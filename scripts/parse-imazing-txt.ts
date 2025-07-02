@@ -23,6 +23,8 @@ const delimiter = '----------------------------------------------------'
 // Initialize linkify
 const linkFinder = linkify()
 
+const DEFAULT_ESTIMATED_TOTAL = 45000
+
 // Function to parse CLI arguments
 function parseArgs(): { inFile: string; outFile: string; preview?: boolean } {
   const args = process.argv.slice(2)
@@ -127,7 +129,7 @@ async function parseFile(
       if (parsedCount % 1000 === 0) {
         const elapsed = (performance.now() - startTime) / 1000
         const rate = parsedCount / elapsed
-        const estimatedTotal = 45000 // rough estimate for ETA calculation, optionally make this configurable
+        const estimatedTotal = DEFAULT_ESTIMATED_TOTAL // rough estimate for ETA calculation, optionally make this configurable
         const eta = ((estimatedTotal - parsedCount) / rate).toFixed(0)
         console.log(
           `...processed ${parsedCount} messages (${rate.toFixed(1)} msg/sec), ETA ~${eta}s`,
