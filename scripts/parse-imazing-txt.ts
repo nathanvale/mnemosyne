@@ -74,10 +74,10 @@ async function parseFile(
   const blockBuffer: { header: string; body: string[] }[] = []
   const BATCH_SIZE = 500
 
-  function parseBlock(block: {
+  async function parseBlock(block: {
     header: string
     body: string[]
-  }): Message | null {
+  }): Promise<Message | null> {
     const bodyJoined = block.body.join('\n')
     const messageBody = bodyJoined.trim()
     if (!messageBody) {
@@ -118,13 +118,9 @@ async function parseFile(
   }
 
   async function processBatch(blocks: { header: string; body: string[] }[]) {
-    const messages: Message[] = []
-    for (const block of blocks) {
-      const message = parseBlock(block)
-      if (message) {
-        messages.push(message)
-      }
-    }
+    const messages = (
+      await Promise.all(blocks.map((block) => parseBlock(block)))
+    ).filter((m): m is Message => !!m)
     for (const message of messages) {
       outputStream.write(Object.values(message))
       parsedCount++
