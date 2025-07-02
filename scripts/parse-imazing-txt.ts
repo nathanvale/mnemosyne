@@ -71,26 +71,26 @@ async function parseFile(
     body: [],
   }
 
-  function processBlock() {
-    if (!currentBlock.header) {
-      // No header found, skip
-      return
-    }
-    const bodyJoined = currentBlock.body.join('\n')
+  const blockBuffer: { header: string; body: string[] }[] = []
+  const BATCH_SIZE = 500
+
+  function parseBlock(block: {
+    header: string
+    body: string[]
+  }): Message | null {
+    const bodyJoined = block.body.join('\n')
     const messageBody = bodyJoined.trim()
     if (!messageBody) {
       console.warn('Skipping block with empty message body.')
-      return
+      return null
     }
 
-    const headerMatch = currentBlock.header.match(headerRegex)
+    const headerMatch = block.header.match(headerRegex)
     if (!headerMatch) {
-      console.warn('Skipping block with invalid header:', currentBlock.header)
-      return
+      console.warn('Skipping block with invalid header:', block.header)
+      return null
     }
     const [, timestampStr, direction] = headerMatch
-
-    // Message body already known to be non-empty
 
     let links = ''
     let assets = ''
@@ -114,32 +114,53 @@ async function parseFile(
       links,
       assets,
     }
+    return message
+  }
 
-    outputStream.write(Object.values(message))
-    parsedCount++
-    if (parsedCount % 1000 === 0) {
-      const elapsed = (performance.now() - startTime) / 1000
-      const rate = parsedCount / elapsed
-      const estimatedTotal = 45000 // rough estimate for ETA calculation, optionally make this configurable
-      const eta = ((estimatedTotal - parsedCount) / rate).toFixed(0)
-      console.log(
-        `...processed ${parsedCount} messages (${rate.toFixed(1)} msg/sec), ETA ~${eta}s`,
-      )
+  async function processBatch(blocks: { header: string; body: string[] }[]) {
+    const messages: Message[] = []
+    for (const block of blocks) {
+      const message = parseBlock(block)
+      if (message) {
+        messages.push(message)
+      }
     }
-    if (preview) {
-      console.log('✓ Parsed message:', {
-        id: message.id,
-        timestamp: message.timestamp,
-        sender: message.sender,
-        preview: message.message.substring(0, 40) + '...',
-      })
+    for (const message of messages) {
+      outputStream.write(Object.values(message))
+      parsedCount++
+      if (parsedCount % 1000 === 0) {
+        const elapsed = (performance.now() - startTime) / 1000
+        const rate = parsedCount / elapsed
+        const estimatedTotal = 45000 // rough estimate for ETA calculation, optionally make this configurable
+        const eta = ((estimatedTotal - parsedCount) / rate).toFixed(0)
+        console.log(
+          `...processed ${parsedCount} messages (${rate.toFixed(1)} msg/sec), ETA ~${eta}s`,
+        )
+      }
+      if (preview) {
+        console.log('✓ Parsed message:', {
+          id: message.id,
+          timestamp: message.timestamp,
+          sender: message.sender,
+          preview: message.message.substring(0, 40) + '...',
+        })
+      }
     }
   }
 
   for await (const line of rl) {
     const cleanLine = line.charCodeAt(0) === 0xfeff ? line.slice(1) : line
     if (cleanLine.startsWith(delimiter)) {
-      processBlock()
+      if (currentBlock.header !== null) {
+        blockBuffer.push({
+          header: currentBlock.header,
+          body: currentBlock.body,
+        })
+        if (blockBuffer.length >= BATCH_SIZE) {
+          await processBatch(blockBuffer)
+          blockBuffer.length = 0
+        }
+      }
       currentBlock = { header: null, body: [] }
     } else if (currentBlock.header === null) {
       currentBlock.header = cleanLine
@@ -149,7 +170,13 @@ async function parseFile(
   }
 
   // Process the last block if the file doesn't end with a delimiter
-  processBlock()
+  if (currentBlock.header !== null) {
+    blockBuffer.push({ header: currentBlock.header, body: currentBlock.body })
+  }
+  if (blockBuffer.length > 0) {
+    await processBatch(blockBuffer)
+    blockBuffer.length = 0
+  }
 
   outputStream.end()
 
