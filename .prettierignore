@@ -1,0 +1,10 @@
+node_modules
+.next
+build
+dist
+public/**
+*.svg
+*.png
+*.ico
+pnpm-lock.yaml
+/.vscode/

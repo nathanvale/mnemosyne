@@ -1,0 +1,24 @@
+import { FlatCompat } from '@eslint/eslintrc'
+import perfectionist from 'eslint-plugin-perfectionist'
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+})
+
+const eslintConfig = [
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...storybook.configs['flat/recommended'],
+  {
+    plugins: { perfectionist },
+    rules: { 'perfectionist/sort-imports': 'error' },
+  },
+]
+
+export default eslintConfig
