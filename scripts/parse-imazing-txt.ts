@@ -1,31 +1,84 @@
+/**
+ * @file
+ * This script parses a text message history file exported from iMazing into a
+ * structured CSV file. It's designed to handle large files efficiently by
+ * reading the input line-by-line and processing messages in batches.
+ *
+ * @module iMazing-Parser
+ *
+ * @see {@link https://www.npmjs.com/package/fast-csv | fast-csv} for the library used to generate the CSV output.
+ * @link See the project's documentation issue for more context on this script's development.
+ *
+ * @section Input File Format
+ * The script expects a `.txt` file with a specific format:
+ * - Messages are separated by a line of dashes: `----------------------------------------------------`
+ * - Each message block starts with a header line: `YYYY-MM-DD HH:MM:SS from/to [Contact Name]`
+ * - The lines following the header form the message body, which can include text, URLs, and asset filenames.
+ *
+ * @section Output CSV Format
+ * The output is a CSV file without headers, containing the following columns:
+ * 1. `id`: A unique, auto-incrementing integer for each message.
+ * 2. `timestamp`: The message timestamp in ISO 8601 format (UTC).
+ * 3. `sender`: The name of the message sender ('Nathan' or the contact name).
+ * 4. `message`: The full, raw text content of the message.
+ * 5. `links`: A comma-separated list of any URLs found in the message.
+ * 6. `assets`: A comma-separated list of any asset filenames (e.g., `IMG_1234.jpeg`) found.
+ *
+ * @example
+ * To run this script from the command line:
+ * ```bash
+ * pnpm tsx scripts/parse-imazing-txt.ts --in ./path/to/input.txt --out ./path/to/output.csv
+ * ```
+ */
 import * as csv from 'fast-csv'
 import fs from 'fs'
 import linkify from 'linkify-it'
 import { performance } from 'perf_hooks'
 import readline from 'readline'
 
-// Define the structure for a parsed message
+// TODO creating documentation for this script
+/**
+ * Defines the structure for a single parsed message object.
+ */
 interface Message {
+  /** A unique, auto-incrementing ID for the message. */
   id: number
+  /** The timestamp of the message in ISO 8601 format (UTC). */
   timestamp: string
+  /** The sender of the message. */
   sender: 'Nathan' | 'Melanie'
+  /** The raw text content of the message. */
   message: string
+  /** A comma-separated string of all URLs found in the message. */
   links: string
+  /** A comma-separated string of all asset filenames found in the message. */
   assets: string
 }
 
 // Regular expressions for parsing
+/** Matches the header line of a message block to extract timestamp, direction, and sender. */
 const headerRegex =
   /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (from|to) (Melanie)$/
+/** Matches common iOS asset filenames (images and videos) within a message body. */
 const assetRegex = /([A-Z]{3,}_\d{4,}\.(jpeg|jpg|png|mov|heic|gif))/gi
+/** The delimiter used to separate message blocks in the input file. */
 const delimiter = '----------------------------------------------------'
 
 // Initialize linkify
+/** An instance of linkify-it used to find URLs in message text. */
 const linkFinder = linkify()
 
+/** A default estimate for the total number of messages, used for calculating ETA. */
 const DEFAULT_ESTIMATED_TOTAL = 45000
 
-// Function to parse CLI arguments
+/**
+ * Parses command-line arguments to get the input and output file paths.
+ * This function is designed for the script's CLI usage and will exit the process
+ * if the required arguments (`--in`, `--out`) are not provided.
+ *
+ * @returns An object containing the input file path, output file path, and an optional preview flag.
+ * @throws Will call `process.exit(1)` if required arguments are missing.
+ */
 function parseArgs(): { inFile: string; outFile: string; preview?: boolean } {
   const args = process.argv.slice(2)
   const inFlagIndex = args.indexOf('--in')
@@ -50,6 +103,16 @@ function parseArgs(): { inFile: string; outFile: string; preview?: boolean } {
   return { inFile, outFile, preview }
 }
 
+/**
+ * Parses the entire input file, processing messages in batches and writing them to a CSV file.
+ * This is the core function of the script, orchestrating the file reading, parsing, and writing.
+ * It logs progress and performance metrics to the console.
+ *
+ * @param inFile - The path to the input text file.
+ * @param outFile - The path where the output CSV file will be saved.
+ * @param preview - If true, logs a preview of each parsed message to the console.
+ * @returns A promise that resolves with the total number of messages parsed.
+ */
 async function parseFile(
   inFile: string,
   outFile: string,
@@ -73,9 +136,22 @@ async function parseFile(
     body: [],
   }
 
+  /**
+   * A buffer to hold message blocks before they are processed.
+   * This is a key part of the batching mechanism to avoid processing messages one-by-one,
+   * which would be inefficient.
+   */
   const blockBuffer: { header: string; body: string[] }[] = []
+  /** The number of message blocks to process in a single batch. */
   const BATCH_SIZE = 500
 
+  /**
+   * Parses a single message block into a structured `Message` object.
+   * It handles header validation, body trimming, and extraction of links and assets.
+   *
+   * @param block - An object containing the header line and an array of body lines for a single message.
+   * @returns A promise that resolves with a `Message` object, or `null` if the block is invalid or empty.
+   */
   async function parseBlock(block: {
     header: string
     body: string[]
@@ -119,6 +195,14 @@ async function parseFile(
     return message
   }
 
+  /**
+   * Processes an array of message blocks in parallel.
+   * This function is central to the script's performance. It takes a batch of blocks,
+   * calls `parseBlock` for each, filters out any invalid results, and writes the
+   * valid messages to the CSV output stream. It also handles progress logging.
+   *
+   * @param blocks - An array of message blocks to be processed.
+   */
   async function processBatch(blocks: { header: string; body: string[] }[]) {
     const messages = (
       await Promise.all(blocks.map((block) => parseBlock(block)))
@@ -146,6 +230,7 @@ async function parseFile(
     }
   }
 
+  // This loop reads the input file line-by-line to avoid loading the entire file into memory.
   for await (const line of rl) {
     const cleanLine = line.charCodeAt(0) === 0xfeff ? line.slice(1) : line
     if (cleanLine.startsWith(delimiter)) {
@@ -187,6 +272,10 @@ async function parseFile(
   return parsedCount
 }
 
+/**
+ * The main entry point for the script when run from the command line.
+ * It orchestrates the argument parsing, file parsing, and final performance logging.
+ */
 async function main() {
   const { inFile, outFile, preview } = parseArgs()
   console.log(`Starting parsing from ${inFile} to ${outFile}...`)
