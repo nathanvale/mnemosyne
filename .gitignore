@@ -42,3 +42,9 @@ next-env.d.ts
 
 *storybook.log
 storybook-static
+
+/src/generated/prisma
+
+# local script artifacts
+/scripts/output/
+/scripts/data/
