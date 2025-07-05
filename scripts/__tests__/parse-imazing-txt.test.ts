@@ -1,3 +1,4 @@
+import * as csv from 'fast-csv'
 import fs from 'fs'
 import mock from 'mock-fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -77,34 +78,36 @@ This is a message with no body.
     expect(mockCsvStream.write).toHaveBeenCalledTimes(3)
 
     // Check first valid message
-    expect(mockCsvStream.write).toHaveBeenCalledWith([
-      1,
-      '2025-07-01T10:00:00.000Z',
-      'Melanie',
-      'Hello Nathan! How are you?\nCheck this out: https://example.com',
-      'https://example.com',
-      '',
-    ])
+    expect(mockCsvStream.write).toHaveBeenCalledWith({
+      id: 1,
+      timestamp: '2025-07-01T10:00:00.000Z',
+      sender: 'Melanie',
+      message:
+        'Hello Nathan! How are you?\nCheck this out: https://example.com',
+      links: 'https://example.com',
+      assets: '',
+    })
 
     // Check second valid message
-    expect(mockCsvStream.write).toHaveBeenCalledWith([
-      2,
-      '2025-07-01T10:05:00.000Z',
-      'Nathan',
-      "I'm good, thanks! Look at this cool image: IMG_1234.jpeg\nAnd this link: http://another-example.com/",
-      'http://another-example.com/',
-      'IMG_1234.jpeg',
-    ])
+    expect(mockCsvStream.write).toHaveBeenCalledWith({
+      id: 2,
+      timestamp: '2025-07-01T10:05:00.000Z',
+      sender: 'Nathan',
+      message:
+        "I'm good, thanks! Look at this cool image: IMG_1234.jpeg\nAnd this link: http://another-example.com/",
+      links: 'http://another-example.com/',
+      assets: 'IMG_1234.jpeg',
+    })
 
     // Check third valid message
-    expect(mockCsvStream.write).toHaveBeenCalledWith([
-      3,
-      '2025-07-01T10:10:00.000Z',
-      'Melanie',
-      'This is a message with no body.',
-      '',
-      '',
-    ])
+    expect(mockCsvStream.write).toHaveBeenCalledWith({
+      id: 3,
+      timestamp: '2025-07-01T10:10:00.000Z',
+      sender: 'Melanie',
+      message: 'This is a message with no body.',
+      links: '',
+      assets: '',
+    })
   })
 
   it('should skip malformed blocks and log warnings', async () => {
@@ -134,14 +137,15 @@ And some images: IMG_1111.jpeg IMG_2222.jpeg
     await parseFile(mockInputFile, mockOutputFile)
 
     expect(mockCsvStream.write).toHaveBeenCalledTimes(1)
-    expect(mockCsvStream.write).toHaveBeenCalledWith([
-      1,
-      '2025-07-01T11:00:00.000Z',
-      'Melanie',
-      'Here are some links:\nhttps://first.com\nhttps://second.com\nAnd some images: IMG_1111.jpeg IMG_2222.jpeg',
-      'https://first.com,https://second.com',
-      'IMG_1111.jpeg,IMG_2222.jpeg',
-    ])
+    expect(mockCsvStream.write).toHaveBeenCalledWith({
+      id: 1,
+      timestamp: '2025-07-01T11:00:00.000Z',
+      sender: 'Melanie',
+      message:
+        'Here are some links:\nhttps://first.com\nhttps://second.com\nAnd some images: IMG_1111.jpeg IMG_2222.jpeg',
+      links: 'https://first.com,https://second.com',
+      assets: 'IMG_1111.jpeg,IMG_2222.jpeg',
+    })
   })
 
   it('should handle CLI arguments for main function', async () => {
@@ -170,5 +174,19 @@ And some images: IMG_1111.jpeg IMG_2222.jpeg
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Usage:'),
     )
+  })
+
+  it('configures fast-csv with the correct headers', async () => {
+    // arrange: empty input so parseFile still runs but writes no rows
+    mock.restore()
+    mock({ [mockInputFile]: '' })
+
+    // spy is already created by vi.mock, so just call parseFile
+    await parseFile(mockInputFile, mockOutputFile)
+
+    expect(csv.format).toHaveBeenCalledWith({
+      headers: ['id', 'timestamp', 'sender', 'message', 'links', 'assets'],
+      writeHeaders: true,
+    })
   })
 })
