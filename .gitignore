@@ -48,3 +48,5 @@ storybook-static
 # local script artifacts
 /scripts/output/
 /scripts/data/
+
+prisma/dev.db
