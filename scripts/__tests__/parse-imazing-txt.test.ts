@@ -168,12 +168,24 @@ And some images: IMG_1111.jpeg IMG_2222.jpeg
     )
   })
 
-  it('should handle missing CLI arguments', async () => {
-    process.argv = ['node', 'scripts/parse-imazing-txt.ts']
-    await expect(main()).rejects.toThrow('process.exit called')
-    expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining('Usage:'),
-    )
+  it('should exit when --in is missing', async () => {
+    // Arrange: missing --in flag for parse-imaging-txt
+    process.argv = [
+      'node',
+      'scripts/parse-imazing-txt.ts',
+      '--out',
+      mockOutputFile,
+    ]
+
+    // Spy on console.error and process.exit
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('exited')
+    })
+
+    // Act & Assert
+    await expect(main()).rejects.toThrow('exited')
+    expect(errSpy).toHaveBeenCalledWith('Usage:', expect.any(String))
   })
 
   it('configures fast-csv with the correct headers', async () => {
