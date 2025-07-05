@@ -16,7 +16,7 @@
  * - The lines following the header form the message body, which can include text, URLs, and asset filenames.
  *
  * @section Output CSV Format
- * The output is a CSV file without headers, containing the following columns:
+ * The output is a CSV file with a header row, containing the following columns:
  * 1. `id`: A unique, auto-incrementing integer for each message.
  * 2. `timestamp`: The message timestamp in ISO 8601 format (UTC).
  * 3. `sender`: The name of the message sender ('Nathan' or the contact name).
@@ -30,6 +30,7 @@
  * pnpm tsx scripts/parse-imazing-txt.ts --in ./path/to/input.txt --out ./path/to/output.csv
  * ```
  */
+import { Command } from 'commander'
 import * as csv from 'fast-csv'
 import fs from 'fs'
 import linkify from 'linkify-it'
@@ -80,27 +81,23 @@ const DEFAULT_ESTIMATED_TOTAL = 45000
  * @throws Will call `process.exit(1)` if required arguments are missing.
  */
 function parseArgs(): { inFile: string; outFile: string; preview?: boolean } {
-  const args = process.argv.slice(2)
-  const inFlagIndex = args.indexOf('--in')
-  const outFlagIndex = args.indexOf('--out')
+  const program = new Command()
 
-  if (inFlagIndex === -1 || outFlagIndex === -1) {
-    console.error(
-      'Usage: tsx scripts/parse-imazing-txt.ts --in <input.txt> --out <output.csv>',
-    )
-    process.exit(1)
+  program
+    .version('1.0.0')
+    .description('Parse iMazing text message exports to CSV')
+    .requiredOption('-i, --in <file>', 'Input text file path')
+    .requiredOption('-o, --out <file>', 'Output CSV file path')
+    .option('-p, --preview', 'Log a preview of each parsed message')
+    .parse(process.argv)
+
+  const options = program.opts()
+
+  return {
+    inFile: options.in,
+    outFile: options.out,
+    preview: options.preview,
   }
-
-  const inFile = args[inFlagIndex + 1]
-  const outFile = args[outFlagIndex + 1]
-  const preview = args.includes('--preview')
-
-  if (!inFile || !outFile) {
-    console.error('Missing input or output file path.')
-    process.exit(1)
-  }
-
-  return { inFile, outFile, preview }
 }
 
 /**
@@ -121,7 +118,10 @@ async function parseFile(
   const startTime = performance.now()
   let parsedCount = 0
   const inputStream = fs.createReadStream(inFile, { encoding: 'utf-8' })
-  const outputStream = csv.format({ headers: false }) // No header as per requirement
+  const outputStream = csv.format({
+    headers: ['id', 'timestamp', 'sender', 'message', 'links', 'assets'],
+    writeHeaders: true,
+  })
   const rl = readline.createInterface({
     input: inputStream,
     crlfDelay: Infinity,
@@ -208,7 +208,7 @@ async function parseFile(
       await Promise.all(blocks.map((block) => parseBlock(block)))
     ).filter((m): m is Message => !!m)
     for (const message of messages) {
-      outputStream.write(Object.values(message))
+      outputStream.write(message)
       parsedCount++
       if (parsedCount % 1000 === 0) {
         const elapsed = (performance.now() - startTime) / 1000
@@ -277,7 +277,15 @@ async function parseFile(
  * It orchestrates the argument parsing, file parsing, and final performance logging.
  */
 async function main() {
-  const { inFile, outFile, preview } = parseArgs()
+  let inFile: string, outFile: string, preview: boolean | undefined
+  try {
+    ;({ inFile, outFile, preview } = parseArgs())
+  } catch (error) {
+    // on missing required options, print usage and exit
+    console.error('Usage:', error instanceof Error ? error.message : error)
+    process.exit(1)
+  }
+
   console.log(`Starting parsing from ${inFile} to ${outFile}...`)
   console.time('⏱ Total parse time')
   const startTime = performance.now()
@@ -288,7 +296,7 @@ async function main() {
 }
 
 // Only invoke main when CLI flags are provided (skip on import for tests)
-if (process.argv.includes('--in') && process.argv.includes('--out')) {
+if (process.argv.some((arg) => ['-i', '--in', '-o', '--out'].includes(arg))) {
   main().catch((error) => {
     console.error('An unexpected error occurred:', error)
     process.exit(1)
