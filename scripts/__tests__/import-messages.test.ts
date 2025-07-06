@@ -111,10 +111,10 @@ describe('CSV Import Script', () => {
     const mainPromise = main()
 
     mockReadStream.write(
-      `id,timestamp,sender,message,links,assets
-1,2025-07-01T10:00:00.000Z,Melanie,"Hello, World!","https://example.com",""
-2,2025-07-01T10:05:00.000Z,Nathan,"Another message","","image.jpg"
-3,2025-07-01T10:10:00.000Z,Melanie,"A third message","https://one.com,https://two.com","asset1.zip,asset2.pdf"
+      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello World!,,
+Nathan,2025-07-01T10:05:00.000Z,,,,iMessage,Outgoing,+456,Nathan,Read,,,Another message,image.jpg,
+Melanie,2025-07-01T10:10:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,A third message,asset1.zip,
 `,
     )
     mockReadStream.end()
@@ -127,8 +127,8 @@ describe('CSV Import Script', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           sender: 'Melanie',
-          message: 'Hello, World!',
-          links: { create: [{ url: 'https://example.com' }] },
+          message: 'Hello World!',
+          links: { create: [] },
           assets: { create: [] },
         }),
       }),
@@ -150,12 +150,8 @@ describe('CSV Import Script', () => {
         data: expect.objectContaining({
           sender: 'Melanie',
           message: 'A third message',
-          links: {
-            create: [{ url: 'https://one.com' }, { url: 'https://two.com' }],
-          },
-          assets: {
-            create: [{ filename: 'asset1.zip' }, { filename: 'asset2.pdf' }],
-          },
+          links: { create: [] },
+          assets: { create: [{ filename: 'asset1.zip' }] },
         }),
       }),
     )
@@ -177,8 +173,8 @@ describe('CSV Import Script', () => {
 
     // Write a single CSV row and end the stream
     mockReadStream.write(
-      `id,timestamp,sender,message,links,assets
-1,2025-08-01T12:00:00.000Z,Alice,"Hi there","https://a.com,https://b.com","file1.png,file2.pdf"
+      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Hi there,file1.png,
 `,
     )
     mockReadStream.end()
@@ -186,17 +182,9 @@ describe('CSV Import Script', () => {
     // Act
     await mainPromise
 
-    // Assert: log.info called with the preview label and an object matching the row
+    // Assert: log.info called with the preview string format
     expect(mockCliLogger.info).toHaveBeenCalledWith(
-      'Parsed message (preview):',
-      expect.objectContaining({
-        timestamp: '2025-08-01T12:00:00.000Z',
-        sender: 'Alice',
-        message: 'Hi there',
-        hash: expect.any(String),
-        links: [{ url: 'https://a.com' }, { url: 'https://b.com' }],
-        assets: [{ filename: 'file1.png' }, { filename: 'file2.pdf' }],
-      }),
+      'Parsed message (preview): 2025-08-01T12:00:00.000Z | Alice | Hi there | incoming | assets: 1',
     )
   })
 
@@ -213,8 +201,8 @@ describe('CSV Import Script', () => {
     const mainPromise = main()
 
     mockReadStream.write(
-      `id,timestamp,sender,message,links,assets
-1,2025-07-01T10:00:00.000Z,Melanie,"Hello, World!","https://example.com",""
+      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello World!,,
 `,
     )
     mockReadStream.end()
@@ -239,10 +227,10 @@ describe('CSV Import Script', () => {
     const mainPromise = main()
 
     mockReadStream.write(
-      `id,timestamp,sender,message,links,assets
-1,2025-07-01T10:00:00.000Z,Melanie,"Valid message","",""
+      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Valid message,,
 invalid-row
-2,2025-07-01T10:05:00.000Z,Nathan,"Another valid message","",""
+Nathan,2025-07-01T10:05:00.000Z,,,,iMessage,Outgoing,+456,Nathan,Read,,,Another valid message,,
 `,
     )
     mockReadStream.end()
@@ -269,7 +257,7 @@ invalid-row
     // Helper to write CSV data to the mock stream
     function writeCsv(rows: string) {
       mockReadStream.write(
-        `id,timestamp,sender,message,links,assets
+        `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
 ${rows}
 `,
       )
@@ -291,7 +279,9 @@ ${rows}
         '--preview',
       ]
       const mainPromise = main()
-      writeCsv(`1,2025-07-01T10:00:00.000Z,Melanie,"Hello","https://e.com",""`)
+      writeCsv(
+        `Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello,,`,
+      )
       await mainPromise
       expect(mockPrismaInstance.message.findUnique).toHaveBeenCalledWith({
         where: { hash: expectedHash },
@@ -301,9 +291,9 @@ ${rows}
     it('imports only new messages when CSV contains duplicates', async () => {
       process.argv = ['tsx', 'scripts/import-messages.ts', '--in', 'mixed.csv']
 
-      const rows = `1,2025-07-01T10:00:00.000Z,Melanie,"Hello","https://e.com",""
-2,2025-07-01T10:05:00.000Z,Nathan,"Brand new","",""
-3,2025-07-01T10:00:00.000Z,Melanie,"Hello","https://e.com",""`
+      const rows = `Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello,,
+Nathan,2025-07-01T10:05:00.000Z,,,,iMessage,Outgoing,+456,Nathan,Read,,,Brand new,,
+Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello,,`
       mockPrismaInstance.message.findUnique
         .mockResolvedValueOnce({ id: 42 })
         .mockResolvedValueOnce(null)
@@ -380,6 +370,52 @@ ${rows}
     expect(mockCliLogger.error).toHaveBeenCalledWith(
       'CSV parsing error:',
       csvError,
+    )
+  })
+
+  it('should import media-only messages (empty text with attachments)', async () => {
+    mockPrismaInstance.message.findUnique.mockResolvedValue(null)
+
+    process.argv = [
+      'tsx',
+      'scripts/import-messages.ts',
+      '--in',
+      'media-messages.csv',
+    ]
+    const mainPromise = main()
+
+    mockReadStream.write(
+      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Melanie,2025-07-01T11:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,,"photo.jpg","image"
+Nathan,2025-07-01T11:05:00.000Z,,,,iMessage,Outgoing,+456,Nathan,Read,,,,"voice-message.m4a","audio"
+`,
+    )
+    mockReadStream.end()
+
+    await mainPromise
+
+    expect(mockPrismaInstance.message.create).toHaveBeenCalledTimes(2)
+    expect(mockPrismaInstance.message.create).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sender: 'Melanie',
+          message: '', // Empty message for media-only
+          links: { create: [] },
+          assets: { create: [{ filename: 'photo.jpg' }] },
+        }),
+      }),
+    )
+    expect(mockPrismaInstance.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sender: 'Nathan',
+          message: '', // Empty message for media-only
+          links: { create: [] },
+          assets: { create: [{ filename: 'voice-message.m4a' }] },
+        }),
+      }),
     )
   })
 })

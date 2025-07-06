@@ -20,9 +20,7 @@
     "build-storybook": "storybook build",
     "test:browser": "vitest --config=vitest.browser.config.ts",
     "prepare": "husky",
-    "parse:imazing": "tsx scripts/parse-imazing-txt.ts --in scripts/data/sample.txt --out scripts/output/messages.csv --preview",
-    "clean:output": "rimraf scripts/output/*",
-    "import:messages": "tsx scripts/import-messages.ts --in scripts/output/messages.csv"
+    "import:messages": "tsx scripts/import-messages.ts --in scripts/data/messages.csv"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",

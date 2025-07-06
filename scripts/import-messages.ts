@@ -69,20 +69,39 @@ export async function main() {
 
 /**
  * Represents a single row of the input CSV with message data.
+ * Maps to the new CSV format with columns like 'Chat Session', 'Message Date', etc.
  */
 interface MessageRow {
-  /** Unique identifier of the message row. */
-  id: string
+  /** Chat session identifier. */
+  'Chat Session': string
   /** ISO string of the message timestamp. */
-  timestamp: string
-  /** Sender identifier or name. */
-  sender: string
+  'Message Date': string
+  /** ISO string of the delivered timestamp. */
+  'Delivered Date': string
+  /** ISO string of the read timestamp. */
+  'Read Date': string
+  /** ISO string of the edited timestamp. */
+  'Edited Date': string
+  /** Service type (SMS, iMessage, etc). */
+  Service: string
+  /** Message type/direction (Incoming, Outgoing). */
+  Type: string
+  /** Sender identifier. */
+  'Sender ID': string
+  /** Sender name. */
+  'Sender Name': string
+  /** Message status. */
+  Status: string
+  /** Message this is replying to. */
+  'Replying to': string
+  /** Message subject. */
+  Subject: string
   /** Text content of the message. */
-  message: string
-  /** Comma-separated URLs attached to the message. */
-  links: string
-  /** Comma-separated filenames attached to the message. */
-  assets: string
+  Text: string
+  /** Attachment filename or path. */
+  Attachment: string
+  /** Type of attachment. */
+  'Attachment type': string
 }
 
 /**
@@ -96,14 +115,40 @@ interface MessageRow {
  * @throws Will throw an error if required fields are missing on the row.
  */
 async function importMessage(row: MessageRow, isPreview: boolean) {
+  // Map new CSV format to expected fields
+  const timestamp = row['Message Date']
+  const rawSender = row['Sender Name']
+  const message = row['Text']
+  const direction =
+    row['Type']?.toLowerCase() === 'incoming' ? 'incoming' : 'outgoing'
+
+  // For outgoing messages, if Sender Name is empty, infer it's from Nathan
+  // For incoming messages, use the Sender Name field
+  const sender = direction === 'outgoing' && !rawSender ? 'Nathan' : rawSender
+
+  // For now, we'll treat attachments as assets (extensible for future use)
+  const assets = row['Attachment'] || ''
+  // Links are not in the new format yet, but keep the field for extensibility
+  const links = '' as string
+
   // bail out on missing essential columns so the row is skipped
-  if (!row.timestamp || !row.sender || !row.message) {
-    throw new Error(`Missing required field(s) in row: ${JSON.stringify(row)}`)
+  // Allow empty message text if there are attachments (media-only messages)
+  const hasAttachments = !!assets
+  if (!timestamp || !sender || (!message && !hasAttachments)) {
+    throw new Error(
+      `Missing required field(s) in row: ${JSON.stringify({
+        'Message Date': timestamp,
+        'Sender Name': rawSender,
+        'Computed Sender': sender,
+        Text: message,
+        Type: row['Type'],
+        'Has Attachments': hasAttachments,
+      })}`,
+    )
   }
-  const { timestamp, sender, message, links, assets } = row
 
   const hash = createHash('sha256')
-    .update(timestamp + sender + message)
+    .update(timestamp + sender + (message || ''))
     .digest('hex')
 
   const existingMessage = await prisma.message.findUnique({ where: { hash } })
@@ -119,20 +164,19 @@ async function importMessage(row: MessageRow, isPreview: boolean) {
     return
   }
 
-  const linkData = links ? links.split(',').map((url) => ({ url })) : []
+  const linkData = links ? links.split(',').map((url: string) => ({ url })) : []
   const assetData = assets
-    ? assets.split(',').map((filename) => ({ filename }))
+    ? assets.split(',').map((filename: string) => ({ filename }))
     : []
 
   if (isPreview) {
-    log.info('Parsed message (preview):', {
-      timestamp,
-      sender,
-      message,
-      hash,
-      links: linkData,
-      assets: assetData,
-    })
+    // Use simple string logging to avoid pino serialization issues
+    const truncatedMessage = message
+      ? message.substring(0, 100) + (message.length > 100 ? '...' : '')
+      : '[empty]'
+    log.info(
+      `Parsed message (preview): ${timestamp} | ${sender} | ${truncatedMessage} | ${direction} | assets: ${assetData.length}`,
+    )
     return
   }
 
@@ -140,7 +184,7 @@ async function importMessage(row: MessageRow, isPreview: boolean) {
     data: {
       timestamp: new Date(timestamp),
       sender,
-      message,
+      message: message || '', // Store empty string for media-only messages
       hash,
       links: {
         create: linkData,
