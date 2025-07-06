@@ -3,6 +3,31 @@ import fs from 'fs'
 import mock from 'mock-fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock the logger module
+const mockCliLogger = {
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn(),
+  trace: vi.fn(),
+  fatal: vi.fn(),
+}
+
+vi.mock('@/lib/logger', () => ({
+  log: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
+    fatal: vi.fn(),
+  },
+  createCliLogger: vi.fn(() => mockCliLogger),
+}))
+
+// Import the mocked logger
+// import { log } from '@/lib/logger' // No longer needed since we use mockCliLogger
+
 // Mock the script's dependencies
 const mockCsvStream = {
   write: vi.fn(),
@@ -39,9 +64,6 @@ describe('iMazing Parser Script', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
-    vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called')
     })
@@ -112,11 +134,11 @@ This is a message with no body.
 
   it('should skip malformed blocks and log warnings', async () => {
     await parseFile(mockInputFile, mockOutputFile)
-    expect(console.warn).toHaveBeenCalledWith(
+    expect(mockCliLogger.warn).toHaveBeenCalledWith(
       'Skipping block with invalid header:',
       'Malformed block',
     )
-    expect(console.warn).toHaveBeenCalledWith(
+    expect(mockCliLogger.warn).toHaveBeenCalledWith(
       'Skipping block with empty message body.',
     )
   })
@@ -159,10 +181,10 @@ And some images: IMG_1111.jpeg IMG_2222.jpeg
       '--preview',
     ]
     await main()
-    expect(console.log).toHaveBeenCalledWith(
+    expect(mockCliLogger.info).toHaveBeenCalledWith(
       expect.stringContaining(`Starting parsing from ${mockInputFile}`),
     )
-    expect(console.log).toHaveBeenCalledWith(
+    expect(mockCliLogger.info).toHaveBeenCalledWith(
       '✓ Parsed message:',
       expect.any(Object),
     )
@@ -177,15 +199,17 @@ And some images: IMG_1111.jpeg IMG_2222.jpeg
       mockOutputFile,
     ]
 
-    // Spy on console.error and process.exit
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    // Spy on process.exit
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('exited')
     })
 
     // Act & Assert
     await expect(main()).rejects.toThrow('exited')
-    expect(errSpy).toHaveBeenCalledWith('Usage:', expect.any(String))
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
+      'Usage:',
+      expect.any(String),
+    )
   })
 
   it('configures fast-csv with the correct headers', async () => {
