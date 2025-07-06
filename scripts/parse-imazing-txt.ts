@@ -37,6 +37,10 @@ import linkify from 'linkify-it'
 import { performance } from 'perf_hooks'
 import readline from 'readline'
 
+import { createCliLogger } from '../src/lib/logger'
+
+const log = createCliLogger('info')
+
 // TODO creating documentation for this script
 /**
  * Defines the structure for a single parsed message object.
@@ -159,13 +163,13 @@ async function parseFile(
     const bodyJoined = block.body.join('\n')
     const messageBody = bodyJoined.trim()
     if (!messageBody) {
-      console.warn('Skipping block with empty message body.')
+      log.warn('Skipping block with empty message body.')
       return null
     }
 
     const headerMatch = block.header.match(headerRegex)
     if (!headerMatch) {
-      console.warn('Skipping block with invalid header:', block.header)
+      log.warn('Skipping block with invalid header:', block.header)
       return null
     }
     const [, timestampStr, direction] = headerMatch
@@ -215,12 +219,12 @@ async function parseFile(
         const rate = parsedCount / elapsed
         const estimatedTotal = DEFAULT_ESTIMATED_TOTAL // rough estimate for ETA calculation, optionally make this configurable
         const eta = ((estimatedTotal - parsedCount) / rate).toFixed(0)
-        console.log(
+        log.info(
           `...processed ${parsedCount} messages (${rate.toFixed(1)} msg/sec), ETA ~${eta}s`,
         )
       }
       if (preview) {
-        console.log('✓ Parsed message:', {
+        log.info('✓ Parsed message:', {
           id: message.id,
           timestamp: message.timestamp,
           sender: message.sender,
@@ -263,10 +267,10 @@ async function parseFile(
 
   outputStream.end()
 
-  console.log(`📦 Parsed ${parsedCount} messages.`)
+  log.info(`📦 Parsed ${parsedCount} messages.`)
 
   csvStream.on('finish', () => {
-    console.log(`\n🎉 Successfully parsed messages to ${outFile}`)
+    log.info(`\n🎉 Successfully parsed messages to ${outFile}`)
   })
 
   return parsedCount
@@ -282,23 +286,23 @@ async function main() {
     ;({ inFile, outFile, preview } = parseArgs())
   } catch (error) {
     // on missing required options, print usage and exit
-    console.error('Usage:', error instanceof Error ? error.message : error)
+    log.error('Usage:', error instanceof Error ? error.message : error)
     process.exit(1)
   }
 
-  console.log(`Starting parsing from ${inFile} to ${outFile}...`)
+  log.info(`Starting parsing from ${inFile} to ${outFile}...`)
   console.time('⏱ Total parse time')
   const startTime = performance.now()
   const parsedCount = await parseFile(inFile, outFile, preview)
   console.timeEnd('⏱ Total parse time')
   const duration = (performance.now() - startTime) / 1000
-  console.log(`🚀 Approx. ${(parsedCount / duration).toFixed(0)} msgs/sec`)
+  log.info(`🚀 Approx. ${(parsedCount / duration).toFixed(0)} msgs/sec`)
 }
 
 // Only invoke main when CLI flags are provided (skip on import for tests)
 if (process.argv.some((arg) => ['-i', '--in', '-o', '--out'].includes(arg))) {
   main().catch((error) => {
-    console.error('An unexpected error occurred:', error)
+    log.error('An unexpected error occurred:', error)
     process.exit(1)
   })
 }

@@ -4,6 +4,10 @@ import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
 import fs from 'fs'
 
+import { createCliLogger } from '../src/lib/logger'
+
+const log = createCliLogger('info')
+
 const prisma = new PrismaClient()
 
 /**
@@ -29,34 +33,34 @@ export async function main() {
   const isPreview = !!options.preview
 
   if (!inputFile) {
-    console.error("error: required option '--in <path>' not specified")
+    log.error("error: required option '--in <path>' not specified")
     process.exit(1)
   }
 
-  console.log(`Starting import from ${inputFile}...`)
+  log.info(`Starting import from ${inputFile}...`)
 
   return new Promise<void>((resolve, reject) => {
     const pendingImports: Promise<void>[] = []
     const readStream = fs.createReadStream(inputFile)
     readStream.on('error', (error) => {
-      console.error('CSV parsing error:', error)
+      log.error('CSV parsing error:', error)
       reject(error)
     })
     readStream
       .pipe(parse({ headers: true }))
       .on('error', (error) => {
-        console.error('CSV parsing error:', error)
+        log.error('CSV parsing error:', error)
         reject(error)
       })
       .on('data', (row: MessageRow) => {
         const p = importMessage(row, isPreview).catch((error) => {
-          console.error('Skipping malformed row:', error)
+          log.error('Skipping malformed row:', error)
         })
         pendingImports.push(p)
       })
       .on('end', async (rowCount: number) => {
         await Promise.all(pendingImports)
-        console.log(`Parsed ${rowCount} rows.`)
+        log.info(`Parsed ${rowCount} rows.`)
         await prisma.$disconnect()
         resolve()
       })
@@ -107,10 +111,10 @@ async function importMessage(row: MessageRow, isPreview: boolean) {
   if (existingMessage) {
     if (isPreview) {
       // two-arg log for the preview test
-      console.log('Skipping existing message with hash:', hash)
+      log.info('Skipping existing message with hash:', hash)
     } else {
       // single-string log for the duplicates test
-      console.log(`Skipping existing message with hash: ${hash}`)
+      log.info(`Skipping existing message with hash: ${hash}`)
     }
     return
   }
@@ -121,7 +125,7 @@ async function importMessage(row: MessageRow, isPreview: boolean) {
     : []
 
   if (isPreview) {
-    console.log('Parsed message (preview):', {
+    log.info('Parsed message (preview):', {
       timestamp,
       sender,
       message,
@@ -146,14 +150,14 @@ async function importMessage(row: MessageRow, isPreview: boolean) {
       },
     },
   })
-  console.log(`Successfully imported message with hash: ${hash}`)
+  log.info(`Successfully imported message with hash: ${hash}`)
 }
 
 const isMain = import.meta.url === `file://${process.argv[1]}`
 
 if (isMain) {
   main().catch((e) => {
-    console.error(e)
+    log.error(e)
     prisma.$disconnect()
     process.exit(1)
   })

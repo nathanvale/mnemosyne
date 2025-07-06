@@ -3,6 +3,28 @@ import * as fastCsv from 'fast-csv'
 import { PassThrough } from 'stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock the logger module with a shared mock logger instance
+const mockCliLogger = vi.hoisted(() => ({
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn(),
+  trace: vi.fn(),
+  fatal: vi.fn(),
+}))
+
+vi.mock('@/lib/logger', () => ({
+  log: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
+    fatal: vi.fn(),
+  },
+  createCliLogger: vi.fn(() => mockCliLogger),
+}))
+
 // Define the shape of our mocked PrismaClient instance
 type MockPrisma = {
   message: {
@@ -67,8 +89,7 @@ describe('CSV Import Script', () => {
       PrismaClientModule,
     ) as unknown as { mockPrismaInstance: MockPrisma }
     mockPrismaInstance = instance
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.clearAllMocks()
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called')
     })
@@ -165,8 +186,8 @@ describe('CSV Import Script', () => {
     // Act
     await mainPromise
 
-    // Assert: console.log called with the preview label and an object matching the row
-    expect(console.log).toHaveBeenCalledWith(
+    // Assert: log.info called with the preview label and an object matching the row
+    expect(mockCliLogger.info).toHaveBeenCalledWith(
       'Parsed message (preview):',
       expect.objectContaining({
         timestamp: '2025-08-01T12:00:00.000Z',
@@ -201,7 +222,7 @@ describe('CSV Import Script', () => {
     await mainPromise
 
     expect(mockPrismaInstance.message.create).not.toHaveBeenCalled()
-    expect(console.log).toHaveBeenCalledWith(
+    expect(mockCliLogger.info).toHaveBeenCalledWith(
       'Skipping existing message with hash:',
       expect.any(String),
     )
@@ -229,7 +250,7 @@ invalid-row
     await mainPromise
 
     expect(mockPrismaInstance.message.create).toHaveBeenCalledTimes(2)
-    expect(console.error).toHaveBeenCalledWith(
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
       'Skipping malformed row:',
       expect.any(Error),
     )
@@ -238,7 +259,7 @@ invalid-row
   it('should fail if input file is not provided', async () => {
     process.argv = ['tsx', 'scripts/import-messages.ts']
     await expect(main()).rejects.toThrow('process.exit called')
-    expect(console.error).toHaveBeenCalledWith(
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
       "error: required option '--in <path>' not specified",
     )
   })
@@ -302,7 +323,7 @@ ${rows}
         }),
       )
 
-      expect(console.log).toHaveBeenCalledWith(
+      expect(mockCliLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('Skipping existing message'),
       )
     })
@@ -319,7 +340,10 @@ ${rows}
 
     // Assert
     await expect(mainPromise).rejects.toBe(csvError)
-    expect(console.error).toHaveBeenCalledWith('CSV parsing error:', csvError)
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
+      'CSV parsing error:',
+      csvError,
+    )
   })
 
   it('fails and logs on file read error', async () => {
@@ -332,7 +356,10 @@ ${rows}
 
     // Should reject and log via the readStream.on('error') handler
     await expect(mainPromise).rejects.toBe(readError)
-    expect(console.error).toHaveBeenCalledWith('CSV parsing error:', readError)
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
+      'CSV parsing error:',
+      readError,
+    )
   })
 
   it('fails and logs on parser error from fast-csv', async () => {
@@ -350,6 +377,9 @@ ${rows}
     mockParser.emit('error', csvError)
 
     await expect(mainPromise).rejects.toBe(csvError)
-    expect(console.error).toHaveBeenCalledWith('CSV parsing error:', csvError)
+    expect(mockCliLogger.error).toHaveBeenCalledWith(
+      'CSV parsing error:',
+      csvError,
+    )
   })
 })

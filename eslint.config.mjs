@@ -19,6 +19,15 @@ const eslintConfig = [
     plugins: { perfectionist },
     rules: { 'perfectionist/sort-imports': 'error' },
   },
+  {
+    ignores: [
+      'src/generated/**/*',
+      'node_modules/**/*',
+      '.next/**/*',
+      'dist/**/*',
+      'build/**/*',
+    ],
+  },
 ]
 
 export default eslintConfig
