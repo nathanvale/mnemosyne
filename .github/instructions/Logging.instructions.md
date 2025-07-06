@@ -29,9 +29,11 @@ To create a CLI-friendly logger (with colored output):
 ```ts
 import { createCliLogger } from '@/lib/logger'
 
-const cliLogger = createCliLogger('debug')
-cliLogger.debug('Starting import task')
+const cliLogger = createCliLogger('info')
+cliLogger.info('Starting import task')
 ```
+
+**Important**: Use CLI logger only for production scripts and user-facing output. For debugging, always use the structured logger (`log.*` methods) which provides callsite info and structured data.
 
 All log lines include callsite info, are prettified in dev, and JSON-structured in prod.
 
@@ -71,6 +73,24 @@ const logger = createLogger({
 ```
 
 Use `mark()` and `measure()` for performance timing, and `group()` to visually organize logs in Chrome DevTools.
+
+---
+
+#### 🎯 Logger Selection Guide
+
+**For Debugging & Development:**
+
+- ✅ **Always use structured logger**: `log.debug()`, `log.info()`, `log.warn()`, `log.error()`
+- ✅ **Provides callsite info**: Shows exact file, line, and column
+- ✅ **Structured data**: Include context objects for better debugging
+
+**For Production Scripts & User Output:**
+
+- ✅ **Use CLI logger**: `createCliLogger('info')`
+- ✅ **Clean output**: Human-readable format for end users
+- ❌ **Not for debugging**: Lacks callsite info and structured data
+
+**Rule of Thumb**: When in doubt, use the structured logger (`log.*` methods).
 
 ---
 
