@@ -70,9 +70,9 @@ import { createCliLogger } from '@/lib/logger'
 const cliLogger = createCliLogger()
 cliLogger.info('Processing started')
 
-// Create CLI logger with custom level for production scripts
-const verboseLogger = createCliLogger('info')
-verboseLogger.info('Processing complete with detailed output')
+// Create CLI logger with custom level
+const debugLogger = createCliLogger('debug')
+debugLogger.debug('Detailed processing info')
 ```
 
 ## Output Examples
@@ -81,7 +81,7 @@ verboseLogger.info('Processing complete with detailed output')
 
 ```
 [INFO 14:30:22] Processing started
-[INFO 14:30:23] Processing complete with detailed output
+[DEBUG 14:30:23] Detailed processing info
 [WARN 14:30:24] Configuration file not found, using defaults
 [ERROR 14:30:25] Failed to connect to database
 ```
@@ -118,69 +118,15 @@ verboseLogger.info('Processing complete with detailed output')
 
 ### Structured Logger (`log.*` methods)
 
-- **Use for**: Application runtime logging, debugging, monitoring, development
+- **Use for**: Application runtime logging, debugging, monitoring
 - **Features**: Callsite tracking, structured JSON output, environment-aware formatting
-- **Example**: User actions, API calls, business logic events, debugging issues
-- **Debugging**: ✅ **Always use this for debugging** - provides callsite info and structured data
+- **Example**: User actions, API calls, business logic events
 
 ### CLI Logger (`createCliLogger()`)
 
-- **Use for**: Production scripts, build tools, user-facing utilities
+- **Use for**: Scripts, build tools, development utilities
 - **Features**: Human-readable output, colorized, clean timestamps
-- **Example**: Import scripts, data processing, migration tools, deployment scripts
-- **Debugging**: ❌ **Do not use for debugging** - lacks callsite info and structured data
-
-> **Important**: CLI Logger is designed for production scripts and user-facing output. For debugging, always use the structured logger (`log.*` methods) which provides callsite information and structured data that makes debugging much easier.
-
-## Best Practices
-
-### ✅ Do: Use Structured Logger for Debugging
-
-```typescript
-import { log } from '@/lib/logger'
-
-// ✅ Good: Structured logger shows callsite and context
-log.debug('Processing user data', {
-  userId: 123,
-  step: 'validation',
-  data: { email: 'user@example.com' },
-})
-
-// ✅ Good: Error logging with full context
-log.error('Database query failed', {
-  query: 'SELECT * FROM users',
-  error: error.message,
-  duration: 150,
-})
-```
-
-### ❌ Don't: Use CLI Logger for Debugging
-
-```typescript
-import { createCliLogger } from '@/lib/logger'
-
-// ❌ Bad: CLI logger lacks callsite info
-const cliLogger = createCliLogger('debug')
-cliLogger.debug('Processing user data') // Missing context and callsite
-```
-
-### ✅ Do: Use CLI Logger for Production Scripts
-
-```typescript
-import { createCliLogger } from '@/lib/logger'
-
-// ✅ Good: Clean output for user-facing scripts
-const logger = createCliLogger('info')
-logger.info('Import started')
-logger.info('Processed 1000 records')
-logger.info('Import completed successfully')
-```
-
-### Rule of Thumb
-
-- **Debugging/Development**: Always use `log.debug()`, `log.info()`, etc.
-- **Production Scripts**: Use `createCliLogger()` for clean user output
-- **When in doubt**: Use the structured logger - it provides more information
+- **Example**: Import scripts, data processing, migration tools
 
 ## Key Benefits
 
@@ -189,9 +135,8 @@ logger.info('Import completed successfully')
 3. **Performance**: Pino is one of the fastest Node.js loggers
 4. **Type Safety**: Full TypeScript support prevents logging errors
 5. **Environment Flexibility**: Readable in development, parseable in production
-6. **Production Script Output**: CLI logger provides clean, user-friendly output for scripts
+6. **CLI-Friendly**: Separate logger for scripts with human-readable output
 7. **Zero Breaking Changes**: All existing console.log calls were seamlessly migrated
-8. **Clear Debugging**: Structured logger provides callsite info essential for debugging
 
 ## Configuration
 
