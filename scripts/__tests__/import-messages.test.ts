@@ -78,7 +78,6 @@ describe('CSV Import Script', () => {
     message: string,
     senderId = '',
     assets = '',
-    attachmentTypes = '',
   ) => {
     // Match the createContentHash function from import-messages.ts
     const content = [
@@ -87,7 +86,6 @@ describe('CSV Import Script', () => {
       senderId || '',
       message || '',
       assets || '',
-      attachmentTypes || '',
     ].join('|')
 
     return createHash('sha256').update(content).digest('hex')
@@ -155,7 +153,7 @@ Melanie,2025-07-01T10:10:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,A thir
           senderId: '+456',
           message: 'Another message',
           links: { create: [] },
-          assets: { create: [{ filename: 'image.jpg', type: null }] },
+          assets: { create: [{ filename: 'image.jpg' }] },
         }),
       }),
     )
@@ -167,79 +165,7 @@ Melanie,2025-07-01T10:10:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,A thir
           senderId: '+123',
           message: 'A third message',
           links: { create: [] },
-          assets: { create: [{ filename: 'asset1.zip', type: null }] },
-        }),
-      }),
-    )
-  })
-
-  it('should handle attachment types correctly', async () => {
-    // Test parsing attachment types and matching them with filenames by index
-    mockPrismaInstance.message.findUnique.mockResolvedValue(null)
-
-    process.argv = [
-      'tsx',
-      'scripts/import-messages.ts',
-      '--in',
-      'attachments.csv',
-    ]
-    const mainPromise = main()
-
-    mockReadStream.write(
-      `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
-Alice,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Message with multiple attachments,"photo.jpg,document.pdf,video.mp4","image/jpeg,application/pdf,video/mp4"
-Nathan,2025-07-01T10:05:00.000Z,,,,iMessage,Outgoing,+456,,Read,,,Another message with single attachment,audio.m4a,audio/mp4
-Melanie,2025-07-01T10:10:00.000Z,,,,iMessage,Incoming,+789,Melanie,Read,,,Message with attachment but no type,data.zip,
-`,
-    )
-    mockReadStream.end()
-
-    await mainPromise
-
-    expect(mockPrismaInstance.message.create).toHaveBeenCalledTimes(3)
-
-    // First message: multiple attachments with types
-    expect(mockPrismaInstance.message.create).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          sender: 'Alice',
-          message: 'Message with multiple attachments',
-          assets: {
-            create: [
-              { filename: 'photo.jpg', type: 'image/jpeg' },
-              { filename: 'document.pdf', type: 'application/pdf' },
-              { filename: 'video.mp4', type: 'video/mp4' },
-            ],
-          },
-        }),
-      }),
-    )
-
-    // Second message: single attachment with type
-    expect(mockPrismaInstance.message.create).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          sender: 'Nathan',
-          message: 'Another message with single attachment',
-          assets: {
-            create: [{ filename: 'audio.m4a', type: 'audio/mp4' }],
-          },
-        }),
-      }),
-    )
-
-    // Third message: attachment without type (should be null)
-    expect(mockPrismaInstance.message.create).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          sender: 'Melanie',
-          message: 'Message with attachment but no type',
-          assets: {
-            create: [{ filename: 'data.zip', type: null }],
-          },
+          assets: { create: [{ filename: 'asset1.zip' }] },
         }),
       }),
     )
@@ -281,7 +207,7 @@ Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Hi there,f
         hash: expect.any(String),
         direction: 'incoming',
         links: [],
-        assets: [{ filename: 'file1.png', type: null }],
+        assets: [{ filename: 'file1.png' }],
       }),
     )
   })
@@ -370,7 +296,6 @@ ${rows}
         'Hello',
         '+123',
         '', // assets
-        '', // attachmentTypes
       )
       mockPrismaInstance.message.findUnique.mockResolvedValueOnce({ id: 1 })
       process.argv = [
@@ -486,5 +411,218 @@ Melanie,2025-07-01T10:00:00.000Z,,,,iMessage,Incoming,+123,Melanie,Read,,,Hello,
         inputFile: 'test.csv',
       }),
     )
+  })
+
+  // URL extraction tests
+  describe('URL extraction from message text', () => {
+    it('should extract and store URLs from message text', async () => {
+      // Arrange: findUnique returns null so importMessage will create new message
+      mockPrismaInstance.message.findUnique.mockResolvedValue(null)
+      mockPrismaInstance.message.create.mockResolvedValue({
+        id: 1,
+        timestamp: new Date('2025-08-01T12:00:00.000Z'),
+        sender: 'Alice',
+        senderId: '+123',
+        message: 'Check out https://example.com and www.google.com',
+        hash: 'test-hash',
+        direction: 'incoming',
+      })
+
+      process.argv = [
+        'tsx',
+        'scripts/import-messages.ts',
+        '--in',
+        'test-messages.csv',
+      ]
+      const mainPromise = main()
+
+      // Write a CSV row with URLs in the text
+      mockReadStream.write(
+        `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Check out https://example.com and www.google.com for more info,,
+`,
+      )
+      mockReadStream.end()
+
+      // Act
+      await mainPromise
+
+      // Assert: message should be created with extracted links
+      expect(mockPrismaInstance.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          timestamp: new Date('2025-08-01T12:00:00.000Z'),
+          sender: 'Alice',
+          senderId: '+123',
+          message:
+            'Check out https://example.com and www.google.com for more info',
+          hash: expect.any(String),
+          links: {
+            create: [
+              { url: 'https://example.com' },
+              { url: 'https://www.google.com' },
+            ],
+          },
+          assets: {
+            create: [],
+          },
+        }),
+      })
+    })
+
+    it('should deduplicate URLs within the same message', async () => {
+      // Arrange
+      mockPrismaInstance.message.findUnique.mockResolvedValue(null)
+      mockPrismaInstance.message.create.mockResolvedValue({
+        id: 1,
+        timestamp: new Date('2025-08-01T12:00:00.000Z'),
+        sender: 'Alice',
+        senderId: '+123',
+        message: 'duplicate urls test',
+        hash: 'test-hash',
+        direction: 'incoming',
+      })
+
+      process.argv = [
+        'tsx',
+        'scripts/import-messages.ts',
+        '--in',
+        'test-messages.csv',
+      ]
+      const mainPromise = main()
+
+      // Write a CSV row with duplicate URLs
+      mockReadStream.write(
+        `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Visit https://example.com and https://EXAMPLE.COM again,,
+`,
+      )
+      mockReadStream.end()
+
+      // Act
+      await mainPromise
+
+      // Assert: should only create one link due to deduplication
+      expect(mockPrismaInstance.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          timestamp: new Date('2025-08-01T12:00:00.000Z'),
+          sender: 'Alice',
+          senderId: '+123',
+          message: 'Visit https://example.com and https://EXAMPLE.COM again',
+          hash: expect.any(String),
+          links: {
+            create: [{ url: 'https://example.com' }],
+          },
+          assets: {
+            create: [],
+          },
+        }),
+      })
+    })
+
+    it('should handle messages with no URLs', async () => {
+      // Arrange
+      mockPrismaInstance.message.findUnique.mockResolvedValue(null)
+      mockPrismaInstance.message.create.mockResolvedValue({
+        id: 1,
+        timestamp: new Date('2025-08-01T12:00:00.000Z'),
+        sender: 'Alice',
+        senderId: '+123',
+        message: 'Hello world!',
+        hash: 'test-hash',
+        direction: 'incoming',
+      })
+
+      process.argv = [
+        'tsx',
+        'scripts/import-messages.ts',
+        '--in',
+        'test-messages.csv',
+      ]
+      const mainPromise = main()
+
+      // Write a CSV row with no URLs
+      mockReadStream.write(
+        `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Hello world!,,
+`,
+      )
+      mockReadStream.end()
+
+      // Act
+      await mainPromise
+
+      // Assert: should create message with empty links array
+      expect(mockPrismaInstance.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          timestamp: new Date('2025-08-01T12:00:00.000Z'),
+          sender: 'Alice',
+          senderId: '+123',
+          message: 'Hello world!',
+          hash: expect.any(String),
+          links: {
+            create: [],
+          },
+          assets: {
+            create: [],
+          },
+        }),
+      })
+    })
+
+    it('should extract and store three different URLs from message text', async () => {
+      // Arrange: findUnique returns null so importMessage will create new message
+      mockPrismaInstance.message.findUnique.mockResolvedValue(null)
+      mockPrismaInstance.message.create.mockResolvedValue({
+        id: 1,
+        timestamp: new Date('2025-08-01T14:00:00.000Z'),
+        sender: 'Bob',
+        senderId: '+789',
+        message:
+          'Check out these three sites: https://github.com, www.stackoverflow.com, and https://docs.google.com',
+        hash: 'test-hash-three-urls',
+        direction: 'outgoing',
+      })
+
+      process.argv = [
+        'tsx',
+        'scripts/import-messages.ts',
+        '--in',
+        'test-messages.csv',
+      ]
+      const mainPromise = main()
+
+      // Write a CSV row with three different URLs in the text
+      mockReadStream.write(
+        `Chat Session,Message Date,Delivered Date,Read Date,Edited Date,Service,Type,Sender ID,Sender Name,Status,Replying to,Subject,Text,Attachment,Attachment type
+Bob,2025-08-01T14:00:00.000Z,,,,iMessage,Outgoing,+789,Bob,Read,,,Check out these three sites: https://github.com www.stackoverflow.com and https://docs.google.com for development help,,
+`,
+      )
+      mockReadStream.end()
+
+      // Act
+      await mainPromise
+
+      // Assert: message should be created with all three extracted links
+      expect(mockPrismaInstance.message.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          timestamp: new Date('2025-08-01T14:00:00.000Z'),
+          sender: 'Bob',
+          senderId: '+789',
+          message:
+            'Check out these three sites: https://github.com www.stackoverflow.com and https://docs.google.com for development help',
+          hash: expect.any(String),
+          links: {
+            create: [
+              { url: 'https://github.com' },
+              { url: 'https://www.stackoverflow.com' },
+              { url: 'https://docs.google.com' },
+            ],
+          },
+          assets: {
+            create: [],
+          },
+        }),
+      })
+    })
   })
 })
