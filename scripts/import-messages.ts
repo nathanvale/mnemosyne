@@ -18,6 +18,7 @@ function createContentHash(
   senderId: string,
   message: string,
   assets: string,
+  attachmentTypes: string,
 ): string {
   // Simple, stable hash based on actual message content
   const content = [
@@ -26,6 +27,7 @@ function createContentHash(
     senderId || '',
     message || '',
     assets || '',
+    attachmentTypes || '',
   ].join('|')
 
   return createHash('sha256').update(content).digest('hex')
@@ -375,6 +377,7 @@ async function importMessage(
 
   // For now, we'll treat attachments as assets (extensible for future use)
   const assets = row['Attachment'] || ''
+  const attachmentTypes = row['Attachment type'] || ''
   // Links are not in the new format yet, but keep the field for extensibility
   const links = '' as string
 
@@ -418,6 +421,7 @@ async function importMessage(
     senderId || '',
     message || '',
     assets || '',
+    attachmentTypes || '',
   )
 
   // Check for in-memory duplicates (same hash within this import batch)
@@ -466,9 +470,20 @@ async function importMessage(
   }
 
   const linkData = links ? links.split(',').map((url: string) => ({ url })) : []
-  const assetData = assets
-    ? assets.split(',').map((filename: string) => ({ filename }))
+
+  // Parse attachments and attachment types as comma-separated lists
+  // Match them by index: first filename with first type, second with second, etc.
+  const assetFilenames = assets
+    ? assets.split(',').map((filename: string) => filename.trim())
     : []
+  const assetTypes = attachmentTypes
+    ? attachmentTypes.split(',').map((type: string) => type.trim())
+    : []
+
+  const assetData = assetFilenames.map((filename: string, index: number) => ({
+    filename,
+    type: assetTypes[index] || null, // Use corresponding type or null if not available
+  }))
 
   if (isPreview) {
     const previewData = {
