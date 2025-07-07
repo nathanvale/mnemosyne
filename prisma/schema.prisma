@@ -37,6 +37,7 @@ model Link {
 model Asset {
   id        Int     @id @default(autoincrement())
   filename  String
+  type      String?
   messageId Int
   message   Message @relation(fields: [messageId], references: [id])
 }
