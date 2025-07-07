@@ -13,3 +13,30 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime
+  sender    String
+  senderId  String?
+  message   String?
+  hash      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  links     Link[]
+  assets    Asset[]
+}
+
+model Link {
+  id        Int     @id @default(autoincrement())
+  url       String
+  messageId Int
+  message   Message @relation(fields: [messageId], references: [id])
+}
+
+model Asset {
+  id        Int     @id @default(autoincrement())
+  filename  String
+  messageId Int
+  message   Message @relation(fields: [messageId], references: [id])
+}
