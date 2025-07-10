@@ -1,1 +1,2 @@
-// Placeholder - will be populated in later issues
+// Export handlers for MSW
+export * from './handlers'

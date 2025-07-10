@@ -7,9 +7,15 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "echo 'Test config package build placeholder'",
-    "dev": "echo 'Test config package dev placeholder'"
+    "build": "echo 'Test config - build via turbo'",
+    "dev": "echo 'Test config package dev placeholder'",
+    "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@studio/mocks": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
 }
