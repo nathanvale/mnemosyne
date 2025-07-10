@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:reset": "prisma migrate reset --force",
+    "db:reset": "pdevdevrisma migrate reset --force",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -16,6 +16,7 @@
     "format:pnpm": "pnpm format",
     "test": "vitest",
     "test:storybook": "vitest --project=storybook",
+    "type-check": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:browser": "vitest --config=vitest.browser.config.ts",

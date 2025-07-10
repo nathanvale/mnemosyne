@@ -50,3 +50,8 @@ storybook-static
 /scripts/data/
 
 prisma/dev.db
+
+# Logs directory created by tmuxinator mnemosyne session
+.logs/
+
+.claude/settings.local.json
