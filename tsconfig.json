@@ -1,40 +1,23 @@
 {
+  "extends": "./packages/shared/tsconfig.app.json",
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "allowImportingTsExtensions": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "paths": {
-      "@/*": ["./src/*"]
-    },
-    "types": [
-      "@vitest/browser/providers/playwright",
-      "vitest/globals",
-      "@testing-library/jest-dom"
-    ]
+      "@/*": ["./src/*"],
+      "@studio/db": ["./packages/db/src"],
+      "@studio/logger": ["./packages/logger/src"],
+      "@studio/scripts": ["./packages/scripts/src"],
+      "@studio/test-config": ["./packages/test-config/src"],
+      "@studio/ui": ["./packages/ui/src"],
+      "@studio/mocks": ["./packages/mocks/src"],
+      "@studio/shared": ["./packages/shared/src"]
+    }
   },
   "include": [
-    "next-env.ds.ts",
+    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
     "vite.config.ts",
     "vitest.config.ts"
-  ],
-  "exclude": ["node_modules"]
+  ]
 }

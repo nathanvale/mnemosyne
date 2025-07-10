@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@studio/db": ["../packages/db/src"],
+      "@studio/logger": ["../packages/logger/src"],
+      "@studio/scripts": ["../packages/scripts/src"],
+      "@studio/test-config": ["../packages/test-config/src"],
+      "@studio/ui": ["../packages/ui/src"],
+      "@studio/mocks": ["../packages/mocks/src"],
+      "@studio/shared": ["../packages/shared/src"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"]
+}
