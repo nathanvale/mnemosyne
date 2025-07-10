@@ -1,8 +1,7 @@
 // Is this frontend or Node?
 // This is Node.js - using the CLI logger
 
-import { PrismaClient } from '@prisma/client'
-
+import { PrismaClient } from '@/generated/prisma'
 import { createCliLogger } from '@/lib/logger'
 
 const logger = createCliLogger('info')
