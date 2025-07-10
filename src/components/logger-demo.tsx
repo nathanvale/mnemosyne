@@ -37,8 +37,9 @@ export function LoggerDemo() {
         const logText = args
           .map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
           .join(' ')
-        capturedLogs.push(`[${level.toUpperCase()}] ${logText}`)
-        setLogs([...capturedLogs])
+        const newLog = `[${level.toUpperCase()}] ${logText}`
+        capturedLogs.push(newLog)
+        setLogs((prevLogs) => [...prevLogs, newLog])
         originalConsole[level](...args)
       }
     })

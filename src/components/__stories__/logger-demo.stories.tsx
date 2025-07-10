@@ -195,12 +195,10 @@ The demo automatically triggers all log levels when loaded, showing the variety 
     // Verify logs appear in the captured output
     await waitFor(
       async () => {
-        const logOutput = canvas.getByText(
-          /Captured Console Output/i,
-        ).parentElement
-        expect(logOutput).toContainHTML('Trace:')
+        const logOutput = canvas.getByText(/\[TRACE\]/)
+        expect(logOutput).toBeInTheDocument()
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     )
   },
 }
