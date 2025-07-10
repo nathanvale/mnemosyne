@@ -7,10 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  setup:
+  lint:
     runs-on: ubuntu-latest
-    outputs:
-      pnpm-cache-dir: ${{ steps.pnpm-config.outputs.cache-dir }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -19,60 +17,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'pnpm'
         
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8
-        
-    - name: Get pnpm store directory
-      id: pnpm-config
-      run: echo "cache-dir=$(pnpm store path)" >> $GITHUB_OUTPUT
-      
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.pnpm-config.outputs.cache-dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
-        
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-      
-    - name: Upload workspace
-      uses: actions/upload-artifact@v4
-      with:
-        name: workspace
-        path: |
-          .
-          !node_modules
-        retention-days: 1
-
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download workspace
-      uses: actions/download-artifact@v4
-      with:
-        name: workspace
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-        
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{ needs.setup.outputs.pnpm-cache-dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -81,29 +31,21 @@ jobs:
       run: pnpm run lint
 
   type-check:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
-    - name: Download workspace
-      uses: actions/download-artifact@v4
-      with:
-        name: workspace
-        
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'pnpm'
         
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8
-        
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{ needs.setup.outputs.pnpm-cache-dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -112,29 +54,21 @@ jobs:
       run: pnpm run type-check
 
   test:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
-    - name: Download workspace
-      uses: actions/download-artifact@v4
-      with:
-        name: workspace
-        
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'pnpm'
         
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8
-        
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{ needs.setup.outputs.pnpm-cache-dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -149,26 +83,19 @@ jobs:
     needs: [lint, type-check, test]
     runs-on: ubuntu-latest
     steps:
-    - name: Download workspace
-      uses: actions/download-artifact@v4
-      with:
-        name: workspace
-        
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'pnpm'
         
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8
-        
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{ needs.setup.outputs.pnpm-cache-dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
