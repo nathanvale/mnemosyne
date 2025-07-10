@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "db:reset": "pdevdevrisma migrate reset --force",
+    "db:reset": "pnpm prisma migrate reset --force",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -78,6 +82,7 @@
     "storybook": "^9.0.15",
     "tailwindcss": "^4.1.11",
     "tsx": "^4.16.2",
+    "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vitest": "^3.2.4",
