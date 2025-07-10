@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@studio/db": ["../db/src"],
+      "@studio/logger": ["../logger/src"],
+      "@studio/scripts": ["../scripts/src"],
+      "@studio/test-config": ["../test-config/src"],
+      "@studio/ui": ["../ui/src"],
+      "@studio/mocks": ["../mocks/src"],
+      "@studio/shared": ["../shared/src"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

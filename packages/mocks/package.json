@@ -1,0 +1,20 @@
+{
+  "name": "@studio/mocks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'Mocks package - build via turbo'",
+    "dev": "echo 'Mocks package dev placeholder'",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "msw": "^2.10.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

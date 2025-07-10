@@ -16,6 +16,16 @@ export default defineConfig({
         resolve: {
           alias: {
             '@': path.resolve(dirname, 'src'),
+            '@studio/db': path.resolve(dirname, 'packages/db/src'),
+            '@studio/logger': path.resolve(dirname, 'packages/logger/src'),
+            '@studio/scripts': path.resolve(dirname, 'packages/scripts/src'),
+            '@studio/test-config': path.resolve(
+              dirname,
+              'packages/test-config/src',
+            ),
+            '@studio/ui': path.resolve(dirname, 'packages/ui/src'),
+            '@studio/mocks': path.resolve(dirname, 'packages/mocks/src'),
+            '@studio/shared': path.resolve(dirname, 'packages/shared/src'),
           },
         },
         plugins: [react()],

@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,14 +12,16 @@
 !.yarn/versions
 
 # testing
-/coverage
+**/coverage
+**/test-results
 
-# next.js
-/.next/
-/out/
+# next.js (apps and packages)
+**/.next/
+**/out/
+**/build/
 
 # production
-/build
+**/dist/
 
 # misc
 .DS_Store
@@ -36,20 +39,36 @@ yarn-error.log*
 # vercel
 .vercel
 
+# turbo
+.turbo
+**/.turbo
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
+# storybook
 *storybook.log
-storybook-static
+**/storybook-static
 
-/src/generated/prisma
+# Prisma generated files (legacy paths - can be removed after cleanup)
+/src/generated/prisma/*
+!src/generated/prisma/index.ts
 
-# local script artifacts
+# Prisma generated files (current monorepo structure)
+packages/db/generated/
+apps/studio/src/generated/
+
+# local script artifacts (legacy paths - can be removed after cleanup)
 /scripts/output/
 /scripts/data/
 
+# local script artifacts (current monorepo structure)
+packages/scripts/src/output/
+packages/scripts/src/data/messages_*.csv
+
 prisma/dev.db
+packages/db/prisma/dev.db
 
 # Logs directory created by tmuxinator mnemosyne session
 .logs/

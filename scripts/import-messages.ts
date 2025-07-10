@@ -1,9 +1,9 @@
+import { PrismaClient } from '@studio/db'
 import { Command } from 'commander'
 import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
 import fs from 'fs'
 
-import { PrismaClient } from '@/generated/prisma'
 import { log, createCliLogger } from '@/lib/logger'
 
 const prisma = new PrismaClient()
