@@ -18,7 +18,6 @@ function createContentHash(
   senderId: string,
   message: string,
   assets: string,
-  attachmentTypes: string,
 ): string {
   // Simple, stable hash based on actual message content
   const content = [
@@ -27,7 +26,6 @@ function createContentHash(
     senderId || '',
     message || '',
     assets || '',
-    attachmentTypes || '',
   ].join('|')
 
   return createHash('sha256').update(content).digest('hex')
@@ -348,6 +346,38 @@ function printImportSummary(
 }
 
 /**
+ * Extract URLs from text content
+ * Matches both http(s) and www. style URLs
+ */
+function extractUrls(text: string): Array<string> {
+  const urlRegex = /(?:https?:\/\/|www\.)[^\s<>"']+/gi
+  const matches = text.match(urlRegex) || []
+
+  // Normalize URLs to start with https://
+  return matches.map((url) => {
+    if (url.startsWith('www.')) {
+      return `https://${url}`
+    }
+    return url
+  })
+}
+
+/**
+ * Deduplicate URLs (case-insensitive)
+ */
+function deduplicateUrls(urls: Array<string>): Array<string> {
+  const seen = new Set<string>()
+  return urls.filter((url) => {
+    const normalized = url.toLowerCase()
+    if (seen.has(normalized)) {
+      return false
+    }
+    seen.add(normalized)
+    return true
+  })
+}
+
+/**
  * Imports a single message row into the database or logs preview info.
  *
  * Validates essential fields, computes a SHA-256 hash, checks for
@@ -377,7 +407,6 @@ async function importMessage(
 
   // For now, we'll treat attachments as assets (extensible for future use)
   const assets = row['Attachment'] || ''
-  const attachmentTypes = row['Attachment type'] || ''
   // Links are not in the new format yet, but keep the field for extensibility
   const links = '' as string
 
@@ -421,7 +450,6 @@ async function importMessage(
     senderId || '',
     message || '',
     assets || '',
-    attachmentTypes || '',
   )
 
   // Check for in-memory duplicates (same hash within this import batch)
@@ -469,21 +497,25 @@ async function importMessage(
     return
   }
 
-  const linkData = links ? links.split(',').map((url: string) => ({ url })) : []
+  // Extract URLs from message text
+  const extractedUrls = extractUrls(message)
 
-  // Parse attachments and attachment types as comma-separated lists
-  // Match them by index: first filename with first type, second with second, etc.
-  const assetFilenames = assets
-    ? assets.split(',').map((filename: string) => filename.trim())
+  // Combine URLs from CSV links field (if any) with extracted URLs
+  const csvUrls = links
+    ? links
+        .split(',')
+        .map((url: string) => url.trim())
+        .filter(Boolean)
     : []
-  const assetTypes = attachmentTypes
-    ? attachmentTypes.split(',').map((type: string) => type.trim())
-    : []
+  const allUrls = [...csvUrls, ...extractedUrls]
 
-  const assetData = assetFilenames.map((filename: string, index: number) => ({
-    filename,
-    type: assetTypes[index] || null, // Use corresponding type or null if not available
-  }))
+  // Deduplicate URLs for this message
+  const uniqueUrls = deduplicateUrls(allUrls)
+  const linkData = uniqueUrls.map((url: string) => ({ url }))
+
+  const assetData = assets
+    ? assets.split(',').map((filename: string) => ({ filename }))
+    : []
 
   if (isPreview) {
     const previewData = {
