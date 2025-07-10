@@ -1,0 +1,15 @@
+{
+  "name": "@studio/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'DB package build placeholder'",
+    "dev": "echo 'DB package dev placeholder'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

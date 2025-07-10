@@ -1,0 +1,15 @@
+{
+  "name": "@studio/logger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'Logger package build placeholder'",
+    "dev": "echo 'Logger package dev placeholder'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.10.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -25,7 +26,11 @@
     "build-storybook": "storybook build",
     "test:browser": "vitest --config=vitest.browser.config.ts",
     "prepare": "husky",
-    "import:messages": "tsx scripts/import-messages.ts --in scripts/data/messages.csv"
+    "import:messages": "tsx scripts/import-messages.ts --in scripts/data/messages.csv",
+    "studio:dev": "pnpm --filter \"@studio/*\" dev",
+    "studio:build": "pnpm --filter \"@studio/*\" build",
+    "studio:test": "pnpm --filter \"@studio/*\" test",
+    "studio:lint": "pnpm --filter \"@studio/*\" lint"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
