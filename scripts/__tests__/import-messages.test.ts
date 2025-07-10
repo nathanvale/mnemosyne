@@ -1,8 +1,7 @@
+import * as PrismaClientModule from '@studio/db'
 import * as fastCsv from 'fast-csv'
 import { PassThrough } from 'stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
-import * as PrismaClientModule from '@/generated/prisma'
 
 // Mock the logger module with a shared mock logger instance
 const mockCliLogger = vi.hoisted(() => ({
@@ -49,7 +48,7 @@ vi.mock('fs', () => ({
 }))
 
 // Mock PrismaClient with a singleton instance so we can control it in tests
-vi.mock('@/generated/prisma', () => {
+vi.mock('@studio/db', () => {
   const mockPrismaInstance = {
     message: {
       findUnique: vi.fn(),

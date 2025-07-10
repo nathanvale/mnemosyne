@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "db:reset": "pnpm prisma migrate reset --force",
+    "db:reset": "pnpm --filter @studio/db db:reset",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

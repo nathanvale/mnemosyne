@@ -1,1 +1,2 @@
-// Placeholder - will be populated in later issues
+export { PrismaClient } from '../generated'
+export type * from '../generated'

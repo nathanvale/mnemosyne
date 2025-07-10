@@ -43,6 +43,16 @@
     "db:reset": {
       "cache": false
     },
+    "db:push": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
     "import:messages": {
       "cache": false
     }
