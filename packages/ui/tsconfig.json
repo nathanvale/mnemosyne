@@ -2,6 +2,7 @@
   "extends": "../shared/tsconfig.package.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "composite": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
