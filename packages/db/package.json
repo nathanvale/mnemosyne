@@ -11,7 +11,7 @@
   "scripts": {
     "build": "prisma generate && tsc",
     "dev": "prisma generate --watch",
-    "type-check": "tsc --noEmit",
+    "type-check": "prisma generate && tsc --noEmit",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force",
     "db:migrate": "prisma migrate dev",
