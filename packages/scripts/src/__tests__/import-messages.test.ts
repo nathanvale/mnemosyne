@@ -13,7 +13,7 @@ const mockCliLogger = vi.hoisted(() => ({
   fatal: vi.fn(),
 }))
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@studio/logger', () => ({
   log: {
     info: vi.fn(),
     error: vi.fn(),

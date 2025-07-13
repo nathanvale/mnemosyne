@@ -1,60 +1,113 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
+  "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "package.json",
+        "tsconfig.json",
+        "next.config.js",
+        "vite.config.ts",
+        "vitest.config.ts"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        "generated/**"
+      ]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "lint": {
       "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        ".eslintrc.*",
+        "package.json"
+      ],
       "outputs": ["node_modules/.cache/eslint/**"]
     },
     "type-check": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "package.json"],
       "outputs": ["**/*.tsbuildinfo"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "inputs": ["src/**", "vitest.config.*", "package.json"],
+      "outputs": ["coverage/**", "test-results/**"],
+      "env": ["NODE_ENV"]
     },
     "test:storybook": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "build-storybook"],
+      "inputs": ["src/**", ".storybook/**", "package.json"],
       "outputs": ["test-results/**"]
     },
     "format": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*"
+      ],
       "outputs": []
     },
     "format:check": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*"
+      ],
       "outputs": []
     },
     "storybook": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "build-storybook": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", ".storybook/**", "package.json"],
       "outputs": ["storybook-static/**"]
     },
     "db:reset": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:studio": {
       "cache": false,
       "persistent": true
     },
     "import:messages": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     }
   }
 }

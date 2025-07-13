@@ -1,9 +1,20 @@
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import StackTracey from 'stacktracey'
 
+// Browser-compatible path resolution
+const isBrowser = typeof window !== 'undefined'
+
+const resolve = isBrowser
+  ? (...paths: string[]) => paths.join('/').replace(/\/+/g, '/')
+  : // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('node:path').resolve
+
+const fileURLToPath = isBrowser
+  ? (url: string) => url
+  : // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('node:url').fileURLToPath
+
 // Get the project root directory
-const PROJECT_ROOT = resolve(process.cwd())
+const PROJECT_ROOT = isBrowser ? '' : resolve(process.cwd())
 
 export interface CallSite {
   file: string
