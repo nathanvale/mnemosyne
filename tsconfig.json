@@ -12,6 +12,16 @@
       "@studio/shared": ["./packages/shared/src"]
     }
   },
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/db" },
+    { "path": "./packages/mocks" },
+    { "path": "./packages/test-config" },
+    { "path": "./packages/logger" },
+    { "path": "./packages/scripts" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/studio" }
+  ],
   "include": [
     "next-env.d.ts",
     "**/*.ts",
