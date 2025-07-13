@@ -11,8 +11,10 @@
         "package.json",
         "tsconfig.json",
         "next.config.js",
+        "next.config.ts",
         "vite.config.ts",
-        "vitest.config.ts"
+        "vitest.config.ts",
+        "prisma/**"
       ],
       "outputs": [
         ".next/**",
@@ -35,26 +37,27 @@
         "*.ts",
         "*.tsx",
         ".eslintrc.*",
+        "eslint.config.*",
         "package.json"
       ],
-      "outputs": ["node_modules/.cache/eslint/**"]
+      "outputs": []
     },
     "type-check": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "tsconfig.json", "package.json"],
+      "inputs": ["src/**", "tsconfig.json", "tsconfig*.json", "package.json"],
       "outputs": ["**/*.tsbuildinfo"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "vitest.config.*", "package.json"],
-      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["src/**", "vitest.config.*", "package.json", ".storybook/**"],
+      "outputs": [],
       "env": ["NODE_ENV"],
       "passThroughEnv": ["CI"]
     },
     "test:storybook": {
       "dependsOn": ["^build", "build-storybook"],
       "inputs": ["src/**", ".storybook/**", "package.json"],
-      "outputs": ["test-results/**"]
+      "outputs": []
     },
     "format": {
       "inputs": [
@@ -64,7 +67,8 @@
         "*.tsx",
         "*.json",
         "*.md",
-        ".prettierrc*"
+        ".prettierrc*",
+        "prettier.config.*"
       ],
       "outputs": []
     },
@@ -76,7 +80,8 @@
         "*.tsx",
         "*.json",
         "*.md",
-        ".prettierrc*"
+        ".prettierrc*",
+        "prettier.config.*"
       ],
       "outputs": []
     },
@@ -109,6 +114,9 @@
     "import:messages": {
       "cache": false,
       "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
     }
   }
 }

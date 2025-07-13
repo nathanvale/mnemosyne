@@ -11,7 +11,8 @@
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
-    "test:storybook": "vitest --project=storybook"
+    "test:storybook": "vitest --project=storybook",
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "@studio/logger": "workspace:*",
