@@ -6,9 +6,18 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "noEmit": false,
+    "allowImportingTsExtensions": false
   },
   "references": [{ "path": "../logger" }],
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "src/**/*.test.*", "src/**/*.stories.*"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/**/*.test.*",
+    "src/**/*.stories.*",
+    "src/logger-demo.tsx",
+    "src/logging-test.tsx"
+  ]
 }

@@ -1,4 +1,3 @@
 export { Counter } from './counter'
 export { FetchUserButton } from './fetch-user-button'
-export { LoggerDemo } from './logger-demo'
-export { LoggingTest } from './logging-test'
+// Note: LoggerDemo and LoggingTest are excluded from build due to @studio/logger dependency
