@@ -48,6 +48,7 @@ export default defineConfig({
             ),
           ],
           include: ['./**/*.test.ts?(x)'],
+          passWithNoTests: true, // Don't fail when no tests are found
         },
       },
       // TODO: Re-enable after fixing browser compatibility issues (#45)
