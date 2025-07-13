@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "format:pnpm": "pnpm format",
     "test": "turbo test",
+    "test:ci": "turbo test -- --run",
     "test:storybook": "pnpm --filter @studio/app test:storybook",
     "type-check": "turbo type-check",
     "storybook": "pnpm --filter @studio/app storybook",

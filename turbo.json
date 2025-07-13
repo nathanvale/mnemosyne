@@ -48,7 +48,8 @@
       "dependsOn": ["^build"],
       "inputs": ["src/**", "vitest.config.*", "package.json"],
       "outputs": ["coverage/**", "test-results/**"],
-      "env": ["NODE_ENV"]
+      "env": ["NODE_ENV"],
+      "passThroughEnv": ["CI"]
     },
     "test:storybook": {
       "dependsOn": ["^build", "build-storybook"],
