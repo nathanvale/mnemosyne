@@ -139,31 +139,48 @@ function getRelativePath(absolutePath: string): string {
 }
 ```
 
-### CLI Logger Variant
+### Unified Node.js Logger with Context Support
 
-A specialized CLI logger provides human-readable output for scripts:
+The Node.js logger now supports the unified API with `withTag()` and `withContext()` methods:
 
 ```typescript
-export function createCliLogger(level: LogLevel = 'info'): Logger {
-  return {
-    trace: (msg, ctx) => logCli('TRACE', msg, ctx),
-    debug: (msg, ctx) => logCli('DEBUG', msg, ctx),
-    info: (msg, ctx) => logCli('INFO', msg, ctx),
-    warn: (msg, ctx) => logCli('WARN', msg, ctx),
-    error: (msg, ctx) => logCli('ERROR', msg, ctx),
+class NodeLogger implements Logger {
+  constructor(private pino: pino.Logger, private tags: string[] = [], private context: LogContext = {}) {}
+
+  info(message: string, context?: LogContext): void {
+    const mergedContext = { ...this.context, ...context }
+    const logData = {
+      ...mergedContext,
+      ...(this.tags.length > 0 && { tags: this.tags }),
+      callsite: getCallsite(),
+    }
+    
+    this.pino.info(logData, message)
+  }
+
+  withTag(tag: string): Logger {
+    return new NodeLogger(this.pino, [...this.tags, tag], this.context)
+  }
+
+  withContext(context: LogContext): Logger {
+    return new NodeLogger(this.pino, this.tags, { ...this.context, ...context })
   }
 }
+```
 
-function logCli(level: string, message: string, context?: any) {
-  const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false })
-  const coloredLevel = colorizeLevel(level)
+### CLI Logger Variant - **Deprecated**
 
-  console.log(`[${coloredLevel} ${timestamp}] ${message}`)
+⚠️ **Deprecated**: Use `createLogger({ prettyPrint: true })` instead.
 
-  if (context) {
-    console.log(JSON.stringify(context, null, 2))
-  }
-}
+```typescript
+// Old approach (deprecated)
+export function createCliLogger(level: LogLevel = 'info'): Logger
+
+// New unified approach
+const cliLogger = createLogger({ 
+  level: 'info', 
+  prettyPrint: true 
+})
 ```
 
 ## 🌐 Browser Implementation Details
@@ -191,7 +208,7 @@ class BrowserLogger implements Logger {
     this.startBatchFlushTimer()
   }
 
-  info(message: string, context?: any): void {
+  info(message: string, context?: LogContext): void {
     const entry = this.createLogEntry('info', message, context)
 
     if (this.config.enableConsole) {
@@ -201,6 +218,14 @@ class BrowserLogger implements Logger {
     if (this.config.remoteEndpoint) {
       this.addToRemoteBatch(entry)
     }
+  }
+
+  withTag(tag: string): Logger {
+    return new BrowserLogger(this.config, [...this.tags, tag], this.context)
+  }
+
+  withContext(context: LogContext): Logger {
+    return new BrowserLogger(this.config, this.tags, { ...this.context, ...context })
   }
 
   private logToConsole(entry: LogEntry): void {
@@ -383,24 +408,42 @@ class LazyLogger implements Logger {
 Context objects are merged efficiently to avoid unnecessary object creation:
 
 ```typescript
-export function withContext(baseContext: any) {
-  return {
-    info: (message: string, additionalContext?: any) => {
-      const mergedContext = additionalContext
-        ? { ...baseContext, ...additionalContext }
-        : baseContext
+export function withContext(baseContext: LogContext): Logger {
+  // Implementation now handled by environment-specific logger classes
+  return log.withContext(baseContext)
+}
 
-      log.info(message, mergedContext)
-    },
-  }
+export function withTag(tag: string): Logger {
+  // Implementation now handled by environment-specific logger classes
+  return log.withTag(tag)
 }
 ```
 
 ## 🧪 Testing Architecture
 
-### Mock Strategy
+### Built-in Testing Utilities
 
-Tests use environment-specific mocks:
+The logger package provides comprehensive testing utilities:
+
+```typescript
+import { createMockLogger, createCapturingMockLogger, mockLoggerModule } from '@studio/logger/testing'
+
+// Basic mock logger for simple tests
+const mockLogger = createMockLogger()
+expect(mockLogger.info).toHaveBeenCalledWith('Expected message', { userId: '123' })
+
+// Capturing mock for advanced testing scenarios
+const capturingLogger = createCapturingMockLogger()
+yourFunction(capturingLogger)
+const calls = capturingLogger.getCalls()
+
+// Module-level mocking
+const { mockLog } = mockLoggerModule()
+```
+
+### Legacy Mock Strategy
+
+For custom testing scenarios, environment-specific mocks can still be used:
 
 ```typescript
 // Node.js tests mock Pino
