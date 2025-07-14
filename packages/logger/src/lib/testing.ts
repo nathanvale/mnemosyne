@@ -70,7 +70,7 @@ export type MockLogger = MockNodeLogger & MockBrowserLogger
  * ```
  */
 export function createMockLogger(): MockLogger {
-  const mockLogger: MockLogger = {
+  const mockLogger = {
     // Core logging methods
     trace: vi.fn(),
     debug: vi.fn(),
@@ -88,13 +88,37 @@ export function createMockLogger(): MockLogger {
     mark: vi.fn(),
     measure: vi.fn(),
     traceDev: vi.fn(),
-  }
 
-  // Add methods that return a new mock logger for chaining
-  mockLogger.withTag = vi.fn().mockReturnValue(mockLogger)
-  mockLogger.withContext = vi.fn().mockReturnValue(mockLogger)
+    // Chaining methods
+    withTag: vi.fn(),
+    withContext: vi.fn(),
+  } as MockLogger
+
+  // Set up chaining to return the same mock logger
+  mockLogger.withTag.mockReturnValue(mockLogger)
+  mockLogger.withContext.mockReturnValue(mockLogger)
 
   return mockLogger
+}
+
+/**
+ * Extended mock logger with capturing capabilities
+ */
+export interface CapturingMockLogger extends MockLogger {
+  getCalls(): Array<{
+    level: LogLevel | 'fatal'
+    message: string
+    context?: LogContext
+    data?: Array<unknown>
+  }>
+  clearCalls(): void
+  getCallCount(): number
+  getCallsForLevel(level: LogLevel | 'fatal'): Array<{
+    level: LogLevel | 'fatal'
+    message: string
+    context?: LogContext
+    data?: Array<unknown>
+  }>
 }
 
 /**
@@ -115,7 +139,7 @@ export function createMockLogger(): MockLogger {
  * ])
  * ```
  */
-export function createCapturingMockLogger() {
+export function createCapturingMockLogger(): CapturingMockLogger {
   const calls: Array<{
     level: LogLevel | 'fatal'
     message: string
@@ -150,7 +174,7 @@ export function createCapturingMockLogger() {
     )
   }
 
-  const mockLogger: MockLogger = {
+  const mockLogger = {
     // Core logging methods
     trace: createCapturingMethod('trace'),
     debug: createCapturingMethod('debug'),
@@ -169,6 +193,10 @@ export function createCapturingMockLogger() {
     measure: vi.fn(),
     traceDev: vi.fn(),
 
+    // Chaining methods
+    withTag: vi.fn(),
+    withContext: vi.fn(),
+
     // Testing utilities
     getCalls: () => [...calls],
     clearCalls: () => {
@@ -177,11 +205,11 @@ export function createCapturingMockLogger() {
     getCallCount: () => calls.length,
     getCallsForLevel: (level: LogLevel | 'fatal') =>
       calls.filter((call) => call.level === level),
-  }
+  } as CapturingMockLogger
 
-  // Add methods that reference mockLogger after it's declared
-  mockLogger.withTag = vi.fn().mockReturnValue(mockLogger)
-  mockLogger.withContext = vi.fn().mockReturnValue(mockLogger)
+  // Set up chaining to return the same mock logger
+  mockLogger.withTag.mockReturnValue(mockLogger)
+  mockLogger.withContext.mockReturnValue(mockLogger)
 
   return mockLogger
 }
