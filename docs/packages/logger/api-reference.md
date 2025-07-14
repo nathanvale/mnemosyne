@@ -21,26 +21,26 @@ The main logger interface provides consistent methods across all environments.
 
 ### Basic Logging Methods
 
-#### `log.trace(message, ...args)`
+#### `log.trace(message, context?)`
 
 Detailed tracing information for debugging complex flows. Automatically includes callsite information.
 
 ```typescript
-log.trace(msg: string, ...args: Array<unknown>): void
+log.trace(message: string, context?: LogContext): void
 ```
 
 **Example:**
 
 ```typescript
-// With context object as first argument
+// With context object
 log.trace('Entering authentication flow', {
   userId: '123',
   method: 'oauth',
   timestamp: Date.now(),
 })
 
-// With additional arguments
-log.trace('Processing data', data, 'additional info')
+// Simple message without context
+log.trace('Processing data')
 ```
 
 **Output (Node.js):**
@@ -65,12 +65,12 @@ log.trace('Processing data', data, 'additional info')
   📍 src/auth.ts:45:7
 ```
 
-#### `log.debug(message, ...args)`
+#### `log.debug(message, context?)`
 
 Development debugging information.
 
 ```typescript
-log.debug(msg: string, ...args: Array<unknown>): void
+log.debug(message: string, context?: LogContext): void
 ```
 
 **Example:**
@@ -83,12 +83,12 @@ log.debug('Database query executed', {
 })
 ```
 
-#### `log.info(message, ...args)`
+#### `log.info(message, context?)`
 
 General informational messages.
 
 ```typescript
-log.info(msg: string, ...args: Array<unknown>): void
+log.info(message: string, context?: LogContext): void
 ```
 
 **Example:**
@@ -101,12 +101,12 @@ log.info('User logged in successfully', {
 })
 ```
 
-#### `log.warn(message, ...args)`
+#### `log.warn(message, context?)`
 
 Warning messages that need attention.
 
 ```typescript
-log.warn(msg: string, ...args: Array<unknown>): void
+log.warn(message: string, context?: LogContext): void
 ```
 
 **Example:**
@@ -119,12 +119,12 @@ log.warn('API rate limit approaching', {
 })
 ```
 
-#### `log.error(message, ...args)`
+#### `log.error(message, context?)`
 
 Error messages for failures and exceptions.
 
 ```typescript
-log.error(msg: string, ...args: Array<unknown>): void
+log.error(message: string, context?: LogContext): void
 ```
 
 **Example:**
@@ -138,12 +138,12 @@ log.error('Database connection failed', {
 })
 ```
 
-#### `log.fatal(message, ...args)`
+#### `log.fatal(message, context?)`
 
 Fatal error messages for critical failures.
 
 ```typescript
-log.fatal(msg: string, ...args: Array<unknown>): void
+log.fatal(message: string, context?: LogContext): void
 ```
 
 **Example:**
@@ -155,40 +155,23 @@ log.fatal('Application startup failed', {
 })
 ```
 
-### ⚠️ Environment-Specific Features
+### 🔗 Advanced Features (All Environments)
 
-**Note**: The Node.js `log` object provides basic logging only. For advanced features like tags and context, use the browser logger or manually include context in your log calls.
-
-#### Node.js Pattern (Current Implementation)
+The unified logger API provides consistent advanced features across all environments:
 
 ```typescript
-import { log } from '@studio/logger'
+import { log, createLogger } from '@studio/logger'
 
-// Basic logging with manual context
+// Basic usage works everywhere
 log.info('User action', {
-  tag: 'AuthService',
   userId: '123',
   action: 'login',
 })
 
-// The context object is merged with callsite information automatically
-log.error('Operation failed', {
-  component: 'PaymentProcessor',
-  error: error.message,
-  retryCount: 3,
-})
-```
-
-#### Browser Logger Advanced Features
-
-For browser environments, use the BrowserLogger class which supports tags and context:
-
-```typescript
-import { createLogger } from '@studio/logger'
-
+// Advanced features work in both Node.js and browser
 const logger = createLogger({ level: 'info' })
 
-// Tags and context (browser only)
+// Tags and context work everywhere
 const authLogger = logger.withTag('AuthService')
 authLogger.info('Password reset initiated')
 
@@ -198,21 +181,22 @@ const userLogger = logger.withContext({
 })
 userLogger.info('Profile updated')
 
-// Chaining (browser only)
+// Method chaining works everywhere
 const requestLogger = logger.withTag('APIRequest').withContext({
   requestId: 'req_456',
   endpoint: '/api/users',
 })
+requestLogger.info('API request completed')
 ```
 
 ## 🏭 Factory Functions
 
-### `createLogger(config)` (Browser Only)
+### `createLogger(config)` (All Environments)
 
-Create a custom browser logger instance with specific configuration.
+Create a custom logger instance with specific configuration. Automatically detects Node.js vs browser environment.
 
 ```typescript
-function createLogger(config: BrowserLoggerConfig): BrowserLogger
+function createLogger(config: LoggerConfig): Logger
 
 interface LoggerConfig {
   // Core Settings
@@ -221,11 +205,13 @@ interface LoggerConfig {
   enableColors?: boolean // Enable colored output (default: true)
   enableInProduction?: boolean // Allow logging in production (default: false)
 
-  // Development Features
-  devClickableTraces?: boolean // Enable clickable source links (default: true)
+  // Node.js Features
+  prettyPrint?: boolean // Enable pretty-printed output for CLI (default: false)
+  outputStream?: NodeJS.WritableStream // Custom output stream (Node.js only)
 
-  // Remote Logging (Browser only)
-  remoteEndpoint?: string // URL for remote log uploads
+  // Browser Features
+  devClickableTraces?: boolean // Enable clickable source links (default: true)
+  remoteEndpoint?: string // URL for remote log uploads (browser only)
   batchSize?: number // Logs per batch (default: 50)
   flushInterval?: number // Auto-flush interval in ms (default: 30000)
   maxRetries?: number // Max retry attempts (default: 3)
@@ -235,13 +221,13 @@ interface LoggerConfig {
   sensitiveFields?: Array<string> // Fields to redact in remote logs
   customRedactionStrategy?: (obj: any) => any // Custom redaction logic
 
-  // Performance
+  // Performance (Browser only)
   enablePerformance?: boolean // Enable performance monitoring (default: false)
 
   // Context
   globalContext?: Record<string, any> // Context added to all logs
 
-  // Callbacks
+  // Callbacks (Browser only)
   onRemoteSuccess?: (logs: Array<any>) => void // Success callback
   onRemoteError?: (error: Error, logs: Array<any>) => void // Error callback
 }
@@ -264,34 +250,37 @@ customLogger.info('Service started')
 // Includes global context automatically
 ```
 
-### `createCliLogger(level?)` (Node.js Only)
+### `createCliLogger(level?)` (Node.js Only) - **Deprecated**
+
+⚠️ **Deprecated**: Use `createLogger({ prettyPrint: true })` instead.
 
 Create a CLI-friendly logger for scripts and command-line tools.
 
 ```typescript
+// Deprecated
 function createCliLogger(level: pino.LevelWithSilent = 'info'): pino.Logger
+
+// Recommended
+const cliLogger = createLogger({ 
+  level: 'debug', 
+  prettyPrint: true 
+})
 ```
 
 **Example:**
 
 ```typescript
-import { createCliLogger } from '@studio/logger'
+import { createLogger } from '@studio/logger'
 
-const cliLogger = createCliLogger('debug')
+const cliLogger = createLogger({ 
+  level: 'debug', 
+  prettyPrint: true 
+})
 
 cliLogger.info('Processing CSV file...')
 cliLogger.debug('Found 1,250 rows')
 cliLogger.warn('Skipping 3 invalid rows')
 cliLogger.info('Import completed successfully')
-```
-
-**Output:**
-
-```
-[INFO 14:30:22] Processing CSV file...
-[DEBUG 14:30:23] Found 1,250 rows
-[WARN 14:30:24] Skipping 3 invalid rows
-[INFO 14:30:25] Import completed successfully
 ```
 
 ## 🌐 Browser-Specific Features
@@ -530,74 +519,86 @@ const logger = createLogger({
 
 ## 🧪 Testing Utilities
 
-### Mocking the Logger
+### Built-in Mock Logger
 
-For testing environments, use Vitest's standard mocking:
+The logger package provides built-in testing utilities for easy test setup:
 
 ```typescript
-import { vi } from 'vitest'
+import { createMockLogger, createCapturingMockLogger } from '@studio/logger/testing'
 
-// Mock the entire logger module
-vi.mock('@studio/logger', () => ({
-  log: {
-    trace: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    withTag: vi.fn().mockReturnThis(),
-    withContext: vi.fn().mockReturnThis(),
-  },
-  createLogger: vi.fn(() => ({
-    trace: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    withTag: vi.fn().mockReturnThis(),
-    withContext: vi.fn().mockReturnThis(),
-  })),
-}))
+// Basic mock logger
+const mockLogger = createMockLogger()
 
-// Verify log calls in tests
-import { log } from '@studio/logger'
+// Test your code
+yourFunction(mockLogger)
 
-expect(log.info).toHaveBeenCalledWith(
+// Assert calls
+expect(mockLogger.info).toHaveBeenCalledWith(
   'User created',
-  expect.objectContaining({ userId: '123' }),
+  { userId: '123' }
 )
+```
+
+### Capturing Mock Logger
+
+For more advanced testing scenarios, use the capturing mock:
+
+```typescript
+import { createCapturingMockLogger } from '@studio/logger/testing'
+
+const mockLogger = createCapturingMockLogger()
+
+// Run your code
+yourFunction(mockLogger)
+
+// Get all captured calls
+const calls = mockLogger.getCalls()
+expected(calls).toEqual([
+  { level: 'info', message: 'Starting process', context: { userId: '123' } },
+  { level: 'error', message: 'Process failed', context: { error: 'timeout' } }
+])
+
+// Filter by log level
+const errorCalls = mockLogger.getCallsForLevel('error')
+expected(errorCalls).toHaveLength(1)
+```
+
+### Module Mocking
+
+For complete module mocking:
+
+```typescript
+import { mockLoggerModule } from '@studio/logger/testing'
+
+// Mock the entire module
+const { mockLog, mockCreateLogger } = mockLoggerModule()
+
+// Now all imports from '@studio/logger' use mocks
+import { log, createLogger } from '@studio/logger'
+
+expect(log.info).toHaveBeenCalledWith('Expected message', { userId: '123' })
 ```
 
 ### Test Patterns
 
 ```typescript
-// Clear all mock calls between tests
+import { createMockLogger, resetMockLogger } from '@studio/logger/testing'
+
+let mockLogger: ReturnType<typeof createMockLogger>
+
 beforeEach(() => {
-  vi.clearAllMocks()
+  mockLogger = createMockLogger()
+  // Or reset existing mock
+  // resetMockLogger(mockLogger)
 })
 
-// Spy on specific methods
-test('can spy on logger methods', () => {
-  const infoSpy = vi.spyOn(log, 'info')
-
-  someFunction()
-
-  expect(infoSpy).toHaveBeenCalledWith('Expected message')
-  infoSpy.mockRestore()
-})
-
-// Mock console for browser logger tests
-Object.defineProperty(window, 'console', {
-  value: {
-    trace: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    group: vi.fn(),
-    groupCollapsed: vi.fn(),
-    groupEnd: vi.fn(),
-  },
+test('logs user creation', () => {
+  createUser('123', mockLogger)
+  
+  expect(mockLogger.info).toHaveBeenCalledWith(
+    'User created',
+    { userId: '123' }
+  )
 })
 ```
 
@@ -624,14 +625,15 @@ interface CallsiteInfo {
 }
 
 interface Logger {
-  trace(message: string, context?: Record<string, any>): void
-  debug(message: string, context?: Record<string, any>): void
-  info(message: string, context?: Record<string, any>): void
-  warn(message: string, context?: Record<string, any>): void
-  error(message: string, context?: Record<string, any>): void
+  trace(message: string, context?: LogContext): void
+  debug(message: string, context?: LogContext): void
+  info(message: string, context?: LogContext): void
+  warn(message: string, context?: LogContext): void
+  error(message: string, context?: LogContext): void
+  fatal(message: string, context?: LogContext): void
 
   withTag(tag: string): Logger
-  withContext(context: Record<string, any>): Logger
+  withContext(context: LogContext): Logger
 
   // Browser-specific methods
   group?(label: string): void
@@ -641,32 +643,36 @@ interface Logger {
   measure?(name: string, startMark?: string): void
   flushLogs?(): Promise<void>
 }
+
+type LogContext = Record<string, any>
 ```
 
 ### Configuration Types
 
 ```typescript
-interface NodeLoggerConfig {
-  level?: LogLevel
-  prettyPrint?: boolean
-  enableCallsiteTracking?: boolean
-  outputStream?: NodeJS.WritableStream
-}
-
-interface BrowserLoggerConfig {
+interface LoggerConfig {
+  // Core Settings (All Environments)
   level?: LogLevel
   enableConsole?: boolean
   enableColors?: boolean
   enableInProduction?: boolean
+  globalContext?: LogContext
+  sensitiveFields?: string[]
+  customRedactionStrategy?: (obj: any) => any
+
+  // Node.js Specific
+  prettyPrint?: boolean
+  enableCallsiteTracking?: boolean
+  outputStream?: NodeJS.WritableStream
+
+  // Browser Specific
+  devClickableTraces?: boolean
   remoteEndpoint?: string
   batchSize?: number
   flushInterval?: number
   maxRetries?: number
   retryBaseDelay?: number
-  sensitiveFields?: string[]
-  customRedactionStrategy?: (obj: any) => any
   enablePerformance?: boolean
-  globalContext?: Record<string, any>
   onRemoteSuccess?: (logs: LogEntry[]) => void
   onRemoteError?: (error: Error, logs: LogEntry[]) => void
 }
