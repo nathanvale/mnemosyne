@@ -1,5 +1,5 @@
 import { PrismaClient } from '@studio/db'
-import { log, createCliLogger } from '@studio/logger'
+import { log, createLogger } from '@studio/logger'
 import { Command } from 'commander'
 import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
@@ -74,7 +74,9 @@ export async function main() {
 
   // Choose appropriate logger based on debug mode
   // Is this Node? Yes - choose between structured logger (debug) and CLI logger (normal)
-  logger = isDebugMode ? log : createCliLogger('info')
+  logger = isDebugMode
+    ? log
+    : createLogger({ level: 'info', prettyPrint: true })
 
   // Reset counters for this run
   importErrors = []
@@ -489,7 +491,7 @@ async function importMessage(
     } else if (isPreview) {
       // two-arg log for the preview test compatibility - only in debug for less noise
       if (isDebugMode) {
-        logger.info('Skipping existing message with hash:', hash)
+        logger.info('Skipping existing message with hash', { hash })
       }
     }
     // For normal import mode, don't log individual duplicates - summary will show total count
@@ -580,7 +582,9 @@ const isMain = import.meta.url === `file://${process.argv[1]}`
 if (isMain) {
   main().catch((e) => {
     // Use appropriate logger for errors
-    const errorLogger = isDebugMode ? log : createCliLogger('error')
+    const errorLogger = isDebugMode
+      ? log
+      : createLogger({ level: 'error', prettyPrint: true })
     errorLogger.error('Script failed', {
       error: e.message,
       stack: isDebugMode ? e.stack : undefined,

@@ -1,6 +1,10 @@
 'use client'
 
-import { BrowserLogger, createLogger, createSentryLogger } from '@studio/logger'
+import {
+  BrowserLogger,
+  createBrowserLogger,
+  createSentryLogger,
+} from '@studio/logger'
 import React, { useState, useEffect } from 'react'
 
 /**
@@ -12,7 +16,7 @@ export function LoggerDemo() {
   const [isRemoteLogging, setIsRemoteLogging] = useState(false)
   const [currentLogLevel, setCurrentLogLevel] = useState<string>('trace')
   const [logger, setLogger] = useState<BrowserLogger>(() =>
-    createLogger({
+    createBrowserLogger({
       level: 'trace',
       enableConsole: true,
       enableColors: true,
@@ -45,7 +49,7 @@ export function LoggerDemo() {
   }, [])
 
   const createRemoteLogger = () => {
-    return createLogger({
+    return createBrowserLogger({
       level: 'trace',
       enableConsole: true,
       enableColors: true,
@@ -71,7 +75,7 @@ export function LoggerDemo() {
 
   const toggleRemoteLogging = () => {
     if (isRemoteLogging) {
-      const newLogger = createLogger({
+      const newLogger = createBrowserLogger({
         level: 'trace',
         enableConsole: true,
         enableColors: true,

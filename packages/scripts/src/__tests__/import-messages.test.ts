@@ -22,7 +22,7 @@ vi.mock('@studio/logger', () => ({
     trace: vi.fn(),
     fatal: vi.fn(),
   },
-  createCliLogger: vi.fn(() => mockCliLogger),
+  createLogger: vi.fn(() => mockCliLogger),
 }))
 
 // Define the shape of our mocked PrismaClient instance

@@ -2,9 +2,9 @@
 // This is Node.js - using the CLI logger
 
 import { PrismaClient } from '@studio/db'
-import { createCliLogger } from '@studio/logger'
+import { createLogger } from '@studio/logger'
 
-const logger = createCliLogger('info')
+const logger = createLogger({ level: 'info', prettyPrint: true })
 const prisma = new PrismaClient()
 
 /**
@@ -97,7 +97,7 @@ async function main() {
     logger.info(`- Processed ${processedCount} messages with URLs`)
     logger.info(`- Created ${totalLinksCreated} links`)
   } catch (error) {
-    logger.error('Error during URL extraction:', error)
+    logger.error('Error during URL extraction', { error })
     process.exit(1)
   } finally {
     await prisma.$disconnect()
@@ -105,6 +105,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  logger.error('Unhandled error:', error)
+  logger.error('Unhandled error', { error })
   process.exit(1)
 })
