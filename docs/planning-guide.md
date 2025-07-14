@@ -9,7 +9,7 @@ As the PM, you're responsible for:
 - Defining clear intent and goals
 - Breaking the project into shippable phases
 - Writing good pitch and design docs
-- Creating space for focus (not task-churn)
+- Creating space for focus (not task-churn) — [see Focus vs. Churn guide](guides/focus-vs-churn.md)
 - Reviewing what's done, not tracking what's not
 
 ## 🧱 Key Concepts
@@ -68,6 +68,8 @@ Define:
 - **Appetite**: Time/energy you're willing to spend
 - **Solution**: What you'll build
 - **Scope**: What's in this cycle vs. future
+
+**Real Example:** [Logger API Unification Pitch](features/logger-api-unification/pitch.md) shows complete cycle planning with implementation phases and success metrics.
 
 ### 4. Track Progress with Done Lists
 
@@ -243,6 +245,10 @@ cp docs/template/* docs/features/my-feature/
 # 3. pitch.md (what this cycle)
 ```
 
+**Example Features:**
+- See [Logger API Unification](features/logger-api-unification/) for complete feature documentation
+- See [Dual Logging System](features/dual-logging/) for architecture-focused feature
+
 ### Architecture Documentation
 
 ```bash
@@ -278,10 +284,20 @@ Your documentation system is working when:
 
 ## 🔗 Quick Links
 
+### Templates
 - [Intent Template](template/intent.md)
 - [Design Template](template/design.md)
 - [Pitch Template](template/pitch.md)
+
+### Guides
+- [Focus vs. Task Churn](guides/focus-vs-churn.md)
 - [GitHub Integration Guide](github-integration.md)
 - [Architecture Overview](architecture/system-overview.md)
+
+### Features
 - [Current Features](features/)
+- [Dual Logging System](features/dual-logging/)
+- [Logger API Unification](features/logger-api-unification/)
+
+### Project Status
 - [Done List](README.md#what-weve-shipped)
