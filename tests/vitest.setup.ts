@@ -1,8 +1,7 @@
+import { server } from '@studio/mocks/server'
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'
 import { beforeAll, afterEach, afterAll, expect } from 'vitest'
-
-import { server } from '@/mocks/server'
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers)

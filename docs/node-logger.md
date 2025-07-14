@@ -12,10 +12,10 @@ This document outlines the structured logger implementation using pino with enha
    - `stacktracey` - Enhanced stack trace parsing
 
 2. **Core Components Created:**
-   - `src/lib/stacktrace.ts` - Callsite extraction helper
-   - `src/lib/logger.ts` - Main logger utility with callsite injection
-   - `src/lib/__tests__/stacktrace.test.ts` - Tests for stacktrace helper
-   - `src/lib/__tests__/logger.test.ts` - Tests for logger utility
+   - `packages/logger/src/lib/stacktrace.ts` - Callsite extraction helper
+   - `packages/logger/src/lib/logger.ts` - Main logger utility with callsite injection
+   - `packages/logger/src/lib/__tests__/stacktrace.test.ts` - Tests for stacktrace helper
+   - `packages/logger/src/lib/__tests__/logger.test.ts` - Tests for logger utility
 
 3. **Logger Features:**
    - **Callsite Tracking**: Every log entry includes accurate file, line, and column information
@@ -27,8 +27,8 @@ This document outlines the structured logger implementation using pino with enha
 
 4. **Migration Completed:**
    - Replaced all `console.log`, `console.error`, `console.warn` calls in scripts
-   - Updated `scripts/import-messages.ts` to use the new logger
-   - Updated `scripts/parse-imazing-txt.ts` to use the new logger
+   - Updated `packages/scripts/src/import-messages.ts` to use the new logger
+   - Updated CLI scripts to use the new logger
    - Updated all test files to expect logger calls instead of console calls
 
 ## Usage Examples
@@ -36,7 +36,7 @@ This document outlines the structured logger implementation using pino with enha
 ### Basic Logging
 
 ```typescript
-import { log } from '@/lib/logger'
+import { log } from '@studio/logger'
 
 log.info('User action completed')
 log.warn('Configuration issue detected')
@@ -56,7 +56,7 @@ log.info('User action completed', {
 ### Using the Direct Logger
 
 ```typescript
-import { logger } from '@/lib/logger'
+import { logger } from '@studio/logger'
 
 logger.info('Direct logger usage')
 ```
@@ -64,7 +64,7 @@ logger.info('Direct logger usage')
 ### CLI Logger for Scripts
 
 ```typescript
-import { createCliLogger } from '@/lib/logger'
+import { createCliLogger } from '@studio/logger'
 
 // Create CLI logger with default 'info' level
 const cliLogger = createCliLogger()
