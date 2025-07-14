@@ -9,7 +9,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "pino": "^9.7.0",

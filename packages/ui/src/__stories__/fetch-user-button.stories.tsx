@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { successProfileHandler, errorProfileHandler } from '@studio/mocks'
 import { http, HttpResponse, delay } from 'msw'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from '@storybook/test'
 
 import { FetchUserButton } from '../fetch-user-button'
 

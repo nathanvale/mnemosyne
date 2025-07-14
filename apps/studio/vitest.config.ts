@@ -1,4 +1,4 @@
-// import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -50,25 +50,24 @@ export default defineConfig({
           include: ['./**/*.test.ts?(x)'],
         },
       },
-      // TODO: Re-enable after fixing browser compatibility issues (#45)
-      // {
-      //   plugins: [
-      //     storybookTest({
-      //       configDir: path.join(dirname, '.storybook'),
-      //       storybookScript: 'pnpm storybook --ci',
-      //     }),
-      //   ],
-      //   test: {
-      //     name: 'storybook',
-      //     browser: {
-      //       enabled: true,
-      //       provider: 'playwright',
-      //       headless: true,
-      //       instances: [{ browser: 'chromium' }],
-      //     },
-      //     setupFiles: ['./.storybook/vitest.setup.ts'],
-      //   },
-      // },
+      {
+        plugins: [
+          storybookTest({
+            configDir: path.join(dirname, '.storybook'),
+            storybookScript: 'pnpm storybook --ci',
+          }),
+        ],
+        test: {
+          name: 'storybook',
+          browser: {
+            enabled: true,
+            provider: 'playwright',
+            headless: true,
+            instances: [{ browser: 'chromium' }],
+          },
+          setupFiles: ['./.storybook/vitest.setup.ts'],
+        },
+      },
     ],
   },
 })

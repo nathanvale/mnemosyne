@@ -1,9 +1,40 @@
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import StackTracey from 'stacktracey'
 
+// Browser-compatible path resolution
+const isBrowser = typeof window !== 'undefined'
+
+const resolve = isBrowser
+  ? (...paths: string[]) => paths.join('/').replace(/\/+/g, '/')
+  : (() => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        return require('node:path').resolve
+      } catch {
+        return (...paths: string[]) => paths.join('/').replace(/\/+/g, '/')
+      }
+    })()
+
+const fileURLToPath = isBrowser
+  ? (url: string) => url
+  : (() => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        return require('node:url').fileURLToPath
+      } catch {
+        return (url: string) => url
+      }
+    })()
+
 // Get the project root directory
-const PROJECT_ROOT = resolve(process.cwd())
+const PROJECT_ROOT = isBrowser
+  ? ''
+  : (() => {
+      try {
+        return resolve(process.cwd())
+      } catch {
+        return ''
+      }
+    })()
 
 export interface CallSite {
   file: string

@@ -9,17 +9,20 @@
     "./client": "./generated/index.js"
   },
   "scripts": {
-    "build": "prisma generate",
+    "build": "prisma generate && tsc",
     "dev": "prisma generate --watch",
+    "type-check": "prisma generate && tsc --noEmit",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "clean": "rm -rf dist generated *.tsbuildinfo"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1"
   },
   "devDependencies": {
-    "prisma": "^6.11.1"
+    "prisma": "^6.11.1",
+    "typescript": "^5.8.3"
   }
 }

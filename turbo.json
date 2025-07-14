@@ -1,59 +1,121 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
+  "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "package.json",
+        "tsconfig.json",
+        "next.config.js",
+        "next.config.ts",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "prisma/**"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        "generated/**"
+      ]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "lint": {
       "dependsOn": ["^build"],
-      "outputs": ["node_modules/.cache/eslint/**"]
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        ".eslintrc.*",
+        "eslint.config.*",
+        "package.json"
+      ],
+      "outputs": []
     },
     "type-check": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "tsconfig*.json", "package.json"],
       "outputs": ["**/*.tsbuildinfo"]
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "inputs": ["src/**", "vitest.config.*", "package.json", ".storybook/**"],
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "passThroughEnv": ["CI"]
     },
     "test:storybook": {
-      "dependsOn": ["^build"],
-      "outputs": ["test-results/**"]
+      "dependsOn": ["^build", "build-storybook"],
+      "inputs": ["src/**", ".storybook/**", "package.json"],
+      "outputs": []
     },
     "format": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
       "outputs": []
     },
     "format:check": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
       "outputs": []
     },
     "storybook": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "build-storybook": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", ".storybook/**", "package.json"],
       "outputs": ["storybook-static/**"]
     },
     "db:reset": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/**"]
     },
     "db:studio": {
       "cache": false,
       "persistent": true
     },
     "import:messages": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "clean": {
       "cache": false
     }
   }

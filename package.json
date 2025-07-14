@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "format:pnpm": "pnpm format",
     "test": "turbo test",
+    "test:ci": "turbo test -- --run",
     "test:storybook": "pnpm --filter @studio/app test:storybook",
     "type-check": "turbo type-check",
     "storybook": "pnpm --filter @studio/app storybook",
@@ -29,7 +30,15 @@
     "studio:dev": "pnpm --filter \"@studio/*\" dev",
     "studio:build": "pnpm --filter \"@studio/*\" build",
     "studio:test": "pnpm --filter \"@studio/*\" test",
-    "studio:lint": "pnpm --filter \"@studio/*\" lint"
+    "studio:lint": "pnpm --filter \"@studio/*\" lint",
+    "clean": "turbo clean && pnpm --filter \"@studio/*\" clean",
+    "clean:cache": "turbo clean && rm -rf node_modules/.cache",
+    "clean:all": "pnpm clean && pnpm clean:cache && rm -rf node_modules",
+    "fresh": "pnpm clean:all && pnpm install",
+    "check": "turbo lint type-check test -- --run",
+    "check:packages": "pnpm --filter \"@studio/*\" run check",
+    "workspace:info": "pnpm list --depth=0",
+    "workspace:outdated": "pnpm outdated --recursive"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",

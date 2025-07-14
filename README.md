@@ -1,36 +1,424 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 Mnemosyne
 
-## Getting Started
+A Next.js 15 monorepo built with TypeScript that provides message management and logging capabilities. Organized as a Turborepo with multiple packages for scalable development.
 
-First, run the development server:
+## 🏗️ Architecture
+
+This is a **Turborepo monorepo** containing:
+
+### 📱 Applications
+
+- **`apps/studio`** - Next.js 15 application with React 19
+
+### 📦 Packages
+
+- **`@studio/db`** - Prisma database client and schema
+- **`@studio/logger`** - Dual logging system (Node.js + browser)
+- **`@studio/ui`** - React components with Storybook
+- **`@studio/scripts`** - CLI utilities and data processing
+- **`@studio/mocks`** - MSW API mocking for development/testing
+- **`@studio/test-config`** - Shared testing configuration
+- **`@studio/shared`** - Shared TypeScript configurations
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm 8+
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone and install dependencies
+git clone <repository>
+cd mnemosyne
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start development server (Next.js app)
+pnpm dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Development server will be available at http://localhost:3000
+```
 
-## Learn More
+## 🛠️ Development Commands
 
-To learn more about Next.js, take a look at the following resources:
+### 🏗️ Build & Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Build all packages and applications
+pnpm build
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Start development server
+pnpm dev
 
-## Deploy on Vercel
+# Start production server
+pnpm start
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Clean all build artifacts
+pnpm clean
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🧪 Testing
+
+```bash
+# Run all tests across the monorepo
+pnpm test
+
+# Run tests in CI mode (no watch)
+pnpm test:ci
+
+# Run Storybook component tests
+pnpm test:storybook
+```
+
+### 🔍 Code Quality
+
+```bash
+# Type check all packages
+pnpm type-check
+
+# Lint all packages
+pnpm lint
+
+# Format code with Prettier
+pnpm format
+
+# Check formatting without fixing
+pnpm format:check
+```
+
+### 🗄️ Database Operations
+
+```bash
+# Reset database (careful: destroys data!)
+pnpm db:reset
+
+# Import messages from CSV
+pnpm import:messages --in path/to/messages.csv
+
+# Preview import without saving
+pnpm import:messages --in path/to/messages.csv --preview
+```
+
+### 📚 Storybook
+
+```bash
+# Start Storybook development server
+pnpm storybook
+
+# Build Storybook for production
+pnpm build-storybook
+```
+
+## 🎯 Turborepo Features
+
+### ⚡ Intelligent Caching
+
+Turborepo automatically caches build outputs and only rebuilds what changed:
+
+```bash
+# First build - all packages built
+pnpm build
+# > Tasks: 8 successful, 8 total
+# > Time: 7.9s
+
+# Second build - everything cached
+pnpm build
+# > Tasks: 8 successful, 8 total
+# > Cached: 8 cached, 8 total
+# > Time: 81ms >>> FULL TURBO
+```
+
+### 🎯 Selective Filtering
+
+Run commands on specific packages:
+
+```bash
+# Run commands on all @studio packages
+pnpm turbo build --filter="@studio/*"
+
+# Run command on specific package
+pnpm turbo test --filter="@studio/logger"
+
+# Run command on app and its dependencies
+pnpm turbo build --filter="@studio/app..."
+```
+
+### 🔗 Dependency-Aware Execution
+
+Tasks automatically run in correct order based on dependencies:
+
+```bash
+# Database builds first, then packages that depend on it, then app
+pnpm **build**
+# 1. @studio/db (generates Prisma client)
+# 2. @studio/logger, @studio/scripts (depend on db)
+# 3. @studio/app (depends on all packages)
+```
+
+## 📦 Package Management
+
+### 🔄 Workspace Commands
+
+```bash
+# Install dependency to specific package
+pnpm add --filter @studio/ui react-icons
+
+# Install dev dependency to root
+pnpm add -D -w eslint-plugin-custom
+
+# Install dependency to all packages
+pnpm add --filter "@studio/*" lodash
+
+# List all workspace packages
+pnpm workspace:info
+
+# Check for outdated dependencies
+pnpm workspace:outdated
+```
+
+### 🏷️ Package Scripts
+
+Each package has standardized scripts:
+
+```bash
+# In any package directory
+pnpm build          # Build the package
+pnpm dev            # Development mode
+pnpm test           # Run tests
+pnpm type-check     # TypeScript checking
+pnpm clean          # Clean build artifacts
+```
+
+## 🗂️ Project Structure
+
+```
+mnemosyne/
+├── apps/
+│   └── studio/              # Next.js application
+│       ├── src/app/         # App Router pages
+│       ├── public/          # Static assets
+│       └── package.json     # App dependencies
+├── packages/
+│   ├── db/                  # Database package
+│   │   ├── prisma/          # Schema and migrations
+│   │   ├── generated/       # Prisma client
+│   │   └── src/index.ts     # Package exports
+│   ├── logger/              # Logging system
+│   │   └── src/lib/         # Logger implementations
+│   ├── ui/                  # Component library
+│   │   ├── src/             # Components
+│   │   └── __stories__/     # Storybook stories
+│   ├── scripts/             # CLI utilities
+│   │   └── src/             # Import scripts
+│   ├── mocks/               # API mocking
+│   ├── test-config/         # Test setup
+│   └── shared/              # Shared configs
+├── turbo.json               # Turborepo configuration
+├── package.json             # Root dependencies
+└── pnpm-workspace.yaml      # Workspace definition
+```
+
+## 🔧 Configuration Files
+
+### Core Configuration
+
+- **`turbo.json`** - Turborepo task pipeline and caching
+- **`pnpm-workspace.yaml`** - Workspace package definitions
+- **`package.json`** - Root scripts and dependencies
+
+### TypeScript
+
+- **`packages/shared/tsconfig.json`** - Base TypeScript config
+- **`packages/shared/tsconfig.app.json`** - App-specific config
+- **`packages/shared/tsconfig.package.json`** - Package-specific config
+
+### Quality Tools
+
+- **`eslint.config.mjs`** - ESLint configuration
+- **`.prettierrc`** - Prettier formatting rules
+- **`vitest.config.ts`** - Test configuration
+
+## 🎨 Development Patterns
+
+### 📂 Import Paths
+
+The monorepo supports both legacy and new import patterns:
+
+```typescript
+// Legacy imports (no longer supported)
+// import { logger } from '@/lib/logger'
+
+// New monorepo imports (recommended)
+import { PrismaClient } from '@studio/db'
+import { logger } from '@studio/logger'
+import { Button } from '@studio/ui'
+```
+
+### 🧪 Testing Strategy
+
+- **Unit Tests**: Vitest with jsdom for component testing
+- **Component Tests**: Storybook with Playwright browser testing
+- **API Mocking**: MSW for realistic API simulation
+- **Database Tests**: In-memory SQLite for fast test execution
+
+### 📦 Package Dependencies
+
+Packages can depend on each other using workspace references:
+
+```json
+{
+  "dependencies": {
+    "@studio/db": "workspace:*",
+    "@studio/logger": "workspace:*"
+  }
+}
+```
+
+## 🚀 Performance Optimizations
+
+### ⚡ Turbo Caching
+
+- **Build artifacts** cached based on source file changes
+- **Test results** cached when no code changes
+- **Type checking** skipped when no TypeScript changes
+- **Linting** cached when no source or config changes
+
+### 🔄 Incremental Builds
+
+- Only changed packages are rebuilt
+- Dependent packages automatically rebuild when dependencies change
+- Remote caching available with Vercel/Turborepo Cloud
+
+### 📊 Performance Monitoring
+
+```bash
+# Generate build performance profile
+pnpm turbo build --profile=profile.json
+
+# View detailed task execution graph
+pnpm turbo build --graph
+
+# Show summary of task execution
+pnpm turbo build --summarize
+```
+
+## 🐛 Debugging & Troubleshooting
+
+### 🔍 Common Issues
+
+**Cache Issues:**
+
+```bash
+# Clear Turbo cache
+pnpm turbo clean
+
+# Force rebuild without cache
+pnpm turbo build --force
+```
+
+**Dependency Issues:**
+
+```bash
+# Reinstall all dependencies
+pnpm clean:all && pnpm install
+
+# Check workspace dependencies
+pnpm list --recursive
+```
+
+**Database Issues:**
+
+```bash
+# Regenerate Prisma client
+pnpm --filter @studio/db build
+
+# Reset database schema
+pnpm db:reset
+```
+
+### 📋 Health Check
+
+Run this comprehensive health check:
+
+```bash
+# Verify all systems working
+pnpm clean && pnpm build && pnpm test -- --run && pnpm type-check && pnpm lint
+```
+
+## 🌟 Key Features
+
+### 🔐 Type Safety
+
+- **Strict TypeScript** configuration across all packages
+- **Shared configs** ensure consistency
+- **Path mapping** for clean imports
+- **Project references** for optimal IDE experience
+
+### 🧪 Comprehensive Testing
+
+- **78 tests** across all packages
+- **Component testing** with Storybook + Playwright
+- **API mocking** with MSW
+- **Browser and Node.js** environments
+
+### 📊 Advanced Logging
+
+- **Dual logging system** for browser and Node.js
+- **Structured logging** with Pino
+- **Debug callsites** for development
+- **Remote logging** capabilities
+
+### 🗄️ Database Management
+
+- **Prisma ORM** with SQLite
+- **Message deduplication** using SHA-256 hashing
+- **CSV import utilities** with error handling
+- **Database migrations** and seeding
+
+## 🤝 Contributing
+
+### 🔄 Workflow
+
+1. **Install dependencies**: `pnpm install`
+2. **Create feature branch**: `git checkout -b feature/your-feature`
+3. **Make changes** in appropriate packages
+4. **Run quality checks**: `pnpm check`
+5. **Run tests**: `pnpm test -- --run`
+6. **Commit changes**: Follow conventional commit format
+7. **Create PR**: All checks must pass in CI
+
+### 📝 Adding New Packages
+
+1. Create directory in `packages/`
+2. Add `package.json` with `@studio/` namespace
+3. Update workspace filtering in scripts if needed
+4. Add appropriate build/test scripts
+5. Update this README
+
+## 📚 Learn More
+
+### 🔗 Technology Stack
+
+- **[Turborepo](https://turbo.build/repo)** - Build system and monorepo tooling
+- **[Next.js 15](https://nextjs.org/)** - React framework with App Router
+- **[Prisma](https://prisma.io/)** - Database ORM and client
+- **[Vitest](https://vitest.dev/)** - Unit testing framework
+- **[Storybook](https://storybook.js.org/)** - Component development and testing
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
+
+### 📖 Documentation
+
+- [Turborepo Documentation](https://turbo.build/repo/docs)
+- [pnpm Workspaces](https://pnpm.io/workspaces)
+- [TypeScript Project References](https://www.typescriptlang.org/docs/handbook/project-references.html)
+
+---
+
+**Built with ❤️ using Turborepo**

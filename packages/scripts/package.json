@@ -8,8 +8,20 @@
   },
   "scripts": {
     "build": "echo 'Scripts package build placeholder'",
-    "dev": "echo 'Scripts package dev placeholder'"
+    "dev": "echo 'Scripts package dev placeholder'",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@studio/db": "workspace:*",
+    "@studio/logger": "workspace:*",
+    "commander": "^14.0.0",
+    "fast-csv": "^5.0.2"
+  },
+  "devDependencies": {
+    "@studio/test-config": "workspace:*",
+    "@types/node": "^24.0.8",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
 }

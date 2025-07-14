@@ -1,9 +1,12 @@
 {
   "extends": "../shared/tsconfig.package.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "composite": true,
+    "noEmit": false,
+    "allowImportingTsExtensions": false
   },
+  "references": [{ "path": "../db" }, { "path": "../logger" }],
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
 }

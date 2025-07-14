@@ -40,7 +40,7 @@ A comprehensive, extensible, production-ready browser logging solution with adva
 ### Basic Usage
 
 ```typescript
-import { createLogger } from '@/lib/browser-logger'
+import { createLogger } from '@studio/logger'
 
 // Create a logger instance
 const logger = createLogger({
@@ -298,7 +298,7 @@ The logger is fully tested with Vitest and includes:
 Run tests with:
 
 ```bash
-pnpm vitest run src/lib/__tests__/browser-logger.test.ts
+pnpm --filter @studio/logger test
 ```
 
 ## 📱 Interactive Demo
@@ -306,7 +306,7 @@ pnpm vitest run src/lib/__tests__/browser-logger.test.ts
 Try the interactive demo component to see all features in action:
 
 ```typescript
-import { LoggerDemo } from '@/components/logger-demo'
+import { LoggerDemo } from '@studio/ui'
 
 // Use in your app or Storybook
 <LoggerDemo />
