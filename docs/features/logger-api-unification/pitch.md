@@ -82,12 +82,12 @@ _What's included and what's not_
 
 ### ✅ This Cycle
 
-- [ ] Unified API signature: `log.info(message, context?)`
-- [ ] Node.js `withTag()` and `withContext()` methods
-- [ ] Single `createLogger()` factory with environment detection
-- [ ] `createMockLogger()` testing utility
-- [ ] Backward compatibility with deprecation warnings
-- [ ] Core documentation updates
+- [x] Unified API signature: `log.info(message, context?)`
+- [x] Node.js `withTag()` and `withContext()` methods
+- [x] Single `createLogger()` factory with environment detection
+- [x] `createMockLogger()` testing utility
+- [x] Backward compatibility with deprecation warnings
+- [x] Core documentation updates
 
 ### ❌ Not This Cycle
 
@@ -108,22 +108,22 @@ _Rough phases of work_
 
 ### Week 1: Core API Unification
 
-- [ ] Update logger signatures to consistent `message, context?` pattern
-- [ ] Add `withTag()` and `withContext()` to Node.js logger
-- [ ] Maintain backward compatibility with warnings
+- [x] Update logger signatures to consistent `message, context?` pattern
+- [x] Add `withTag()` and `withContext()` to Node.js logger
+- [x] Maintain backward compatibility with warnings
 
 ### Week 2: Factory and Testing
 
-- [ ] Create unified `createLogger()` with environment detection
-- [ ] Implement `createMockLogger()` utility
-- [ ] Update all internal usage to new API
+- [x] Create unified `createLogger()` with environment detection
+- [x] Implement `createMockLogger()` utility
+- [x] Update all internal usage to new API
 
 ### Week 3: Documentation and Polish
 
-- [ ] Update package documentation
-- [ ] Create migration guide
-- [ ] Test cross-package compatibility
-- [ ] Performance verification
+- [x] Update package documentation
+- [x] Create migration guide
+- [x] Test cross-package compatibility
+- [x] Performance verification
 
 ## 🎯 Success Metrics
 
