@@ -39,6 +39,12 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 - `pnpm db:reset` - Reset Prisma database via @studio/db package
 - `pnpm import:messages` - Import messages from CSV files via @studio/scripts
 
+### Documentation
+
+- `pnpm --filter @studio/docs dev` - Start Docusaurus documentation site (port 3001)
+- `pnpm --filter @studio/docs build` - Build documentation site for production
+- `pnpm --filter @studio/docs deploy` - Deploy to GitHub Pages
+
 ### Storybook
 
 - `pnpm storybook` - Start Storybook development server
@@ -66,7 +72,8 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 ```
 mnemosyne/
 ├── apps/
-│   └── studio/                    # Next.js 15 application
+│   ├── studio/                    # Next.js 15 application
+│   └── docs/                      # Docusaurus documentation site
 ├── packages/
 │   ├── db/                        # Prisma database client and schema
 │   ├── logger/                    # Dual logging system (Node.js + browser)
@@ -75,12 +82,18 @@ mnemosyne/
 │   ├── mocks/                     # MSW API mocking
 │   ├── test-config/               # Shared testing configuration
 │   └── shared/                    # Shared TypeScript configurations
+├── docs/                          # Source documentation (markdown files)
+│   ├── architecture/              # System design documentation
+│   ├── features/                  # Feature documentation (Basecamp-style)
+│   ├── guides/                    # Development guides and methodology
+│   └── packages/                  # Package-specific documentation
 ├── turbo.json                     # Turborepo pipeline configuration
 └── pnpm-workspace.yaml            # Workspace definitions
 ```
 
 ### Package Architecture
 
+- **@studio/docs** - Docusaurus documentation site with enhanced Turborepo integration
 - **@studio/db** - Database package with Prisma client and schema
 - **@studio/logger** - Comprehensive logging system for Node.js and browser
 - **@studio/ui** - React component library with Storybook stories
@@ -92,6 +105,8 @@ mnemosyne/
 ### Key Directories
 
 - `apps/studio/` - Next.js application with App Router
+- `apps/docs/` - Docusaurus documentation site
+- `docs/` - Source documentation files (markdown)
 - `packages/db/prisma/` - Database schema and migrations
 - `packages/db/generated/` - Generated Prisma client
 - `packages/logger/src/lib/` - Dual logging system implementation
@@ -165,9 +180,19 @@ mnemosyne/
 - Custom rules for component organization
 - Consistent across all packages
 
+### Documentation Architecture
+
+- **Source content**: Markdown files in `docs/` directory (architecture, features, guides, packages)
+- **Docusaurus site**: Built in `apps/docs/` with enhanced Turborepo integration
+- **Live site**: https://nathanvale.github.io/mnemosyne/ (auto-deploys from main branch)
+- **Local development**: `pnpm --filter @studio/docs dev` (runs on port 3001)
+- **Mermaid support**: Architecture diagrams with visual data flow representations
+- **Enhanced caching**: Sub-5-second incremental builds with 90%+ cache hit rates
+
 ### CI/CD
 
 - GitHub Actions with parallel jobs for lint, type-check, test, and build
+- Documentation auto-deployment to GitHub Pages on main branch changes
 - Turbo-powered builds with intelligent caching
 - Prisma client generation handled by @studio/db package
 - Pre-commit hooks with Husky for staged file linting and formatting

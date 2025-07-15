@@ -1,0 +1,71 @@
+# 🧠 Mnemosyne Documentation
+
+Welcome to **Mnemosyne** — a relational memory system that helps AI agents remember the emotional journey of relationships, not just facts.
+
+## 🌅 Vision
+
+Build a system that remembers love, laughter, pain, and progress — the whole messy journey of a relationship. One that lets an AI feel like it _knows you_ not just through facts, but through shared emotional history.
+
+## 🎯 What We're Building
+
+- **Message Import**: Ingest and normalize years of real-world text history
+- **Memory Extraction**: Transform messages into structured, retrievable emotional memory  
+- **Agent Serving**: Deliver memory to agents in a way that shapes their responses and tone
+
+## 🧭 Quick Navigation
+
+### 🏗️ [Architecture](/architecture/system-overview)
+High-level system design, data flow, and technical foundations built on Next.js 15 + Turborepo.
+
+### 🎨 [Features](/features/dual-logging/intent)
+Detailed documentation for each feature following Basecamp-style planning methodology.
+
+### 📦 [Packages](/packages/logger)  
+Technical documentation for the `@studio/*` monorepo packages.
+
+### 🗺️ [Guides](/guides/planning-guide)
+Development methodology, planning approach, and team collaboration guides.
+
+## 🚀 Getting Started
+
+```bash
+# Clone and install
+git clone https://github.com/nathanvale/mnemosyne.git
+cd mnemosyne
+pnpm install
+
+# Start development (Next.js app on port 3000)
+pnpm dev
+
+# View documentation locally (port 3001)
+pnpm docs:dev
+```
+
+### For Understanding the System
+1. Start with the [System Overview](/architecture/system-overview) to understand the technical architecture
+2. Review the [Phase Plan](/architecture/phase-plan) to see the development roadmap
+3. Explore [Features](/features/dual-logging/intent) to understand individual capabilities
+
+## 🔄 Current Phase
+
+**Phase 1: Message Import** ✅ Complete
+- CSV message ingestion with SHA-256 deduplication
+- Turborepo monorepo with @studio/* package architecture
+- Dual logging system for Node.js + browser environments
+
+**Phase 2: Memory Extraction** 📋 Next
+- GPT-powered analysis of message content for emotional context
+- Memory validation and review queue
+- Relationship mapping and timeline analysis
+
+## 📚 Documentation Philosophy
+
+This documentation follows **Basecamp principles**:
+- We shape work, do it, and mark it done
+- Focus on shipping phases, not tracking tasks  
+- Use appetite to define scope, not deadlines
+- Celebrate completed work in "done lists"
+
+---
+
+*This documentation site is built with [Docusaurus](https://docusaurus.io/) and automatically deploys when the main branch is updated. Edit source files in the `docs/` directory to contribute.*
