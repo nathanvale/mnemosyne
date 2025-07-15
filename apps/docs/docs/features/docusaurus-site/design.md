@@ -21,7 +21,7 @@ The design prioritizes build performance through sophisticated dependency tracki
 ```mermaid
 graph TD
     A[Source docs/] --> B[Content Transformer]
-    C[@studio/* packages] --> D[Package Watcher]
+    C[Studio Packages] --> D[Package Watcher]
     B --> E[Docusaurus Build]
     D --> E
     E --> F[Turborepo Cache]

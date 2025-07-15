@@ -22,7 +22,7 @@ graph TD
     G --> J[Assets Table]
 
     %% Error Handling
-    B --> K[@studio/logger]
+    B --> K[Studio Logger]
     F --> K
     K --> L[Error Recovery]
 
@@ -46,7 +46,7 @@ graph TD
     X --> Y[Agent Response]
 
     %% Logging Flow (All Phases)
-    B --> Z[@studio/logger]
+    B --> Z[Studio Logger]
     M --> Z
     U --> Z
     Z --> AA[Structured Logs]
@@ -97,7 +97,7 @@ Timestamps → Source Messages → File Information
 ### Error Handling Flow
 
 ```
-Processing Error → @studio/logger → Error Classification → Recovery Action
+Processing Error → Studio Logger → Error Classification → Recovery Action
       ↓               ↓                  ↓                   ↓
 Parse Failure → Structured Log → Skip/Retry → Continue Batch
 ```
@@ -200,7 +200,7 @@ Agent Input → Relevance → Cache Hit/Miss → Database → Agent Response
 ### Logging Flow (All Phases)
 
 ```
-Any Operation → @studio/logger → Node.js/Browser → Structured Output
+Any Operation → Studio Logger → Node.js/Browser → Structured Output
       ↓             ↓               ↓               ↓
 Process Event → Dual System → Environment → Development/Production
                                Detection      Logs
