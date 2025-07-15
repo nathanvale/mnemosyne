@@ -9,6 +9,7 @@ This is a **Turborepo monorepo** containing:
 ### 📱 Applications
 
 - **`apps/studio`** - Next.js 15 application with React 19
+- **`apps/docs`** - Docusaurus documentation site
 
 ### 📦 Packages
 
@@ -43,6 +44,11 @@ pnpm install
 pnpm dev
 
 # Development server will be available at http://localhost:3000
+
+# Start documentation site
+pnpm docs:dev
+
+# Documentation site will be available at http://localhost:3001
 ```
 
 ## 🛠️ Development Commands
@@ -105,9 +111,15 @@ pnpm import:messages --in path/to/messages.csv
 pnpm import:messages --in path/to/messages.csv --preview
 ```
 
-### 📚 Storybook
+### 📚 Documentation & Storybook
 
 ```bash
+# Start documentation site development server
+pnpm docs:dev
+
+# Build documentation site
+pnpm --filter @studio/docs build
+
 # Start Storybook development server
 pnpm storybook
 
@@ -200,10 +212,15 @@ pnpm clean          # Clean build artifacts
 ```
 mnemosyne/
 ├── apps/
-│   └── studio/              # Next.js application
-│       ├── src/app/         # App Router pages
-│       ├── public/          # Static assets
-│       └── package.json     # App dependencies
+│   ├── studio/              # Next.js application
+│   │   ├── src/app/         # App Router pages
+│   │   ├── public/          # Static assets
+│   │   └── package.json     # App dependencies
+│   └── docs/                # Docusaurus documentation site
+│       ├── docs/            # MDX documentation files
+│       ├── src/             # Custom React components
+│       ├── static/          # Static assets
+│       └── docusaurus.config.ts  # Site configuration
 ├── packages/
 │   ├── db/                  # Database package
 │   │   ├── prisma/          # Schema and migrations
@@ -219,6 +236,11 @@ mnemosyne/
 │   ├── mocks/               # API mocking
 │   ├── test-config/         # Test setup
 │   └── shared/              # Shared configs
+├── docs/                    # Source documentation (markdown)
+│   ├── architecture/        # System design docs
+│   ├── features/            # Feature documentation
+│   ├── guides/              # Development guides
+│   └── packages/            # Package documentation
 ├── turbo.json               # Turborepo configuration
 ├── package.json             # Root dependencies
 └── pnpm-workspace.yaml      # Workspace definition
@@ -400,6 +422,36 @@ pnpm clean && pnpm build && pnpm test -- --run && pnpm type-check && pnpm lint
 3. Update workspace filtering in scripts if needed
 4. Add appropriate build/test scripts
 5. Update this README
+
+## 📚 Documentation
+
+### 🌐 Live Documentation Site
+
+The complete project documentation is available at:
+
+- **Production**: https://nathanvale.github.io/mnemosyne/
+- **Local Development**: http://localhost:3001 (run `pnpm docs:dev`)
+
+### 📖 Documentation Structure
+
+- **Architecture**: High-level system design and technical foundations
+- **Features**: Detailed documentation for each feature (Basecamp-style planning)
+- **Guides**: Development methodology and team collaboration guides
+- **Packages**: Technical documentation for @studio/\* monorepo packages
+
+### 🏗️ Contributing to Documentation
+
+Documentation source files are in the `docs/` directory:
+
+```bash
+# Edit documentation files in docs/
+vi docs/architecture/system-overview.md
+
+# Preview changes locally
+pnpm docs:dev
+
+# Documentation auto-deploys when merged to main
+```
 
 ## 📚 Learn More
 

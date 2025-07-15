@@ -11,6 +11,7 @@
   "scripts": {
     "db:reset": "pnpm --filter @studio/db db:reset",
     "dev": "pnpm --filter @studio/app dev",
+    "docs:dev": "pnpm --filter @studio/docs dev",
     "build": "turbo build",
     "start": "pnpm --filter @studio/app start",
     "lint": "turbo lint",
