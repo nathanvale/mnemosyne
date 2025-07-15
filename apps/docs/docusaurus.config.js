@@ -3,9 +3,9 @@ const { themes: prismThemes } = require('prism-react-renderer')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Mnemosyne Engineering Docs',
-  tagline: 'Relational Memory System Documentation',
-  favicon: 'img/favicon.ico',
+  title: 'Mnemosyne',
+  tagline: 'AI that remembers what matters',
+  favicon: 'favicon.ico',
 
   // Set the production url of your site here
   url: 'https://nathanvale.github.io',
@@ -51,13 +51,16 @@ const config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    // Social card image for sharing
+    image: 'img/hero/hero-mnemosyne.png',
     navbar: {
       title: 'Mnemosyne',
       logo: {
         alt: 'Mnemosyne Logo',
-        src: 'img/logo.svg',
+        src: 'img/logos/mnemosyne-logo.svg',
+        srcDark: 'img/logos/mnemosyne-logo-dark.svg',
+        href: '/',
+        target: '_self',
       },
       items: [
         {

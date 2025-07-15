@@ -1,31 +1,117 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Mnemosyne Documentation Theme
+ * Custom styling for the AI memory engine documentation site
  */
 
-/* You can override the default Infima variables here. */
+/* Google Fonts Import with Performance Optimizations */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+/* Font preloading for better performance */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --font-display: swap;
+}
+
+/* Mnemosyne Brand Color System */
+:root {
+  /* Primary Brand Colors */
+  --mnemosyne-navy: #2c3e50;
+  --mnemosyne-gold: #f1c40f;
+  --mnemosyne-violet: #9b59b6;
+  --mnemosyne-parchment: #fdf6e3;
+
+  /* Semantic Colors */
+  --color-primary: var(--mnemosyne-navy);
+  --color-accent: var(--mnemosyne-gold);
+  --color-secondary: var(--mnemosyne-violet);
+  --color-background: var(--mnemosyne-parchment);
+
+  /* Text Hierarchy */
+  --color-text-primary: #2c3e50;
+  --color-text-secondary: #5d6d7e;
+  --color-text-muted: #95a5a6;
+
+  /* Interactive States */
+  --color-link: var(--mnemosyne-violet);
+  --color-link-hover: #8e44ad;
+  --color-border: #e8f4f8;
+
+  /* Typography */
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* Container Widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* Override Docusaurus Variables */
+  --ifm-color-primary: var(--mnemosyne-navy);
+  --ifm-color-primary-dark: #243447;
+  --ifm-color-primary-darker: #1f2d3a;
+  --ifm-color-primary-darkest: #1a252f;
+  --ifm-color-primary-light: #34495e;
+  --ifm-color-primary-lighter: #3d556b;
+  --ifm-color-primary-lightest: #52677a;
+  --ifm-font-family-base: var(--font-body);
+  --ifm-heading-font-family: var(--font-heading);
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Dark Mode Colors */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --mnemosyne-navy: #1a252f;
+  --mnemosyne-gold: #f39c12;
+  --mnemosyne-violet: #a569bd;
+  --mnemosyne-parchment: #1e1e1e;
+
+  --color-background: var(--mnemosyne-navy);
+  --color-text-primary: #ecf0f1;
+  --color-text-secondary: #bdc3c7;
+  --color-text-muted: #7f8c8d;
+  --color-border: #34495e;
+
+  --ifm-color-primary: var(--mnemosyne-violet);
+  --ifm-color-primary-dark: #9a57b3;
+  --ifm-color-primary-darker: #9152a9;
+  --ifm-color-primary-darkest: #784389;
+  --ifm-color-primary-light: #af7bc7;
+  --ifm-color-primary-lighter: #b480cb;
+  --ifm-color-primary-lightest: #c699d7;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
@@ -68,4 +154,59 @@
 .feature-status--planned {
   background-color: var(--ifm-color-info-light);
   color: var(--ifm-color-info-dark);
+}
+
+/* Accessibility improvements */
+.hero-skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--ifm-color-primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.hero-skip-link:focus {
+  top: 6px;
+}
+
+/* Focus styles for better keyboard navigation */
+:focus {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --ifm-color-primary: #000000;
+    --color-text-primary: #000000;
+    --color-text-secondary: #000000;
+    --color-border: #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hero,
+  .navbar,
+  .footer {
+    display: none !important;
+  }
+
+  .docs {
+    background: white !important;
+    color: black !important;
+  }
 }
