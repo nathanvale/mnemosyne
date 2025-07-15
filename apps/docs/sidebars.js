@@ -30,9 +30,6 @@ const sidebars = {
         'features/docusaurus-site/intent',
         'features/docusaurus-site/design',
         'features/docusaurus-site/pitch',
-        'features/mnemosyne-docs-theme/intent',
-        'features/mnemosyne-docs-theme/design',
-        'features/mnemosyne-docs-theme/pitch',
       ],
     },
     {
