@@ -1,3 +1,8 @@
+---
+id: glossary
+title: Glossary
+---
+
 # 📖 Glossary
 
 ## 🧠 Core Concepts

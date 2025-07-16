@@ -3,6 +3,12 @@ const { themes: prismThemes } = require('prism-react-renderer')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
+  stylesheets: [
+    {
+      href: 'https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&display=swap',
+      rel: 'stylesheet',
+    },
+  ],
   title: 'Mnemosyne',
   tagline: 'AI that remembers what matters',
   favicon: 'favicon.ico',
@@ -19,6 +25,7 @@ const config = {
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
+  onBrokenAnchors: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -39,7 +46,8 @@ const config = {
       {
         docs: {
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/nathanvale/mnemosyne/tree/main/docs/',
+          editUrl:
+            'https://github.com/nathanvale/mnemosyne/tree/main/apps/docs/docs/',
           routeBasePath: '/',
         },
         blog: false,
@@ -56,61 +64,49 @@ const config = {
     navbar: {
       title: 'Mnemosyne',
       logo: {
+        src: 'img/logo-dark.svg',
+        srcDark: 'img/logo-light.svg',
         alt: 'Mnemosyne Logo',
-        src: 'img/logos/mnemosyne-logo.svg',
-        srcDark: 'img/logos/mnemosyne-logo-dark.svg',
         href: '/',
         target: '_self',
       },
       items: [
+        { to: '/about', label: 'About', position: 'right' },
+        { to: '/packages', label: 'Packages', position: 'right' },
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
-          label: 'Documentation',
+          to: '/architecture/system-overview',
+          label: 'Docs',
+          position: 'right',
         },
         {
-          href: 'https://github.com/nathanvale/mnemosyne',
-          label: 'GitHub',
+          to: '/intent',
+          label: 'Get Started',
           position: 'right',
+          className: 'get-started-button',
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
-          title: 'Documentation',
           items: [
             {
-              label: 'Architecture',
-              to: '/architecture/system-overview',
-            },
-            {
-              label: 'Features',
-              to: '/features',
+              label: 'About',
+              to: '/about',
             },
             {
               label: 'Packages',
               to: '/packages',
             },
-          ],
-        },
-        {
-          title: 'Development',
-          items: [
             {
-              label: 'GitHub',
-              href: 'https://github.com/nathanvale/mnemosyne',
-            },
-            {
-              label: 'Issues',
-              href: 'https://github.com/nathanvale/mnemosyne/issues',
+              label: 'Docs',
+              to: '/architecture/system-overview',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Mnemosyne Project. Built with Docusaurus.`,
+      copyright: `© ${new Date().getFullYear()} Mnemosyne. All rights reserved.`,
     },
     prism: {
       theme: prismThemes.github,

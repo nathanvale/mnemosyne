@@ -1,3 +1,8 @@
+---
+id: data-flow
+title: Data Flow Architecture
+---
+
 # 🌊 Data Flow Architecture
 
 ## 🎯 Overview
@@ -37,7 +42,7 @@ graph TD
     P --> R[Relationship Context]
     P --> S[Timeline Position]
 
-    %% Phase 3: Agent Serving (Future)
+    %% Phase 3: Claude Integration (MVP)
     T[Agent Request] --> U[MCP Engine]
     U --> V[Memory Query]
     V --> P
@@ -97,7 +102,7 @@ Timestamps → Source Messages → File Information
 ### Error Handling Flow
 
 ```
-Processing Error → Studio Logger → Error Classification → Recovery Action
+Processing Error → @studio/logger → Error Classification → Recovery Action
       ↓               ↓                  ↓                   ↓
 Parse Failure → Structured Log → Skip/Retry → Continue Batch
 ```
@@ -156,7 +161,7 @@ Time Windows → Optimal Size → Worker Threads → Error Recovery
 
 ---
 
-## 🤖 Phase 3: Agent Serving (Future)
+## 🤖 Phase 3: Claude Integration (MVP)
 
 ### MCP Query Flow
 
@@ -200,7 +205,7 @@ Agent Input → Relevance → Cache Hit/Miss → Database → Agent Response
 ### Logging Flow (All Phases)
 
 ```
-Any Operation → Studio Logger → Node.js/Browser → Structured Output
+Any Operation → @studio/logger → Node.js/Browser → Structured Output
       ↓             ↓               ↓               ↓
 Process Event → Dual System → Environment → Development/Production
                                Detection      Logs

@@ -1,8 +1,15 @@
+---
+id: system-overview
+title: System Overview
+---
+
 # 🏗️ System Overview
 
 ## 🎯 High-Level Architecture
 
 Mnemosyne is a **Next.js 15 Turborepo monorepo** designed to transform message history into structured emotional memory for AI agents.
+
+> **📋 Post-MVP Development**: For production-ready improvements and scaling roadmap, see [Post-MVP Architecture Roadmap](./post-mvp-roadmap.md).
 
 ## 🛠️ Core Technologies
 
@@ -44,21 +51,22 @@ CSV Files → @studio/scripts → Prisma DB → @studio/logger
 Content Hash → Deduplication → Storage → Structured Logs
 ```
 
-### Future Phase (Memory Extraction)
+### MVP Phase 2 (Memory Extraction)
 
 ```
-Raw Messages → GPT Processing → Memory Entries → Validation Queue
-     ↓              ↓               ↓              ↓
-Context Tags → Emotional Metadata → Relationships → Review System
+Raw Messages → Claude Processing → Memory Entries → Simple Validation
+     ↓              ↓                ↓              ↓
+Message Batches → Emotional → TypeScript → Human Review
+(100-500)        Analysis    Schema     (70% target)
 ```
 
-### Future Phase (Agent Serving)
+### MVP Phase 3 (Claude Integration)
 
 ```
-Agent Query → MCP Engine → Memory Retrieval → Context Injection
-     ↓           ↓             ↓               ↓
-Relationship → Relevant → Emotional → Enhanced
-  Scope      Memories    Context    Response
+User Message → Memory Query → Context Selection → Claude + Context → Enhanced Response
+     ↓             ↓              ↓                    ↓               ↓
+Input Text → Relevant → Top 3-5 → Claude API → Response with
+             Memories   Memories   + Memory     Emotional Context
 ```
 
 ## 📦 Package Ecosystem
@@ -93,21 +101,28 @@ Relationship → Relevant → Emotional → Enhanced
 3. **Extract** - Pull out links, assets, and metadata
 4. **Store** - Persist in relational format
 
-### Memory Generation (Future)
+### Memory Generation (MVP Phase 2)
 
-1. **Analyze** - GPT processes message content for emotional context
-2. **Tag** - Apply relationship and emotional metadata
-3. **Validate** - Human review queue for memory accuracy
-4. **Index** - Optimize for agent retrieval patterns
+1. **Process** - Claude analyzes message batches for emotional context
+2. **Structure** - Apply TypeScript schema for emotional metadata
+3. **Validate** - Simple human review for 70% accuracy target
+4. **Store** - Generate 50-100 high-quality emotional memories
 
-### Agent Serving (Future)
+### Claude Integration (MVP Phase 3)
 
-1. **Scope** - Filter memories by relationship context
-2. **Rank** - Order by relevance to current conversation
-3. **Inject** - Provide as context to agent systems
-4. **Track** - Log which memories influenced responses
+1. **Query** - Retrieve relevant memories based on conversation context
+2. **Select** - Choose top 3-5 memories by relevance scoring
+3. **Inject** - Provide as context to Claude API calls
+4. **Respond** - Demonstrate Claude "knows you" through memory context
 
 ## 🎯 Design Principles
+
+### MVP-First Approach
+
+- **Quality over scale** - 50-100 meaningful memories vs thousands
+- **Proof of concept** - Demonstrate Claude "knows you" through memory
+- **Single integration** - Claude only, extensible later
+- **Realistic targets** - 70% validation rate, 6-8 week phases
 
 ### Relationship-Aware
 
@@ -128,3 +143,27 @@ Relationship → Relevant → Emotional → Enhanced
 - **Component isolation** via Storybook
 - **API mocking** via MSW
 - **Type safety** across all boundaries
+
+## 📊 MVP Timeline & Success
+
+### Timeline (4-5 months total)
+
+- **Phase 1**: Message Import ✅ (6 weeks - Complete)
+- **Phase 2**: Memory Extraction MVP (6-8 weeks)
+- **Phase 3**: Claude Integration MVP (6-8 weeks)
+
+### Success Criteria
+
+**Phase 2 MVP:**
+
+- Extract 50-100 high-quality emotional memories
+- Achieve 70% human validation rate
+- Define concrete TypeScript memory schema
+- Stay within Claude Pro account limits
+
+**Phase 3 MVP:**
+
+- Memory query response < 2 seconds
+- 3-5 relevant memories per conversation
+- Claude responses feel personal and contextual
+- **Ultimate goal**: One "wow, it knows me" moment
