@@ -1,3 +1,8 @@
+---
+id: README
+title: Mnemosyne Documentation
+---
+
 # 📚 Mnemosyne Documentation
 
 Welcome to the Mnemosyne documentation system. This uses a **Basecamp-style approach** to project management that emphasizes calm, async-friendly development without micromanaging tasks.
@@ -7,7 +12,7 @@ Welcome to the Mnemosyne documentation system. This uses a **Basecamp-style appr
 ### 🎯 Start Here
 
 - [**Intent**](intent.md) - Project vision and multi-phase roadmap
-- [**Planning Guide**](guides/planning-guide.md) - How to use this documentation system
+- [**Planning Guide**](planning-guide.md) - How to use this documentation system
 
 ### 🏗️ Architecture
 

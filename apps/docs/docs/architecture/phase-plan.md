@@ -1,3 +1,8 @@
+---
+id: phase-plan
+title: Phase Plan
+---
+
 # 🗺️ Phase Plan
 
 ## 🎯 Roadmap Overview
@@ -43,118 +48,245 @@ Three sequential phases transform raw message history into AI-ready emotional me
 
 ---
 
-## 🧠 Phase 2: Memory Extraction
+## 🧠 Phase 2: Enhanced Memory Extraction (Emotionally Intelligent MVP)
 
 **Status**: Next  
-**Appetite**: Large (8-12 weeks)  
+**Appetite**: Medium (6-8 weeks)  
 **Dependencies**: Phase 1 complete
 
-### Vision
+### Enhanced Vision
 
-Transform stored messages into structured emotional memories using GPT processing, creating the foundation for relationship-aware AI interactions.
+Transform stored messages into psychologically meaningful emotional memories using delta-triggered extraction, mood scoring, and smart validation. Creates the foundation for relationship-aware AI interactions that understand emotional continuity and context. **MVP Focus**: Prove the concept with emotional intelligence and quality over quantity.
 
-### Core Deliverables
+### Enhanced Core Deliverables
 
-#### Memory Processing Engine
+#### Enhanced Memory Schema Definition
 
-- **GPT Integration** - Process message batches for emotional context extraction
-- **Memory Schema** - Structured format for emotional metadata and relationships
-- **Batch Processing** - Handle large message volumes efficiently
-- **Error Recovery** - Graceful handling of GPT API failures and rate limits
+- **Emotional Intelligence Schema** - TypeScript types for mood scoring, delta triggers, and emotional salience
+- **Mood Scoring Framework** - Local and contextual mood analysis with confidence factors
+- **Delta-Triggered Memory Types** - Structured format for emotionally significant moments
+- **Smart Validation Schema** - Auto-confirmation with confidence thresholds and user feedback
 
-#### Memory Validation System
+#### Emotionally Intelligent Processing Engine
 
-- **Review Queue** - Interface for validating extracted memories
-- **Memory Editor** - Tools for refining GPT-generated emotional context
-- **Quality Metrics** - Scoring system for memory accuracy and relevance
-- **Feedback Loop** - Improve extraction prompts based on human review
+- **Delta-Triggered Extraction** - Focus on emotionally significant moments (mood repairs, positive spikes, sustained tenderness)
+- **Mood Scoring Algorithm** - Contextual analysis with delta detection and emotional salience
+- **Tone-Tagged Clustering** - Group messages by emotional coherence and psychological patterns
+- **Enhanced Claude Integration** - Emotionally weighted prompts with mood context for improved analysis
 
-#### Relationship Context Engine
+#### Smart Validation System
 
-- **Person Detection** - Identify participants in message exchanges
-- **Relationship Mapping** - Track emotional dynamics between people
-- **Timeline Analysis** - Understand how relationships evolve over time
-- **Context Tagging** - Label memories with emotional and situational metadata
+- **Auto-Confirmation** - Confidence thresholds (>0.75 auto-approve, 0.50-0.75 review suggested)
+- **Emotional Significance Weighting** - Prioritize validation based on emotional importance
+- **Bulk Import Handling** - Intelligent emotional sampling for large datasets
+- **User Feedback Calibration** - Continuous system learning and confidence adjustment
 
-### Technical Architecture
+#### MCP Agent Context Layer
+
+- **Mood Context Tokens** - Structured emotional context for Phase 3 agent integration
+- **Relational Timeline** - Emotional event tracking and relationship narrative construction
+- **Emotional Vocabulary** - Tone-consistent response capability with relationship awareness
+- **HTTP/TRPC Endpoints** - External agent integration interface for Phase 3 preparation
+
+### Enhanced Technical Architecture
 
 ```
-Messages → GPT Processor → Memory Entries → Validation Queue
-    ↓           ↓               ↓              ↓
-Batch API → Emotional → Structured → Human Review
-Pipeline    Analysis    Metadata    Interface
+Message Analysis → Mood Scoring → Delta Detection → Memory Extraction → Smart Validation → MCP Context
+      ↓                ↓              ↓                 ↓                  ↓                ↓
+Emotional Context → Mood Deltas → Salience Triggers → Claude Processing → Auto-Confirmation → Agent Integration
+      ↓                ↓              ↓                 ↓                  ↓                ↓
+Local/Contextual → Tone Tags → Emotional Significance → Memory Clustering → User Feedback → Phase 3 Ready
 ```
 
-### Package Extensions
+### Enhanced Memory Schema Example
 
-- **@studio/memory** - GPT processing and memory extraction
-- **@studio/validation** - Review queue and memory editing tools
-- **@studio/relationships** - Person and relationship tracking
+```typescript
+interface EnhancedMemory {
+  id: string
+  messageIds: string[]
+  participants: string[]
+  emotionalContext: {
+    mood: 'positive' | 'negative' | 'neutral' | 'mixed' | 'ambiguous'
+    intensity: number // 1-10
+    moodScore: number // -1.0 to 1.0
+    themes: string[] // ['humor', 'support', 'frustration']
+    deltaTriggers: string[] // ['mood_repair', 'positive_spike', 'sustained_tenderness']
+    temporalPatterns: TemporalPattern[]
+  }
+  relationshipDynamics: {
+    closeness: number // 1-10
+    tension: number // 1-10
+    supportiveness: number // 1-10
+  }
+  moodScore: {
+    score: number // -1.0 to 1.0
+    tone: string
+    emotionTags: string[]
+    summary: string
+    analysisMode: 'local' | 'contextual'
+  }
+  moodDelta: {
+    delta: number
+    deltaType: 'positive_spike' | 'mood_repair' | 'sustained_tenderness'
+    significance: number
+  }
+  emotionalSalience: number // 1-10
+  toneCluster: string[]
+  summary: string
+  extractedAt: Date
+  confidence: number // 1-10
+  confidenceFactors: {
+    emotionalSalience: number
+    moodCertainty: number
+    contextualSupport: number
+  }
+}
+```
 
-### Success Criteria
+### Enhanced Package Extensions
 
-- Extract meaningful emotional context from 80%+ of message batches
-- Achieve 90%+ human validation rate for extracted memories
-- Process 10,000+ messages per hour with GPT integration
-- Generate relationship timelines spanning years of history
+- **@studio/memory** - Enhanced Claude processing with mood scoring and delta-triggered extraction
+- **@studio/validation** - Smart validation system with domain-specific UI components for emotional memory review
+- **@studio/schema** - Enhanced TypeScript definitions for emotional intelligence and mood tracking
+- **@studio/mcp** - MCP foundation layer providing emotional intelligence endpoints for future MCP server integration
+- **@studio/ui** - Shared component library for common UI elements across packages
+
+### Enhanced MVP Success Criteria
+
+- Extract emotionally significant memories from 70%+ of processed message batches using delta-triggered analysis
+- Achieve 70%+ auto-confirmation rate with confidence thresholds and smart validation
+- Process 500-1000 messages successfully with emotional intelligence and quality control
+- Generate 50-100 high-quality emotional memories with mood context for Phase 3 testing
+- Stay within Claude Pro account limits through efficient emotionally-weighted processing
+- Provide structured MCP agent context with mood tokens and relational timeline for Phase 3 integration
 
 ---
 
-## 🤖 Phase 3: Agent Serving (MCP Engine)
+## 🤖 Phase 3: Claude Memory Integration (MVP)
 
 **Status**: Future  
-**Appetite**: Large (10-14 weeks)  
+**Appetite**: Medium (6-8 weeks)  
 **Dependencies**: Phase 2 complete
 
-### Vision
+---
 
-Build MCP (Model Context Protocol) engine that serves relationship-scoped emotional memory to AI agents, enabling conversations that feel like they "know you."
+### 🎯 Enhanced Vision
 
-### Core Deliverables
+Build a **Claude integration system** that provides **emotionally intelligent, relationship-scoped context** to conversations using Phase 2's MCP layer — proving that an AI agent can feel like it "knows you" through emotional memory and mood continuity.
 
-#### MCP Protocol Engine
+**MVP Focus**: Single integration that demonstrates emotionally aware AI conversations with relationship context.
 
-- **Memory Query API** - Retrieve relevant memories based on conversation context
-- **Relationship Scoping** - Filter memories by participant relationships
-- **Relevance Ranking** - Order memories by emotional and temporal relevance
-- **Context Injection** - Format memories for agent consumption
+---
 
-#### Agent Integration Layer
+### 🔧 Enhanced Core Deliverables
 
-- **Claude Integration** - Native support for Claude Code and chat
-- **GPT Integration** - OpenAI API compatibility layer
-- **Custom Agents** - Extensible interface for future AI systems
-- **Memory Tracking** - Log which memories influence agent responses
+#### MCP-Powered Memory Query Engine
 
-#### Production Infrastructure
+- **Mood-Aware Query API** – Retrieve emotionally relevant memories using MCP endpoints
+- **Emotional Relevance Ranking** – Scoring by emotional salience, mood context, and temporal relevance
+- **Agent Context Formatting** – Structure mood tokens and relational timeline for Claude consumption
+- **Relationship Filtering** – Scope memories to conversation participants with emotional continuity
 
-- **API Gateway** - Rate limiting, authentication, monitoring
-- **Memory Caching** - Fast retrieval for frequently accessed memories
-- **Analytics** - Track memory usage patterns and effectiveness
-- **Privacy Controls** - Granular access controls for sensitive memories
+#### Emotionally Intelligent Claude Integration
 
-### Technical Architecture
+- **Enhanced Claude API Integration** – Direct integration with mood context and emotional vocabulary
+- **Mood-Aware Context Injection** – Seamlessly add emotional memory context to conversations
+- **Emotional Memory Selection** – Choose most emotionally relevant memories for each interaction
+- **Relationship-Aware Conversations** – Demonstrate "knowing you" through emotional continuity and mood awareness
+
+#### MCP Integration Infrastructure
+
+- **MCP Context API** – Leverage Phase 2's mood tokens and relational timeline endpoints
+- **Emotional Processing** – Integrate mood scoring and delta awareness into conversation flow
+- **Mood-Aware Logging** – Track emotional effectiveness and memory relevance
+- **Emotionally Intelligent Interface** – UI demonstrating mood-aware, relationship-contextual conversations
+
+---
+
+### 🧠 Enhanced Architecture Plan
+
+#### Goal
+
+Create a minimal viable system that proves emotionally intelligent memory can enhance AI conversations with mood awareness and relationship continuity.
+
+#### Enhanced File Structure
 
 ```
-Agent Request → MCP Engine → Memory Retrieval → Context Injection
-      ↓            ↓             ↓               ↓
-Relationship → Relevance → Emotional → Enhanced
-   Scope       Ranking     Context    Response
+@studio/context/
+├── index.ts                  # Main API for emotionally intelligent conversations
+├── mcp-integration.ts        # Integration with Phase 2 MCP endpoints
+├── mood-aware-query.ts       # Query memories with emotional relevance
+├── emotional-context-builder.ts # Format mood tokens and relational timeline
+├── claude-integration.ts     # Enhanced Claude API with emotional context
+├── types/
+│   └── conversation.ts       # Enhanced request/response types with mood
+└── utils/
+    └── emotional-relevance.ts # Emotional salience-based memory ranking
 ```
 
-### Package Extensions
+#### Enhanced Integration Flow
 
-- **@studio/mcp** - Model Context Protocol engine
-- **@studio/agents** - Agent integration adapters
-- **@studio/api** - Production API gateway
-- **@studio/analytics** - Memory usage tracking
+```
+User Message → MCP Context → Mood-Aware Query → Emotional Context → Claude + Context → Emotionally Intelligent Response
+     ↓             ↓              ↓                    ↓               ↓                    ↓
+Input Text → Mood Tokens → Emotional Memories → Relational Timeline → Claude API → Response with
+             Relational     + Salience Ranking    + Vocabulary        + Emotional     Mood Continuity
+             Context                                                   Context
+```
 
-### Success Criteria
+#### Enhanced MVP Example
 
-- Sub-100ms memory retrieval for agent requests
-- 95%+ agent satisfaction with provided emotional context
-- Support 1000+ concurrent agent conversations
-- Demonstrate measurably "warmer" AI interactions
+```typescript
+interface EmotionalConversationRequest {
+  message: string
+  participants: string[]
+  conversationId?: string
+  currentMood?: string
+  contextTimeframe?: string
+}
+
+interface EmotionalConversationResponse {
+  response: string
+  memoriesUsed: EnhancedMemory[]
+  moodContext: MoodContextToken
+  relationalContext: RelationalEvent[]
+  emotionalContinuity: boolean
+  contextInjected: boolean
+}
+```
+
+---
+
+### 📦 Enhanced Package Extensions
+
+- `@studio/context`: Enhanced memory query and Claude integration with MCP layer
+- `@studio/ui`: Shared component library for common UI elements across packages
+- `@studio/validation`: Domain-specific validation interfaces for emotional memory review (progressive development: Storybook → Next.js → Production)
+
+---
+
+### ✅ Enhanced MVP Success Criteria
+
+| Goal                        | Enhanced Metric                                              |
+| --------------------------- | ------------------------------------------------------------ |
+| Emotional memory relevance  | 3-5 emotionally relevant memories per query                  |
+| Mood-aware response quality | Claude responses demonstrate emotional continuity            |
+| Integration speed           | < 2 seconds total response time with MCP context             |
+| Emotional memory usage      | Uses 50+ different emotional memories across tests           |
+| Mood continuity             | Conversations maintain emotional context across interactions |
+
+---
+
+### 🧬 Why This Enhanced MVP Matters
+
+This emotionally intelligent phase proves the core concept with emotional awareness:
+
+- **Conversation feels emotionally personal** – Claude references shared emotional history and mood patterns
+- **Emotional memory is actionable** – System successfully queries and applies emotionally relevant memories
+- **Mood continuity works** – Conversations maintain emotional context and relationship awareness
+- **Technical foundation proven** – MCP→Query→Context→Response pipeline functions with emotional intelligence
+
+**Success = One conversation where Claude demonstrates emotional continuity that makes you think "wow, it really understands our relationship"**
 
 ---
 
@@ -183,34 +315,37 @@ Foundation →        Memory →         Agent
 
 ---
 
-## 📊 Timeline Estimates
+## 📊 MVP Timeline Estimates
 
-| Phase   | Duration    | Complexity | Risk Level |
-| ------- | ----------- | ---------- | ---------- |
-| Phase 1 | 6 weeks     | Medium     | Low ✅     |
-| Phase 2 | 8-12 weeks  | High       | Medium     |
-| Phase 3 | 10-14 weeks | High       | High       |
+| Phase   | Duration  | Complexity | Risk Level |
+| ------- | --------- | ---------- | ---------- |
+| Phase 1 | 6 weeks   | Medium     | Low ✅     |
+| Phase 2 | 6-8 weeks | Medium     | Low        |
+| Phase 3 | 6-8 weeks | Medium     | Medium     |
 
-**Total Project Timeline**: 6-8 months for full emotional memory system
+**Total MVP Timeline**: 4-5 months for working emotional memory system
 
 ---
 
-## 🎯 Success Metrics
+## 🎯 MVP Success Metrics
 
 ### Phase 2 Targets
 
-- Memory extraction accuracy > 80%
-- Human validation rate > 90%
-- Processing throughput > 10K messages/hour
+- Memory extraction accuracy > 70%
+- Human validation rate > 70%
+- Generate 50-100 high-quality memories
+- Stay within Claude Pro account limits
 
 ### Phase 3 Targets
 
-- Memory retrieval latency < 100ms
-- Agent context satisfaction > 95%
-- Concurrent conversations > 1000
+- Memory query response < 2 seconds
+- 3-5 relevant memories per conversation
+- Claude responses feel personal and contextual
+- One "wow, it knows me" moment
 
-### Overall Vision
+### Overall MVP Vision
 
-- AI agents that feel like they "know you"
-- Warm, contextual conversations spanning years of shared history
-- Relationship-aware emotional continuity in digital interactions
+- **Proof of concept**: AI that demonstrates emotional memory
+- **Quality over scale**: 50-100 meaningful memories vs thousands
+- **Single integration**: Claude works, extensible later
+- **Personal impact**: One conversation that feels genuinely "warm"

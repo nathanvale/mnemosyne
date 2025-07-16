@@ -1,3 +1,8 @@
+---
+id: monorepo
+title: Monorepo Architecture
+---
+
 # 🏗️ Monorepo Architecture
 
 ## 🎯 Turborepo Strategy

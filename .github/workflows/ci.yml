@@ -28,7 +28,7 @@ jobs:
       run: pnpm install --no-frozen-lockfile
       
     - name: Generate Prisma client
-      run: pnpm --filter @studio/db generate
+      run: pnpm exec prisma generate
       
     - name: Run linting
       run: pnpm run lint
@@ -54,7 +54,7 @@ jobs:
       run: pnpm install --no-frozen-lockfile
       
     - name: Generate Prisma client
-      run: pnpm --filter @studio/db generate
+      run: pnpm exec prisma generate
       
     - name: Run type checking
       run: pnpm run type-check
@@ -80,13 +80,13 @@ jobs:
       run: pnpm install --no-frozen-lockfile
       
     - name: Generate Prisma client
-      run: pnpm --filter @studio/db generate
+      run: pnpm exec prisma generate
       
     - name: Install Playwright browsers
       run: pnpm exec playwright install --with-deps
       
     - name: Run tests
-      run: pnpm run test -- --run
+      run: pnpm run test --run
 
   build:
     needs: [lint, type-check, test]
@@ -110,7 +110,7 @@ jobs:
       run: pnpm install --no-frozen-lockfile
       
     - name: Generate Prisma client
-      run: pnpm --filter @studio/db generate
+      run: pnpm exec prisma generate
       
     - name: Build application
       run: pnpm run build

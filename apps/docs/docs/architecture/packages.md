@@ -1,3 +1,8 @@
+---
+id: packages
+title: Package Dependency Graph
+---
+
 # 📦 Package Dependency Graph
 
 ## 🎯 Package Overview
@@ -221,7 +226,7 @@ Compile      Output       Bundles     System
 
 | Package             | LOC   | Dependencies | Build Time | Bundle Size |
 | ------------------- | ----- | ------------ | ---------- | ----------- |
-| @studio/shared      | ~100  | 0            | &lt;1s     | 0KB         |
+| @studio/shared      | ~100  | 0            | \<1s       | 0KB         |
 | @studio/db          | ~500  | 2            | ~5s        | 150KB       |
 | @studio/logger      | ~800  | 3            | ~2s        | 45KB        |
 | @studio/test-config | ~200  | 5            | ~1s        | 25KB        |
@@ -234,39 +239,36 @@ Compile      Output       Bundles     System
 - **Cold build**: ~20 seconds for all packages
 - **Incremental build**: ~2-5 seconds for changed packages
 - **Cache hit rate**: 90%+ during development
-- **Hot reload time**: &lt;500ms across package boundaries
+- **Hot reload time**: \<500ms across package boundaries
 
 ---
 
 ## 🎯 Future Package Evolution
 
-### Phase 2 Additions (Memory Extraction)
+### Phase 2 Additions (Memory Extraction MVP)
 
-- **@studio/memory** - GPT processing and memory extraction
-- **@studio/validation** - Memory review and validation UI
-- **@studio/relationships** - Person and relationship tracking
+- **@studio/memory** - Claude processing and memory extraction
+- **@studio/validation** - Simple review interface and quality tools
+- **@studio/schema** - TypeScript definitions for memory structure
 
-### Phase 3 Additions (Agent Serving)
+### Phase 3 Additions (Claude Integration MVP)
 
-- **@studio/mcp** - Model Context Protocol engine
-- **@studio/agents** - Agent integration adapters
-- **@studio/api** - Production API gateway
-- **@studio/analytics** - Memory usage tracking
+- **@studio/context** - Memory query and Claude integration
 
-### Updated Dependency Graph (Future)
+### Updated Dependency Graph (MVP Future)
 
 ```
 @studio/shared
     ↓
-@studio/db → @studio/memory → @studio/mcp
+@studio/db → @studio/memory → @studio/context
     ↓           ↓               ↓
-@studio/logger → @studio/validation → @studio/agents
-    ↓              ↓                    ↓
-@studio/ui → @studio/relationships → @studio/api
-    ↓           ↓                     ↓
-@studio/scripts → @studio/analytics
+@studio/logger → @studio/validation
     ↓              ↓
-@studio/mocks → apps/studio
+@studio/ui → @studio/schema
+    ↓           ↓
+@studio/scripts → apps/studio
+    ↓
+@studio/mocks
 ```
 
 ---
