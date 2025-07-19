@@ -1,5 +1,5 @@
 import { PrismaClient } from '@studio/db'
-import { log, createLogger } from '@studio/logger'
+import { createLogger, cli, debug } from '@studio/logger'
 import { Command } from 'commander'
 import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
@@ -73,10 +73,10 @@ export async function main() {
   isDebugMode = !!options.debug
 
   // Choose appropriate logger based on debug mode
-  // Is this Node? Yes - choose between structured logger (debug) and CLI logger (normal)
+  // Use new preset functions for cleaner API
   logger = isDebugMode
-    ? log
-    : createLogger({ level: 'info', prettyPrint: true })
+    ? debug() // Pretty print with callsite links for debugging
+    : cli() // Pretty print without callsite for CLI feedback
 
   // Reset counters for this run
   importErrors = []

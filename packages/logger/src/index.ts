@@ -1,6 +1,5 @@
 // Export logger functionality
 export * from './lib/logger'
-export * from './lib/debug-callsite'
 export * from './lib/logger-demo'
 
 // Export browser logger with specific exports to avoid conflicts
