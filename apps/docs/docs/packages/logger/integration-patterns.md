@@ -1,82 +1,68 @@
 # 🔌 Logger Integration Patterns
 
-This guide demonstrates advanced integration patterns, third-party service connections, and architectural patterns for using `@studio/logger` in complex applications.
+This guide demonstrates advanced integration patterns, third-party service connections, and architectural patterns for using the **smart environment-aware `@studio/logger`** in complex applications.
 
 ## 🎯 Overview
 
-The logger package supports various integration patterns for different use cases, from simple console logging to complex multi-service error tracking. This guide covers proven patterns for production applications.
+The enhanced logger package supports various integration patterns with **zero-configuration auto-detection**, intelligent preset functions (`cli()`, `debug()`, `production()`), and seamless environment variable overrides. This guide covers proven patterns for production applications using the new smart logger system.
 
 ## 🏢 Error Tracking Service Integration
 
 ### Sentry Integration
 
-#### Factory Function Approach
+#### Smart Auto-Detection with Sentry
 
 ```typescript
 import * as Sentry from '@sentry/browser'
-import { createLogger } from '@studio/logger'
+import logger, { production, createLogger } from '@studio/logger'
 
-export function createSentryLogger(config: {
-  dsn: string
-  environment: string
-  level?: LogLevel
-}) {
-  // Initialize Sentry
-  Sentry.init({
-    dsn: config.dsn,
-    environment: config.environment,
-  })
+// Zero-config approach - uses auto-detection
+export function setupSentryIntegration(dsn: string) {
+  Sentry.init({ dsn, environment: process.env.NODE_ENV })
 
-  return createLogger({
-    level: config.level || 'error',
-    enableInProduction: true,
+  // Intercept error logs from the auto-detecting logger
+  const originalError = logger.error
+  logger.error = function (message: string, context?: any) {
+    // Call original logger (auto-configured)
+    originalError.call(this, message, context)
+
+    // Send to Sentry with enhanced callsite info
+    Sentry.captureException(new Error(message), {
+      contexts: { error_context: context },
+      tags: { source: 'auto_logger' },
+    })
+  }
+}
+
+// Preset-based approach for production
+export function createSentryProductionLogger(dsn: string) {
+  Sentry.init({ dsn, environment: 'production' })
+
+  return production({
     onRemoteError: (error, logs) => {
-      // Send failed logs to Sentry as context
+      // Send failed log batches to Sentry
       Sentry.captureException(error, {
         contexts: {
-          logs: {
-            failed_batch: logs.length,
+          failed_logs: {
+            batch_size: logs.length,
             sample_logs: logs.slice(0, 3),
           },
         },
       })
     },
-    customLogProcessor: (entry) => {
-      // Send errors directly to Sentry
-      if (entry.level === 'error') {
-        Sentry.captureException(new Error(entry.message), {
-          contexts: {
-            log_entry: entry.context,
-            callsite: entry.callsite,
-          },
-          tags: entry.tags?.reduce(
-            (acc, tag) => {
-              acc[`tag_${tag}`] = true
-              return acc
-            },
-            {} as Record<string, boolean>,
-          ),
-        })
-      }
-
-      return entry
-    },
   })
 }
 
-// Usage
-const logger = createSentryLogger({
-  dsn: 'https://your-sentry-dsn@sentry.io/project',
-  environment: 'production',
-  level: 'warn',
-})
+// Environment variable driven setup
+// LOGGER_MODE=production SENTRY_DSN=https://... npm start
+setupSentryIntegration(process.env.SENTRY_DSN!)
 
+// Auto-configured logger now sends errors to Sentry
 logger.error('Payment processing failed', {
   userId: '123',
   amount: 99.99,
   paymentMethod: 'credit_card',
 })
-// Automatically sends to both Sentry and logger remote endpoint
 ```
 
 #### Hook-Based Integration (Browser Only)
@@ -114,109 +100,120 @@ logger.error = function (message: string, ...args: any[]) {
 ```typescript
 import { createLogger } from '@studio/logger'
 
+// Environment-aware DataDog integration
 export function createDatadogLogger(config: {
   apiKey: string
   service: string
-  environment: string
 }) {
+  // Auto-detect or use environment variable override
+  const baseLogger = process.env.LOGGER_MODE
+    ? createLogger() // Respects LOGGER_MODE env var
+    : production() // Default to production preset
+
   return createLogger({
-    level: 'info',
+    ...baseLogger.config,
     remoteEndpoint: `https://http-intake.logs.datadoghq.com/v1/input/${config.apiKey}`,
     globalContext: {
       service: config.service,
-      env: config.environment,
+      env: process.env.NODE_ENV,
       version: process.env.APP_VERSION,
-    },
-    customRedactionStrategy: (obj) => {
-      // DataDog-specific redaction
-      const redacted = { ...obj }
-
-      // Remove specific DataDog reserved attributes if accidentally included
-      delete redacted.dd
-      delete redacted.ddsource
-      delete redacted.ddtags
-
-      return redacted
+      dd: {
+        service: config.service,
+        env: process.env.NODE_ENV,
+      },
     },
     onRemoteSuccess: (logs) => {
-      console.debug(`Sent ${logs.length} logs to DataDog`)
+      // Use debug preset for internal logging
+      const internalLogger = debug()
+      internalLogger.debug(`Sent ${logs.length} logs to DataDog`)
     },
     onRemoteError: (error, logs) => {
-      console.error('DataDog logging failed:', error.message)
-      // Fallback to local storage or alternative endpoint
+      // Use debug preset for error logging
+      const internalLogger = debug()
+      internalLogger.error('DataDog logging failed', {
+        error: error.message,
+        batchSize: logs.length,
+      })
     },
   })
 }
 
-// Usage with DataDog-specific formatting
+// Smart environment-driven setup
+// LOGGER_MODE=production DATADOG_API_KEY=xxx npm start
 const logger = createDatadogLogger({
   apiKey: process.env.DATADOG_API_KEY!,
   service: 'user-service',
-  environment: 'production',
 })
 
 logger.info('User action completed', {
   userId: '123',
   action: 'profile_update',
   duration: 245,
-  // DataDog will automatically index these fields
-  'dd.trace_id': getCurrentTraceId(),
-  'dd.span_id': getCurrentSpanId(),
+  // Enhanced callsite tracking with IDE-friendly format
+  trace_id: getCurrentTraceId(),
+  span_id: getCurrentSpanId(),
 })
 ```
 
-### LogRocket Integration
+### LogRocket Integration with Auto-Detection
 
 ```typescript
 import LogRocket from 'logrocket'
-import { createLogger } from '@studio/logger'
+import logger, { debug, production } from '@studio/logger'
 
-export function createLogRocketLogger(config: {
-  appId: string
-  environment: string
-}) {
-  LogRocket.init(config.appId)
+export function setupLogRocketIntegration(appId: string) {
+  LogRocket.init(appId)
 
-  return createLogger({
-    level: 'info',
-    enableInProduction: true,
+  // Intercept logs from auto-detecting logger
+  const originalInfo = logger.info
+  const originalError = logger.error
+
+  logger.info = function (message: string, context?: any) {
+    originalInfo.call(this, message, context)
+    LogRocket.captureMessage(message, { level: 'info', extra: context })
+  }
+
+  logger.error = function (message: string, context?: any) {
+    originalError.call(this, message, context)
+    LogRocket.captureException(new Error(message), { extra: context })
+  }
+}
+
+// Preset-based LogRocket logger
+export function createLogRocketLogger(appId: string) {
+  LogRocket.init(appId)
+
+  // Use production preset for structured logging
+  return production({
     globalContext: {
-      environment: config.environment,
-      session: LogRocket.sessionURL,
+      session: () => LogRocket.sessionURL, // Dynamic session URL
+      environment: process.env.NODE_ENV,
     },
-    customLogProcessor: (entry) => {
-      // Send structured logs to LogRocket
-      LogRocket.captureMessage(entry.message, {
-        level: entry.level,
-        extra: {
-          context: entry.context,
-          tags: entry.tags,
-          callsite: entry.callsite,
-        },
+    onRemoteError: (error, logs) => {
+      // Send failed batches to LogRocket
+      LogRocket.captureException(error, {
+        extra: { failed_batch: logs.length },
       })
-
-      return entry
     },
   })
 }
 
-// Advanced usage with user identification
-const logger = createLogRocketLogger({
-  appId: 'your-app-id',
-  environment: 'production',
-})
+// Environment variable driven setup
+// LOGGER_MODE=production LOGROCKET_APP_ID=xxx npm start
+setupLogRocketIntegration(process.env.LOGROCKET_APP_ID!)
 
-// Identify user for session correlation
+// Enhanced user identification with context chaining
 function identifyUser(user: { id: string; email: string; name: string }) {
   LogRocket.identify(user.id, {
     email: user.email,
     name: user.name,
   })
 
-  // Update logger context
-  const userLogger = logger.withContext({
+  // Create user-scoped logger with enhanced callsite tracking
+  const userLogger = logger.withTag('UserSession').withContext({
     userId: user.id,
     userEmail: user.email,
+    sessionUrl: LogRocket.sessionURL,
   })
 
   return userLogger
@@ -241,16 +238,20 @@ interface LoggerContextType {
 const LoggerContext = createContext<LoggerContextType | null>(null)
 
 export function LoggerProvider({ children }: { children: React.ReactNode }) {
-  const baseLogger = useMemo(() => createLogger({
-    level: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
-    enableInProduction: true,
-    remoteEndpoint: process.env.REACT_APP_LOG_ENDPOINT,
-    globalContext: {
-      app: 'frontend',
-      version: process.env.REACT_APP_VERSION,
-      build: process.env.REACT_APP_BUILD_ID
-    }
-  }), [])
+  const baseLogger = useMemo(() => {
+    // Use auto-detecting logger or respect environment variables
+    // LOGGER_MODE=debug REACT_APP_LOG_ENDPOINT=... npm start
+    return process.env.REACT_APP_LOG_ENDPOINT
+      ? createLogger({
+          remoteEndpoint: process.env.REACT_APP_LOG_ENDPOINT,
+          globalContext: {
+            app: 'frontend',
+            version: process.env.REACT_APP_VERSION,
+            build: process.env.REACT_APP_BUILD_ID
+          }
+        })
+      : logger // Use auto-detecting default logger
+  }, [])
 
   const createComponentLogger = (componentName: string) => {
     return baseLogger.withTag(componentName).withContext({
@@ -453,42 +454,39 @@ export default function RootLayout({
 
 ## 🏗️ Backend Service Integration
 
-### Express.js Middleware (Node.js)
+### Express.js Middleware with Smart Logger
 
 ```typescript
 import express from 'express'
-import { log } from '@studio/logger'
+import logger, { debug, production } from '@studio/logger'
 
 export function createLoggingMiddleware() {
+  // Choose appropriate logger preset based on environment
+  // LOGGER_MODE=debug for detailed request logging
+  // LOGGER_MODE=production for structured API logs
+  const baseLogger =
+    process.env.LOGGER_MODE === 'debug' ? debug() : production()
+
   return (
     req: express.Request,
     res: express.Response,
     next: express.NextFunction,
   ) => {
-    const requestContext = {
+    const requestId = req.headers['x-request-id'] || generateRequestId()
+
+    // Create request-scoped logger with automatic context
+    req.logger = baseLogger.withTag('ExpressAPI').withContext({
       method: req.method,
       url: req.originalUrl,
       userAgent: req.get('User-Agent'),
       ip: req.ip,
-      requestId: req.headers['x-request-id'] || generateRequestId(),
-    }
-
-    // Create a logger function that includes request context
-    req.logger = {
-      info: (msg: string, additional?: any) =>
-        log.info(msg, { ...requestContext, ...additional }),
-      warn: (msg: string, additional?: any) =>
-        log.warn(msg, { ...requestContext, ...additional }),
-      error: (msg: string, additional?: any) =>
-        log.error(msg, { ...requestContext, ...additional }),
-      debug: (msg: string, additional?: any) =>
-        log.debug(msg, { ...requestContext, ...additional }),
-    }
+      requestId,
+    })
 
     req.logger.info('Request started')
     const startTime = Date.now()
 
-    // Log response
+    // Log response with enhanced metrics
     const originalSend = res.send
     res.send = function (data) {
       const duration = Date.now() - startTime
@@ -497,6 +495,7 @@ export function createLoggingMiddleware() {
         statusCode: res.statusCode,
         duration,
         contentLength: data?.length,
+        success: res.statusCode < 400,
       })
 
       return originalSend.call(this, data)
@@ -506,16 +505,26 @@ export function createLoggingMiddleware() {
   }
 }
 
-// Usage
+// Usage with environment variable control
+// LOGGER_MODE=debug LOG_LEVEL=trace npm start
 const app = express()
 app.use(createLoggingMiddleware())
 
 app.get('/users/:id', (req, res) => {
+  // Logger automatically includes request context and enhanced callsite info
   req.logger.info('Fetching user', { userId: req.params.id })
 
-  // ... route logic
-
-  res.json({ user: userData })
+  try {
+    const user = getUserById(req.params.id)
+    req.logger.debug('User retrieved successfully', { user: user.id })
+    res.json({ user })
+  } catch (error) {
+    req.logger.error('Failed to fetch user', {
+      userId: req.params.id,
+      error: error.message,
+    })
+    res.status(500).json({ error: 'Internal server error' })
+  }
 })
 ```
 
@@ -525,12 +534,10 @@ app.get('/users/:id', (req, res) => {
 
 ```typescript
 import { PrismaClient } from '@prisma/client'
-import { createLogger } from '@studio/logger'
+import logger, { debug, production } from '@studio/logger'
 
-const logger = createLogger({
-  level: 'debug',
-  globalContext: { component: 'database' },
-})
+// Use debug preset for database queries in development
+const dbLogger = debug().withTag('Database')
 
 export const prisma = new PrismaClient({
   log: [
@@ -541,144 +548,220 @@ export const prisma = new PrismaClient({
   ],
 })
 
-// Log all queries
+// Enhanced query logging with callsite tracking
 prisma.$on('query', (event) => {
-  logger.debug('Database query executed', {
+  dbLogger.debug('Database query executed', {
     query: event.query,
     params: event.params,
     duration: event.duration,
     target: event.target,
-  })
-})
-
-// Log errors
-prisma.$on('error', (event) => {
-  logger.error('Database error occurred', {
-    message: event.message,
-    target: event.target,
-  })
-})
-
-// Middleware for query timing
-prisma.$use(async (params, next) => {
-  const logger = createLogger({
-    globalContext: {
-      model: params.model,
-      action: params.action,
+    performance: {
+      slow: event.duration > 100,
+      duration_ms: event.duration,
     },
   })
+})
 
-  logger.debug('Query started', { args: params.args })
+// Enhanced error logging with context
+prisma.$on('error', (event) => {
+  dbLogger.error('Database error occurred', {
+    message: event.message,
+    target: event.target,
+    timestamp: new Date().toISOString(),
+  })
+})
+
+// Smart middleware with preset-based logging
+prisma.$use(async (params, next) => {
+  const queryLogger = dbLogger.withContext({
+    model: params.model,
+    action: params.action,
+    queryId: generateQueryId(),
+  })
+
+  queryLogger.debug('Query started', {
+    args: params.args,
+    operation: `${params.model}.${params.action}`,
+  })
   const startTime = Date.now()
 
   try {
     const result = await next(params)
     const duration = Date.now() - startTime
 
-    logger.info('Query completed', {
+    queryLogger.info('Query completed', {
       duration,
       resultCount: Array.isArray(result) ? result.length : 1,
+      performance: {
+        fast: duration < 50,
+        slow: duration > 100,
+        duration_ms: duration,
+      },
     })
 
     return result
   } catch (error) {
     const duration = Date.now() - startTime
 
-    logger.error('Query failed', {
+    queryLogger.error('Query failed', {
       duration,
       error: error.message,
+      operation: `${params.model}.${params.action}`,
+      args: params.args,
     })
 
     throw error
   }
 })
+
+// Environment variable control
+// LOGGER_MODE=debug LOG_LEVEL=trace npm start (detailed query logs)
+// LOGGER_MODE=production npm start (error logs only)
 ```
 
 ## 🧪 Testing Integration Patterns
 
-### Jest/Vitest Integration
+### Jest/Vitest Integration with Smart Logger
 
-The logger package uses standard Vitest mocking patterns. Here's how to mock the logger in your tests:
+The enhanced logger package includes comprehensive testing utilities. Here's how to mock the smart logger system:
 
 ```typescript
-// Mock the entire logger module
+// Mock the entire enhanced logger module
 import { vi } from 'vitest'
 
-// Mock at the module level
+// Enhanced mock with preset functions
 vi.mock('@studio/logger', () => ({
-  log: {
+  // Auto-detecting default export
+  default: {
     trace: vi.fn(),
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
+    fatal: vi.fn(),
     withTag: vi.fn().mockReturnThis(),
     withContext: vi.fn().mockReturnThis(),
   },
+  // Preset functions
+  cli: vi.fn(() => ({
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    withTag: vi.fn().mockReturnThis(),
+    withContext: vi.fn().mockReturnThis(),
+  })),
+  debug: vi.fn(() => ({
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    withTag: vi.fn().mockReturnThis(),
+    withContext: vi.fn().mockReturnThis(),
+  })),
+  production: vi.fn(() => ({
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    withTag: vi.fn().mockReturnThis(),
+    withContext: vi.fn().mockReturnThis(),
+  })),
   createLogger: vi.fn(() => ({
     trace: vi.fn(),
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
+    fatal: vi.fn(),
     withTag: vi.fn().mockReturnThis(),
     withContext: vi.fn().mockReturnThis(),
   })),
-  createCliLogger: vi.fn(() => ({
-    trace: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }))
 }))
 
-// Individual test setup
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-// Component testing with logger
-import { render, screen } from '@testing-library/react'
-import { log } from '@studio/logger'
+// Enhanced component testing
+import { render } from '@testing-library/react'
+import logger, { debug, cli } from '@studio/logger'
 import { UserProfile } from './UserProfile'
 
-test('logs component lifecycle events', () => {
+test('uses auto-detecting logger correctly', () => {
   render(<UserProfile userId="123" />)
 
-  expect(log.info).toHaveBeenCalledWith(
+  expect(logger.info).toHaveBeenCalledWith(
     'Component mounted',
     expect.objectContaining({ userId: '123' })
   )
 })
 
-// Spy on specific logger methods
-test('can spy on logger methods', () => {
-  const infoSpy = vi.spyOn(log, 'info')
+test('respects preset function configuration', () => {
+  const debugLogger = debug()
+  const cliLogger = cli()
 
-  // Component or function that uses logger
-  someFunction()
+  expect(debug).toHaveBeenCalled()
+  expect(cli).toHaveBeenCalled()
+  expect(debugLogger.withTag).toBeDefined()
+  expect(cliLogger.withContext).toBeDefined()
+})
 
-  expect(infoSpy).toHaveBeenCalledWith('Expected message')
+// Environment variable testing
+test('respects environment variable overrides', () => {
+  vi.stubEnv('LOGGER_MODE', 'debug')
+  vi.stubEnv('LOG_LEVEL', 'trace')
 
-  infoSpy.mockRestore()
+  // Test that logger respects environment variables
+  const customLogger = createLogger()
+  expect(createLogger).toHaveBeenCalled()
 })
 ```
 
-### Storybook Integration
+### Storybook Integration with Smart Logger
 
 ```typescript
 // .storybook/decorators/logger.tsx
-import { createLogger } from '@studio/logger'
+import { debug, createLogger } from '@studio/logger'
 import { LoggerProvider } from '../../src/contexts/logger'
 
 export const withLogger = (Story, context) => {
-  const logger = createLogger({
-    level: 'debug',
-    enableConsole: true,
+  // Use debug preset for rich Storybook development experience
+  const logger = debug({
     globalContext: {
       story: context.title,
-      component: context.component
+      component: context.component,
+      storybook: true,
+    },
+    // Enable enhanced clickable traces for Storybook development
+    devClickableTraces: true,
+  })
+
+  return (
+    <LoggerProvider value={{
+      logger,
+      createComponentLogger: (name) => logger.withTag(name).withContext({
+        storyComponent: name,
+        storyTitle: context.title,
+      })
+    }}>
+      <Story />
+    </LoggerProvider>
+  )
+}
+
+// Enhanced decorator with environment control
+export const withSmartLogger = (Story, context) => {
+  // Respect LOGGER_MODE environment variable in Storybook
+  // LOGGER_MODE=production npm run storybook (for production-like testing)
+  const logger = createLogger({
+    globalContext: {
+      story: context.title,
+      component: context.component,
+      storybook: true,
+      environment: 'storybook',
     }
   })
 
@@ -691,130 +774,233 @@ export const withLogger = (Story, context) => {
 
 // .storybook/main.ts
 export default {
-  decorators: [withLogger],
+  decorators: [withSmartLogger],
   // ... other config
 }
+
+// Environment variable control in Storybook
+// LOGGER_MODE=debug npm run storybook (rich debugging)
+// LOGGER_MODE=cli npm run storybook (clean output)
 ```
 
 ## 🔄 Advanced Patterns
 
-### Multi-Service Correlation
+### Multi-Service Correlation with Smart Logger
 
 ```typescript
-// Correlation ID pattern for microservices
+// Enhanced correlation ID pattern with smart presets
 import { v4 as uuid } from 'uuid'
-import { createLogger } from '@studio/logger'
+import logger, { production, debug } from '@studio/logger'
 
 export function createCorrelatedLogger(correlationId?: string) {
   const id = correlationId || uuid()
 
-  return createLogger({
-    globalContext: {
-      correlationId: id,
-      service: process.env.SERVICE_NAME,
-    },
+  // Use auto-detection or environment variable override
+  // LOGGER_MODE=production for structured microservice logs
+  // LOGGER_MODE=debug for development correlation tracking
+  return logger.withContext({
+    correlationId: id,
+    service: process.env.SERVICE_NAME,
+    version: process.env.SERVICE_VERSION,
+    deployment: process.env.DEPLOYMENT_ENV,
   })
 }
 
-// API Gateway usage
+// Enhanced API Gateway middleware with smart logging
 app.use((req, res, next) => {
   const correlationId = req.headers['x-correlation-id'] || uuid()
   res.setHeader('x-correlation-id', correlationId)
 
+  // Create service-scoped logger with enhanced context
   req.logger = createCorrelatedLogger(correlationId)
+    .withTag('APIGateway')
+    .withContext({
+      requestMethod: req.method,
+      requestPath: req.path,
+      userAgent: req.get('User-Agent'),
+      clientIp: req.ip,
+    })
+
   next()
 })
 
-// Forward correlation ID to downstream services
-async function callDownstreamService(data, logger) {
-  const correlationId = logger.context.correlationId
+// Enhanced downstream service calls with correlation tracking
+async function callDownstreamService(data: any, logger: Logger) {
+  const correlationId = logger.globalContext.correlationId
+  const serviceLogger = logger.withTag('DownstreamCall')
 
-  const response = await fetch('https://downstream.service.com/api', {
-    headers: {
-      'x-correlation-id': correlationId,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  logger.info('Downstream service called', {
-    service: 'downstream',
-    statusCode: response.status,
+  serviceLogger.info('Calling downstream service', {
+    service: 'user-service',
+    operation: 'getUserProfile',
     correlationId,
   })
 
-  return response.json()
+  try {
+    const response = await fetch('https://user-service.internal/api/profile', {
+      headers: {
+        'x-correlation-id': correlationId,
+        'x-service-name': process.env.SERVICE_NAME,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    const result = await response.json()
+
+    serviceLogger.info('Downstream service response received', {
+      service: 'user-service',
+      statusCode: response.status,
+      success: response.ok,
+      correlationId,
+      responseTime: Date.now(),
+    })
+
+    return result
+  } catch (error) {
+    serviceLogger.error('Downstream service call failed', {
+      service: 'user-service',
+      error: error.message,
+      correlationId,
+      retryable: error.code === 'TIMEOUT',
+    })
+    throw error
+  }
 }
+
+// Environment variable driven correlation
+// LOGGER_MODE=production SERVICE_NAME=api-gateway npm start
 ```
 
-### Circuit Breaker Pattern
+### Circuit Breaker Pattern with Smart Logger
 
 ```typescript
-import { createLogger } from '@studio/logger'
+import logger, { production } from '@studio/logger'
 
 class CircuitBreaker {
-  private logger = createLogger({
-    globalContext: { component: 'circuit-breaker' },
-  })
+  private logger = production().withTag('CircuitBreaker')
   private failureCount = 0
   private lastFailureTime = 0
   private state: 'closed' | 'open' | 'half-open' = 'closed'
+  private operationId = 0
+
+  constructor(
+    private threshold = 5,
+    private timeout = 60000,
+  ) {
+    this.logger = this.logger.withContext({
+      component: 'circuit-breaker',
+      threshold,
+      timeout,
+    })
+  }
 
   async execute<T>(
     operation: () => Promise<T>,
     operationName: string,
   ): Promise<T> {
+    const currentOperationId = ++this.operationId
+    const operationLogger = this.logger.withContext({
+      operation: operationName,
+      operationId: currentOperationId,
+      state: this.state,
+    })
+
     if (this.state === 'open') {
-      this.logger.warn('Circuit breaker is open, rejecting request', {
-        operation: operationName,
+      operationLogger.warn('Circuit breaker is open, rejecting request', {
         failureCount: this.failureCount,
+        lastFailureTime: this.lastFailureTime,
+        timeSinceLastFailure: Date.now() - this.lastFailureTime,
       })
       throw new Error('Circuit breaker is open')
     }
 
-    try {
-      this.logger.debug('Executing operation', { operation: operationName })
-      const result = await operation()
+    if (this.state === 'half-open') {
+      operationLogger.info('Circuit breaker is half-open, attempting operation')
+    }
 
-      this.onSuccess(operationName)
+    const startTime = Date.now()
+
+    try {
+      operationLogger.debug('Executing operation')
+      const result = await operation()
+      const duration = Date.now() - startTime
+
+      this.onSuccess(operationName, operationLogger, duration)
       return result
     } catch (error) {
-      this.onFailure(operationName, error)
+      const duration = Date.now() - startTime
+      this.onFailure(operationName, error, operationLogger, duration)
       throw error
     }
   }
 
-  private onSuccess(operationName: string) {
+  private onSuccess(operationName: string, logger: Logger, duration: number) {
+    const previousState = this.state
     this.failureCount = 0
     this.state = 'closed'
 
-    this.logger.info('Operation succeeded, circuit breaker reset', {
+    logger.info('Operation succeeded', {
       operation: operationName,
+      duration,
+      previousState,
+      newState: this.state,
+      circuitBreakerReset: previousState !== 'closed',
     })
   }
 
-  private onFailure(operationName: string, error: any) {
+  private onFailure(
+    operationName: string,
+    error: any,
+    logger: Logger,
+    duration: number,
+  ) {
     this.failureCount++
     this.lastFailureTime = Date.now()
+    const previousState = this.state
 
-    if (this.failureCount >= 5) {
+    if (this.failureCount >= this.threshold) {
       this.state = 'open'
-      this.logger.error('Circuit breaker opened due to failures', {
+      logger.error('Circuit breaker opened due to failures', {
         operation: operationName,
         failureCount: this.failureCount,
+        threshold: this.threshold,
         error: error.message,
+        duration,
+        previousState,
+        newState: this.state,
       })
     } else {
-      this.logger.warn('Operation failed, incrementing failure count', {
+      logger.warn('Operation failed, incrementing failure count', {
         operation: operationName,
         failureCount: this.failureCount,
+        threshold: this.threshold,
         error: error.message,
+        duration,
+        state: this.state,
       })
+    }
+
+    // Schedule half-open attempt
+    if (this.state === 'open') {
+      setTimeout(() => {
+        this.state = 'half-open'
+        logger.info('Circuit breaker transitioned to half-open', {
+          operation: operationName,
+          timeout: this.timeout,
+        })
+      }, this.timeout)
     }
   }
 }
+
+// Environment variable driven configuration
+// LOGGER_MODE=production CIRCUIT_BREAKER_THRESHOLD=3 npm start
+const circuitBreaker = new CircuitBreaker(
+  parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD || '5'),
+  parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT || '60000'),
+)
 ```
 
 ---
 
-_These integration patterns provide proven approaches for incorporating the logger into complex applications and service architectures._
+_These enhanced integration patterns showcase the **smart environment-aware logger system** with zero-configuration auto-detection, intelligent preset functions, Chrome-optimized clickable callsites, and seamless environment variable overrides for maximum developer productivity in complex applications and service architectures._

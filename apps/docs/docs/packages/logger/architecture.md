@@ -4,7 +4,7 @@ This document provides deep technical details about the `@studio/logger` package
 
 ## 🎯 Overview
 
-The `@studio/logger` package implements a unified logging interface that automatically adapts to its runtime environment. The architecture uses environment detection and factory patterns to provide optimal logging for each context.
+The `@studio/logger` package implements a **smart environment-aware logging system** that automatically detects and adapts to different execution contexts (development, production, CI). The architecture uses intelligent environment detection, preset factory functions, and automatic configuration to provide optimal logging for each scenario with **zero manual configuration**.
 
 ## 📦 Package Structure
 
@@ -24,85 +24,128 @@ packages/logger/
 
 ## 🔧 Core Architecture Patterns
 
-### Environment Detection Strategy
+### Smart Environment Detection Strategy
 
-The logger uses runtime detection to determine the execution context:
+The logger uses intelligent environment detection to automatically configure itself:
 
 ```typescript
-function detectEnvironment(): 'node' | 'browser' {
-  if (typeof window !== 'undefined') {
-    return 'browser'
+type LoggerMode = 'debug' | 'production' | 'cli'
+
+function getDefaultMode(): LoggerMode {
+  // Environment variable override takes precedence
+  const envMode = process.env.LOGGER_MODE as LoggerMode
+  if (envMode && ['debug', 'production', 'cli'].includes(envMode)) {
+    return envMode
   }
-  if (typeof process !== 'undefined' && process.versions?.node) {
-    return 'node'
+
+  // Auto-detect based on NODE_ENV and context
+  if (process.env.NODE_ENV === 'development') return 'debug'
+  if (process.env.NODE_ENV === 'production') return 'production'
+  if (process.env.CI || (process.stdout && !process.stdout.isTTY)) {
+    return 'production' // Structured logs for CI/automation
   }
-  // Fallback for edge cases
-  return 'browser'
+
+  // Safe default
+  return 'production'
 }
 ```
 
-### Factory Pattern Implementation
+### Preset Factory Functions
 
-The main logger uses a factory pattern to provide environment-specific implementations:
+Three optimized preset functions provide common logging configurations:
 
 ```typescript
-export const log = createEnvironmentLogger()
-
-function createEnvironmentLogger(): Logger {
-  const env = detectEnvironment()
-
-  if (env === 'node') {
-    return createNodeLogger({
-      level: getLogLevel(),
-      enableCallsiteTracking: true,
-      prettyPrint: isDevelopment(),
-    })
-  } else {
-    return createBrowserLogger({
-      level: getLogLevel(),
-      enableConsole: true,
-      enableColors: true,
-      enableInProduction: false,
-    })
-  }
+// 🖥️ CLI-friendly logger - pretty print without noise
+export function cli(config: Partial<NodeLoggerConfig> = {}): NodeLogger {
+  return createLogger({
+    level: 'info',
+    prettyPrint: true,
+    includeCallsite: false, // Clean output for end users
+    ...config,
+  })
 }
+
+// 🐛 Debug logger - full diagnostics with clickable traces
+export function debug(config: Partial<NodeLoggerConfig> = {}): NodeLogger {
+  return createLogger({
+    level: 'debug',
+    prettyPrint: true,
+    includeCallsite: true, // IDE-friendly callsite links
+    ...config,
+  })
+}
+
+// 🏭 Production logger - structured JSON for monitoring
+export function production(config: Partial<NodeLoggerConfig> = {}): NodeLogger {
+  return createLogger({
+    level: 'info',
+    prettyPrint: false, // JSON output for log aggregation
+    includeCallsite: true,
+    ...config,
+  })
+}
+```
+
+### Auto-Detecting Default Export
+
+The main logger automatically selects the best configuration:
+
+```typescript
+// Smart default that auto-detects environment
+const logger = createLogger() // Uses getDefaultMode() internally
+
+// Equivalent manual configuration based on detected environment
+const logger =
+  NODE_ENV === 'development'
+    ? debug()
+    : NODE_ENV === 'production'
+      ? production()
+      : cli()
+
+export default logger
 ```
 
 ## 🖥️ Node.js Implementation Details
 
-### Pino Integration
+### Enhanced Pino Integration
 
-The Node.js logger uses Pino for high-performance structured logging:
+The Node.js logger uses Pino with intelligent configuration based on mode:
 
 ```typescript
 import pino from 'pino'
 import pretty from 'pino-pretty'
 
-function createNodeLogger(config: NodeLoggerConfig): Logger {
+function createNodeLogger(config: NodeLoggerConfig): NodeLogger {
   const pinoConfig: pino.LoggerOptions = {
     level: config.level || 'info',
     formatters: {
       level: (label) => ({ level: label }),
     },
-    timestamp: pino.stdTimeFunctions.isoTime,
+    timestamp: config.prettyPrint ? false : pino.stdTimeFunctions.isoTime,
   }
 
-  // Pretty printing for development
+  // Smart transport configuration based on pretty print mode
   const stream = config.prettyPrint
     ? pretty({
         colorize: true,
-        translateTime: 'HH:MM:ss.l',
-        ignore: 'pid,hostname',
+        translateTime: false, // No timestamps in pretty mode
+        ignore: 'pid,hostname,time', // Clean output
+        messageFormat: (log, messageKey) => {
+          const callsiteInfo = log.callsite
+            ? ` 📍 ${log.callsite.file}:${log.callsite.line}:${log.callsite.column}`
+            : ''
+          return `${log[messageKey]}${callsiteInfo}`
+        },
       })
     : process.stdout
 
-  return pino(pinoConfig, stream)
+  return new NodeLogger(pino(pinoConfig, stream), config)
 }
 ```
 
-### Callsite Tracking Implementation
+### Enhanced Callsite Tracking Implementation
 
-Accurate callsite information is extracted using stacktracey:
+Accurate callsite information is extracted using stacktracey with IDE-friendly formatting:
 
 ```typescript
 import StackTracey from 'stacktracey'
@@ -122,10 +165,16 @@ export function getCallsite(): CallsiteInfo | null {
 
     if (!relevantFrame) return null
 
+    const file = getRelativePath(relevantFrame.file)
+    const line = relevantFrame.line || 0
+    const column = relevantFrame.column || 0
+
     return {
-      file: getRelativePath(relevantFrame.file),
-      line: relevantFrame.line || 0,
-      column: relevantFrame.column || 0,
+      file,
+      line,
+      column,
+      // IDE-friendly clickable link format
+      callsiteLink: `${file}:${line}:${column}`,
     }
   } catch (error) {
     // Graceful fallback if callsite extraction fails
@@ -172,79 +221,80 @@ class NodeLogger implements Logger {
 }
 ```
 
-### CLI Logger Variant - **Deprecated**
+### Environment Variable Overrides
 
-⚠️ **Deprecated**: Use `createLogger({ prettyPrint: true })` instead.
+Fine-grained control through environment variables:
 
 ```typescript
-// Old approach (deprecated)
-export function createCliLogger(level: LogLevel = 'info'): Logger
+// Override logger mode
+LOGGER_MODE=debug npm start
+LOGGER_MODE=cli npm run build
+LOGGER_MODE=production npm test
 
-// New unified approach
-const cliLogger = createLogger({
-  level: 'info',
-  prettyPrint: true,
-})
+// Override log level
+LOG_LEVEL=trace npm run dev
+LOG_LEVEL=error npm run prod
+
+// Override specific features
+LOGGER_PRETTY_PRINT=false npm start
+LOGGER_INCLUDE_CALLSITE=true npm run build
 ```
 
 ## 🌐 Browser Implementation Details
 
-### Console Enhancement Strategy
+### Enhanced Console with Clickable Links
 
-The browser logger enhances the native console with additional features:
+The browser logger enhances the native console with IDE-friendly clickable callsite links:
 
 ```typescript
-class BrowserLogger implements Logger {
-  private config: BrowserLoggerConfig
-  private remoteBatch: LogEntry[] = []
-  private flushTimer?: NodeJS.Timeout
+private logToConsole(entry: LogEntry): void {
+  const { level, message, tag, context, data, callsite } = entry
+  const consoleMethod = CONSOLE_METHODS[level]
+  const timestamp = formatTimestamp()
 
-  constructor(config: BrowserLoggerConfig) {
-    this.config = {
-      level: 'info',
-      enableConsole: true,
-      enableColors: true,
-      batchSize: 50,
-      flushInterval: 30000,
-      ...config,
+  const prefix = `[${timestamp}] ${level.toUpperCase()}`
+  const tagSuffix = tag ? ` [${tag}]` : ''
+  const mainMessage = `${prefix}${tagSuffix}: ${message}`
+
+  // Build arguments array for console output
+  const args: Array<unknown> = []
+
+  if (this.config.enableColors) {
+    // Use colored output with CSS styles
+    args.push(`%c${mainMessage}`, LEVEL_COLORS[level])
+  } else {
+    args.push(mainMessage)
+  }
+
+  // Add context if present
+  if (context && Object.keys(context).length > 0) {
+    args.push('Context:', context)
+  }
+
+  // Add callsite info with Chrome-optimized clickable format
+  if (callsite) {
+    if (
+      this.config.devClickableTraces &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      // Create Error object for guaranteed Chrome clickability
+      const clickableTrace = new Error()
+      clickableTrace.name = ''
+      clickableTrace.message = `📍 ${callsite.file}:${callsite.line}:${callsite.column}`
+      args.push(clickableTrace)
+    } else {
+      // Fallback string format - often clickable in Chrome
+      args.push(`📍 ${callsite.file}:${callsite.line}:${callsite.column}`)
     }
-
-    this.startBatchFlushTimer()
   }
 
-  info(message: string, context?: LogContext): void {
-    const entry = this.createLogEntry('info', message, context)
-
-    if (this.config.enableConsole) {
-      this.logToConsole(entry)
-    }
-
-    if (this.config.remoteEndpoint) {
-      this.addToRemoteBatch(entry)
-    }
+  // Add any additional data
+  if (data && data.length > 0) {
+    args.push(...data)
   }
 
-  withTag(tag: string): Logger {
-    return new BrowserLogger(this.config, [...this.tags, tag], this.context)
-  }
-
-  withContext(context: LogContext): Logger {
-    return new BrowserLogger(this.config, this.tags, {
-      ...this.context,
-      ...context,
-    })
-  }
-
-  private logToConsole(entry: LogEntry): void {
-    const style = this.getLevelStyle(entry.level)
-    const timestamp = new Date(entry.timestamp).toLocaleTimeString()
-
-    console.log(
-      `%c[${entry.level.toUpperCase()} ${timestamp}] ${entry.message}`,
-      style,
-      ...(entry.context ? [entry.context] : []),
-    )
-  }
+  // Use the console method directly
+  ;(console[consoleMethod] as (...args: Array<unknown>) => void)(...args)
 }
 ```
 
@@ -505,23 +555,54 @@ describe('callsite tracking', () => {
 
 ## 🔧 Configuration Architecture
 
-### Environment-Based Configuration
+### Environment-Based Auto-Configuration
 
-Configuration adapts automatically to the environment:
+Configuration adapts automatically with intelligent defaults and environment variable overrides:
 
 ```typescript
-function getDefaultConfig(): LoggerConfig {
-  const isProduction = process.env.NODE_ENV === 'production'
-  const isDevelopment = process.env.NODE_ENV === 'development'
+function getLoggerConfig(): NodeLoggerConfig {
+  const mode = getDefaultMode() // 'debug' | 'production' | 'cli'
+  const level = (process.env.LOG_LEVEL as LogLevel) || getDefaultLevel(mode)
+  const prettyPrint = parseBooleanEnv(
+    'LOGGER_PRETTY_PRINT',
+    mode !== 'production',
+  )
+  const includeCallsite = parseBooleanEnv(
+    'LOGGER_INCLUDE_CALLSITE',
+    mode === 'debug',
+  )
 
   return {
-    level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'debug'),
-    enableConsole: !isProduction,
-    enableColors: isDevelopment,
-    enableInProduction: false,
-    batchSize: isProduction ? 100 : 10,
-    flushInterval: isProduction ? 60000 : 5000,
+    level,
+    prettyPrint,
+    includeCallsite,
+    globalContext: {
+      environment: process.env.NODE_ENV || 'development',
+      service: process.env.SERVICE_NAME,
+      version: process.env.VERSION,
+    },
+    tags: [],
   }
+}
+
+function getDefaultLevel(mode: LoggerMode): LogLevel {
+  switch (mode) {
+    case 'debug':
+      return 'debug'
+    case 'production':
+      return 'info'
+    case 'cli':
+      return 'info'
+    default:
+      return 'info'
+  }
+}
+
+function parseBooleanEnv(envVar: string, defaultValue: boolean): boolean {
+  const value = process.env[envVar]
+  if (value === 'true') return true
+  if (value === 'false') return false
+  return defaultValue
 }
 ```
 
@@ -540,6 +621,32 @@ export function updateLoggerConfig(updates: Partial<LoggerConfig>): void {
 }
 ```
 
+## 🚀 Performance & Developer Experience Benefits
+
+### Zero Configuration Setup
+
+- **Auto-detection**: Automatically selects optimal configuration based on environment
+- **Preset functions**: `cli()`, `debug()`, `production()` for common use cases
+- **Smart defaults**: Reasonable defaults that work out of the box
+
+### Development Productivity
+
+- **IDE-friendly callsites**: Clickable `file:line:column` links in both Node.js and browser
+- **Clean CLI output**: No timestamps or noise in pretty print mode
+- **Rich debugging**: Full diagnostics in debug mode with enhanced error objects
+
+### Production Ready
+
+- **Structured logging**: JSON output for log aggregation and monitoring
+- **Performance optimized**: Efficient batching and minimal overhead
+- **Security conscious**: Automatic sensitive data redaction
+
+### Flexible Control
+
+- **Environment variables**: Override any configuration through environment variables
+- **Preset customization**: Override any preset with additional configuration
+- **Context chaining**: `logger.withTag('API').withContext({ userId })` for rich metadata
+
 ---
 
-_This architecture provides high performance, security, and flexibility while maintaining a simple, unified API across all environments._
+_This smart environment-aware architecture provides **zero-configuration simplicity** for common cases while maintaining **full flexibility** for advanced scenarios, ensuring optimal logging across development, testing, and production environments._

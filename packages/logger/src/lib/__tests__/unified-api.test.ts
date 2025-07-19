@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest'
 
-import { createLogger, log } from '../logger'
+import { createLogger, production } from '../logger'
 import { createMockLogger } from '../testing'
 
 describe('Unified Logger API', () => {
   describe('Unified API Signature', () => {
     it('accepts message and context object', () => {
+      const logger = production()
       expect(() => {
-        log.info('User action completed', {
+        logger.info('User action completed', {
           userId: '123',
           action: 'login',
           duration: 150,
@@ -16,28 +17,31 @@ describe('Unified Logger API', () => {
     })
 
     it('accepts message without context', () => {
+      const logger = production()
       expect(() => {
-        log.info('Simple message')
+        logger.info('Simple message')
       }).not.toThrow()
     })
 
     it('supports all log levels with unified signature', () => {
+      const logger = production()
       const context = { feature: 'auth', userId: '123' }
 
       expect(() => {
-        log.trace('Trace message', context)
-        log.debug('Debug message', context)
-        log.info('Info message', context)
-        log.warn('Warning message', context)
-        log.error('Error message', context)
-        log.fatal('Fatal message', context)
+        logger.trace('Trace message', context)
+        logger.debug('Debug message', context)
+        logger.info('Info message', context)
+        logger.warn('Warning message', context)
+        logger.error('Error message', context)
+        logger.fatal('Fatal message', context)
       }).not.toThrow()
     })
   })
 
   describe('Context and Tag Support', () => {
     it('supports withTag for Node.js logger', () => {
-      const taggedLogger = log.withTag('UserService')
+      const logger = production()
+      const taggedLogger = logger.withTag('UserService')
 
       expect(taggedLogger).toBeDefined()
       expect(typeof taggedLogger.info).toBe('function')
@@ -45,7 +49,8 @@ describe('Unified Logger API', () => {
     })
 
     it('supports withContext for Node.js logger', () => {
-      const contextLogger = log.withContext({
+      const logger = production()
+      const contextLogger = logger.withContext({
         service: 'auth',
         version: '1.0.0',
       })
@@ -56,7 +61,8 @@ describe('Unified Logger API', () => {
     })
 
     it('supports method chaining', () => {
-      const chainedLogger = log
+      const logger = production()
+      const chainedLogger = logger
         .withTag('APIClient')
         .withContext({ endpoint: '/api/users' })
         .withTag('UserService')

@@ -5,19 +5,105 @@ Complete API documentation for the `@studio/logger` package with TypeScript sign
 ## 🚀 Quick Start
 
 ```typescript
-import { log, createLogger, createCliLogger } from '@studio/logger'
+import logger, { cli, debug, production, createLogger } from '@studio/logger'
 
-// Use the default logger (environment-adaptive)
-log.info('Hello world', { userId: 123 })
+// Zero-config smart logger (auto-detects environment)
+logger.info('Hello world', { userId: 123 })
+
+// Use optimized presets for specific contexts
+const cliLogger = cli() // Clean output for CLI tools
+const debugLogger = debug() // Rich debugging with clickable traces
+const prodLogger = production() // Structured JSON for monitoring
 
 // Create custom logger instances
-const customLogger = createLogger({ level: 'debug' })
-const cliLogger = createCliLogger('info')
+const customLogger = createLogger({ level: 'debug', prettyPrint: true })
 ```
 
-## 🎯 Default Logger Interface
+## 🎯 Smart Auto-Detecting Logger
 
-The main logger interface provides consistent methods across all environments.
+The default export automatically configures itself based on environment detection:
+
+```typescript
+import logger from '@studio/logger'
+
+// Automatically configured based on:
+// • NODE_ENV === 'development' → debug mode (pretty + callsites)
+// • NODE_ENV === 'production' → structured JSON logs
+// • CI environment → structured logs for automation
+// • Environment variables → LOGGER_MODE override
+
+logger.info('This automatically uses the best configuration')
+```
+
+### Environment Variable Overrides
+
+```bash
+# Override logger mode
+LOGGER_MODE=debug npm start       # Force debug mode
+LOGGER_MODE=cli npm run build     # Force clean CLI output
+LOGGER_MODE=production npm test   # Force structured JSON
+
+# Override specific settings
+LOG_LEVEL=trace npm run dev       # Set log level
+LOGGER_PRETTY_PRINT=false npm start         # Disable pretty printing
+LOGGER_INCLUDE_CALLSITE=true npm run build  # Enable callsite tracking
+```
+
+## 📦 Preset Functions
+
+Three optimized preset functions for common scenarios:
+
+### `cli(config?)` - Clean CLI Output
+
+Perfect for command-line tools and scripts. No timestamps, no callsites, just clean readable output.
+
+```typescript
+import { cli } from '@studio/logger'
+
+const logger = cli({ level: 'info' })
+logger.info('Processing files...')
+logger.warn('Skipped 3 invalid entries')
+logger.info('✅ Completed successfully')
+
+// Output:
+// INFO: Processing files...
+// WARN: Skipped 3 invalid entries
+// INFO: ✅ Completed successfully
+```
+
+### `debug(config?)` - Rich Development Debugging
+
+Enhanced debugging with IDE-friendly clickable callsite links and full diagnostics.
+
+```typescript
+import { debug } from '@studio/logger'
+
+const logger = debug({ level: 'trace' })
+logger.debug('User authentication started')
+logger.trace('Validating credentials')
+
+// Output (pretty printed):
+// DEBUG: User authentication started 📍 src/auth.ts:45:12
+// TRACE: Validating credentials 📍 src/auth.ts:47:8
+```
+
+### `production(config?)` - Structured JSON Logs
+
+Optimized for log aggregation, monitoring, and production environments.
+
+```typescript
+import { production } from '@studio/logger'
+
+const logger = production({ level: 'info' })
+logger.info('User login successful', { userId: '123', method: 'oauth' })
+
+// Output (JSON):
+// {"level":30,"time":1703095890123,"msg":"User login successful","userId":"123","method":"oauth","callsite":{"file":"src/auth.ts","line":52,"column":8}}
+```
+
+## 🎯 Unified Logger Interface
+
+All loggers (default, presets, and custom) provide the same consistent interface:
 
 ### Basic Logging Methods
 
@@ -250,40 +336,44 @@ customLogger.info('Service started')
 // Includes global context automatically
 ```
 
-### `createCliLogger(level?)` (Node.js Only) - **Deprecated**
+### Preset Configuration Override
 
-⚠️ **Deprecated**: Use `createLogger({ prettyPrint: true })` instead.
-
-Create a CLI-friendly logger for scripts and command-line tools.
+All preset functions accept configuration overrides:
 
 ```typescript
-// Deprecated
-function createCliLogger(level: pino.LevelWithSilent = 'info'): pino.Logger
+import { cli, debug, production } from '@studio/logger'
 
-// Recommended
-const cliLogger = createLogger({
-  level: 'debug',
-  prettyPrint: true,
+// Override preset defaults
+const verboseCli = cli({ level: 'debug' })
+const quietDebug = debug({ level: 'warn' })
+const trackedProduction = production({
+  globalContext: { service: 'api', version: '1.2.0' },
+})
+
+// Mix and match features
+const customLogger = cli({
+  level: 'trace',
+  includeCallsite: true, // Add callsites to CLI output
 })
 ```
 
-**Example:**
+## 🌐 Browser-Specific Features
+
+### Enhanced Clickable Callsites
+
+The browser logger provides Chrome-optimized clickable links for easy source navigation:
 
 ```typescript
 import { createLogger } from '@studio/logger'
 
-const cliLogger = createLogger({
-  level: 'debug',
-  prettyPrint: true,
+const logger = createLogger({
+  devClickableTraces: true, // Creates Error objects for guaranteed Chrome clickability
+  enableColors: true,
 })
 
-cliLogger.info('Processing CSV file...')
-cliLogger.debug('Found 1,250 rows')
-cliLogger.warn('Skipping 3 invalid rows')
-cliLogger.info('Import completed successfully')
+logger.info('User logged in', { userId: '123' })
+// Output: INFO: User logged in 📍 src/auth.ts:42:8 [clickable in Chrome]
 ```
-
-## 🌐 Browser-Specific Features
 
 ### Console Grouping
 
