@@ -43,7 +43,7 @@ export {
 
 // Validation types
 export type {
-  ValidationResult,
+  ValidationResult as SchemaValidationResult,
   ValidationWorkflow,
   ValidationResultInput,
   ValidationResultOutput,
@@ -124,6 +124,82 @@ export {
   TemporalContextSchema,
   TemporalAnalyticsSchema,
 } from './processing/temporal'
+
+// Type guard functions
+export {
+  isMemory,
+  isMemoryMetadata,
+  isEmotionalContext,
+  isRelationshipDynamics,
+  isParticipant,
+  isParticipantArray,
+  isEmotionalState,
+  isEmotionalTheme,
+  isCommunicationPattern,
+  isInteractionQuality,
+  isParticipantRole,
+  isNonEmptyString,
+  isUUID,
+  isISODateTime,
+  isNumberInRange,
+  hasProperty,
+} from './utils/type-guards'
+
+// Schema validation functions
+export type {
+  ValidationError,
+  ValidationWarning,
+  ValidationResult,
+  ValidationOptions,
+} from './utils/schema-validation'
+export {
+  validateMemory,
+  validateEmotionalContext,
+  validateRelationshipDynamics,
+  validateParticipant,
+  validateBatch,
+} from './utils/schema-validation'
+
+// Data transformation functions
+export type {
+  ExportMemory,
+  MemoryV1,
+  MigrationRecord,
+  MemoryFeatures,
+} from './utils/transformations'
+export {
+  transformMemoryToExport,
+  transformMemoryFromV1,
+  transformMemoryForDatabase,
+  transformMemoryFromDatabase,
+  normalizeMemory,
+  extractMemoryFeatures,
+  createMigrationRecord,
+  transformBatch,
+} from './utils/transformations'
+
+// Advanced validation types
+export type {
+  ValidationSeverity,
+  ValidationCategory,
+  ValidationIssue,
+  ValidationConfig,
+  ValidationRule,
+  ValidationContext,
+  BatchValidationResult,
+  BatchValidationOptions,
+  ValidationMiddleware,
+  ValidationRuleRegistry,
+  ValidationConfigFactory,
+  ValidatedType,
+  ValidationFunction,
+  AsyncValidationFunction,
+} from './utils/validation-types'
+export {
+  isValidated,
+  markAsValidated,
+  removeValidationMarker,
+} from './utils/validation-types'
 
 // Constants and utilities
 export {
