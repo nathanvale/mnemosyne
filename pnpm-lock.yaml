@@ -454,9 +454,6 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2
     devDependencies:
-      '@studio/test-config':
-        specifier: workspace:*
-        version: link:../test-config
       '@types/node':
         specifier: ^24.0.8
         version: 24.0.8
@@ -474,12 +471,18 @@ importers:
       '@studio/db':
         specifier: workspace:*
         version: link:../db
+      '@studio/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@studio/mocks':
         specifier: workspace:*
         version: link:../mocks
       '@studio/schema':
         specifier: workspace:*
         version: link:../schema
+      '@studio/scripts':
+        specifier: workspace:*
+        version: link:../scripts
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3

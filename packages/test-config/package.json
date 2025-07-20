@@ -16,7 +16,9 @@
     "@testing-library/react": "^16.3.0",
     "@studio/mocks": "workspace:*",
     "@studio/db": "workspace:*",
-    "@studio/schema": "workspace:*"
+    "@studio/schema": "workspace:*",
+    "@studio/scripts": "workspace:*",
+    "@studio/logger": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

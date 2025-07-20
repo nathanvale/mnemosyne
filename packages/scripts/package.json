@@ -30,7 +30,6 @@
     "fast-csv": "^5.0.2"
   },
   "devDependencies": {
-    "@studio/test-config": "workspace:*",
     "@types/node": "^24.0.8",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
