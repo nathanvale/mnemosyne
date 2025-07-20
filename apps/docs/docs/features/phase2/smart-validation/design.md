@@ -217,7 +217,7 @@ interface EmotionalSignificanceScore {
 │ Auto-Confirmation Summary:                                  │
 │ ✅ 12 memories auto-approved (confidence >0.75)            │
 │ ⚠️  8 memories flagged for review (0.5-0.75)               │
-│ ❌ 2 memories auto-rejected (confidence <0.5)              │
+│ ❌ 2 memories auto-rejected (confidence &lt;0.5)              │
 │                                                             │
 │ Estimated Review Time: 15 minutes                          │
 └─────────────────────────────────────────────────────────────┘

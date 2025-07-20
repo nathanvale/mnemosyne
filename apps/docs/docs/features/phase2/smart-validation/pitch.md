@@ -45,7 +45,7 @@ $ pnpm validate:batch --batch-id batch_2024_001
 [INFO] Processing 50 extracted memories for validation...
 [INFO] Auto-approved: 35 memories (70% - confidence >0.75)
 [INFO] Flagged for review: 13 memories (26% - confidence 0.5-0.75)
-[INFO] Auto-rejected: 2 memories (4% - confidence <0.5)
+[INFO] Auto-rejected: 2 memories (4% - confidence &lt;0.5)
 [INFO] Estimated review time: 12 minutes for prioritized memories
 [INFO] Validation queue ready - 3 critical, 6 high, 4 medium priority
 ```
@@ -326,7 +326,7 @@ interface AutoConfirmationResult {
 - **Scenario**: Validator reviews flagged memories with rich context interface
 - **Data**: 20 borderline memories with emotional context and significance data
 - **Flow**: Priority queue → Context presentation → Quick validation decisions
-- **Success**: <90 seconds average review time with high decision confidence
+- **Success**: &lt;90 seconds average review time with high decision confidence
 
 **Learning System Demo**:
 
