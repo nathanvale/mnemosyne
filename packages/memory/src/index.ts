@@ -44,6 +44,13 @@ export interface MemoryProcessingSystem {
   organization: import('./organization/clusterer').MemoryClusterer
 }
 
+// Export the enhanced processor class directly
+export { EnhancedMemoryProcessor } from './extraction/enhanced-processor'
+export type {
+  ProcessorConfig,
+  ProcessingResult,
+} from './extraction/enhanced-processor'
+
 /**
  * Factory function to create a complete memory processing system
  */

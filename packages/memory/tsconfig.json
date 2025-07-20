@@ -1,5 +1,5 @@
 {
-  "extends": "@studio/shared/tsconfig.package.json",
+  "extends": "../shared/tsconfig.package.json",
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist"
