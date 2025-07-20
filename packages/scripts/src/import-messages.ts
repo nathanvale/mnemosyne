@@ -43,7 +43,7 @@ let skippedCount = 0
 let importedCount = 0
 let duplicatesSkipped = 0
 let isDebugMode = false
-let logger: typeof log
+let logger: ReturnType<typeof createLogger>
 
 // Track hashes within this import session to prevent duplicate imports
 const importSessionHashes = new Set<string>()
