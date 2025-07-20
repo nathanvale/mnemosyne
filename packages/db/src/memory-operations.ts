@@ -26,6 +26,8 @@ export interface DatabaseMemoryInput {
   }>
   summary: string
   confidence: number // 1-10 scale
+  contentHash: string // SHA-256 hash for deduplication
+  deduplicationMetadata?: string // JSON metadata for merge history
   extractedAt?: Date
 }
 
@@ -131,6 +133,21 @@ function validateDatabaseMemoryInput(input: unknown): ValidationResult {
       value: data.confidence,
       expectedType: 'number',
       code: 'INVALID_RANGE',
+    })
+  }
+
+  // contentHash can be empty string for deduplication processing - it will be generated
+  if (
+    data.contentHash !== undefined &&
+    data.contentHash !== '' &&
+    !isNonEmptyString(data.contentHash)
+  ) {
+    errors.push({
+      message: 'contentHash must be a non-empty string when provided',
+      field: 'contentHash',
+      value: data.contentHash,
+      expectedType: 'string',
+      code: 'INVALID_TYPE',
     })
   }
 
@@ -262,6 +279,8 @@ export class MemoryDatabase {
           participants: JSON.stringify(memoryData.participants),
           summary: memoryData.summary,
           confidence: memoryData.confidence,
+          contentHash: memoryData.contentHash,
+          deduplicationMetadata: memoryData.deduplicationMetadata,
           extractedAt: memoryData.extractedAt ?? new Date(),
         },
         include: {
@@ -493,6 +512,8 @@ export class MemoryDatabase {
               participants: JSON.stringify(memory.participants),
               summary: memory.summary,
               confidence: memory.confidence,
+              contentHash: memory.contentHash,
+              deduplicationMetadata: memory.deduplicationMetadata,
               extractedAt: memory.extractedAt ?? new Date(),
             },
           }),
@@ -512,6 +533,101 @@ export class MemoryDatabase {
         error: error instanceof Error ? error.message : String(error),
       }
     }
+  }
+
+  /**
+   * Find memory by content hash for deduplication
+   */
+  async findMemoryByHash(
+    contentHash: string,
+  ): Promise<DatabaseOperationResult<PrismaMemory | null>> {
+    try {
+      const memory = await this.prisma.memory.findUnique({
+        where: { contentHash },
+        include: {
+          messages: true,
+          emotionalContext: true,
+          relationshipDynamics: true,
+          validationStatus: true,
+          qualityMetrics: true,
+        },
+      })
+
+      return {
+        data: memory,
+        validation: { isValid: true, errors: [], warnings: [] },
+        success: true,
+      }
+    } catch (error) {
+      return {
+        data: null,
+        validation: { isValid: true, errors: [], warnings: [] },
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+  }
+
+  /**
+   * Get all memories for deduplication comparison
+   */
+  async getAllMemoriesForDeduplication(): Promise<
+    DatabaseOperationResult<
+      Array<{
+        id: string
+        summary: string
+        participants: string
+        sourceMessageIds: string
+        confidence: number
+        contentHash: string
+      }>
+    >
+  > {
+    try {
+      const memories = await this.prisma.memory.findMany({
+        select: {
+          id: true,
+          summary: true,
+          participants: true,
+          sourceMessageIds: true,
+          confidence: true,
+          contentHash: true,
+        },
+      })
+
+      return {
+        data: memories,
+        validation: { isValid: true, errors: [], warnings: [] },
+        success: true,
+      }
+    } catch (error) {
+      return {
+        data: null,
+        validation: { isValid: true, errors: [], warnings: [] },
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+  }
+
+  /**
+   * Create memory with deduplication check
+   */
+  async createMemoryWithDeduplication(
+    memoryData: DatabaseMemoryInput,
+  ): Promise<DatabaseOperationResult<PrismaMemory>> {
+    const existingCheck = await this.findMemoryByHash(memoryData.contentHash)
+
+    if (existingCheck.success && existingCheck.data) {
+      return {
+        data: existingCheck.data,
+        validation: { isValid: true, errors: [], warnings: [] },
+        success: true,
+        error: 'Memory with this content hash already exists',
+      }
+    }
+
+    return this.createMemory(memoryData)
   }
 }
 

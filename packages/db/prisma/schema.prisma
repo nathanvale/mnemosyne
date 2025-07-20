@@ -45,6 +45,8 @@ model Memory {
   participants      String             // JSON participant data
   summary          String
   confidence       Int                // 1-10 scale
+  contentHash      String             @unique // SHA-256 hash for deduplication
+  deduplicationMetadata String?       // JSON metadata for merge history
   extractedAt      DateTime           @default(now())
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
@@ -55,6 +57,8 @@ model Memory {
   relationshipDynamics RelationshipDynamics?
   validationStatus ValidationStatus?
   qualityMetrics   QualityMetrics[]
+  
+  @@index([contentHash])
 }
 
 model EmotionalContext {
