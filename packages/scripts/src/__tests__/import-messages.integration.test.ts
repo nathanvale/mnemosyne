@@ -22,6 +22,8 @@ vi.mock('@studio/logger', () => ({
     fatal: vi.fn(),
   },
   createLogger: vi.fn(() => mockCliLogger),
+  cli: vi.fn(() => mockCliLogger),
+  debug: vi.fn(() => mockCliLogger),
 }))
 
 // Prepare controllable stream and mock fs
