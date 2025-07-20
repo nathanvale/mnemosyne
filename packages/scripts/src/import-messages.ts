@@ -5,7 +5,7 @@ import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
 import fs from 'fs'
 
-const prisma = new PrismaClient()
+export const prisma = new PrismaClient()
 
 /**
  * Creates a stable content-based hash for message deduplication.
@@ -55,9 +55,11 @@ const importSessionHashes = new Set<string>()
  * and preview mode. Streams CSV rows and imports messages into the
  * database using Prisma.
  *
+ * @param customPrisma - Optional Prisma client to use instead of the default (for testing)
  * @returns A promise that resolves when the import is complete.
  */
-export async function main() {
+export async function main(customPrisma?: PrismaClient) {
+  const prismaClient = customPrisma || prisma
   const program = new Command()
   program
     .version('1.0.0')
@@ -120,40 +122,43 @@ export async function main() {
         processedCount++
 
         const currentRowIndex = rowIndex // Capture the current row index for the closure
-        const p = importMessage(row, isPreview, currentRowIndex).catch(
-          (error) => {
-            importErrors.push({
+        const p = importMessage(
+          row,
+          isPreview,
+          currentRowIndex,
+          prismaClient,
+        ).catch((error) => {
+          importErrors.push({
+            rowIndex: currentRowIndex,
+            error,
+            rowData: {
+              'Message Date': row['Message Date'],
+              'Sender Name': row['Sender Name'],
+              'Sender ID': row['Sender ID'],
+              Text:
+                row['Text']?.substring(0, 50) +
+                (row['Text']?.length > 50 ? '...' : ''),
+              Type: row['Type'],
+            },
+          })
+
+          if (isDebugMode) {
+            logger.error('Failed to import message', {
               rowIndex: currentRowIndex,
-              error,
+              error: error.message,
               rowData: {
                 'Message Date': row['Message Date'],
                 'Sender Name': row['Sender Name'],
                 'Sender ID': row['Sender ID'],
                 Text:
-                  row['Text']?.substring(0, 50) +
-                  (row['Text']?.length > 50 ? '...' : ''),
+                  row['Text']?.substring(0, 100) +
+                  (row['Text']?.length > 100 ? '...' : ''),
                 Type: row['Type'],
               },
             })
-
-            if (isDebugMode) {
-              logger.error('Failed to import message', {
-                rowIndex: currentRowIndex,
-                error: error.message,
-                rowData: {
-                  'Message Date': row['Message Date'],
-                  'Sender Name': row['Sender Name'],
-                  'Sender ID': row['Sender ID'],
-                  Text:
-                    row['Text']?.substring(0, 100) +
-                    (row['Text']?.length > 100 ? '...' : ''),
-                  Type: row['Type'],
-                },
-              })
-            }
-            // Suppress individual errors in non-debug mode for cleaner output
-          },
-        )
+          }
+          // Suppress individual errors in non-debug mode for cleaner output
+        })
         pendingImports.push(p)
       })
       .on('end', async (rowCount: number) => {
@@ -165,7 +170,7 @@ export async function main() {
         // Print summary
         printImportSummary(rowCount, duration, inputFile, isPreview)
 
-        await prisma.$disconnect()
+        await prismaClient.$disconnect()
 
         // Give logger time to flush before resolving
         setTimeout(() => {
@@ -387,12 +392,14 @@ function deduplicateUrls(urls: Array<string>): Array<string> {
  * @param row - The CSV-parsed message row to import.
  * @param isPreview - If true, logs parsed message without importing.
  * @param rowIndex - The row number for error reporting.
+ * @param prismaClient - The Prisma client to use for database operations.
  * @throws Will throw an error if required fields are missing on the row.
  */
 async function importMessage(
   row: MessageRow,
   isPreview: boolean,
   rowIndex: number,
+  prismaClient: PrismaClient,
 ) {
   // Map new CSV format to expected fields
   const timestamp = row['Message Date']
@@ -472,7 +479,9 @@ async function importMessage(
     return
   }
 
-  const existingMessage = await prisma.message.findUnique({ where: { hash } })
+  const existingMessage = await prismaClient.message.findUnique({
+    where: { hash },
+  })
 
   if (existingMessage) {
     skippedCount++
@@ -542,7 +551,7 @@ async function importMessage(
   // Mark this hash as processed in this session BEFORE attempting to create
   importSessionHashes.add(hash)
 
-  await prisma.message.create({
+  await prismaClient.message.create({
     data: {
       timestamp: new Date(timestamp),
       sender,
@@ -580,16 +589,16 @@ async function importMessage(
 const isMain = import.meta.url === `file://${process.argv[1]}`
 
 if (isMain) {
-  main().catch((e) => {
+  main().catch(async (e) => {
     // Use appropriate logger for errors
     const errorLogger = isDebugMode
-      ? log
+      ? logger
       : createLogger({ level: 'error', prettyPrint: true })
     errorLogger.error('Script failed', {
       error: e.message,
       stack: isDebugMode ? e.stack : undefined,
     })
-    prisma.$disconnect()
+    await prisma.$disconnect()
     process.exit(1)
   })
 }

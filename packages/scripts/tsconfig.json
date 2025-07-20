@@ -6,7 +6,11 @@
     "noEmit": false,
     "allowImportingTsExtensions": false
   },
-  "references": [{ "path": "../db" }, { "path": "../logger" }],
+  "references": [
+    { "path": "../db" },
+    { "path": "../logger" },
+    { "path": "../test-config" }
+  ],
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
 }
