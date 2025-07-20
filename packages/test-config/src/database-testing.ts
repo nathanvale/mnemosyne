@@ -203,6 +203,7 @@ export async function seedTestDatabase(client: PrismaClient) {
       ]),
       summary: 'Friendly conversation with link sharing',
       confidence: 8,
+      contentHash: 'test-content-hash-1',
       messages: {
         connect: [{ id: message1.id }, { id: message2.id }],
       },
@@ -313,13 +314,15 @@ function getPrismaGeneratedSchemaStatements(): string[] {
       UPDATE "Message" SET "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = NEW."id";
     END`,
 
-    // Memory schema tables (from 20250720080225_add_memory_schema)
+    // Memory schema tables (from 20250720080225_add_memory_schema + 20250720111836_add_memory_deduplication)
     `CREATE TABLE "Memory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "sourceMessageIds" TEXT NOT NULL,
         "participants" TEXT NOT NULL,
         "summary" TEXT NOT NULL,
         "confidence" INTEGER NOT NULL,
+        "contentHash" TEXT NOT NULL,
+        "deduplicationMetadata" TEXT,
         "extractedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL
@@ -386,7 +389,9 @@ function getPrismaGeneratedSchemaStatements(): string[] {
         CONSTRAINT "_MemoryMessages_B_fkey" FOREIGN KEY ("B") REFERENCES "Message" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     )`,
 
-    // Memory schema indexes (from 20250720080225_add_memory_schema)
+    // Memory schema indexes (from 20250720080225_add_memory_schema + 20250720111836_add_memory_deduplication)
+    `CREATE UNIQUE INDEX "Memory_contentHash_key" ON "Memory"("contentHash")`,
+    `CREATE INDEX "Memory_contentHash_idx" ON "Memory"("contentHash")`,
     `CREATE UNIQUE INDEX "EmotionalContext_memoryId_key" ON "EmotionalContext"("memoryId")`,
     `CREATE UNIQUE INDEX "RelationshipDynamics_memoryId_key" ON "RelationshipDynamics"("memoryId")`,
     `CREATE UNIQUE INDEX "ValidationStatus_memoryId_key" ON "ValidationStatus"("memoryId")`,
@@ -486,6 +491,7 @@ export function createTestMemoryInput(
     ],
     summary: 'Test memory for validation',
     confidence: 8,
+    contentHash: `test-hash-${randomBytes(4).toString('hex')}`,
     extractedAt: new Date(),
   }
 

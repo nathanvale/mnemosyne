@@ -9,6 +9,12 @@ import {
 import { createLogger } from '@studio/logger'
 import { type ValidationResult } from '@studio/schema'
 
+import {
+  MemoryContentHasher,
+  MemoryDeduplicator,
+  type MemoryForDeduplication,
+} from './memory-deduplication'
+
 const logger = createLogger({
   tags: ['memory-processing'],
   includeCallsite: true,
@@ -33,9 +39,11 @@ export interface MemoryProcessingResult {
   failed: number
   validationErrors: number
   databaseErrors: number
+  duplicatesSkipped: number
+  similarMerged: number
   errors: Array<{
     index: number
-    type: 'validation' | 'database'
+    type: 'validation' | 'database' | 'deduplication'
     message: string
     data?: unknown
   }>
@@ -46,6 +54,8 @@ export interface MemoryProcessingResult {
  */
 export class MemoryDataProcessor {
   private memoryDb: ReturnType<typeof createMemoryDatabase>
+  private contentHasher: MemoryContentHasher
+  private deduplicator: MemoryDeduplicator
 
   constructor(
     private prisma: PrismaClient,
@@ -57,6 +67,84 @@ export class MemoryDataProcessor {
     },
   ) {
     this.memoryDb = createMemoryDatabase(prisma)
+    this.contentHasher = new MemoryContentHasher()
+    this.deduplicator = new MemoryDeduplicator(this.contentHasher)
+  }
+
+  /**
+   * Process memories with deduplication support
+   */
+  async processMemoriesWithDeduplication(
+    memoriesData: unknown[],
+  ): Promise<MemoryProcessingResult> {
+    const result: MemoryProcessingResult = {
+      processed: 0,
+      successful: 0,
+      failed: 0,
+      validationErrors: 0,
+      databaseErrors: 0,
+      duplicatesSkipped: 0,
+      similarMerged: 0,
+      errors: [],
+    }
+
+    if (this.config.logProgress) {
+      logger.info(`Starting memory processing with deduplication`, {
+        totalItems: memoriesData.length,
+        batchSize: this.config.batchSize,
+        validateFirst: this.config.validateFirst,
+      })
+    }
+
+    this.deduplicator.clearSessionHashes()
+
+    const existingMemoriesResult =
+      await this.memoryDb.getAllMemoriesForDeduplication()
+    const existingMemories: MemoryForDeduplication[] =
+      existingMemoriesResult.success && existingMemoriesResult.data
+        ? existingMemoriesResult.data.map((m) => ({
+            id: m.id,
+            summary: m.summary,
+            participants: JSON.parse(m.participants),
+            sourceMessageIds: JSON.parse(m.sourceMessageIds),
+            confidence: m.confidence,
+          }))
+        : []
+
+    for (let i = 0; i < memoriesData.length; i += this.config.batchSize) {
+      const batch = memoriesData.slice(i, i + this.config.batchSize)
+
+      if (this.config.logProgress) {
+        logger.info(
+          `Processing batch ${Math.floor(i / this.config.batchSize) + 1} with deduplication`,
+          {
+            batchStart: i,
+            batchSize: batch.length,
+          },
+        )
+      }
+
+      await this.processBatchWithDeduplication(
+        batch,
+        i,
+        result,
+        existingMemories,
+      )
+    }
+
+    if (this.config.logProgress) {
+      logger.info(`Memory processing with deduplication completed`, {
+        ...result,
+        successRate:
+          result.processed > 0 ? result.successful / result.processed : 0,
+        deduplicationRate:
+          result.processed > 0
+            ? result.duplicatesSkipped / result.processed
+            : 0,
+      })
+    }
+
+    return result
   }
 
   /**
@@ -71,6 +159,8 @@ export class MemoryDataProcessor {
       failed: 0,
       validationErrors: 0,
       databaseErrors: 0,
+      duplicatesSkipped: 0,
+      similarMerged: 0,
       errors: [],
     }
 
@@ -138,6 +228,121 @@ export class MemoryDataProcessor {
           throw error
         }
       }
+    }
+  }
+
+  /**
+   * Process a single batch of memories with deduplication
+   */
+  private async processBatchWithDeduplication(
+    batch: unknown[],
+    startIndex: number,
+    result: MemoryProcessingResult,
+    existingMemories: MemoryForDeduplication[],
+  ): Promise<void> {
+    for (let i = 0; i < batch.length; i++) {
+      const globalIndex = startIndex + i
+      const memoryData = batch[i]
+
+      try {
+        result.processed++
+        await this.processSingleMemoryWithDeduplication(
+          memoryData,
+          globalIndex,
+          result,
+          existingMemories,
+        )
+      } catch (error) {
+        result.failed++
+        result.errors.push({
+          index: globalIndex,
+          type: 'database',
+          message: error instanceof Error ? error.message : String(error),
+          data: memoryData,
+        })
+        if (!this.config.continueOnError) {
+          throw error
+        }
+      }
+    }
+  }
+
+  /**
+   * Process a single memory with validation and deduplication
+   */
+  private async processSingleMemoryWithDeduplication(
+    memoryData: unknown,
+    index: number,
+    result: MemoryProcessingResult,
+    existingMemories: MemoryForDeduplication[],
+  ): Promise<void> {
+    if (this.config.validateFirst) {
+      const validation = validateMemoryForDatabase(memoryData)
+      if (!validation.isValid) {
+        result.failed++
+        result.validationErrors++
+        result.errors.push({
+          index,
+          type: 'validation',
+          message: `Validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+          data: memoryData,
+        })
+        return
+      }
+    }
+
+    const memoryInput = memoryData as DatabaseMemoryInput
+
+    const memory: MemoryForDeduplication = {
+      id: memoryInput.id,
+      summary: memoryInput.summary,
+      participants: memoryInput.participants,
+      sourceMessageIds: memoryInput.sourceMessageIds,
+      confidence: memoryInput.confidence,
+    }
+
+    const duplicationCheck = await this.deduplicator.checkForDuplicates(
+      memory,
+      existingMemories,
+    )
+
+    if (duplicationCheck.isDuplicate) {
+      result.duplicatesSkipped++
+
+      if (this.config.logProgress) {
+        logger.info(`Skipping duplicate memory`, {
+          index,
+          memoryId: memory.id,
+          duplicateType: duplicationCheck.duplicateType,
+          similarity: duplicationCheck.similarity,
+          existingId: duplicationCheck.existingMemoryId,
+        })
+      }
+
+      return
+    }
+
+    const contentHash = this.contentHasher.generateContentHash(memory)
+    const memoryInputWithHash = {
+      ...memoryInput,
+      contentHash,
+    }
+
+    const createResult =
+      await this.memoryDb.createMemoryWithDeduplication(memoryInputWithHash)
+
+    if (!createResult.success) {
+      result.failed++
+      result.databaseErrors++
+      result.errors.push({
+        index,
+        type: 'database',
+        message: createResult.error || 'Unknown database error',
+        data: memoryData,
+      })
+    } else {
+      result.successful++
+      existingMemories.push(memory)
     }
   }
 
@@ -243,6 +448,8 @@ export class MemoryDataProcessor {
       failed: 0,
       validationErrors: 0,
       databaseErrors: 0,
+      duplicatesSkipped: 0,
+      similarMerged: 0,
       errors: [],
     }
 
@@ -391,6 +598,7 @@ export function transformLegacyMemory(legacyData: {
     participants: [{ id: 'legacy-user', name: 'Legacy User', role: 'unknown' }],
     summary: legacyData.summary || legacyData.content || 'Legacy memory',
     confidence: legacyData.confidence || 5,
+    contentHash: '', // Will be generated during processing
     extractedAt: new Date(),
   }
 
