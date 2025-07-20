@@ -1,7 +1,8 @@
 import type { PrismaClient } from '@studio/db'
-import type { Logger } from '@studio/logger'
+import type pino from 'pino'
 
 import { createLogger } from '@studio/logger'
+import { EmotionalState } from '@studio/schema'
 
 import type {
   ConversationData,
@@ -22,7 +23,7 @@ export interface ProcessorConfig {
   /** Database client for persistence */
   database: PrismaClient
   /** Logger instance */
-  logger?: Logger
+  logger?: pino.Logger
   /** Processing performance settings */
   performance?: {
     /** Batch size for processing multiple conversations */
@@ -86,7 +87,7 @@ export interface ProcessingResult {
  * - Integration with existing deduplication
  */
 export class EnhancedMemoryProcessor {
-  private readonly logger: Logger
+  private readonly logger: pino.Logger
   private readonly config: Required<ProcessorConfig>
 
   constructor(config: ProcessorConfig) {
@@ -358,10 +359,16 @@ export class EnhancedMemoryProcessor {
     // Placeholder emotional analysis
     const emotionalAnalysis: EmotionalAnalysis = {
       context: {
-        tone: 'neutral',
-        emotions: [],
+        primaryEmotion: EmotionalState.NEUTRAL,
+        secondaryEmotions: [],
         intensity: 0.5,
-        relationships: {},
+        valence: 0,
+        themes: [],
+        indicators: {
+          phrases: [],
+          emotionalWords: [],
+          styleIndicators: [],
+        },
       },
       moodScoring: {
         score: 5.0,
