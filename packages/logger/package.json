@@ -14,6 +14,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@studio/schema": "workspace:*",
     "pino": "^9.7.0",
     "stacktracey": "^2.1.8",
     "zod": "^3.25.74"

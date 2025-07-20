@@ -18,6 +18,9 @@ export {
   type CallSite as StackTraceCallSite,
 } from './lib/stacktrace'
 
+// Export schema-aware logging utilities
+export * from './lib/schema-logging'
+
 // Note: The unified createLogger from './lib/logger' is the recommended factory function
 // Use createBrowserLogger if you specifically need browser-only features
 

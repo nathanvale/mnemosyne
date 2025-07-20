@@ -380,6 +380,9 @@ importers:
       '@prisma/client':
         specifier: ^6.11.1
         version: 6.11.1(prisma@6.11.1(typescript@5.8.3))(typescript@5.8.3)
+      '@studio/schema':
+        specifier: workspace:*
+        version: link:../schema
     devDependencies:
       prisma:
         specifier: ^6.11.1
@@ -390,6 +393,9 @@ importers:
 
   packages/logger:
     dependencies:
+      '@studio/schema':
+        specifier: workspace:*
+        version: link:../schema
       pino:
         specifier: ^9.7.0
         version: 9.7.0
@@ -423,9 +429,6 @@ importers:
         specifier: ^3.24.1
         version: 3.25.74
     devDependencies:
-      '@studio/test-config':
-        specifier: workspace:*
-        version: link:../test-config
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -441,6 +444,9 @@ importers:
       '@studio/logger':
         specifier: workspace:*
         version: link:../logger
+      '@studio/schema':
+        specifier: workspace:*
+        version: link:../schema
       commander:
         specifier: ^14.0.0
         version: 14.0.0
@@ -448,9 +454,6 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2
     devDependencies:
-      '@studio/test-config':
-        specifier: workspace:*
-        version: link:../test-config
       '@types/node':
         specifier: ^24.0.8
         version: 24.0.8
@@ -468,9 +471,18 @@ importers:
       '@studio/db':
         specifier: workspace:*
         version: link:../db
+      '@studio/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@studio/mocks':
         specifier: workspace:*
         version: link:../mocks
+      '@studio/schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@studio/scripts':
+        specifier: workspace:*
+        version: link:../scripts
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3
@@ -490,6 +502,9 @@ importers:
       '@studio/mocks':
         specifier: workspace:*
         version: link:../mocks
+      '@studio/schema':
+        specifier: workspace:*
+        version: link:../schema
       axios:
         specifier: ^1.10.0
         version: 1.10.0

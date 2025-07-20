@@ -24,6 +24,19 @@ vi.mock('@studio/logger', () => ({
   createLogger: vi.fn(() => mockCliLogger),
   cli: vi.fn(() => mockCliLogger),
   debug: vi.fn(() => mockCliLogger),
+  createMemoryLogger: vi.fn(() => ({
+    logMemoryEvent: vi.fn(),
+    logBatchProcessing: vi.fn(),
+    logValidationResult: vi.fn(),
+  })),
+  createSchemaLogger: vi.fn(() => ({
+    logMemoryValidation: vi.fn(),
+    logBatchValidation: vi.fn(),
+    logPerformanceMetrics: vi.fn(),
+  })),
+  withPerformanceLogging: vi.fn(async (logger, operation, fn) => {
+    return await fn()
+  }),
 }))
 
 // Prepare controllable stream and mock fs
@@ -280,7 +293,7 @@ Alice,2025-08-01T12:00:00.000Z,,,,iMessage,Incoming,+123,Alice,Read,,,Check out 
       'Check out https://example.com and www.google.com for more info',
     )
     expect(message?.links).toHaveLength(2)
-    expect(message?.links.map((link) => link.url)).toEqual([
+    expect(message?.links.map((link: { url: string }) => link.url)).toEqual([
       'https://example.com',
       'https://www.google.com',
     ])

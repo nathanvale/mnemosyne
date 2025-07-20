@@ -18,6 +18,7 @@ export default defineConfig({
             '@': path.resolve(dirname, 'src'),
             '@studio/db': path.resolve(dirname, 'packages/db/src'),
             '@studio/logger': path.resolve(dirname, 'packages/logger/src'),
+            '@studio/schema': path.resolve(dirname, 'packages/schema/src'),
             '@studio/scripts': path.resolve(dirname, 'packages/scripts/src'),
             '@studio/test-config': path.resolve(
               dirname,
