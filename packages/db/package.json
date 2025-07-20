@@ -19,7 +19,8 @@
     "clean": "rm -rf dist generated *.tsbuildinfo"
   },
   "dependencies": {
-    "@prisma/client": "^6.11.1"
+    "@prisma/client": "^6.11.1",
+    "@studio/schema": "workspace:*"
   },
   "devDependencies": {
     "prisma": "^6.11.1",

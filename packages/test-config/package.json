@@ -15,7 +15,8 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@studio/mocks": "workspace:*",
-    "@studio/db": "workspace:*"
+    "@studio/db": "workspace:*",
+    "@studio/schema": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

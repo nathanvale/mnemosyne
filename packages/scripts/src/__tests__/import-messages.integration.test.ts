@@ -24,6 +24,19 @@ vi.mock('@studio/logger', () => ({
   createLogger: vi.fn(() => mockCliLogger),
   cli: vi.fn(() => mockCliLogger),
   debug: vi.fn(() => mockCliLogger),
+  createMemoryLogger: vi.fn(() => ({
+    logMemoryEvent: vi.fn(),
+    logBatchProcessing: vi.fn(),
+    logValidationResult: vi.fn(),
+  })),
+  createSchemaLogger: vi.fn(() => ({
+    logMemoryValidation: vi.fn(),
+    logBatchValidation: vi.fn(),
+    logPerformanceMetrics: vi.fn(),
+  })),
+  withPerformanceLogging: vi.fn(async (logger, operation, fn) => {
+    return await fn()
+  }),
 }))
 
 // Prepare controllable stream and mock fs

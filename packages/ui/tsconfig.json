@@ -10,7 +10,7 @@
     "noEmit": false,
     "allowImportingTsExtensions": false
   },
-  "references": [{ "path": "../logger" }],
+  "references": [{ "path": "../schema" }, { "path": "../logger" }],
   "include": ["src/**/*"],
   "exclude": [
     "dist",

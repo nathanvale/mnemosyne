@@ -11,8 +11,9 @@
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"],
   "references": [
-    {
-      "path": "../db"
-    }
+    { "path": "../schema" },
+    { "path": "../db" },
+    { "path": "../logger" },
+    { "path": "../scripts" }
   ]
 }

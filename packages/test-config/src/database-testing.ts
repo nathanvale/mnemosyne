@@ -1,4 +1,13 @@
 import { PrismaClient } from '@studio/db'
+import {
+  type DatabaseMemoryInput,
+  type DatabaseEmotionalContextInput,
+  type DatabaseRelationshipDynamicsInput,
+  createMemoryDatabase,
+  validateMemoryForDatabase,
+  validateEmotionalContextForDatabase,
+  validateRelationshipDynamicsForDatabase,
+} from '@studio/db'
 import { execSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -455,5 +464,189 @@ async function pushSchema(databaseUrl: string): Promise<void> {
     throw new Error(
       `Failed to push schema to test database: ${error instanceof Error ? error.message : String(error)}`,
     )
+  }
+}
+
+/**
+ * Schema-validated test data creation utilities
+ */
+
+/**
+ * Create a valid test memory input with schema validation
+ */
+export function createTestMemoryInput(
+  overrides?: Partial<DatabaseMemoryInput>,
+): DatabaseMemoryInput {
+  const defaultData: DatabaseMemoryInput = {
+    id: `test-memory-${randomBytes(4).toString('hex')}`,
+    sourceMessageIds: ['msg-1', 'msg-2'],
+    participants: [
+      { id: 'alice', name: 'Alice', role: 'self' },
+      { id: 'bob', name: 'Bob', role: 'friend' },
+    ],
+    summary: 'Test memory for validation',
+    confidence: 8,
+    extractedAt: new Date(),
+  }
+
+  const data = { ...defaultData, ...overrides }
+
+  // Validate the data before returning
+  const validation = validateMemoryForDatabase(data)
+  if (!validation.isValid) {
+    throw new Error(
+      `Test memory data is invalid: ${validation.errors.map((e) => e.message).join(', ')}`,
+    )
+  }
+
+  return data
+}
+
+/**
+ * Create a valid test emotional context input with schema validation
+ */
+export function createTestEmotionalContextInput(
+  overrides?: Partial<DatabaseEmotionalContextInput>,
+): DatabaseEmotionalContextInput {
+  const defaultData: DatabaseEmotionalContextInput = {
+    id: `test-emotion-${randomBytes(4).toString('hex')}`,
+    primaryMood: 'positive',
+    intensity: 7,
+    themes: ['connection', 'sharing'],
+    emotionalMarkers: ['friendly greeting', 'helpful sharing'],
+    contextualEvents: ['link shared'],
+    temporalPatterns: {
+      isBuilding: true,
+      isResolving: false,
+    },
+  }
+
+  const data = { ...defaultData, ...overrides }
+
+  // Validate the data before returning
+  const validation = validateEmotionalContextForDatabase(data)
+  if (!validation.isValid) {
+    throw new Error(
+      `Test emotional context data is invalid: ${validation.errors.map((e) => e.message).join(', ')}`,
+    )
+  }
+
+  return data
+}
+
+/**
+ * Create a valid test relationship dynamics input with schema validation
+ */
+export function createTestRelationshipDynamicsInput(
+  overrides?: Partial<DatabaseRelationshipDynamicsInput>,
+): DatabaseRelationshipDynamicsInput {
+  const defaultData: DatabaseRelationshipDynamicsInput = {
+    id: `test-dynamics-${randomBytes(4).toString('hex')}`,
+    overallDynamics: { connectionStrength: 0.8 },
+    participantDynamics: [],
+    communicationPatterns: ['supportive', 'open'],
+    interactionQuality: {
+      quality: 'positive',
+      indicators: ['sharing'],
+    },
+  }
+
+  const data = { ...defaultData, ...overrides }
+
+  // Validate the data before returning
+  const validation = validateRelationshipDynamicsForDatabase(data)
+  if (!validation.isValid) {
+    throw new Error(
+      `Test relationship dynamics data is invalid: ${validation.errors.map((e) => e.message).join(', ')}`,
+    )
+  }
+
+  return data
+}
+
+/**
+ * Create a memory database instance for testing with validation
+ */
+export function createTestMemoryDatabase(client: PrismaClient) {
+  return createMemoryDatabase(client)
+}
+
+/**
+ * Seed database with schema-validated memory data
+ */
+export async function seedMemoryTestData(client: PrismaClient) {
+  const memoryDb = createTestMemoryDatabase(client)
+
+  // Create test memory with validation
+  const memoryInput = createTestMemoryInput({
+    id: 'validated-test-memory-1',
+    summary: 'Schema-validated test memory',
+  })
+
+  const memoryResult = await memoryDb.createMemory(memoryInput)
+  if (!memoryResult.success) {
+    throw new Error(`Failed to create test memory: ${memoryResult.error}`)
+  }
+
+  // Create emotional context with validation
+  const emotionalContextInput = createTestEmotionalContextInput({
+    id: 'validated-test-emotion-1',
+    primaryMood: 'optimistic',
+  })
+
+  const emotionResult = await memoryDb.createEmotionalContext(
+    memoryResult.data!.id,
+    emotionalContextInput,
+  )
+  if (!emotionResult.success) {
+    throw new Error(
+      `Failed to create test emotional context: ${emotionResult.error}`,
+    )
+  }
+
+  // Create relationship dynamics with validation
+  const dynamicsInput = createTestRelationshipDynamicsInput({
+    id: 'validated-test-dynamics-1',
+  })
+
+  const dynamicsResult = await memoryDb.createRelationshipDynamics(
+    memoryResult.data!.id,
+    dynamicsInput,
+  )
+  if (!dynamicsResult.success) {
+    throw new Error(
+      `Failed to create test relationship dynamics: ${dynamicsResult.error}`,
+    )
+  }
+
+  return {
+    memory: memoryResult.data!,
+    emotionalContext: emotionResult.data!,
+    relationshipDynamics: dynamicsResult.data!,
+  }
+}
+
+/**
+ * Test utility to validate that test data conforms to schema
+ */
+export function validateTestData() {
+  const testMemory = createTestMemoryInput()
+  const testEmotion = createTestEmotionalContextInput()
+  const testDynamics = createTestRelationshipDynamicsInput()
+
+  const memoryValidation = validateMemoryForDatabase(testMemory)
+  const emotionValidation = validateEmotionalContextForDatabase(testEmotion)
+  const dynamicsValidation =
+    validateRelationshipDynamicsForDatabase(testDynamics)
+
+  return {
+    memoryValid: memoryValidation.isValid,
+    emotionValid: emotionValidation.isValid,
+    dynamicsValid: dynamicsValidation.isValid,
+    errors: [
+      ...memoryValidation.errors,
+      ...emotionValidation.errors,
+      ...dynamicsValidation.errors,
+    ],
   }
 }
