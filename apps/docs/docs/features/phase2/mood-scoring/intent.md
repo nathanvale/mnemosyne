@@ -202,7 +202,7 @@ The Mood Scoring Algorithm provides contextual emotional analysis that transform
 - **Transition Recognition**: 85%+ accuracy in identifying significant emotional shifts within conversations
 - **Timeline Coherence**: Mood evolution tracking shows logical emotional progression over time
 - **Mood Repair Identification**: 90%+ accuracy in recognizing emotional support and recovery moments
-- **False Positive Rate**: <15% of detected mood deltas are spurious or insignificant
+- **False Positive Rate**: &lt;15% of detected mood deltas are spurious or insignificant
 
 ### 🎯 AI Enhancement Quality
 

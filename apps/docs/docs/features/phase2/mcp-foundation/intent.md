@@ -223,7 +223,7 @@ The MCP Foundation Layer creates the foundational infrastructure for Phase 3 AI 
 
 ### 🎯 API Performance
 
-- **Response Time**: <200ms response times for agent context assembly requests
+- **Response Time**: &lt;200ms response times for agent context assembly requests
 - **Caching Efficiency**: 80%+ cache hit rate for frequently requested agent contexts
 - **Scalability**: Support 50-100 emotional memories in context without performance degradation
 - **Reliability**: 99%+ uptime for agent context endpoints with graceful error handling

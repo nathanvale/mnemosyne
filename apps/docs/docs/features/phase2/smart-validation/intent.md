@@ -46,7 +46,7 @@ The Smart Validation System dramatically reduces manual validation burden by aut
 
 **Auto-Confirmation System**:
 
-- Configurable confidence thresholds (>0.75 auto-approve, 0.50-0.75 review, <0.50 auto-reject)
+- Configurable confidence thresholds (>0.75 auto-approve, 0.50-0.75 review, &lt;0.50 auto-reject)
 - Multi-factor confidence scoring integrating Claude confidence, emotional coherence, relationship accuracy
 - Batch processing for efficient large-scale validation
 - Continuous calibration based on user feedback and accuracy metrics
@@ -194,14 +194,14 @@ The Smart Validation System dramatically reduces manual validation burden by aut
 
 - **Auto-Confirmation Rate**: 70%+ of memories automatically confirmed without human review
 - **Accuracy Rate**: 95%+ agreement between auto-confirmation and human validation decisions
-- **False Positive Rate**: <5% of auto-approved memories would be rejected by human reviewers
-- **False Negative Rate**: <10% of review-flagged memories would be auto-approved by human reviewers
+- **False Positive Rate**: &lt;5% of auto-approved memories would be rejected by human reviewers
+- **False Negative Rate**: &lt;10% of review-flagged memories would be auto-approved by human reviewers
 
 ### 🎯 Validation Efficiency
 
 - **Time Reduction**: 60%+ reduction in human validation time through smart automation
 - **Review Focus**: 90%+ of human validation time spent on genuinely ambiguous or significant memories
-- **Queue Processing**: Average review time <5 seconds per memory with rich context
+- **Queue Processing**: Average review time &lt;5 seconds per memory with rich context
 - **Batch Processing**: Handle 500-1000 memory batches with intelligent sampling and quality assurance
 
 ### 🎯 System Learning

@@ -188,7 +188,7 @@ interface EmotionalSignificanceScore {
 
 **Confidence Score Display**:
 
-- Visual confidence meter with color coding (green >0.75, yellow 0.5-0.75, red <0.5)
+- Visual confidence meter with color coding (green >0.75, yellow 0.5-0.75, red &lt;0.5)
 - Factor breakdown showing Claude confidence, emotional coherence, relationship accuracy
 - Reasoning explanation highlighting decision drivers and uncertainty areas
 - Historical context showing similar memory validation patterns
@@ -251,7 +251,7 @@ Final Confidence = (
 
 - **Auto-Approve (>0.75)**: High confidence across all factors, immediate confirmation
 - **Review Required (0.50-0.75)**: Mixed factors or moderate confidence, human assessment needed
-- **Auto-Reject (<0.50)**: Low confidence or quality issues, automatic rejection with reasoning
+- **Auto-Reject (&lt;0.50)**: Low confidence or quality issues, automatic rejection with reasoning
 
 ### Emotional Significance Integration
 

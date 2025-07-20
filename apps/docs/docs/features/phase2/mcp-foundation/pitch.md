@@ -240,7 +240,7 @@ interface MCPEmotionalIntelligence {
 
 ### API Performance
 
-- **Response Time**: <200ms response times for agent context assembly requests
+- **Response Time**: &lt;200ms response times for agent context assembly requests
 - **Context Size**: Support 50-100 emotional memories in context without performance degradation
 - **Caching Efficiency**: 80%+ cache hit rate for frequently requested agent contexts
 - **Scalability**: Handle concurrent agent context requests without quality degradation
@@ -348,7 +348,7 @@ interface MCPEmotionalIntelligence {
 - **Scenario**: Multiple concurrent agent context requests with caching and optimization
 - **Data**: 10 different participants with varying memory volumes and emotional complexity
 - **Flow**: Concurrent API calls → Cache utilization → Context assembly → Performance metrics
-- **Success**: <200ms response times with 80%+ cache hit rates demonstrating production readiness
+- **Success**: &lt;200ms response times with 80%+ cache hit rates demonstrating production readiness
 
 **MCP Foundation Demo**:
 

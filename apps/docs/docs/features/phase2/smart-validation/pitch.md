@@ -98,7 +98,7 @@ interface AutoConfirmationResult {
 
 1. **Auto-Approve (>0.75 confidence)**: Clear emotional context, high Claude confidence, consistent relationship dynamics
 2. **Review Required (0.50-0.75 confidence)**: Mixed signals, moderate confidence, or high emotional significance
-3. **Auto-Reject (<0.50 confidence)**: Low Claude confidence, poor emotional coherence, or quality issues
+3. **Auto-Reject (&lt;0.50 confidence)**: Low Claude confidence, poor emotional coherence, or quality issues
 
 **Multi-Factor Confidence Scoring**:
 
@@ -213,14 +213,14 @@ interface AutoConfirmationResult {
 
 - **Auto-Confirmation Rate**: 70%+ of memories automatically validated without human review
 - **Accuracy Rate**: 95%+ agreement between auto-confirmation and human validation decisions
-- **False Positive Rate**: <5% of auto-approved memories would be rejected by human reviewers
+- **False Positive Rate**: &lt;5% of auto-approved memories would be rejected by human reviewers
 - **Processing Speed**: Auto-confirm 1000+ memories per minute with quality maintenance
 
 ### Review Efficiency
 
 - **Time Reduction**: 60%+ reduction in human validation time through smart automation
 - **Review Focus**: 90%+ of human validation time spent on genuinely ambiguous or significant memories
-- **Queue Processing**: Average review time <90 seconds per memory with rich context
+- **Queue Processing**: Average review time &lt;90 seconds per memory with rich context
 - **Quality Maintenance**: Auto-confirmed memories maintain 8+ average quality scores
 
 ### System Learning
