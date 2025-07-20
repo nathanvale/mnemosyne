@@ -17,17 +17,20 @@ import type {
 export function isMemory(obj: unknown): obj is Memory {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires checking object properties after initial type check
+  const candidate = obj as any
+
   return (
-    typeof obj.id === 'string' &&
-    typeof obj.content === 'string' &&
-    typeof obj.timestamp === 'string' &&
-    obj.author !== undefined &&
-    Array.isArray(obj.participants) &&
-    obj.emotionalContext !== undefined &&
-    obj.relationshipDynamics !== undefined &&
-    Array.isArray(obj.tags) &&
-    obj.tags.every((tag: unknown) => typeof tag === 'string') &&
-    isMemoryMetadata(obj.metadata)
+    typeof candidate.id === 'string' &&
+    typeof candidate.content === 'string' &&
+    typeof candidate.timestamp === 'string' &&
+    candidate.author !== undefined &&
+    Array.isArray(candidate.participants) &&
+    candidate.emotionalContext !== undefined &&
+    candidate.relationshipDynamics !== undefined &&
+    Array.isArray(candidate.tags) &&
+    candidate.tags.every((tag: unknown) => typeof tag === 'string') &&
+    isMemoryMetadata(candidate.metadata)
   )
 }
 
@@ -37,13 +40,16 @@ export function isMemory(obj: unknown): obj is Memory {
 export function isMemoryMetadata(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    typeof obj.processedAt === 'string' &&
-    typeof obj.schemaVersion === 'string' &&
-    typeof obj.source === 'string' &&
-    typeof obj.confidence === 'number' &&
-    obj.confidence >= 0 &&
-    obj.confidence <= 1
+    typeof candidate.processedAt === 'string' &&
+    typeof candidate.schemaVersion === 'string' &&
+    typeof candidate.source === 'string' &&
+    typeof candidate.confidence === 'number' &&
+    candidate.confidence >= 0 &&
+    candidate.confidence <= 1
   )
 }
 
@@ -53,21 +59,24 @@ export function isMemoryMetadata(obj: unknown): boolean {
 export function isEmotionalContext(obj: unknown): obj is EmotionalContext {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    isEmotionalState(obj.primaryEmotion) &&
-    Array.isArray(obj.secondaryEmotions) &&
-    obj.secondaryEmotions.every(isEmotionalState) &&
-    typeof obj.intensity === 'number' &&
-    obj.intensity >= 0 &&
-    obj.intensity <= 1 &&
-    typeof obj.valence === 'number' &&
-    obj.valence >= -1 &&
-    obj.valence <= 1 &&
-    Array.isArray(obj.themes) &&
-    obj.themes.every(isEmotionalTheme) &&
-    (obj.temporalPatterns === undefined ||
-      isTemporalPatterns(obj.temporalPatterns)) &&
-    isEmotionalIndicators(obj.indicators)
+    isEmotionalState(candidate.primaryEmotion) &&
+    Array.isArray(candidate.secondaryEmotions) &&
+    candidate.secondaryEmotions.every(isEmotionalState) &&
+    typeof candidate.intensity === 'number' &&
+    candidate.intensity >= 0 &&
+    candidate.intensity <= 1 &&
+    typeof candidate.valence === 'number' &&
+    candidate.valence >= -1 &&
+    candidate.valence <= 1 &&
+    Array.isArray(candidate.themes) &&
+    candidate.themes.every(isEmotionalTheme) &&
+    (candidate.temporalPatterns === undefined ||
+      isTemporalPatterns(candidate.temporalPatterns)) &&
+    isEmotionalIndicators(candidate.indicators)
   )
 }
 
@@ -123,11 +132,16 @@ export function isEmotionalTheme(value: unknown): value is EmotionalTheme {
 export function isTemporalPatterns(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    typeof obj.isBuilding === 'boolean' &&
-    typeof obj.isResolving === 'boolean' &&
-    (obj.expectedDuration === undefined ||
-      ['transient', 'short-term', 'long-term'].includes(obj.expectedDuration))
+    typeof candidate.isBuilding === 'boolean' &&
+    typeof candidate.isResolving === 'boolean' &&
+    (candidate.expectedDuration === undefined ||
+      ['transient', 'short-term', 'long-term'].includes(
+        candidate.expectedDuration,
+      ))
   )
 }
 
@@ -137,13 +151,18 @@ export function isTemporalPatterns(obj: unknown): boolean {
 export function isEmotionalIndicators(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    Array.isArray(obj.phrases) &&
-    obj.phrases.every((phrase: unknown) => typeof phrase === 'string') &&
-    Array.isArray(obj.emotionalWords) &&
-    obj.emotionalWords.every((word: unknown) => typeof word === 'string') &&
-    Array.isArray(obj.styleIndicators) &&
-    obj.styleIndicators.every(
+    Array.isArray(candidate.phrases) &&
+    candidate.phrases.every((phrase: unknown) => typeof phrase === 'string') &&
+    Array.isArray(candidate.emotionalWords) &&
+    candidate.emotionalWords.every(
+      (word: unknown) => typeof word === 'string',
+    ) &&
+    Array.isArray(candidate.styleIndicators) &&
+    candidate.styleIndicators.every(
       (indicator: unknown) => typeof indicator === 'string',
     )
   )
@@ -157,15 +176,18 @@ export function isRelationshipDynamics(
 ): obj is RelationshipDynamics {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    isCommunicationPattern(obj.communicationPattern) &&
-    isInteractionQuality(obj.interactionQuality) &&
-    isPowerDynamics(obj.powerDynamics) &&
-    isAttachmentIndicators(obj.attachmentIndicators) &&
-    isHealthIndicators(obj.healthIndicators) &&
-    isNumberInRange(obj.connectionStrength, 0, 1) &&
-    (obj.participantDynamics === undefined ||
-      isParticipantDynamicsArray(obj.participantDynamics))
+    isCommunicationPattern(candidate.communicationPattern) &&
+    isInteractionQuality(candidate.interactionQuality) &&
+    isPowerDynamics(candidate.powerDynamics) &&
+    isAttachmentIndicators(candidate.attachmentIndicators) &&
+    isHealthIndicators(candidate.healthIndicators) &&
+    isNumberInRange(candidate.connectionStrength, 0, 1) &&
+    (candidate.participantDynamics === undefined ||
+      isParticipantDynamicsArray(candidate.participantDynamics))
   )
 }
 
@@ -175,11 +197,15 @@ export function isRelationshipDynamics(
 export function isParticipant(obj: unknown): obj is Participant {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    isNonEmptyString(obj.id) &&
-    isNonEmptyString(obj.name) &&
-    isParticipantRole(obj.role) &&
-    (obj.metadata === undefined || isParticipantMetadata(obj.metadata))
+    isNonEmptyString(candidate.id) &&
+    isNonEmptyString(candidate.name) &&
+    isParticipantRole(candidate.role) &&
+    (candidate.metadata === undefined ||
+      isParticipantMetadata(candidate.metadata))
   )
 }
 
@@ -301,12 +327,15 @@ export function isParticipantRole(value: unknown): value is ParticipantRole {
 export function isPowerDynamics(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    (obj.dominantParticipant === undefined ||
-      typeof obj.dominantParticipant === 'string') &&
-    typeof obj.isBalanced === 'boolean' &&
-    Array.isArray(obj.concerningPatterns) &&
-    obj.concerningPatterns.every(
+    (candidate.dominantParticipant === undefined ||
+      typeof candidate.dominantParticipant === 'string') &&
+    typeof candidate.isBalanced === 'boolean' &&
+    Array.isArray(candidate.concerningPatterns) &&
+    candidate.concerningPatterns.every(
       (pattern: unknown) => typeof pattern === 'string',
     )
   )
@@ -318,13 +347,16 @@ export function isPowerDynamics(obj: unknown): boolean {
 export function isAttachmentIndicators(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    Array.isArray(obj.secure) &&
-    obj.secure.every((item: unknown) => typeof item === 'string') &&
-    Array.isArray(obj.anxious) &&
-    obj.anxious.every((item: unknown) => typeof item === 'string') &&
-    Array.isArray(obj.avoidant) &&
-    obj.avoidant.every((item: unknown) => typeof item === 'string')
+    Array.isArray(candidate.secure) &&
+    candidate.secure.every((item: unknown) => typeof item === 'string') &&
+    Array.isArray(candidate.anxious) &&
+    candidate.anxious.every((item: unknown) => typeof item === 'string') &&
+    Array.isArray(candidate.avoidant) &&
+    candidate.avoidant.every((item: unknown) => typeof item === 'string')
   )
 }
 
@@ -334,13 +366,16 @@ export function isAttachmentIndicators(obj: unknown): boolean {
 export function isHealthIndicators(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    Array.isArray(obj.positive) &&
-    obj.positive.every((item: unknown) => typeof item === 'string') &&
-    Array.isArray(obj.negative) &&
-    obj.negative.every((item: unknown) => typeof item === 'string') &&
-    Array.isArray(obj.repairAttempts) &&
-    obj.repairAttempts.every((item: unknown) => typeof item === 'string')
+    Array.isArray(candidate.positive) &&
+    candidate.positive.every((item: unknown) => typeof item === 'string') &&
+    Array.isArray(candidate.negative) &&
+    candidate.negative.every((item: unknown) => typeof item === 'string') &&
+    Array.isArray(candidate.repairAttempts) &&
+    candidate.repairAttempts.every((item: unknown) => typeof item === 'string')
   )
 }
 
@@ -353,15 +388,18 @@ export function isParticipantDynamicsArray(arr: unknown): boolean {
   return arr.every((item: unknown) => {
     if (!item || typeof item !== 'object') return false
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+    const candidate = item as any
+
     return (
-      Array.isArray(item.participants) &&
-      item.participants.length === 2 &&
-      item.participants.every((p: unknown) => typeof p === 'string') &&
+      Array.isArray(candidate.participants) &&
+      candidate.participants.length === 2 &&
+      candidate.participants.every((p: unknown) => typeof p === 'string') &&
       ['supportive', 'conflictual', 'neutral', 'complex'].includes(
-        item.dynamicType,
+        candidate.dynamicType,
       ) &&
-      Array.isArray(item.observations) &&
-      item.observations.every((obs: unknown) => typeof obs === 'string')
+      Array.isArray(candidate.observations) &&
+      candidate.observations.every((obs: unknown) => typeof obs === 'string')
     )
   })
 }
@@ -372,14 +410,20 @@ export function isParticipantDynamicsArray(arr: unknown): boolean {
 export function isParticipantMetadata(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard pattern requires accessing unknown object properties
+  const candidate = obj as any
+
   return (
-    (obj.sourceId === undefined || typeof obj.sourceId === 'string') &&
-    (obj.canonicalName === undefined ||
-      typeof obj.canonicalName === 'string') &&
-    (obj.aliases === undefined ||
-      (Array.isArray(obj.aliases) &&
-        obj.aliases.every((alias: unknown) => typeof alias === 'string'))) &&
-    (obj.relationshipDescription === undefined ||
-      typeof obj.relationshipDescription === 'string')
+    (candidate.sourceId === undefined ||
+      typeof candidate.sourceId === 'string') &&
+    (candidate.canonicalName === undefined ||
+      typeof candidate.canonicalName === 'string') &&
+    (candidate.aliases === undefined ||
+      (Array.isArray(candidate.aliases) &&
+        candidate.aliases.every(
+          (alias: unknown) => typeof alias === 'string',
+        ))) &&
+    (candidate.relationshipDescription === undefined ||
+      typeof candidate.relationshipDescription === 'string')
   )
 }

@@ -350,7 +350,8 @@ export function validateBatch<T>(
 // Helper functions
 
 function getValueAtPath(obj: unknown, path: (string | number)[]): unknown {
-  return path.reduce((current, key) => current?.[key], obj)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Need to access nested properties by path, obj starts as unknown
+  return path.reduce((current: any, key) => current?.[key], obj)
 }
 
 function getExpectedType(issue: z.ZodIssue): string {
@@ -392,35 +393,48 @@ function addMemoryWarnings(
   memory: unknown,
   warnings: ValidationWarning[],
 ): void {
+  if (!memory || typeof memory !== 'object') return
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Need to access properties of unknown object after type check
+  const memoryCandidate = memory as any
+
   // Check for low confidence
   if (
-    memory?.metadata?.confidence !== undefined &&
-    memory.metadata.confidence < 0.5
+    memoryCandidate.metadata?.confidence !== undefined &&
+    memoryCandidate.metadata.confidence < 0.5
   ) {
     warnings.push({
       field: 'metadata.confidence',
       message: 'Low confidence score may indicate poor memory quality',
-      value: memory.metadata.confidence,
+      value: memoryCandidate.metadata.confidence,
       suggestion: 'Consider re-processing or manual review',
     })
   }
 
   // Check for empty content
-  if (memory?.content && memory.content.trim().length < 10) {
+  if (
+    memoryCandidate.content &&
+    typeof memoryCandidate.content === 'string' &&
+    memoryCandidate.content.trim().length < 10
+  ) {
     warnings.push({
       field: 'content',
       message: 'Very short content may lack sufficient context',
-      value: memory.content,
+      value: memoryCandidate.content,
       suggestion: 'Ensure memory captures meaningful information',
     })
   }
 
   // Check for missing tags
-  if (!memory?.tags || memory.tags.length === 0) {
+  if (
+    !memoryCandidate.tags ||
+    !Array.isArray(memoryCandidate.tags) ||
+    memoryCandidate.tags.length === 0
+  ) {
     warnings.push({
       field: 'tags',
       message: 'No tags specified for categorization',
-      value: memory.tags,
+      value: memoryCandidate.tags,
       suggestion: 'Add relevant tags for better organization',
     })
   }
@@ -430,23 +444,40 @@ function addEmotionalContextWarnings(
   context: unknown,
   warnings: ValidationWarning[],
 ): void {
+  if (!context || typeof context !== 'object') return
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Need to access properties of unknown object after type check
+  const contextCandidate = context as any
+
   // Check for intensity-valence mismatch
-  if (context?.intensity > 0.8 && Math.abs(context.valence) < 0.3) {
+  if (
+    typeof contextCandidate.intensity === 'number' &&
+    typeof contextCandidate.valence === 'number' &&
+    contextCandidate.intensity > 0.8 &&
+    Math.abs(contextCandidate.valence) < 0.3
+  ) {
     warnings.push({
       field: 'intensity/valence',
       message:
         'High intensity with neutral valence may indicate complex emotions',
-      value: { intensity: context.intensity, valence: context.valence },
+      value: {
+        intensity: contextCandidate.intensity,
+        valence: contextCandidate.valence,
+      },
       suggestion: 'Consider reviewing emotional classification',
     })
   }
 
   // Check for missing themes
-  if (!context?.themes || context.themes.length === 0) {
+  if (
+    !contextCandidate.themes ||
+    !Array.isArray(contextCandidate.themes) ||
+    contextCandidate.themes.length === 0
+  ) {
     warnings.push({
       field: 'themes',
       message: 'No emotional themes identified',
-      value: context.themes,
+      value: contextCandidate.themes,
       suggestion: 'Consider adding relevant emotional themes',
     })
   }
@@ -456,31 +487,38 @@ function addRelationshipDynamicsWarnings(
   dynamics: unknown,
   warnings: ValidationWarning[],
 ): void {
+  if (!dynamics || typeof dynamics !== 'object') return
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Need to access properties of unknown object after type check
+  const dynamicsCandidate = dynamics as any
+
   // Check for concerning patterns
   if (
-    dynamics?.powerDynamics?.concerningPatterns &&
-    dynamics.powerDynamics.concerningPatterns.length > 0
+    dynamicsCandidate.powerDynamics?.concerningPatterns &&
+    Array.isArray(dynamicsCandidate.powerDynamics.concerningPatterns) &&
+    dynamicsCandidate.powerDynamics.concerningPatterns.length > 0
   ) {
     warnings.push({
       field: 'powerDynamics.concerningPatterns',
       message: 'Concerning patterns detected in relationship dynamics',
-      value: dynamics.powerDynamics.concerningPatterns,
+      value: dynamicsCandidate.powerDynamics.concerningPatterns,
       suggestion: 'Review for potential relationship issues',
     })
   }
 
   // Check for low connection strength with positive interaction quality
   if (
-    dynamics?.connectionStrength < 0.3 &&
-    dynamics?.interactionQuality === 'positive'
+    typeof dynamicsCandidate.connectionStrength === 'number' &&
+    dynamicsCandidate.connectionStrength < 0.3 &&
+    dynamicsCandidate.interactionQuality === 'positive'
   ) {
     warnings.push({
       field: 'connectionStrength/interactionQuality',
       message:
         'Low connection strength conflicts with positive interaction quality',
       value: {
-        connectionStrength: dynamics.connectionStrength,
-        interactionQuality: dynamics.interactionQuality,
+        connectionStrength: dynamicsCandidate.connectionStrength,
+        interactionQuality: dynamicsCandidate.interactionQuality,
       },
       suggestion: 'Review relationship assessment for consistency',
     })
