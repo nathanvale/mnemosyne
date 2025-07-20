@@ -1,29 +1,28 @@
 import type { DatabaseMemoryInput } from '@studio/db'
 
-import { PrismaClient } from '@studio/db'
+import { createTestDatabase, type TestDatabase } from '@studio/test-config'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { MemoryDataProcessor } from '../memory-processing'
 
 describe('MemoryDataProcessor with Deduplication', () => {
-  let prisma: PrismaClient
+  let testDb: TestDatabase
   let processor: MemoryDataProcessor
 
   beforeEach(async () => {
-    prisma = new PrismaClient()
-    processor = new MemoryDataProcessor(prisma, {
+    testDb = await createTestDatabase()
+    processor = new MemoryDataProcessor(testDb.client, {
       batchSize: 10,
       continueOnError: true,
       validateFirst: true,
       logProgress: false, // Disable logging in tests
     })
 
-    await prisma.memory.deleteMany()
+    await testDb.client.memory.deleteMany()
   })
 
   afterEach(async () => {
-    await prisma.memory.deleteMany()
-    await prisma.$disconnect()
+    await testDb.cleanup()
   })
 
   it('should process memories without deduplication', async () => {
@@ -54,7 +53,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.duplicatesSkipped).toBe(0)
     expect(result.errors).toHaveLength(0)
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(2)
   })
 
@@ -95,7 +94,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.duplicatesSkipped).toBe(1) // mem2 skipped as duplicate of mem1
     expect(result.errors).toHaveLength(0)
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(2)
     expect(memories.map((m) => m.id).sort()).toEqual(['mem1', 'mem3'])
   })
@@ -131,7 +130,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].type).toBe('validation')
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(1)
     expect(memories[0].id).toBe('mem1')
   })
@@ -170,7 +169,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.failed).toBe(0)
     expect(result.duplicatesSkipped).toBe(1)
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(1)
     expect(memories[0].id).toBe('mem1')
   })
@@ -192,7 +191,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
 
     expect(result.successful).toBe(1)
 
-    const memory = await prisma.memory.findUnique({
+    const memory = await testDb.client.memory.findUnique({
       where: { id: 'mem1' },
     })
 
@@ -228,7 +227,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.failed).toBe(1)
     expect(result.databaseErrors).toBe(1)
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(1)
   })
 
@@ -246,7 +245,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
       })
     }
 
-    const processor = new MemoryDataProcessor(prisma, {
+    const processor = new MemoryDataProcessor(testDb.client, {
       batchSize: 5,
       continueOnError: true,
       validateFirst: true,
@@ -261,7 +260,7 @@ describe('MemoryDataProcessor with Deduplication', () => {
     expect(result.duplicatesSkipped).toBe(19) // 19 duplicates of the repeated memory
     expect(result.failed).toBe(0)
 
-    const memories = await prisma.memory.findMany()
+    const memories = await testDb.client.memory.findMany()
     expect(memories).toHaveLength(6)
   })
 })
