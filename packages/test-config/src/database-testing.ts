@@ -126,7 +126,16 @@ export async function createTestDatabase(
  */
 export async function resetTestDatabase(client: PrismaClient): Promise<void> {
   // Delete in dependency order to handle foreign key constraints
-  // Assets and Links depend on Messages, so delete them first
+  // Memory-related tables must be deleted before Messages due to foreign keys
+
+  // Delete memory-related data first (in reverse dependency order)
+  await client.qualityMetrics.deleteMany()
+  await client.validationStatus.deleteMany()
+  await client.relationshipDynamics.deleteMany()
+  await client.emotionalContext.deleteMany()
+  await client.memory.deleteMany()
+
+  // Delete original tables (Assets and Links depend on Messages)
   await client.asset.deleteMany()
   await client.link.deleteMany()
   await client.message.deleteMany()
@@ -174,9 +183,68 @@ export async function seedTestDatabase(client: PrismaClient) {
     },
   })
 
+  // Create example memory with emotional context
+  const memory1 = await client.memory.create({
+    data: {
+      id: 'test-memory-1',
+      sourceMessageIds: JSON.stringify([message1.id, message2.id]),
+      participants: JSON.stringify([
+        { id: 'alice', name: 'Alice', role: 'self' },
+        { id: 'bob', name: 'Bob', role: 'friend' },
+      ]),
+      summary: 'Friendly conversation with link sharing',
+      confidence: 8,
+      messages: {
+        connect: [{ id: message1.id }, { id: message2.id }],
+      },
+      emotionalContext: {
+        create: {
+          id: 'test-emotion-1',
+          primaryMood: 'positive',
+          intensity: 7,
+          themes: JSON.stringify(['connection', 'sharing']),
+          emotionalMarkers: JSON.stringify([
+            'friendly greeting',
+            'helpful sharing',
+          ]),
+          contextualEvents: JSON.stringify(['link shared']),
+          temporalPatterns: JSON.stringify({
+            isBuilding: true,
+            isResolving: false,
+          }),
+        },
+      },
+      relationshipDynamics: {
+        create: {
+          id: 'test-dynamics-1',
+          overallDynamics: JSON.stringify({ connectionStrength: 0.8 }),
+          participantDynamics: JSON.stringify([]),
+          communicationPatterns: JSON.stringify(['supportive', 'open']),
+          interactionQuality: JSON.stringify({
+            quality: 'positive',
+            indicators: ['sharing'],
+          }),
+        },
+      },
+      validationStatus: {
+        create: {
+          id: 'test-validation-1',
+          status: 'approved',
+          validator: 'test-system',
+          validatedAt: new Date('2025-01-01T12:00:00Z'),
+          refinementSuggestions: JSON.stringify([]),
+          approvalHistory: JSON.stringify([
+            { status: 'approved', timestamp: '2025-01-01T12:00:00Z' },
+          ]),
+        },
+      },
+    },
+  })
+
   return {
     message1,
     message2,
+    memory1,
   }
 }
 
@@ -190,6 +258,7 @@ export async function seedTestDatabase(client: PrismaClient) {
  * IMPORTANT: This schema is derived from the actual migration files:
  * - packages/db/prisma/migrations/20250704085329_init/migration.sql
  * - packages/db/prisma/migrations/20250707003405_add_asset_type_field/migration.sql
+ * - packages/db/prisma/migrations/20250720080225_add_memory_schema/migration.sql
  *
  * When Prisma migrations are added, this function MUST be updated to match.
  */
@@ -234,6 +303,87 @@ function getPrismaGeneratedSchemaStatements(): string[] {
     BEGIN
       UPDATE "Message" SET "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = NEW."id";
     END`,
+
+    // Memory schema tables (from 20250720080225_add_memory_schema)
+    `CREATE TABLE "Memory" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "sourceMessageIds" TEXT NOT NULL,
+        "participants" TEXT NOT NULL,
+        "summary" TEXT NOT NULL,
+        "confidence" INTEGER NOT NULL,
+        "extractedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL
+    )`,
+
+    `CREATE TABLE "EmotionalContext" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "primaryMood" TEXT NOT NULL,
+        "intensity" INTEGER NOT NULL,
+        "themes" TEXT NOT NULL,
+        "emotionalMarkers" TEXT NOT NULL,
+        "contextualEvents" TEXT NOT NULL,
+        "temporalPatterns" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "EmotionalContext_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "RelationshipDynamics" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "overallDynamics" TEXT NOT NULL,
+        "participantDynamics" TEXT NOT NULL,
+        "communicationPatterns" TEXT NOT NULL,
+        "interactionQuality" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "RelationshipDynamics_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "ValidationStatus" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "status" TEXT NOT NULL,
+        "validator" TEXT,
+        "validatedAt" DATETIME,
+        "validationRound" INTEGER NOT NULL DEFAULT 1,
+        "requiresRefinement" BOOLEAN NOT NULL DEFAULT false,
+        "refinementSuggestions" TEXT NOT NULL,
+        "approvalHistory" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "ValidationStatus_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "QualityMetrics" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "overallQuality" REAL NOT NULL,
+        "dimensionalQuality" TEXT NOT NULL,
+        "confidenceAlignment" REAL NOT NULL,
+        "validationConsistency" REAL NOT NULL,
+        "evidenceSupport" REAL NOT NULL,
+        "calculatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "calculationMethod" TEXT NOT NULL,
+        CONSTRAINT "QualityMetrics_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "_MemoryMessages" (
+        "A" TEXT NOT NULL,
+        "B" INTEGER NOT NULL,
+        CONSTRAINT "_MemoryMessages_A_fkey" FOREIGN KEY ("A") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "_MemoryMessages_B_fkey" FOREIGN KEY ("B") REFERENCES "Message" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    // Memory schema indexes (from 20250720080225_add_memory_schema)
+    `CREATE UNIQUE INDEX "EmotionalContext_memoryId_key" ON "EmotionalContext"("memoryId")`,
+    `CREATE UNIQUE INDEX "RelationshipDynamics_memoryId_key" ON "RelationshipDynamics"("memoryId")`,
+    `CREATE UNIQUE INDEX "ValidationStatus_memoryId_key" ON "ValidationStatus"("memoryId")`,
+    `CREATE INDEX "QualityMetrics_memoryId_idx" ON "QualityMetrics"("memoryId")`,
+    `CREATE UNIQUE INDEX "_MemoryMessages_AB_unique" ON "_MemoryMessages"("A", "B")`,
+    `CREATE INDEX "_MemoryMessages_B_index" ON "_MemoryMessages"("B")`,
   ]
 }
 
