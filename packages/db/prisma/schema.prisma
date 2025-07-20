@@ -19,6 +19,7 @@ model Message {
   updatedAt DateTime @updatedAt
   assets    Asset[]
   links     Link[]
+  memories  Memory[] @relation("MemoryMessages")
 }
 
 model Link {
@@ -34,4 +35,84 @@ model Asset {
   messageId Int
   type      String?
   message   Message @relation(fields: [messageId], references: [id])
+}
+
+// Phase 2: Memory and Emotional Intelligence Schema
+
+model Memory {
+  id                String             @id @default(cuid())
+  sourceMessageIds  String             // JSON array of message IDs
+  participants      String             // JSON participant data
+  summary          String
+  confidence       Int                // 1-10 scale
+  extractedAt      DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  // Relationships
+  messages         Message[]          @relation("MemoryMessages")
+  emotionalContext EmotionalContext?
+  relationshipDynamics RelationshipDynamics?
+  validationStatus ValidationStatus?
+  qualityMetrics   QualityMetrics[]
+}
+
+model EmotionalContext {
+  id              String   @id @default(cuid())
+  memoryId        String   @unique
+  primaryMood     String   // positive, negative, neutral, mixed, ambiguous
+  intensity       Int      // 1-10 scale
+  themes          String   // JSON EmotionalTheme array
+  emotionalMarkers String  // JSON EmotionalMarker array
+  contextualEvents String  // JSON ContextualEvent array
+  temporalPatterns String  // JSON TemporalPattern array
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  memory          Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
+
+model RelationshipDynamics {
+  id                   String   @id @default(cuid())
+  memoryId             String   @unique
+  overallDynamics      String   // JSON OverallRelationshipDynamics
+  participantDynamics  String   // JSON ParticipantDynamics array
+  communicationPatterns String  // JSON CommunicationPattern array
+  interactionQuality   String   // JSON InteractionQuality
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  memory               Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
+
+model ValidationStatus {
+  id                   String   @id @default(cuid())
+  memoryId             String   @unique
+  status               String   // pending, approved, rejected, needs_refinement
+  validator            String?
+  validatedAt          DateTime?
+  validationRound      Int      @default(1)
+  requiresRefinement   Boolean  @default(false)
+  refinementSuggestions String  // JSON RefinementSuggestion array
+  approvalHistory      String   // JSON ApprovalHistory array
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  memory               Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
+
+model QualityMetrics {
+  id                    String   @id @default(cuid())
+  memoryId              String
+  overallQuality        Float    // 1-10 scale
+  dimensionalQuality    String   // JSON DimensionalQuality object
+  confidenceAlignment   Float
+  validationConsistency Float
+  evidenceSupport       Float
+  calculatedAt          DateTime @default(now())
+  calculationMethod     String
+  
+  memory                Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  @@index([memoryId])
 }
