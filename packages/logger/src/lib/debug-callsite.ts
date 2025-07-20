@@ -8,8 +8,8 @@ function debugCallsite() {
   console.log('Frame 4:', getCallSite(4))
 }
 
-function testCallsite() {
+export function testCallsite() {
   debugCallsite()
 }
 
-testCallsite()
+// Removed automatic execution - call testCallsite() manually if needed for debugging

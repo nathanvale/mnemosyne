@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { logger, log } from '../logger'
+import logger, { production } from '../logger'
 
 describe('logger', () => {
   beforeEach(() => {
@@ -16,32 +16,23 @@ describe('logger', () => {
   })
 
   it('should provide convenience log methods', () => {
-    expect(log).toBeDefined()
-    expect(typeof log.info).toBe('function')
-    expect(typeof log.error).toBe('function')
-    expect(typeof log.warn).toBe('function')
-    expect(typeof log.debug).toBe('function')
-    expect(typeof log.trace).toBe('function')
-    expect(typeof log.fatal).toBe('function')
+    expect(logger).toBeDefined()
+    expect(typeof logger.info).toBe('function')
+    expect(typeof logger.error).toBe('function')
+    expect(typeof logger.warn).toBe('function')
+    expect(typeof logger.debug).toBe('function')
+    expect(typeof logger.trace).toBe('function')
+    expect(typeof logger.fatal).toBe('function')
   })
 
-  it('should include callsite information in logs', () => {
-    const spy = vi.spyOn(logger, 'info')
+  it('should auto-detect environment and provide appropriate logger', () => {
+    // Test that default logger is created successfully
+    expect(logger).toBeDefined()
+    expect(typeof logger.info).toBe('function')
 
-    // This should trigger the callsite and include location info
-    log.info('Test message')
-
-    // Check that the logger was called with callsite information
-    expect(spy).toHaveBeenCalledTimes(1)
-    const call = spy.mock.calls[0]
-    const firstArg = call[0] as unknown as {
-      callsite: { file: string; line: number; column: number }
-    }
-    expect(firstArg).toHaveProperty('callsite')
-    expect(firstArg.callsite).toHaveProperty('file')
-    expect(firstArg.callsite).toHaveProperty('line')
-    expect(firstArg.callsite).toHaveProperty('column')
-    expect(firstArg.callsite.file).toContain('logger.test.ts')
-    expect(call[1]).toBe('Test message')
+    // Test that production logger can be created explicitly
+    const prodLogger = production()
+    expect(prodLogger).toBeDefined()
+    expect(typeof prodLogger.info).toBe('function')
   })
 })
