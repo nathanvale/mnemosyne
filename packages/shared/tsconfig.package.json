@@ -8,7 +8,8 @@
       "@studio/test-config": ["../test-config/src"],
       "@studio/ui": ["../ui/src"],
       "@studio/mocks": ["../mocks/src"],
-      "@studio/shared": ["../shared/src"]
+      "@studio/shared": ["../shared/src"],
+      "@studio/schema": ["../schema/src"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

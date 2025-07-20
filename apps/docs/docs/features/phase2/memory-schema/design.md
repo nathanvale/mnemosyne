@@ -27,6 +27,7 @@ The Memory Schema Definition provides the comprehensive TypeScript type system a
 ```typescript
 interface Memory {
   id: string // Unique memory identifier
+  contentHash: string // SHA-256 hash for deduplication
   sourceMessageIds: string[] // Messages that contributed to this memory
   participants: Participant[] // People involved in the memory
   emotionalContext: EmotionalContext // Emotional analysis and themes
@@ -37,6 +38,7 @@ interface Memory {
   validationStatus: ValidationStatus // Validation workflow state
   qualityMetrics?: QualityMetrics // Quality assessment results
   metadata: MemoryMetadata // Processing and system metadata
+  deduplicationMetadata?: DeduplicationMetadata // Deduplication tracking and merge history
 }
 ```
 
@@ -296,6 +298,7 @@ interface MemoryMetadata {
   validation: ValidationMetadata
   system: SystemMetadata
   relationships: RelationshipMetadata
+  deduplication?: DeduplicationMetadata
 }
 
 interface ProcessingMetadata {
@@ -332,6 +335,33 @@ interface SystemMetadata {
   sourceSystem: string // System that created this memory
   migrationHistory: MigrationRecord[] // Schema migration history
   accessHistory: AccessRecord[] // Who accessed this memory when
+}
+
+interface DeduplicationMetadata {
+  contentHash: string // Primary content hash for deduplication
+  sourceHash: string // Hash based only on source message IDs
+  semanticHash: string // Hash based only on semantic content
+  duplicateChecksum: string // Fast checksum for initial duplicate filtering
+  hashingVersion: string // Version of hashing algorithm used
+  hashingTimestamp: Date // When hash was calculated
+  collisionChecked: boolean // Whether hash collision was verified
+  similarityAnalyzed?: boolean // Whether similarity analysis was performed
+  mergeHistory?: MergeOperation[] // History of merge operations for this memory
+  duplicateOf?: string // If this is identified as duplicate, ID of original
+  mergedFrom?: string[] // IDs of memories that were merged into this one
+}
+
+interface MergeOperation {
+  mergeId: string // Unique identifier for this merge
+  mergedMemoryId: string // ID of memory that was merged in
+  mergedAt: Date // When merge occurred
+  mergeStrategy: string // Strategy used (content_based, manual, etc.)
+  mergeConfidence: number // Confidence in merge quality (1-10)
+  conflictsResolved: number // Number of conflicts that were resolved
+  qualityImprovement: number // Quality improvement from merge (-10 to +10)
+  mergedBy: string // Who/what performed the merge (system_auto, user_id, etc.)
+  preservedFields: string[] // Which fields were preserved from original
+  enhancedFields: string[] // Which fields were enhanced by merge
 }
 ```
 
@@ -428,6 +458,7 @@ export function isMemory(obj: any): obj is Memory {
   return (
     obj &&
     typeof obj.id === 'string' &&
+    typeof obj.contentHash === 'string' &&
     Array.isArray(obj.sourceMessageIds) &&
     Array.isArray(obj.participants) &&
     isEmotionalContext(obj.emotionalContext) &&
@@ -465,6 +496,21 @@ export function isRelationshipDynamics(obj: any): obj is RelationshipDynamics {
     Array.isArray(obj.communicationPatterns)
   )
 }
+
+export function isDeduplicationMetadata(
+  obj: any,
+): obj is DeduplicationMetadata {
+  return (
+    obj &&
+    typeof obj.contentHash === 'string' &&
+    typeof obj.sourceHash === 'string' &&
+    typeof obj.semanticHash === 'string' &&
+    typeof obj.duplicateChecksum === 'string' &&
+    typeof obj.hashingVersion === 'string' &&
+    obj.hashingTimestamp instanceof Date &&
+    typeof obj.collisionChecked === 'boolean'
+  )
+}
 ```
 
 ### Schema Validation Utilities
@@ -495,6 +541,22 @@ export function validateMemory(memory: any): ValidationResult {
       message: 'Memory ID is required and must be a string',
       value: memory.id,
       expectedType: 'string',
+    })
+  }
+
+  if (!memory.contentHash || typeof memory.contentHash !== 'string') {
+    errors.push({
+      field: 'contentHash',
+      message: 'Content hash is required and must be a string',
+      value: memory.contentHash,
+      expectedType: 'string',
+    })
+  } else if (!/^[a-f0-9]{64}$/i.test(memory.contentHash)) {
+    errors.push({
+      field: 'contentHash',
+      message: 'Content hash must be a valid SHA-256 hash (64 hex characters)',
+      value: memory.contentHash,
+      expectedType: 'string (SHA-256 hex)',
     })
   }
 

@@ -43,6 +43,14 @@ The Memory Processing Engine is designed as a comprehensive AI-powered system th
 - **Components**: Memory formatter, confidence calculator, quality validator
 - **Output**: Structured memories ready for domain-specific validation UI and MCP foundation layer
 
+**Memory Deduplication Engine**
+
+- **Role**: Prevent duplicate memory creation through content-based deduplication
+- **Responsibility**: Duplicate detection, similarity analysis, memory merging
+- **Components**: Content hasher, duplicate detector, similarity analyzer, memory merger
+- **Output**: Deduplicated memories with conflict resolution and merge metadata
+- **Reference**: See [Memory Deduplication Design](../memory-deduplication/design.md) for comprehensive strategy
+
 **Error Recovery System**
 
 - **Role**: Comprehensive error handling and recovery strategies
@@ -53,11 +61,11 @@ The Memory Processing Engine is designed as a comprehensive AI-powered system th
 ### Data Flow Architecture
 
 ```
-Message Selection → Batch Creation → Claude Processing → Memory Formatting → Quality Assessment → Storage
-       ↓                ↓               ↓                    ↓                  ↓             ↓
-Context Analysis → Batch Optimization → Emotional Analysis → Schema Validation → Confidence Scoring → Persistence
-       ↓                ↓               ↓                    ↓                  ↓             ↓
-Priority Filter → Queue Management → Response Parsing → Memory Creation → Quality Check → Database Storage
+Message Selection → Batch Creation → Claude Processing → Memory Formatting → Deduplication Check → Quality Assessment → Storage
+       ↓                ↓               ↓                    ↓                     ↓                ↓             ↓
+Context Analysis → Batch Optimization → Emotional Analysis → Schema Validation → Duplicate Detection → Confidence Scoring → Persistence
+       ↓                ↓               ↓                    ↓                     ↓                ↓             ↓
+Priority Filter → Queue Management → Response Parsing → Memory Creation → Similarity Analysis → Quality Check → Database Storage
 ```
 
 **Detailed Flow**:
@@ -66,8 +74,9 @@ Priority Filter → Queue Management → Response Parsing → Memory Creation �
 2. **Batch Creation**: Group messages into optimal batches balancing quality and cost
 3. **Claude Processing**: Analyze emotional context with structured prompts
 4. **Memory Formatting**: Transform Claude output into structured memory objects
-5. **Quality Assessment**: Validate memory quality and calculate confidence scores
-6. **Storage**: Persist memories with processing metadata and validation status
+5. **Deduplication Check**: Generate content hash and check for existing similar memories
+6. **Quality Assessment**: Validate memory quality and calculate confidence scores
+7. **Storage**: Persist memories with processing metadata and validation status
 
 ## 📦 Package Implementation
 
@@ -92,6 +101,11 @@ src/
 │   ├── confidence-calculator.ts # Confidence scoring algorithms
 │   ├── quality-validator.ts   # Memory quality assessment
 │   └── evidence-extractor.ts  # Textual evidence extraction
+├── deduplication/
+│   ├── content-hasher.ts      # Content-based memory hashing
+│   ├── duplicate-detector.ts  # Duplicate memory detection
+│   ├── similarity-analyzer.ts # Memory similarity analysis
+│   └── memory-merger.ts       # Intelligent memory merging
 ├── error/
 │   ├── error-classifier.ts    # Error categorization and analysis
 │   ├── retry-manager.ts       # Retry logic and backoff strategies
@@ -99,7 +113,8 @@ src/
 ├── types/
 │   ├── processing.ts          # Processing pipeline types
 │   ├── claude.ts              # Claude integration types
-│   └── batch.ts               # Batch processing types
+│   ├── batch.ts               # Batch processing types
+│   └── deduplication.ts       # Deduplication system types
 └── index.ts                   # Main API exports
 ```
 
