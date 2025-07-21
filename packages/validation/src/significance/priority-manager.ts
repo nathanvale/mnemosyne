@@ -1,4 +1,6 @@
-import type { Memory } from '@studio/schema'
+import type { Memory, EmotionalContext } from '@studio/schema'
+
+import { isEmotionalContext, isParticipant } from '@studio/schema'
 
 import type {
   PrioritizedMemory,
@@ -17,7 +19,7 @@ export class PriorityManager {
    */
   createPrioritizedList(
     memories: Memory[],
-    significanceScores: Map<string, EmotionalSignificanceScore>
+    significanceScores: Map<string, EmotionalSignificanceScore>,
   ): PrioritizedMemoryList {
     // Create prioritized memories with review context
     const prioritizedMemories: PrioritizedMemory[] = memories
@@ -50,13 +52,14 @@ export class PriorityManager {
    */
   optimizeQueue(
     queue: ValidationQueue,
-    prioritizedList: PrioritizedMemoryList
+    prioritizedList: PrioritizedMemoryList,
   ): OptimizedQueue {
     const { resourceAllocation } = queue
     const { availableTime, validatorExpertise } = resourceAllocation
 
     // Calculate optimal batch size based on available time
-    const estimatedTimePerMemory = this.estimateValidationTime(validatorExpertise)
+    const estimatedTimePerMemory =
+      this.estimateValidationTime(validatorExpertise)
     const maxMemories = Math.floor(availableTime / estimatedTimePerMemory)
 
     // Select memories based on strategy
@@ -64,13 +67,13 @@ export class PriorityManager {
     const optimizedMemories = this.applyStrategy(
       prioritizedList.memories,
       maxMemories,
-      strategy
+      strategy,
     )
 
     // Calculate expected outcomes
     const expectedOutcomes = this.calculateExpectedOutcomes(
       optimizedMemories,
-      estimatedTimePerMemory
+      estimatedTimePerMemory,
     )
 
     return {
@@ -89,7 +92,7 @@ export class PriorityManager {
    */
   private createPrioritizedMemory(
     memory: Memory,
-    significanceScore: EmotionalSignificanceScore
+    significanceScore: EmotionalSignificanceScore,
   ): Omit<PrioritizedMemory, 'priorityRank'> {
     const reviewContext = this.generateReviewContext(memory, significanceScore)
 
@@ -105,22 +108,28 @@ export class PriorityManager {
    */
   private generateReviewContext(
     memory: Memory,
-    significanceScore: EmotionalSignificanceScore
+    significanceScore: EmotionalSignificanceScore,
   ): PrioritizedMemory['reviewContext'] {
     const focusAreas: string[] = []
     const validationHints: string[] = []
 
     // Identify focus areas based on significance factors
     const { factors } = significanceScore
-    
+
     if (factors.emotionalIntensity > 0.8) {
       focusAreas.push('High emotional intensity - verify emotional accuracy')
-      validationHints.push('Pay special attention to emotional nuances and intensity levels')
+      validationHints.push(
+        'Pay special attention to emotional nuances and intensity levels',
+      )
     }
 
     if (factors.relationshipImpact > 0.8) {
-      focusAreas.push('Significant relationship impact - check relationship dynamics')
-      validationHints.push('Verify participant relationships and interaction patterns')
+      focusAreas.push(
+        'Significant relationship impact - check relationship dynamics',
+      )
+      validationHints.push(
+        'Verify participant relationships and interaction patterns',
+      )
     }
 
     if (factors.lifeEventSignificance > 0.8) {
@@ -149,15 +158,14 @@ export class PriorityManager {
    */
   private generateReviewReason(score: EmotionalSignificanceScore): string {
     const { overall, factors } = score
-    
+
     if (overall > 0.9) {
       return 'Critical emotional memory requiring careful validation'
     }
-    
+
     // Find the highest factor
-    const highestFactor = Object.entries(factors)
-      .sort((a, b) => b[1] - a[1])[0]
-    
+    const highestFactor = Object.entries(factors).sort((a, b) => b[1] - a[1])[0]
+
     const factorDescriptions: Record<string, string> = {
       emotionalIntensity: 'high emotional intensity',
       relationshipImpact: 'significant relationship implications',
@@ -165,7 +173,7 @@ export class PriorityManager {
       participantVulnerability: 'vulnerable participant involvement',
       temporalImportance: 'temporal significance',
     }
-    
+
     return `Requires review due to ${factorDescriptions[highestFactor[0]] || 'elevated significance'}`
   }
 
@@ -173,7 +181,7 @@ export class PriorityManager {
    * Calculate significance distribution
    */
   private calculateDistribution(
-    memories: PrioritizedMemory[]
+    memories: PrioritizedMemory[],
   ): PrioritizedMemoryList['significanceDistribution'] {
     const distribution = {
       high: 0,
@@ -199,7 +207,7 @@ export class PriorityManager {
    * Estimate validation time based on validator expertise
    */
   private estimateValidationTime(
-    expertise: 'beginner' | 'intermediate' | 'expert'
+    expertise: 'beginner' | 'intermediate' | 'expert',
   ): number {
     // Time in minutes per memory
     switch (expertise) {
@@ -217,7 +225,7 @@ export class PriorityManager {
    */
   private selectOptimizationStrategy(
     queue: ValidationQueue,
-    prioritizedList: PrioritizedMemoryList
+    prioritizedList: PrioritizedMemoryList,
   ): OptimizationStrategy {
     const { significanceDistribution } = prioritizedList
     const totalMemories = prioritizedList.totalCount
@@ -261,7 +269,7 @@ export class PriorityManager {
   private applyStrategy(
     memories: PrioritizedMemory[],
     maxCount: number,
-    strategy: OptimizationStrategy
+    strategy: OptimizationStrategy,
   ): PrioritizedMemory[] {
     switch (strategy.name) {
       case 'high-significance-focus': {
@@ -277,14 +285,24 @@ export class PriorityManager {
           mediumRatio: number
           lowRatio: number
         }
-        
+
         const highCount = Math.floor(maxCount * highRatio)
         const mediumCount = Math.floor(maxCount * mediumRatio)
         const lowCount = Math.floor(maxCount * lowRatio)
 
-        const high = memories.filter((m) => m.significanceScore.overall >= 0.7).slice(0, highCount)
-        const medium = memories.filter((m) => m.significanceScore.overall >= 0.4 && m.significanceScore.overall < 0.7).slice(0, mediumCount)
-        const low = memories.filter((m) => m.significanceScore.overall < 0.4).slice(0, lowCount)
+        const high = memories
+          .filter((m) => m.significanceScore.overall >= 0.7)
+          .slice(0, highCount)
+        const medium = memories
+          .filter(
+            (m) =>
+              m.significanceScore.overall >= 0.4 &&
+              m.significanceScore.overall < 0.7,
+          )
+          .slice(0, mediumCount)
+        const low = memories
+          .filter((m) => m.significanceScore.overall < 0.4)
+          .slice(0, lowCount)
 
         return [...high, ...medium, ...low]
       }
@@ -301,15 +319,14 @@ export class PriorityManager {
    */
   private calculateExpectedOutcomes(
     memories: PrioritizedMemory[],
-    timePerMemory: number
+    timePerMemory: number,
   ): OptimizedQueue['strategy']['expectedOutcomes'] {
     const estimatedTime = memories.length * timePerMemory
-    
+
     // Calculate average quality
-    const avgSignificance = memories.reduce(
-      (sum, m) => sum + m.significanceScore.overall,
-      0
-    ) / memories.length
+    const avgSignificance =
+      memories.reduce((sum, m) => sum + m.significanceScore.overall, 0) /
+      memories.length
 
     // Calculate coverage metrics
     const emotionalRange = this.calculateEmotionalRange(memories)
@@ -333,10 +350,14 @@ export class PriorityManager {
   private calculateEmotionalRange(memories: PrioritizedMemory[]): number {
     // Simplified calculation - would analyze actual emotional contexts
     const uniqueEmotions = new Set<string>()
-    
+
     for (const memory of memories) {
-      const emotionalContext = memory.memory.emotionalContext as any
-      if (emotionalContext?.primaryEmotion) {
+      const emotionalContext: EmotionalContext | unknown =
+        memory.memory.emotionalContext
+      if (
+        isEmotionalContext(emotionalContext) &&
+        emotionalContext.primaryEmotion
+      ) {
         uniqueEmotions.add(emotionalContext.primaryEmotion)
       }
     }
@@ -351,13 +372,15 @@ export class PriorityManager {
   private calculateTemporalSpan(memories: PrioritizedMemory[]): number {
     if (memories.length === 0) return 0
 
-    const timestamps = memories.map((m) => new Date(m.memory.timestamp).getTime())
+    const timestamps = memories.map((m) =>
+      new Date(m.memory.timestamp).getTime(),
+    )
     const minTime = Math.min(...timestamps)
     const maxTime = Math.max(...timestamps)
-    
+
     // Calculate span in days
     const spanDays = (maxTime - minTime) / (1000 * 60 * 60 * 24)
-    
+
     // Normalize to 0-1 (assume 365 days is full coverage)
     return Math.min(1, spanDays / 365)
   }
@@ -367,12 +390,11 @@ export class PriorityManager {
    */
   private calculateParticipantDiversity(memories: PrioritizedMemory[]): number {
     const uniqueParticipants = new Set<string>()
-    
+
     for (const memory of memories) {
       for (const participant of memory.memory.participants || []) {
-        const p = participant as any
-        if (p?.id) {
-          uniqueParticipants.add(p.id)
+        if (isParticipant(participant) && participant.id) {
+          uniqueParticipants.add(participant.id)
         }
       }
     }
