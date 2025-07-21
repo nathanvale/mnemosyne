@@ -26,12 +26,30 @@ export class McpExpressServer {
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
     this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*')
+      const allowedOrigins =
+        process.env.NODE_ENV === 'production'
+          ? process.env.ALLOWED_ORIGINS?.split(',') || [
+              'https://localhost:3000',
+            ]
+          : [
+              'http://localhost:3000',
+              'http://127.0.0.1:3000',
+              'http://localhost:3001',
+            ]
+
+      const origin = req.headers.origin
+      if (origin && allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin)
+      } else if (process.env.NODE_ENV !== 'production') {
+        res.header('Access-Control-Allow-Origin', '*')
+      }
+
       res.header(
         'Access-Control-Allow-Methods',
         'GET, POST, PUT, DELETE, OPTIONS',
       )
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+      res.header('Access-Control-Allow-Credentials', 'true')
 
       if (req.method === 'OPTIONS') {
         res.sendStatus(200)
