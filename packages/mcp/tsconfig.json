@@ -1,0 +1,15 @@
+{
+  "extends": "../shared/tsconfig.package.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
+  "references": [
+    { "path": "../schema" },
+    { "path": "../memory" },
+    { "path": "../db" },
+    { "path": "../logger" }
+  ]
+}
