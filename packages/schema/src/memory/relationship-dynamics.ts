@@ -90,6 +90,12 @@ export interface RelationshipDynamics {
     /** Specific observations */
     observations: string[]
   }>
+
+  /** Quality score for relationship assessment (0-10 scale) */
+  quality?: number
+
+  /** Communication patterns observed in the relationship */
+  patterns?: string[]
 }
 
 /**
@@ -128,6 +134,8 @@ export const RelationshipDynamicsSchema = z.object({
       }),
     )
     .optional(),
+  quality: z.number().min(0).max(10).optional(),
+  patterns: z.array(z.string()).optional(),
 })
 
 export type RelationshipDynamicsInput = z.input<

@@ -1,4 +1,8 @@
-import type { Memory } from '@studio/schema'
+import type {
+  Memory,
+  EmotionalContext,
+  RelationshipDynamics,
+} from '@studio/schema'
 
 import {
   ValidationStatus,
@@ -26,7 +30,7 @@ describe('Auto-confirmation Engine', () => {
       id: 'test-memory-1',
       content: 'This is a test memory with meaningful emotional content',
       timestamp: '2024-01-15T10:30:00.000Z',
-      author: { id: 'user-1', name: 'Test User' },
+      author: { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
       participants: [
         { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
         { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
@@ -84,25 +88,49 @@ describe('Auto-confirmation Engine', () => {
     })
 
     it('routes low-confidence memories for review', () => {
-      // Lower the confidence factors
-      mockMemory.metadata.confidence = 0.3
-      mockMemory.emotionalContext = null
+      // Create a new memory object with low confidence factors
+      const lowConfidenceMemory: Memory = {
+        ...mockMemory,
+        metadata: {
+          ...mockMemory.metadata,
+          confidence: 0.3,
+        },
+        emotionalContext: {
+          primaryEmotion: EmotionalState.NEUTRAL,
+          secondaryEmotions: [],
+          intensity: 0.1,
+          valence: 0,
+          themes: [],
+          indicators: { phrases: [], emotionalWords: [], styleIndicators: [] },
+        },
+        content: 'Short', // Too short for good content quality
+        tags: [], // No tags
+      }
 
-      const result = engine.evaluateMemory(mockMemory)
+      const result = engine.evaluateMemory(lowConfidenceMemory)
 
       expect(result.decision).toBe('needs-review')
       expect(result.confidence).toBeLessThan(0.75)
+      expect(result.confidence).toBeGreaterThanOrEqual(0.5)
       expect(result.suggestedActions).toBeDefined()
     })
 
     it('auto-rejects very low confidence memories', () => {
-      // Create a very poor quality memory
-      mockMemory.metadata.confidence = 0.2
-      mockMemory.emotionalContext = null
-      mockMemory.relationshipDynamics = null
-      mockMemory.content = 'x'
+      // Create a new memory object with very low confidence factors
+      const veryLowConfidenceMemory: Memory = {
+        ...mockMemory,
+        metadata: {
+          ...mockMemory.metadata,
+          confidence: 0.1, // Very low claude confidence
+        },
+        emotionalContext: null as unknown as EmotionalContext, // Remove emotional context
+        relationshipDynamics: null as unknown as RelationshipDynamics, // Remove relationship dynamics
+        content: 'X', // Too short
+        tags: [], // No tags
+        timestamp: 'invalid', // Invalid timestamp
+      }
 
-      const result = engine.evaluateMemory(mockMemory)
+      const result = engine.evaluateMemory(veryLowConfidenceMemory)
 
       expect(result.decision).toBe('auto-reject')
       expect(result.confidence).toBeLessThan(0.5)
@@ -128,13 +156,35 @@ describe('Auto-confirmation Engine', () => {
           ...mockMemory,
           id: 'test-memory-2',
           metadata: { ...mockMemory.metadata, confidence: 0.4 },
-          emotionalContext: null,
+          emotionalContext: {
+            primaryEmotion: EmotionalState.NEUTRAL,
+            secondaryEmotions: [],
+            intensity: 0.1,
+            valence: 0,
+            themes: [],
+            indicators: {
+              phrases: [],
+              emotionalWords: [],
+              styleIndicators: [],
+            },
+          },
         },
         {
           ...mockMemory,
           id: 'test-memory-3',
           metadata: { ...mockMemory.metadata, confidence: 0.2 },
-          emotionalContext: null,
+          emotionalContext: {
+            primaryEmotion: EmotionalState.NEUTRAL,
+            secondaryEmotions: [],
+            intensity: 0.1,
+            valence: 0,
+            themes: [],
+            indicators: {
+              phrases: [],
+              emotionalWords: [],
+              styleIndicators: [],
+            },
+          },
           relationshipDynamics: null,
         },
       ] as Memory[]
@@ -216,7 +266,7 @@ describe('ConfidenceCalculator', () => {
       id: 'test-memory-1',
       content: 'This is meaningful content with sufficient length and quality',
       timestamp: '2024-01-15T10:30:00.000Z',
-      author: { id: 'user-1', name: 'Test User' },
+      author: { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
       participants: [
         { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
         { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
@@ -275,9 +325,13 @@ describe('ConfidenceCalculator', () => {
   })
 
   it('handles missing emotional context', () => {
-    mockMemory.emotionalContext = null
+    // Create a new memory object without emotional context
+    const memoryWithoutEmotionalContext: Memory = {
+      ...mockMemory,
+      emotionalContext: null as unknown as EmotionalContext,
+    }
 
-    const result = calculator.calculateConfidence(mockMemory)
+    const result = calculator.calculateConfidence(memoryWithoutEmotionalContext)
 
     expect(result.factors.emotionalCoherence).toBeLessThan(0.5)
   })

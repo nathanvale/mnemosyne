@@ -2,10 +2,18 @@ import type { PrismaClient } from '@studio/db'
 import type pino from 'pino'
 
 import { createLogger } from '@studio/logger'
-import { EmotionalState } from '@studio/schema'
+import {
+  EmotionalState,
+  ParticipantRole,
+  CommunicationPattern,
+  InteractionQuality,
+  type Participant,
+  type RelationshipDynamics,
+} from '@studio/schema'
 
 import type {
   ConversationData,
+  ConversationParticipant,
   ExtractedMemory,
   MemoryQualityScore,
   EmotionalAnalysis,
@@ -396,12 +404,15 @@ export class EnhancedMemoryProcessor {
       id: this.generateMemoryId(),
       content: this.extractMemoryContent(conversationData),
       timestamp: conversationData.timestamp.toISOString(),
-      author:
+      author: this.convertParticipant(
         conversationData.participants.find((p) => p.role === 'author') ??
-        conversationData.participants[0],
-      participants: conversationData.participants,
+          conversationData.participants[0],
+      ),
+      participants: conversationData.participants.map((p) =>
+        this.convertParticipant(p),
+      ),
       emotionalContext: emotionalAnalysis.context,
-      relationshipDynamics: {}, // Placeholder for relationship analysis
+      relationshipDynamics: this.createDefaultRelationshipDynamics(),
       tags: ['conversation'], // Basic tags
       metadata: {
         processedAt: extractedAt.toISOString(),
@@ -475,6 +486,69 @@ export class EnhancedMemoryProcessor {
       meetsConfidenceThreshold &&
       meetsSignificanceThreshold
     )
+  }
+
+  /**
+   * Create default RelationshipDynamics for placeholder use
+   */
+  private createDefaultRelationshipDynamics(): RelationshipDynamics {
+    return {
+      communicationPattern: CommunicationPattern.FORMAL,
+      interactionQuality: InteractionQuality.NEUTRAL,
+      powerDynamics: {
+        isBalanced: true,
+        concerningPatterns: [],
+      },
+      attachmentIndicators: {
+        secure: [],
+        anxious: [],
+        avoidant: [],
+      },
+      healthIndicators: {
+        positive: [],
+        negative: [],
+        repairAttempts: [],
+      },
+      connectionStrength: 0.5,
+      participantDynamics: [],
+      quality: 5,
+      patterns: [],
+    }
+  }
+
+  /**
+   * Convert ConversationParticipant to Participant with proper role mapping
+   */
+  private convertParticipant(
+    conversationParticipant: ConversationParticipant,
+  ): Participant {
+    // Map conversation roles to ParticipantRole enum
+    let role: ParticipantRole
+    switch (conversationParticipant.role) {
+      case 'author':
+        role = ParticipantRole.SELF
+        break
+      case 'recipient':
+        role = ParticipantRole.OTHER
+        break
+      case 'observer':
+        role = ParticipantRole.OTHER
+        break
+      default:
+        role = ParticipantRole.OTHER
+    }
+
+    return {
+      id: conversationParticipant.id,
+      name: conversationParticipant.name,
+      role,
+      metadata: {
+        sourceId: conversationParticipant.id,
+        canonicalName: conversationParticipant.name,
+        relationshipDescription:
+          conversationParticipant.metadata?.relationshipType,
+      },
+    }
   }
 
   /**

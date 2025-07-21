@@ -15,7 +15,10 @@ import { DEFAULT_THRESHOLD_CONFIG } from '../config/defaults'
 import { ConfidenceCalculator } from './confidence-calculator'
 import { ThresholdManager } from './threshold-manager'
 
-const logger = createLogger({ tags: ['validation:auto-confirmation'] })
+const logger = createLogger({
+  tags: ['validation:auto-confirmation'],
+  level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
+})
 
 /**
  * Implementation of the auto-confirmation engine

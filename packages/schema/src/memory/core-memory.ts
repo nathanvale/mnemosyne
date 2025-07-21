@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+import type { EmotionalContext } from './emotional-context'
+import type { Participant } from './participants'
+import type { RelationshipDynamics } from './relationship-dynamics'
+
 /**
  * Core memory interface representing a single memory unit
  * with emotional intelligence and relationship analysis
@@ -15,16 +19,16 @@ export interface Memory {
   timestamp: string
 
   /** Primary participant who created this memory */
-  author: unknown // Will be typed as Participant when imported
+  author: Participant
 
   /** All participants involved in this memory */
-  participants: unknown[] // Will be typed as Participant[] when imported
+  participants: Participant[]
 
   /** Emotional analysis of the memory */
-  emotionalContext: unknown // Will be typed as EmotionalContext when imported
+  emotionalContext: EmotionalContext
 
   /** Relationship dynamics captured in this memory */
-  relationshipDynamics: unknown // Will be typed as RelationshipDynamics when imported
+  relationshipDynamics: RelationshipDynamics
 
   /** Tags for categorization and retrieval */
   tags: string[]
@@ -49,10 +53,10 @@ export const MemorySchema = z.object({
   id: z.string().uuid(),
   content: z.string().min(1),
   timestamp: z.string().datetime(),
-  author: z.lazy(() => z.any()), // Will be defined in participants.ts
-  participants: z.array(z.lazy(() => z.any())),
-  emotionalContext: z.lazy(() => z.any()), // Will be defined in emotional-context.ts
-  relationshipDynamics: z.lazy(() => z.any()), // Will be defined in relationship-dynamics.ts
+  author: z.lazy(() => z.any()), // ParticipantSchema import would create circular dependency
+  participants: z.array(z.lazy(() => z.any())), // ParticipantSchema import would create circular dependency
+  emotionalContext: z.lazy(() => z.any()), // EmotionalContextSchema import would create circular dependency
+  relationshipDynamics: z.lazy(() => z.any()), // RelationshipDynamicsSchema import would create circular dependency
   tags: z.array(z.string()),
   metadata: z.object({
     processedAt: z.string().datetime(),
