@@ -1,11 +1,4 @@
-import type {
-  Memory,
-  EmotionalContext,
-  RelationshipDynamics,
-  ValidationStatus,
-  ValidationIssueType,
-  QualityMetrics,
-} from '@studio/schema'
+import type { Memory, ValidationStatus, QualityMetrics } from '@studio/schema'
 
 /**
  * Auto-confirmation result for a memory
