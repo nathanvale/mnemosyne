@@ -236,8 +236,8 @@ export class AgentContextAssembler {
     participantId: string,
   ): Promise<ExtractedMemory[]> {
     return memories.filter((memory) => {
-      const isParticipant = memory.participants.some(
-        (p: Participant) => p.id === participantId,
+      const isParticipant = (memory.participants as Participant[]).some(
+        (p) => p.id === participantId,
       )
       const significanceThreshold =
         memory.significance.overall >= this.config.relevanceThreshold * 10
