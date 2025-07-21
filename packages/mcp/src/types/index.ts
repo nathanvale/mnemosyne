@@ -1,4 +1,4 @@
-import type { ExtractedMemory } from '@studio/memory'
+// Core MCP interfaces and types
 
 import { z } from 'zod'
 

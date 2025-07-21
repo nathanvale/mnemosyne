@@ -92,8 +92,9 @@ export class MoodContextTokenizer {
       }
     }
 
-    const recentScores = memories.slice(0, 10).map(m => m.emotionalAnalysis.moodScoring.score)
-    const olderScores = memories.slice(10, 20).map(m => m.emotionalAnalysis.moodScoring.score)
+    const half = Math.floor(memories.length / 2)
+    const recentScores = memories.slice(0, half).map(m => m.emotionalAnalysis.moodScoring.score)
+    const olderScores = memories.slice(half).map(m => m.emotionalAnalysis.moodScoring.score)
 
     const recentAverage = recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length
     const olderAverage = olderScores.length > 0 
@@ -105,17 +106,19 @@ export class MoodContextTokenizer {
 
     let direction: 'improving' | 'declining' | 'stable' | 'volatile'
     
-    if (magnitude < 0.5) {
-      direction = 'stable'
-    } else if (this.isVolatile(recentScores)) {
+    const allScores = memories.map(m => m.emotionalAnalysis.moodScoring.score)
+    
+    if (this.isVolatile(allScores)) {
       direction = 'volatile'
+    } else if (magnitude < 0.5) {
+      direction = 'stable'
     } else if (difference > 0) {
       direction = 'improving'
     } else {
       direction = 'declining'
     }
 
-    const timespan = this.calculateTimespan(memories.slice(0, Math.min(20, memories.length)))
+    const timespan = this.calculateTimespan(memories)
 
     return {
       direction,

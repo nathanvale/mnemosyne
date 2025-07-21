@@ -110,7 +110,7 @@ describe('MoodContextTokenizer', () => {
       const result = await tokenizer.generateMoodContext(memories)
       
       expect(result.trajectoryOverview).not.toBe('No emotional trajectory data available.')
-      expect(result.trajectoryOverview).toContain('emotional trajectory')
+      expect(result.trajectoryOverview.toLowerCase()).toContain('emotional trajectory')
     })
 
     it('should respect maxDescriptors configuration', async () => {
@@ -163,9 +163,9 @@ function createMockMemory(options: {
     participants: [{ id: 'participant-1', name: 'Test User', role: 'primary' }],
     emotionalAnalysis: {
       context: {
-        state: 'joy',
+        primaryEmotion: 'joy',
         intensity: options.moodScore || 5,
-        theme: options.themes || ['neutral'],
+        themes: options.themes || ['neutral'],
         valence: 'positive',
         arousal: 'medium',
         confidence: options.confidence || 0.8,

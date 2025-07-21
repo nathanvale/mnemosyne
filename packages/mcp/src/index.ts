@@ -39,7 +39,7 @@ export interface McpService {
 /**
  * Create a complete MCP service instance
  */
-export function createMcpService(config?: {
+export async function createMcpService(config?: {
   server?: {
     enabled: boolean
     port?: number
@@ -69,16 +69,22 @@ export function createMcpService(config?: {
       prioritizeRecent?: boolean
     }
   }
-}): McpService {
+}): Promise<McpService> {
+  // Dynamic imports to avoid circular dependencies
+  const { MoodContextTokenizer } = await import('./mood-context/tokenizer')
+  const { RelationalTimelineBuilder } = await import('./relational-timeline/builder')
+  const { EmotionalVocabularyExtractor } = await import('./vocabulary/extractor')
+  const { AgentContextAssembler } = await import('./context-assembly/assembler')
+
   const service: McpService = {
-    moodTokenizer: new (require('./mood-context/tokenizer').MoodContextTokenizer)(config?.mood),
-    timelineBuilder: new (require('./relational-timeline/builder').RelationalTimelineBuilder)(config?.timeline),
-    vocabularyExtractor: new (require('./vocabulary/extractor').EmotionalVocabularyExtractor)(config?.vocabulary),
-    contextAssembler: new (require('./context-assembly/assembler').AgentContextAssembler)(config?.context),
+    moodTokenizer: new MoodContextTokenizer(config?.mood),
+    timelineBuilder: new RelationalTimelineBuilder(config?.timeline),
+    vocabularyExtractor: new EmotionalVocabularyExtractor(config?.vocabulary),
+    contextAssembler: new AgentContextAssembler(config?.context),
   }
 
   if (config?.server?.enabled) {
-    const { createMcpServer } = require('./api/server')
+    const { createMcpServer } = await import('./api/server')
     service.server = createMcpServer(config.server.port)
   }
 

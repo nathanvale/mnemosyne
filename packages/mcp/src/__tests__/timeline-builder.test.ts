@@ -234,9 +234,9 @@ function createMockMemory(options: {
     ],
     emotionalAnalysis: {
       context: {
-        state: 'mixed',
+        primaryEmotion: 'mixed',
         intensity: 6,
-        theme: ['support'],
+        themes: ['support'],
         valence: 'positive',
         arousal: 'medium',
         confidence: 0.8,
