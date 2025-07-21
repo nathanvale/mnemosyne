@@ -130,7 +130,7 @@ describe('Significance Weighter', () => {
         { id: 'user-2', name: 'Child', role: ParticipantRole.FAMILY },
       ]
       mockMemory.emotionalContext = {
-        ...mockMemory.emotionalContext,
+        ...mockMemory.emotionalContext!,
         themes: [EmotionalTheme.SUPPORT, EmotionalTheme.GROWTH],
       }
 
@@ -199,7 +199,7 @@ describe('Significance Weighter', () => {
         {
           ...mockMemory,
           id: 'medium',
-          emotionalContext: { ...mockMemory.emotionalContext, intensity: 0.5 },
+          emotionalContext: { ...mockMemory.emotionalContext!, intensity: 0.5 },
         },
         {
           ...mockMemory,
