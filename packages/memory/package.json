@@ -17,11 +17,12 @@
     "@studio/schema": "workspace:*",
     "@studio/db": "workspace:*",
     "@studio/logger": "workspace:*",
-    "pino": "^9.6.0",
     "zod": "^3.25.74"
   },
   "devDependencies": {
     "@studio/test-config": "workspace:*",
+    "@types/node": "^24.0.8",
+    "pino": "^9.7.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }
