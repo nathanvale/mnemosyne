@@ -9,7 +9,26 @@ import type {
   TimelineSummary,
   ContextOptimization,
   AgentRecommendations,
+  RelationalTimeline,
+  EmotionalVocabulary,
+  MoodContextTokens,
 } from '../types/index'
+
+// Internal interfaces for parameter typing
+interface Participant {
+  id: string
+  name?: string
+  role?: string
+}
+
+interface RelationshipDynamics {
+  communicationPatterns: string[]
+}
+
+interface EmotionalEvent {
+  type: string
+  emotionalImpact: number
+}
 
 import { MoodContextTokenizer } from '../mood-context/tokenizer'
 import { RelationalTimelineBuilder } from '../relational-timeline/builder'
@@ -218,8 +237,8 @@ export class AgentContextAssembler {
   ): Promise<ExtractedMemory[]> {
     return memories.filter((memory) => {
       const isParticipant = memory.participants.some(
-        (p: any) => p.id === participantId,
-      ) // eslint-disable-line @typescript-eslint/no-explicit-any
+        (p: Participant) => p.id === participantId,
+      )
       const significanceThreshold =
         memory.significance.overall >= this.config.relevanceThreshold * 10
 
@@ -255,13 +274,12 @@ export class AgentContextAssembler {
   /**
    * Create timeline summary from full timeline
    */
-  private createTimelineSummary(timeline: any): TimelineSummary {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
+  private createTimelineSummary(timeline: RelationalTimeline): TimelineSummary {
     return {
       overview: timeline.summary,
       recentEvents: timeline.events.slice(0, 10),
       relationshipPatterns: timeline.relationshipDynamics
-        .flatMap((rd: any) => rd.communicationPatterns) // eslint-disable-line @typescript-eslint/no-explicit-any
+        .flatMap((rd: RelationshipDynamics) => rd.communicationPatterns)
         .slice(0, 5),
       trajectoryTrend: this.analyzeTrendFromEvents(timeline.events),
     }
@@ -271,9 +289,9 @@ export class AgentContextAssembler {
    * Calculate context optimization metrics
    */
   private async calculateOptimization(
-    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    moodContext: MoodContextTokens,
     timelineSummary: TimelineSummary,
-    vocabulary: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    vocabulary: EmotionalVocabulary,
     memories: ExtractedMemory[],
   ): Promise<ContextOptimization> {
     const tokenCount = this.estimateTokenCount(
@@ -300,9 +318,9 @@ export class AgentContextAssembler {
    * Generate agent response recommendations
    */
   private async generateRecommendations(
-    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    moodContext: MoodContextTokens,
     timelineSummary: TimelineSummary,
-    vocabulary: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    vocabulary: EmotionalVocabulary,
     conversationGoal?: string,
   ): Promise<AgentRecommendations> {
     const tone = this.recommendTone(moodContext, vocabulary)
@@ -326,8 +344,10 @@ export class AgentContextAssembler {
   /**
    * Recommend communication tone
    */
-  private recommendTone(moodContext: any, vocabulary: any): string[] {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
+  private recommendTone(
+    moodContext: MoodContextTokens,
+    vocabulary: EmotionalVocabulary,
+  ): string[] {
     const tone: string[] = []
 
     const moodScore = moodContext.currentMood.score
@@ -351,7 +371,7 @@ export class AgentContextAssembler {
    * Recommend communication approach
    */
   private recommendApproach(
-    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    moodContext: MoodContextTokens,
     conversationGoal?: string,
   ): 'supportive' | 'analytical' | 'celebratory' | 'empathetic' {
     const moodScore = moodContext.currentMood.score
@@ -381,9 +401,8 @@ export class AgentContextAssembler {
    */
   private recommendEmphasis(
     timelineSummary: TimelineSummary,
-    vocabulary: any,
+    vocabulary: EmotionalVocabulary,
   ): string[] {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     const emphasize: string[] = []
 
     const positivePatterns = timelineSummary.relationshipPatterns.filter(
@@ -409,10 +428,9 @@ export class AgentContextAssembler {
    * Recommend topics to avoid
    */
   private recommendAvoidance(
-    moodContext: any,
+    moodContext: MoodContextTokens,
     timelineSummary: TimelineSummary,
   ): string[] {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     const avoid: string[] = []
 
     const moodScore = moodContext.currentMood.score
@@ -438,7 +456,7 @@ export class AgentContextAssembler {
    * Recommend response length
    */
   private recommendResponseLength(
-    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    moodContext: MoodContextTokens,
     conversationGoal?: string,
   ): 'brief' | 'moderate' | 'detailed' {
     const moodScore = moodContext.currentMood.score
@@ -460,8 +478,7 @@ export class AgentContextAssembler {
   /**
    * Analyze trend from events
    */
-  private analyzeTrendFromEvents(events: any[]): string {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
+  private analyzeTrendFromEvents(events: EmotionalEvent[]): string {
     if (events.length === 0) return 'no data available'
 
     const recentEvents = events.slice(-5)
@@ -481,11 +498,10 @@ export class AgentContextAssembler {
    * Estimate token count for context
    */
   private estimateTokenCount(
-    moodContext: any,
-    timelineSummary: any,
-    vocabulary: any,
+    moodContext: MoodContextTokens,
+    timelineSummary: TimelineSummary,
+    vocabulary: EmotionalVocabulary,
   ): number {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     const baseTokens = 200
 
     const moodTokens =
@@ -538,11 +554,10 @@ export class AgentContextAssembler {
    * Assess context quality metrics
    */
   private assessQualityMetrics(
-    moodContext: any,
-    timelineSummary: any,
-    vocabulary: any,
+    moodContext: MoodContextTokens,
+    timelineSummary: TimelineSummary,
+    vocabulary: EmotionalVocabulary,
   ) {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     const completeness = Math.min(
       (moodContext.recentMoodTags.length / 5 +
         timelineSummary.recentEvents.length / 10 +

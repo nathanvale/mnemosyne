@@ -1,4 +1,5 @@
 import type { ExtractedMemory } from '@studio/memory'
+import type { RelationshipDynamics } from '@studio/schema'
 
 import { logger } from '@studio/logger'
 import { v4 as uuidv4 } from 'uuid'
@@ -10,6 +11,12 @@ import type {
   RelationshipEvolution,
   TimelineConfig,
 } from '../types/index'
+
+// Interface for accessing relationship dynamics properties
+interface RelationshipDynamicsWithQuality extends RelationshipDynamics {
+  quality?: number
+  patterns?: string[]
+}
 
 /**
  * RelationalTimelineBuilder constructs emotional event timelines
@@ -127,16 +134,21 @@ export class RelationalTimelineBuilder {
 
     if (
       memory.relationshipDynamics &&
-      (memory.relationshipDynamics as any).quality > 7
+      (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
+        .quality &&
+      (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
+        .quality! > 7
     ) {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
       events.push({
         id: uuidv4(),
         timestamp: new Date(memory.timestamp),
         type: 'relationship_shift',
         description: 'Positive relationship dynamics observed',
         emotionalImpact:
-          ((memory.relationshipDynamics as any).quality / 10) * 5, // eslint-disable-line @typescript-eslint/no-explicit-any
+          ((memory.relationshipDynamics as RelationshipDynamicsWithQuality)
+            .quality! /
+            10) *
+          5,
         participants: memory.participants.map((p: any) => p.id), // eslint-disable-line @typescript-eslint/no-explicit-any
         sourceMemoryId: memory.id,
       })
@@ -387,8 +399,10 @@ export class RelationalTimelineBuilder {
     memories: ExtractedMemory[],
   ): RelationshipEvolution['qualityMetrics'] {
     const qualityScores = memories.map(
-      (m) => (m.relationshipDynamics as any)?.quality || 5,
-    ) // eslint-disable-line @typescript-eslint/no-explicit-any
+      (m) =>
+        (m.relationshipDynamics as RelationshipDynamicsWithQuality)?.quality ||
+        5,
+    )
     const avgQuality =
       qualityScores.reduce((sum, q) => sum + q, 0) / qualityScores.length
 
@@ -416,11 +430,13 @@ export class RelationalTimelineBuilder {
     const patterns = new Set<string>()
 
     for (const memory of memories) {
-      if ((memory.relationshipDynamics as any)?.patterns) {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
-        ;(memory.relationshipDynamics as any).patterns.forEach(
-          (pattern: string) => patterns.add(pattern),
-        ) // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (
+        (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
+          ?.patterns
+      ) {
+        ;(
+          memory.relationshipDynamics as RelationshipDynamicsWithQuality
+        ).patterns!.forEach((pattern: string) => patterns.add(pattern))
       }
 
       memory.emotionalAnalysis.patterns.forEach((pattern) => {

@@ -1,4 +1,5 @@
 import type { ExtractedMemory } from '@studio/memory'
+import type { RelationshipDynamics } from '@studio/schema'
 
 import { logger } from '@studio/logger'
 
@@ -7,6 +8,11 @@ import type {
   VocabularyEvolution,
   VocabularyConfig,
 } from '../types/index'
+
+// Interface for accessing relationship dynamics properties
+interface RelationshipDynamicsWithQuality extends RelationshipDynamics {
+  quality?: number
+}
 
 /**
  * EmotionalVocabularyExtractor extracts tone-consistent vocabulary
@@ -163,8 +169,9 @@ export class EmotionalVocabularyExtractor {
         }
 
         const qualityTerms = this.qualityToTerms(
-          (memory.relationshipDynamics as any)?.quality || 5,
-        ) // eslint-disable-line @typescript-eslint/no-explicit-any
+          (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
+            ?.quality || 5,
+        )
         for (const term of qualityTerms) {
           termMap.set(term, (termMap.get(term) || 0) + 1)
         }
