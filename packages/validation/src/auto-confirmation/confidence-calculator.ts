@@ -1,5 +1,7 @@
 import type { Memory } from '@studio/schema'
 
+import { isEmotionalContext, isRelationshipDynamics } from '@studio/schema'
+
 import type { ThresholdConfig } from '../types'
 
 /**
@@ -53,21 +55,31 @@ export class ConfidenceCalculator {
     let score = 0.5 // Base score
 
     // Check for emotional state consistency
-    const emotionalContext = memory.emotionalContext as any
-    if (emotionalContext.primaryEmotion && emotionalContext.emotionalStates) {
+    if (!isEmotionalContext(memory.emotionalContext)) {
+      return 0.3 // Return early if emotional context is not valid
+    }
+
+    // TypeScript now knows memory.emotionalContext is EmotionalContext
+    if (
+      memory.emotionalContext.primaryEmotion &&
+      memory.emotionalContext.secondaryEmotions
+    ) {
       score += 0.2
     }
 
     // Check for emotional intensity alignment
-    if (emotionalContext.intensity !== undefined) {
-      const intensity = emotionalContext.intensity
+    if (memory.emotionalContext.intensity !== undefined) {
+      const intensity = memory.emotionalContext.intensity
       if (intensity >= 0 && intensity <= 1) {
         score += 0.15
       }
     }
 
     // Check for emotional themes
-    if (emotionalContext.themes && Array.isArray(emotionalContext.themes)) {
+    if (
+      memory.emotionalContext.themes &&
+      Array.isArray(memory.emotionalContext.themes)
+    ) {
       score += 0.15
     }
 
@@ -85,15 +97,19 @@ export class ConfidenceCalculator {
 
     let score = 0.5 // Base score
 
-    const dynamics = memory.relationshipDynamics as any
+    // Check for relationship dynamics validity
+    if (!isRelationshipDynamics(memory.relationshipDynamics)) {
+      return 0.4 // Return early if relationship dynamics are not valid
+    }
 
-    // Check for communication patterns
-    if (dynamics.communicationPatterns && Array.isArray(dynamics.communicationPatterns)) {
+    // TypeScript now knows memory.relationshipDynamics is RelationshipDynamics
+    // Check for communication pattern
+    if (memory.relationshipDynamics.communicationPattern) {
       score += 0.2
     }
 
     // Check for interaction quality
-    if (dynamics.interactionQuality) {
+    if (memory.relationshipDynamics.interactionQuality) {
       score += 0.15
     }
 
@@ -115,7 +131,7 @@ export class ConfidenceCalculator {
     try {
       const timestamp = new Date(memory.timestamp)
       const processedAt = new Date(memory.metadata.processedAt)
-      
+
       // Timestamp should be before processing time
       if (timestamp <= processedAt) {
         score += 0.15
@@ -123,8 +139,12 @@ export class ConfidenceCalculator {
 
       // Check if timestamp is reasonable (not in future, not too far in past)
       const now = new Date()
-      const tenYearsAgo = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate())
-      
+      const tenYearsAgo = new Date(
+        now.getFullYear() - 10,
+        now.getMonth(),
+        now.getDate(),
+      )
+
       if (timestamp <= now && timestamp >= tenYearsAgo) {
         score += 0.15
       }
@@ -166,7 +186,7 @@ export class ConfidenceCalculator {
    */
   private calculateWeightedScore(factors: Record<string, number>): number {
     const weights = this.config.weights
-    
+
     let weightedSum = 0
     let totalWeight = 0
 

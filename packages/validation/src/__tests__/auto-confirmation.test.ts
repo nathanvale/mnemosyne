@@ -1,6 +1,13 @@
 import type { Memory } from '@studio/schema'
 
-import { ValidationStatus } from '@studio/schema'
+import {
+  ValidationStatus,
+  EmotionalState,
+  EmotionalTheme,
+  CommunicationPattern,
+  InteractionQuality,
+  ParticipantRole,
+} from '@studio/schema'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { ConfidenceCalculator } from '../auto-confirmation/confidence-calculator'
@@ -21,18 +28,39 @@ describe('Auto-confirmation Engine', () => {
       timestamp: '2024-01-15T10:30:00.000Z',
       author: { id: 'user-1', name: 'Test User' },
       participants: [
-        { id: 'user-1', name: 'Test User', role: 'self' },
-        { id: 'user-2', name: 'Friend', role: 'friend' },
+        { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
+        { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
       ],
       emotionalContext: {
-        primaryEmotion: 'joy',
+        primaryEmotion: EmotionalState.JOY,
+        secondaryEmotions: [EmotionalState.EXCITEMENT],
         intensity: 0.8,
-        emotionalStates: [{ emotion: 'joy', intensity: 0.8 }],
-        themes: ['celebration', 'friendship'],
+        valence: 0.7,
+        themes: [EmotionalTheme.CELEBRATION, EmotionalTheme.CONNECTION],
+        indicators: {
+          phrases: ['happy birthday', 'great time'],
+          emotionalWords: ['joy', 'celebration'],
+          styleIndicators: ['!', 'positive tone'],
+        },
       },
       relationshipDynamics: {
-        communicationPatterns: ['supportive'],
-        interactionQuality: 'meaningful',
+        communicationPattern: CommunicationPattern.SUPPORTIVE,
+        interactionQuality: InteractionQuality.POSITIVE,
+        powerDynamics: {
+          isBalanced: true,
+          concerningPatterns: [],
+        },
+        attachmentIndicators: {
+          secure: ['supportive communication'],
+          anxious: [],
+          avoidant: [],
+        },
+        healthIndicators: {
+          positive: ['empathy', 'active listening'],
+          negative: [],
+          repairAttempts: [],
+        },
+        connectionStrength: 0.8,
       },
       tags: ['birthday', 'celebration', 'friends'],
       metadata: {
@@ -41,7 +69,7 @@ describe('Auto-confirmation Engine', () => {
         source: 'test',
         confidence: 0.85,
       },
-    } as any
+    }
   })
 
   describe('evaluateMemory', () => {
@@ -58,7 +86,7 @@ describe('Auto-confirmation Engine', () => {
     it('routes low-confidence memories for review', () => {
       // Lower the confidence factors
       mockMemory.metadata.confidence = 0.3
-      mockMemory.emotionalContext = null as any
+      mockMemory.emotionalContext = null
 
       const result = engine.evaluateMemory(mockMemory)
 
@@ -70,8 +98,8 @@ describe('Auto-confirmation Engine', () => {
     it('auto-rejects very low confidence memories', () => {
       // Create a very poor quality memory
       mockMemory.metadata.confidence = 0.2
-      mockMemory.emotionalContext = null as any
-      mockMemory.relationshipDynamics = null as any
+      mockMemory.emotionalContext = null
+      mockMemory.relationshipDynamics = null
       mockMemory.content = 'x'
 
       const result = engine.evaluateMemory(mockMemory)
@@ -100,14 +128,14 @@ describe('Auto-confirmation Engine', () => {
           ...mockMemory,
           id: 'test-memory-2',
           metadata: { ...mockMemory.metadata, confidence: 0.4 },
-          emotionalContext: null as any,
+          emotionalContext: null,
         },
         {
           ...mockMemory,
           id: 'test-memory-3',
           metadata: { ...mockMemory.metadata, confidence: 0.2 },
-          emotionalContext: null as any,
-          relationshipDynamics: null as any,
+          emotionalContext: null,
+          relationshipDynamics: null,
         },
       ] as Memory[]
 
@@ -170,7 +198,9 @@ describe('Auto-confirmation Engine', () => {
       expect(update.previousThresholds).toBeDefined()
       expect(update.recommendedThresholds).toBeDefined()
       expect(update.updateReasons.length).toBeGreaterThan(0)
-      expect(update.updateReasons.some(reason => reason.includes('threshold'))).toBe(true)
+      expect(
+        update.updateReasons.some((reason) => reason.includes('threshold')),
+      ).toBe(true)
     })
   })
 })
@@ -186,23 +216,50 @@ describe('ConfidenceCalculator', () => {
       id: 'test-memory-1',
       content: 'This is meaningful content with sufficient length and quality',
       timestamp: '2024-01-15T10:30:00.000Z',
-      participants: [{ id: 'user-1' }, { id: 'user-2' }],
+      author: { id: 'user-1', name: 'Test User' },
+      participants: [
+        { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
+        { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
+      ],
       emotionalContext: {
-        primaryEmotion: 'joy',
+        primaryEmotion: EmotionalState.JOY,
+        secondaryEmotions: [EmotionalState.CONTENTMENT],
         intensity: 0.8,
-        emotionalStates: [{ emotion: 'joy' }],
-        themes: ['celebration'],
+        valence: 0.7,
+        themes: [EmotionalTheme.CELEBRATION],
+        indicators: {
+          phrases: ['meaningful content', 'quality'],
+          emotionalWords: ['joy'],
+          styleIndicators: ['positive tone'],
+        },
       },
       relationshipDynamics: {
-        communicationPatterns: ['supportive'],
-        interactionQuality: 'meaningful',
+        communicationPattern: CommunicationPattern.SUPPORTIVE,
+        interactionQuality: InteractionQuality.POSITIVE,
+        powerDynamics: {
+          isBalanced: true,
+          concerningPatterns: [],
+        },
+        attachmentIndicators: {
+          secure: ['supportive communication'],
+          anxious: [],
+          avoidant: [],
+        },
+        healthIndicators: {
+          positive: ['empathy'],
+          negative: [],
+          repairAttempts: [],
+        },
+        connectionStrength: 0.7,
       },
       tags: ['birthday', 'celebration'],
       metadata: {
         processedAt: '2024-01-15T11:00:00.000Z',
+        schemaVersion: '1.0.0',
+        source: 'test',
         confidence: 0.8,
       },
-    } as any
+    }
   })
 
   it('calculates confidence factors correctly', () => {
@@ -218,7 +275,7 @@ describe('ConfidenceCalculator', () => {
   })
 
   it('handles missing emotional context', () => {
-    mockMemory.emotionalContext = null as any
+    mockMemory.emotionalContext = null
 
     const result = calculator.calculateConfidence(mockMemory)
 
@@ -280,7 +337,9 @@ describe('ThresholdManager', () => {
       update.previousThresholds.autoApproveThreshold,
     )
     expect(update.updateReasons.length).toBeGreaterThan(0)
-    expect(update.updateReasons.some(reason => reason.includes('threshold'))).toBe(true)
+    expect(
+      update.updateReasons.some((reason) => reason.includes('threshold')),
+    ).toBe(true)
   })
 
   it('handles empty feedback gracefully', () => {
