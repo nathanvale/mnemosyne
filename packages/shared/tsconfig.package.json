@@ -10,7 +10,8 @@
       "@studio/ui": ["../ui/src"],
       "@studio/mocks": ["../mocks/src"],
       "@studio/shared": ["../shared/src"],
-      "@studio/schema": ["../schema/src"]
+      "@studio/schema": ["../schema/src"],
+      "@studio/validation": ["../validation/src"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]
