@@ -1,5 +1,5 @@
 import type { ExtractedMemory } from '@studio/memory'
-import type { RelationshipDynamics } from '@studio/schema'
+import type { Participant } from '@studio/schema'
 
 import { logger } from '@studio/logger'
 
@@ -8,11 +8,6 @@ import type {
   VocabularyEvolution,
   VocabularyConfig,
 } from '../types/index'
-
-// Interface for accessing relationship dynamics properties
-interface RelationshipDynamicsWithQuality extends RelationshipDynamics {
-  quality?: number
-}
 
 /**
  * EmotionalVocabularyExtractor extracts tone-consistent vocabulary
@@ -160,7 +155,7 @@ export class EmotionalVocabularyExtractor {
 
     for (const memory of memories) {
       if (memory.relationshipDynamics) {
-        const patterns = (memory.relationshipDynamics as any)?.patterns || [] // eslint-disable-line @typescript-eslint/no-explicit-any
+        const patterns = memory.relationshipDynamics?.patterns || []
         for (const pattern of patterns) {
           const term = this.relationshipPatternToTerm(pattern)
           if (term) {
@@ -169,8 +164,7 @@ export class EmotionalVocabularyExtractor {
         }
 
         const qualityTerms = this.qualityToTerms(
-          (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
-            ?.quality || 5,
+          memory.relationshipDynamics?.quality || 5,
         )
         for (const term of qualityTerms) {
           termMap.set(term, (termMap.get(term) || 0) + 1)
@@ -188,13 +182,13 @@ export class EmotionalVocabularyExtractor {
         )
       }
 
-      const participantRoles = memory.participants.map((p: any) => p.role) // eslint-disable-line @typescript-eslint/no-explicit-any
+      const participantRoles = (memory.participants as Participant[]).map(
+        (p) => p.role,
+      )
       for (const role of participantRoles) {
-        if (role !== 'observer') {
-          const term = this.roleToRelationshipTerm(role)
-          if (term) {
-            termMap.set(term, (termMap.get(term) || 0) + 0.5)
-          }
+        const term = this.roleToRelationshipTerm(role)
+        if (term) {
+          termMap.set(term, (termMap.get(term) || 0) + 0.5)
         }
       }
     }

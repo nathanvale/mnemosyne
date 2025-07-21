@@ -1,5 +1,4 @@
 import type { ExtractedMemory } from '@studio/memory'
-import type { RelationshipDynamics } from '@studio/schema'
 
 import { logger } from '@studio/logger'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,12 +10,6 @@ import type {
   RelationshipEvolution,
   TimelineConfig,
 } from '../types/index'
-
-// Interface for accessing relationship dynamics properties
-interface RelationshipDynamicsWithQuality extends RelationshipDynamics {
-  quality?: number
-  patterns?: string[]
-}
 
 /**
  * RelationalTimelineBuilder constructs emotional event timelines
@@ -134,21 +127,15 @@ export class RelationalTimelineBuilder {
 
     if (
       memory.relationshipDynamics &&
-      (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
-        .quality &&
-      (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
-        .quality! > 7
+      memory.relationshipDynamics.quality &&
+      memory.relationshipDynamics.quality > 7
     ) {
       events.push({
         id: uuidv4(),
         timestamp: new Date(memory.timestamp),
         type: 'relationship_shift',
         description: 'Positive relationship dynamics observed',
-        emotionalImpact:
-          ((memory.relationshipDynamics as RelationshipDynamicsWithQuality)
-            .quality! /
-            10) *
-          5,
+        emotionalImpact: (memory.relationshipDynamics.quality! / 10) * 5,
         participants: memory.participants.map((p: any) => p.id), // eslint-disable-line @typescript-eslint/no-explicit-any
         sourceMemoryId: memory.id,
       })
@@ -399,9 +386,7 @@ export class RelationalTimelineBuilder {
     memories: ExtractedMemory[],
   ): RelationshipEvolution['qualityMetrics'] {
     const qualityScores = memories.map(
-      (m) =>
-        (m.relationshipDynamics as RelationshipDynamicsWithQuality)?.quality ||
-        5,
+      (m) => m.relationshipDynamics?.quality || 5,
     )
     const avgQuality =
       qualityScores.reduce((sum, q) => sum + q, 0) / qualityScores.length
@@ -430,13 +415,10 @@ export class RelationalTimelineBuilder {
     const patterns = new Set<string>()
 
     for (const memory of memories) {
-      if (
-        (memory.relationshipDynamics as RelationshipDynamicsWithQuality)
-          ?.patterns
-      ) {
-        ;(
-          memory.relationshipDynamics as RelationshipDynamicsWithQuality
-        ).patterns!.forEach((pattern: string) => patterns.add(pattern))
+      if (memory.relationshipDynamics?.patterns) {
+        memory.relationshipDynamics.patterns.forEach((pattern: string) =>
+          patterns.add(pattern),
+        )
       }
 
       memory.emotionalAnalysis.patterns.forEach((pattern) => {
