@@ -59,21 +59,16 @@ export async function createMcpService(config?: {
     includeEvolution?: boolean
     sourceScope?: 'recent' | 'all' | 'significant'
   }
-  context?: {
-    maxTokens?: number
-    relevanceThreshold?: number
-    includeRecommendations?: boolean
-    scope?: {
-      timeWindow?: 'week' | 'month' | 'quarter'
-      includeHistorical?: boolean
-      prioritizeRecent?: boolean
-    }
-  }
+  context?: Partial<import('./types/index').AgentContextConfig>
 }): Promise<McpService> {
   // Dynamic imports to avoid circular dependencies
   const { MoodContextTokenizer } = await import('./mood-context/tokenizer')
-  const { RelationalTimelineBuilder } = await import('./relational-timeline/builder')
-  const { EmotionalVocabularyExtractor } = await import('./vocabulary/extractor')
+  const { RelationalTimelineBuilder } = await import(
+    './relational-timeline/builder'
+  )
+  const { EmotionalVocabularyExtractor } = await import(
+    './vocabulary/extractor'
+  )
   const { AgentContextAssembler } = await import('./context-assembly/assembler')
 
   const service: McpService = {
@@ -142,9 +137,9 @@ export const McpUtils = {
     }
 
     try {
-      const testMemories: any[] = []
+      const testMemories: any[] = [] // eslint-disable-line @typescript-eslint/no-explicit-any
       await service.moodTokenizer.generateMoodContext(testMemories)
-    } catch (error) {
+    } catch {
       services.moodTokenizer = false
       errors.push('MoodTokenizer validation failed')
     }
@@ -164,29 +159,30 @@ export const McpUtils = {
       id: 'mood_context',
       type: 'mood_context' as const,
       name: 'Mood Context Tokens',
-      description: 'Current mood assessment and trajectory for agent consumption',
-      schema: {} as any, // Will be populated with Zod schemas
+      description:
+        'Current mood assessment and trajectory for agent consumption',
+      schema: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     },
     {
       id: 'relational_timeline',
       type: 'timeline' as const,
       name: 'Relational Timeline',
       description: 'Chronological emotional events and relationship dynamics',
-      schema: {} as any,
+      schema: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     },
     {
       id: 'emotional_vocabulary',
       type: 'vocabulary' as const,
       name: 'Emotional Vocabulary',
       description: 'Tone-consistent vocabulary for agent responses',
-      schema: {} as any,
+      schema: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     },
     {
       id: 'agent_context',
       type: 'agent_context' as const,
       name: 'Agent Context',
       description: 'Comprehensive emotional intelligence context for agents',
-      schema: {} as any,
+      schema: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     },
   ],
 }
@@ -194,4 +190,6 @@ export const McpUtils = {
 /**
  * Default MCP service instance for convenience
  */
-export const defaultMcpService = createMcpService(McpUtils.createConfig.balanced())
+export const defaultMcpService = createMcpService(
+  McpUtils.createConfig.balanced(),
+)

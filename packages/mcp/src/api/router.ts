@@ -5,13 +5,50 @@ import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
 
 import type {
-  AgentContext,
+  MoodContextConfig,
+  TimelineConfig,
+  VocabularyConfig,
+  AgentContextConfig,
 } from '../types/index'
 
 import { AgentContextAssembler } from '../context-assembly/assembler'
 import { MoodContextTokenizer } from '../mood-context/tokenizer'
 import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 import { EmotionalVocabularyExtractor } from '../vocabulary/extractor'
+
+// API-specific types for TRPC inputs
+interface GenerateMoodContextInput {
+  memories: ExtractedMemory[]
+  config?: Partial<MoodContextConfig>
+}
+
+interface BuildTimelineInput {
+  memories: ExtractedMemory[]
+  participantId: string
+  config?: Partial<TimelineConfig>
+}
+
+interface ExtractVocabularyInput {
+  memories: ExtractedMemory[]
+  participantId: string
+  config?: Partial<VocabularyConfig>
+}
+
+interface AssembleContextInput {
+  memories: ExtractedMemory[]
+  participantId: string
+  conversationGoal?: string
+  config?: Partial<AgentContextConfig>
+}
+
+interface OptimizeContextInput {
+  context?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  maxTokens: number
+}
+
+interface ValidateContextInput {
+  context?: any // eslint-disable-line @typescript-eslint/no-explicit-any
+}
 
 const t = initTRPC.create()
 
@@ -31,23 +68,32 @@ export const mcpRouter = router({
         memories: z.array(z.any()),
         config: z
           .object({
-            complexityLevel: z.enum(['basic', 'standard', 'detailed']).optional(),
+            complexityLevel: z
+              .enum(['basic', 'standard', 'detailed'])
+              .optional(),
             includeTrajectory: z.boolean().optional(),
             maxDescriptors: z.number().optional(),
           })
           .optional(),
-      })
+      }),
     )
-    .output(z.any())
-    .mutation(async ({ input }: { input: any }) => {
+    .output(
+      z.object({
+        success: z.boolean(),
+        data: z.any(),
+        metadata: z.object({
+          memoryCount: z.number(),
+          generatedAt: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }: { input: GenerateMoodContextInput }) => {
       logger.info('Generating mood context via API', {
         memoryCount: input.memories.length,
       })
 
       const tokenizer = new MoodContextTokenizer(input.config)
-      const moodContext = await tokenizer.generateMoodContext(
-        input.memories as ExtractedMemory[]
-      )
+      const moodContext = await tokenizer.generateMoodContext(input.memories)
 
       return {
         success: true,
@@ -74,10 +120,21 @@ export const mcpRouter = router({
             includeRelationshipEvolution: z.boolean().optional(),
           })
           .optional(),
-      })
+      }),
     )
-    .output(z.any())
-    .mutation(async ({ input }: { input: any }) => {
+    .output(
+      z.object({
+        success: z.boolean(),
+        data: z.any(),
+        metadata: z.object({
+          participantId: z.string(),
+          eventCount: z.number(),
+          keyMomentCount: z.number(),
+          generatedAt: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }: { input: BuildTimelineInput }) => {
       logger.info('Building relational timeline via API', {
         participantId: input.participantId,
         memoryCount: input.memories.length,
@@ -85,8 +142,8 @@ export const mcpRouter = router({
 
       const builder = new RelationalTimelineBuilder(input.config)
       const timeline = await builder.buildTimeline(
-        input.memories as ExtractedMemory[],
-        input.participantId
+        input.memories,
+        input.participantId,
       )
 
       return {
@@ -116,10 +173,21 @@ export const mcpRouter = router({
             sourceScope: z.enum(['recent', 'all', 'significant']).optional(),
           })
           .optional(),
-      })
+      }),
     )
-    .output(z.any())
-    .mutation(async ({ input }: { input: any }) => {
+    .output(
+      z.object({
+        success: z.boolean(),
+        data: z.any(),
+        metadata: z.object({
+          participantId: z.string(),
+          themeCount: z.number(),
+          descriptorCount: z.number(),
+          generatedAt: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }: { input: ExtractVocabularyInput }) => {
       logger.info('Extracting vocabulary via API', {
         participantId: input.participantId,
         memoryCount: input.memories.length,
@@ -127,8 +195,8 @@ export const mcpRouter = router({
 
       const extractor = new EmotionalVocabularyExtractor(input.config)
       const vocabulary = await extractor.extractVocabulary(
-        input.memories as ExtractedMemory[],
-        input.participantId
+        input.memories,
+        input.participantId,
       )
 
       return {
@@ -166,10 +234,22 @@ export const mcpRouter = router({
               .optional(),
           })
           .optional(),
-      })
+      }),
     )
-    .output(z.any())
-    .mutation(async ({ input }: { input: any }) => {
+    .output(
+      z.object({
+        success: z.boolean(),
+        data: z.any(),
+        metadata: z.object({
+          contextId: z.string(),
+          participantId: z.string(),
+          tokenCount: z.number(),
+          relevanceScore: z.number(),
+          generatedAt: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }: { input: AssembleContextInput }) => {
       logger.info('Assembling agent context via API', {
         participantId: input.participantId,
         memoryCount: input.memories.length,
@@ -178,9 +258,9 @@ export const mcpRouter = router({
 
       const assembler = new AgentContextAssembler(input.config)
       const context = await assembler.assembleContext(
-        input.memories as ExtractedMemory[],
+        input.memories,
         input.participantId,
-        input.conversationGoal
+        input.conversationGoal,
       )
 
       return {
@@ -204,10 +284,21 @@ export const mcpRouter = router({
       z.object({
         context: z.any(),
         maxTokens: z.number(),
-      })
+      }),
     )
-    .output(z.any())
-    .mutation(async ({ input }: { input: any }) => {
+    .output(
+      z.object({
+        success: z.boolean(),
+        data: z.any(),
+        metadata: z.object({
+          originalTokens: z.number(),
+          optimizedTokens: z.number(),
+          reduction: z.number(),
+          optimizedAt: z.string(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }: { input: OptimizeContextInput }) => {
       logger.info('Optimizing context via API', {
         contextId: input.context.id,
         maxTokens: input.maxTokens,
@@ -215,8 +306,8 @@ export const mcpRouter = router({
 
       const assembler = new AgentContextAssembler()
       const optimizedContext = await assembler.optimizeContextSize(
-        input.context as AgentContext,
-        input.maxTokens
+        input.context,
+        input.maxTokens,
       )
 
       return {
@@ -225,7 +316,9 @@ export const mcpRouter = router({
         metadata: {
           originalTokens: input.context.optimization.tokenCount,
           optimizedTokens: optimizedContext.optimization.tokenCount,
-          reduction: input.context.optimization.tokenCount - optimizedContext.optimization.tokenCount,
+          reduction:
+            input.context.optimization.tokenCount -
+            optimizedContext.optimization.tokenCount,
           optimizedAt: new Date().toISOString(),
         },
       }
@@ -238,7 +331,7 @@ export const mcpRouter = router({
     .input(
       z.object({
         context: z.any(),
-      })
+      }),
     )
     .output(
       z.object({
@@ -253,17 +346,15 @@ export const mcpRouter = router({
         metadata: z.object({
           validatedAt: z.string(),
         }),
-      })
+      }),
     )
-    .query(async ({ input }: { input: any }) => {
+    .query(async ({ input }: { input: ValidateContextInput }) => {
       logger.info('Validating context quality via API', {
         contextId: input.context.id,
       })
 
       const assembler = new AgentContextAssembler()
-      const qualityScore = await assembler.validateContextQuality(
-        input.context as AgentContext
-      )
+      const qualityScore = await assembler.validateContextQuality(input.context)
 
       return {
         success: true,
@@ -289,7 +380,7 @@ export const mcpRouter = router({
           vocabularyExtractor: z.boolean(),
           contextAssembler: z.boolean(),
         }),
-      })
+      }),
     )
     .query(async () => {
       logger.info('Health check requested')
@@ -319,7 +410,7 @@ export const mcpRouter = router({
           resources: z.array(z.string()),
           tools: z.array(z.string()),
         }),
-      })
+      }),
     )
     .query(async () => {
       return {

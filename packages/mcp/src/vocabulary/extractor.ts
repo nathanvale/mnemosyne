@@ -28,11 +28,11 @@ export class EmotionalVocabularyExtractor {
    */
   async extractVocabulary(
     memories: ExtractedMemory[],
-    participantId: string
+    participantId: string,
   ): Promise<EmotionalVocabulary> {
-    logger.info('Extracting emotional vocabulary', { 
-      participantId, 
-      memoryCount: memories.length 
+    logger.info('Extracting emotional vocabulary', {
+      participantId,
+      memoryCount: memories.length,
     })
 
     if (memories.length === 0) {
@@ -44,9 +44,11 @@ export class EmotionalVocabularyExtractor {
 
     const themes = await this.extractEmotionalThemes(sortedMemories)
     const moodDescriptors = await this.extractMoodDescriptors(sortedMemories)
-    const relationshipTerms = await this.extractRelationshipTerms(sortedMemories)
-    const communicationStyle = await this.analyzeCommunicationStyle(sortedMemories)
-    
+    const relationshipTerms =
+      await this.extractRelationshipTerms(sortedMemories)
+    const communicationStyle =
+      await this.analyzeCommunicationStyle(sortedMemories)
+
     const evolution = this.config.includeEvolution
       ? await this.analyzeVocabularyEvolution(sortedMemories)
       : []
@@ -54,8 +56,14 @@ export class EmotionalVocabularyExtractor {
     const vocabulary: EmotionalVocabulary = {
       participantId,
       themes: themes.slice(0, this.config.maxTermsPerCategory),
-      moodDescriptors: moodDescriptors.slice(0, this.config.maxTermsPerCategory),
-      relationshipTerms: relationshipTerms.slice(0, this.config.maxTermsPerCategory),
+      moodDescriptors: moodDescriptors.slice(
+        0,
+        this.config.maxTermsPerCategory,
+      ),
+      relationshipTerms: relationshipTerms.slice(
+        0,
+        this.config.maxTermsPerCategory,
+      ),
       communicationStyle,
       evolution,
     }
@@ -72,12 +80,14 @@ export class EmotionalVocabularyExtractor {
   /**
    * Extract emotional themes from memories
    */
-  private async extractEmotionalThemes(memories: ExtractedMemory[]): Promise<string[]> {
+  private async extractEmotionalThemes(
+    memories: ExtractedMemory[],
+  ): Promise<string[]> {
     const themeMap = new Map<string, number>()
 
     for (const memory of memories) {
       const themes = memory.emotionalAnalysis.context.themes || []
-      
+
       for (const theme of themes) {
         const normalizedTheme = this.normalizeTheme(theme)
         themeMap.set(normalizedTheme, (themeMap.get(normalizedTheme) || 0) + 1)
@@ -87,7 +97,10 @@ export class EmotionalVocabularyExtractor {
       for (const pattern of patterns) {
         const patternTheme = this.patternToTheme(pattern.type)
         if (patternTheme) {
-          themeMap.set(patternTheme, (themeMap.get(patternTheme) || 0) + pattern.significance)
+          themeMap.set(
+            patternTheme,
+            (themeMap.get(patternTheme) || 0) + pattern.significance,
+          )
         }
       }
     }
@@ -98,24 +111,32 @@ export class EmotionalVocabularyExtractor {
   /**
    * Extract mood descriptors from memories
    */
-  private async extractMoodDescriptors(memories: ExtractedMemory[]): Promise<string[]> {
+  private async extractMoodDescriptors(
+    memories: ExtractedMemory[],
+  ): Promise<string[]> {
     const descriptorMap = new Map<string, number>()
 
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
       const confidence = memory.emotionalAnalysis.moodScoring.confidence
-      
+
       for (const descriptor of descriptors) {
         const normalized = this.normalizeMoodDescriptor(descriptor)
         const weight = confidence * (memory.significance.overall / 10)
-        descriptorMap.set(normalized, (descriptorMap.get(normalized) || 0) + weight)
+        descriptorMap.set(
+          normalized,
+          (descriptorMap.get(normalized) || 0) + weight,
+        )
       }
 
       if (memory.emotionalAnalysis.context.primaryEmotion) {
         const state = memory.emotionalAnalysis.context.primaryEmotion
         const stateDescriptor = this.emotionalStateToDescriptor(state)
         if (stateDescriptor) {
-          descriptorMap.set(stateDescriptor, (descriptorMap.get(stateDescriptor) || 0) + 1)
+          descriptorMap.set(
+            stateDescriptor,
+            (descriptorMap.get(stateDescriptor) || 0) + 1,
+          )
         }
       }
     }
@@ -126,12 +147,14 @@ export class EmotionalVocabularyExtractor {
   /**
    * Extract relationship terms from memories
    */
-  private async extractRelationshipTerms(memories: ExtractedMemory[]): Promise<string[]> {
+  private async extractRelationshipTerms(
+    memories: ExtractedMemory[],
+  ): Promise<string[]> {
     const termMap = new Map<string, number>()
 
     for (const memory of memories) {
       if (memory.relationshipDynamics) {
-        const patterns = (memory.relationshipDynamics as any)?.patterns || []
+        const patterns = (memory.relationshipDynamics as any)?.patterns || [] // eslint-disable-line @typescript-eslint/no-explicit-any
         for (const pattern of patterns) {
           const term = this.relationshipPatternToTerm(pattern)
           if (term) {
@@ -139,21 +162,26 @@ export class EmotionalVocabularyExtractor {
           }
         }
 
-        const qualityTerms = this.qualityToTerms((memory.relationshipDynamics as any)?.quality || 5)
+        const qualityTerms = this.qualityToTerms(
+          (memory.relationshipDynamics as any)?.quality || 5,
+        ) // eslint-disable-line @typescript-eslint/no-explicit-any
         for (const term of qualityTerms) {
           termMap.set(term, (termMap.get(term) || 0) + 1)
         }
       }
 
       const supportPatterns = memory.emotionalAnalysis.patterns.filter(
-        p => p.type === 'support_seeking' || p.type === 'mood_repair'
+        (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
       )
-      
+
       for (const pattern of supportPatterns) {
-        termMap.set('supportive', (termMap.get('supportive') || 0) + pattern.significance)
+        termMap.set(
+          'supportive',
+          (termMap.get('supportive') || 0) + pattern.significance,
+        )
       }
 
-      const participantRoles = memory.participants.map((p: any) => p.role)
+      const participantRoles = memory.participants.map((p: any) => p.role) // eslint-disable-line @typescript-eslint/no-explicit-any
       for (const role of participantRoles) {
         if (role !== 'observer') {
           const term = this.roleToRelationshipTerm(role)
@@ -172,7 +200,8 @@ export class EmotionalVocabularyExtractor {
    */
   private async analyzeCommunicationStyle(memories: ExtractedMemory[]) {
     const toneMap = new Map<string, number>()
-    let expressiveness: 'direct' | 'metaphorical' | 'analytical' | 'emotional' = 'direct'
+    let expressiveness: 'direct' | 'metaphorical' | 'analytical' | 'emotional' =
+      'direct'
     const supportLanguageSet = new Set<string>()
 
     let directCount = 0
@@ -188,17 +217,30 @@ export class EmotionalVocabularyExtractor {
 
       const style = this.analyzeExpressionStyle(memory)
       switch (style) {
-        case 'direct': directCount++; break
-        case 'metaphorical': metaphoricalCount++; break
-        case 'analytical': analyticalCount++; break
-        case 'emotional': emotionalCount++; break
+        case 'direct':
+          directCount++
+          break
+        case 'metaphorical':
+          metaphoricalCount++
+          break
+        case 'analytical':
+          analyticalCount++
+          break
+        case 'emotional':
+          emotionalCount++
+          break
       }
 
       const supportLanguage = this.extractSupportLanguage(memory)
-      supportLanguage.forEach(lang => supportLanguageSet.add(lang))
+      supportLanguage.forEach((lang) => supportLanguageSet.add(lang))
     }
 
-    const maxCount = Math.max(directCount, metaphoricalCount, analyticalCount, emotionalCount)
+    const maxCount = Math.max(
+      directCount,
+      metaphoricalCount,
+      analyticalCount,
+      emotionalCount,
+    )
     if (maxCount === directCount) expressiveness = 'direct'
     else if (maxCount === metaphoricalCount) expressiveness = 'metaphorical'
     else if (maxCount === analyticalCount) expressiveness = 'analytical'
@@ -214,7 +256,9 @@ export class EmotionalVocabularyExtractor {
   /**
    * Analyze vocabulary evolution over time
    */
-  private async analyzeVocabularyEvolution(memories: ExtractedMemory[]): Promise<VocabularyEvolution[]> {
+  private async analyzeVocabularyEvolution(
+    memories: ExtractedMemory[],
+  ): Promise<VocabularyEvolution[]> {
     if (memories.length < 10) return []
 
     const sortedMemories = this.sortMemoriesByRecency(memories)
@@ -226,14 +270,30 @@ export class EmotionalVocabularyExtractor {
       const currentWindow = timeWindows[i]
       const previousWindow = timeWindows[i + 1]
 
-      const currentTerms = await this.extractTermsFromWindow(currentWindow.memories)
-      const previousTerms = await this.extractTermsFromWindow(previousWindow.memories)
+      const currentTerms = await this.extractTermsFromWindow(
+        currentWindow.memories,
+      )
+      const previousTerms = await this.extractTermsFromWindow(
+        previousWindow.memories,
+      )
 
-      const newTerms = currentTerms.filter(term => !previousTerms.includes(term))
-      const increasingTerms = this.findIncreasingTerms(currentWindow.memories, previousWindow.memories)
-      const decreasingTerms = this.findDecreasingTerms(currentWindow.memories, previousWindow.memories)
+      const newTerms = currentTerms.filter(
+        (term) => !previousTerms.includes(term),
+      )
+      const increasingTerms = this.findIncreasingTerms(
+        currentWindow.memories,
+        previousWindow.memories,
+      )
+      const decreasingTerms = this.findDecreasingTerms(
+        currentWindow.memories,
+        previousWindow.memories,
+      )
 
-      if (newTerms.length > 0 || increasingTerms.length > 0 || decreasingTerms.length > 0) {
+      if (
+        newTerms.length > 0 ||
+        increasingTerms.length > 0 ||
+        decreasingTerms.length > 0
+      ) {
         evolution.push({
           period: {
             start: currentWindow.start,
@@ -259,7 +319,7 @@ export class EmotionalVocabularyExtractor {
       case 'recent':
         return sortedMemories.slice(0, 20)
       case 'significant':
-        return sortedMemories.filter(m => m.significance.overall > 6)
+        return sortedMemories.filter((m) => m.significance.overall > 6)
       case 'all':
       default:
         return sortedMemories
@@ -269,9 +329,12 @@ export class EmotionalVocabularyExtractor {
   /**
    * Sort memories by recency (most recent first)
    */
-  private sortMemoriesByRecency(memories: ExtractedMemory[]): ExtractedMemory[] {
-    return [...memories].sort((a, b) => 
-      b.processing.extractedAt.getTime() - a.processing.extractedAt.getTime()
+  private sortMemoriesByRecency(
+    memories: ExtractedMemory[],
+  ): ExtractedMemory[] {
+    return [...memories].sort(
+      (a, b) =>
+        b.processing.extractedAt.getTime() - a.processing.extractedAt.getTime(),
     )
   }
 
@@ -288,7 +351,10 @@ export class EmotionalVocabularyExtractor {
    * Normalize theme for consistency
    */
   private normalizeTheme(theme: string): string {
-    return theme.toLowerCase().trim().replace(/[^\w\s]/g, '')
+    return theme
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s]/g, '')
   }
 
   /**
@@ -296,11 +362,11 @@ export class EmotionalVocabularyExtractor {
    */
   private patternToTheme(patternType: string): string | null {
     const mapping: Record<string, string> = {
-      'support_seeking': 'seeking support',
-      'mood_repair': 'emotional recovery',
-      'celebration': 'celebration',
-      'vulnerability': 'vulnerability',
-      'growth': 'personal growth',
+      support_seeking: 'seeking support',
+      mood_repair: 'emotional recovery',
+      celebration: 'celebration',
+      vulnerability: 'vulnerability',
+      growth: 'personal growth',
     }
     return mapping[patternType] || null
   }
@@ -317,13 +383,13 @@ export class EmotionalVocabularyExtractor {
    */
   private emotionalStateToDescriptor(state: string): string | null {
     const stateMap: Record<string, string> = {
-      'joy': 'joyful',
-      'sadness': 'sad',
-      'anger': 'frustrated',
-      'fear': 'anxious',
-      'surprise': 'surprised',
-      'love': 'loving',
-      'gratitude': 'grateful',
+      joy: 'joyful',
+      sadness: 'sad',
+      anger: 'frustrated',
+      fear: 'anxious',
+      surprise: 'surprised',
+      love: 'loving',
+      gratitude: 'grateful',
     }
     return stateMap[state.toLowerCase()] || null
   }
@@ -333,11 +399,11 @@ export class EmotionalVocabularyExtractor {
    */
   private relationshipPatternToTerm(pattern: string): string | null {
     const patternMap: Record<string, string> = {
-      'collaborative': 'collaborative',
-      'supportive': 'supportive',
-      'conflicted': 'challenging',
-      'distant': 'distant',
-      'intimate': 'close',
+      collaborative: 'collaborative',
+      supportive: 'supportive',
+      conflicted: 'challenging',
+      distant: 'distant',
+      intimate: 'close',
     }
     return patternMap[pattern.toLowerCase()] || null
   }
@@ -357,9 +423,9 @@ export class EmotionalVocabularyExtractor {
    */
   private roleToRelationshipTerm(role: string): string | null {
     const roleMap: Record<string, string> = {
-      'primary': 'close connection',
-      'secondary': 'acquaintance',
-      'supportive': 'supporter',
+      primary: 'close connection',
+      secondary: 'acquaintance',
+      supportive: 'supporter',
     }
     return roleMap[role.toLowerCase()] || null
   }
@@ -379,7 +445,9 @@ export class EmotionalVocabularyExtractor {
     if (significance >= 8) tones.push('important', 'meaningful')
 
     const patterns = memory.emotionalAnalysis.patterns
-    const hasSupport = patterns.some(p => p.type === 'support_seeking' || p.type === 'mood_repair')
+    const hasSupport = patterns.some(
+      (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+    )
     if (hasSupport) tones.push('supportive', 'caring')
 
     return tones
@@ -388,16 +456,42 @@ export class EmotionalVocabularyExtractor {
   /**
    * Analyze expression style from memory content
    */
-  private analyzeExpressionStyle(memory: ExtractedMemory): 'direct' | 'metaphorical' | 'analytical' | 'emotional' {
+  private analyzeExpressionStyle(
+    memory: ExtractedMemory,
+  ): 'direct' | 'metaphorical' | 'analytical' | 'emotional' {
     const content = memory.content.toLowerCase()
 
-    const metaphorIndicators = ['like', 'as if', 'reminds me', 'similar to', 'feels like']
-    const analyticalIndicators = ['because', 'therefore', 'analysis', 'consider', 'rational']
-    const emotionalIndicators = ['feel', 'heart', 'soul', 'deeply', 'overwhelming']
+    const metaphorIndicators = [
+      'like',
+      'as if',
+      'reminds me',
+      'similar to',
+      'feels like',
+    ]
+    const analyticalIndicators = [
+      'because',
+      'therefore',
+      'analysis',
+      'consider',
+      'rational',
+    ]
+    const emotionalIndicators = [
+      'feel',
+      'heart',
+      'soul',
+      'deeply',
+      'overwhelming',
+    ]
 
-    const hasMetaphor = metaphorIndicators.some(indicator => content.includes(indicator))
-    const hasAnalytical = analyticalIndicators.some(indicator => content.includes(indicator))
-    const hasEmotional = emotionalIndicators.some(indicator => content.includes(indicator))
+    const hasMetaphor = metaphorIndicators.some((indicator) =>
+      content.includes(indicator),
+    )
+    const hasAnalytical = analyticalIndicators.some((indicator) =>
+      content.includes(indicator),
+    )
+    const hasEmotional = emotionalIndicators.some((indicator) =>
+      content.includes(indicator),
+    )
 
     if (hasMetaphor) return 'metaphorical'
     if (hasAnalytical) return 'analytical'
@@ -413,8 +507,14 @@ export class EmotionalVocabularyExtractor {
     const content = memory.content.toLowerCase()
 
     const supportPhrases = [
-      'i understand', 'im here for you', 'you can do this', 'it will be okay',
-      'i believe in you', 'youre not alone', 'take your time', 'youre doing great'
+      'i understand',
+      'im here for you',
+      'you can do this',
+      'it will be okay',
+      'i believe in you',
+      'youre not alone',
+      'take your time',
+      'youre doing great',
     ]
 
     for (const phrase of supportPhrases) {
@@ -424,8 +524,10 @@ export class EmotionalVocabularyExtractor {
     }
 
     const patterns = memory.emotionalAnalysis.patterns
-    const supportPatterns = patterns.filter(p => p.type === 'support_seeking' || p.type === 'mood_repair')
-    
+    const supportPatterns = patterns.filter(
+      (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+    )
+
     if (supportPatterns.length > 0) {
       supportLanguage.push('encouragement', 'validation')
     }
@@ -445,7 +547,11 @@ export class EmotionalVocabularyExtractor {
 
     const sortedMemories = this.sortMemoriesByRecency(memories)
     const windowSize = Math.max(5, Math.floor(memories.length / 4))
-    const windows: Array<{ start: Date; end: Date; memories: ExtractedMemory[] }> = []
+    const windows: Array<{
+      start: Date
+      end: Date
+      memories: ExtractedMemory[]
+    }> = []
 
     for (let i = 0; i < memories.length; i += windowSize) {
       const windowMemories = sortedMemories.slice(i, i + windowSize)
@@ -464,15 +570,19 @@ export class EmotionalVocabularyExtractor {
   /**
    * Extract terms from a window of memories
    */
-  private async extractTermsFromWindow(memories: ExtractedMemory[]): Promise<string[]> {
+  private async extractTermsFromWindow(
+    memories: ExtractedMemory[],
+  ): Promise<string[]> {
     const terms = new Set<string>()
 
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach(desc => terms.add(this.normalizeMoodDescriptor(desc)))
+      descriptors.forEach((desc) =>
+        terms.add(this.normalizeMoodDescriptor(desc)),
+      )
 
       const themes = memory.emotionalAnalysis.context.themes || []
-      themes.forEach(theme => terms.add(this.normalizeTheme(theme)))
+      themes.forEach((theme) => terms.add(this.normalizeTheme(theme)))
     }
 
     return Array.from(terms)
@@ -481,7 +591,10 @@ export class EmotionalVocabularyExtractor {
   /**
    * Find increasing terms between windows
    */
-  private findIncreasingTerms(currentMemories: ExtractedMemory[], previousMemories: ExtractedMemory[]): string[] {
+  private findIncreasingTerms(
+    currentMemories: ExtractedMemory[],
+    previousMemories: ExtractedMemory[],
+  ): string[] {
     const currentFreq = this.calculateTermFrequency(currentMemories)
     const previousFreq = this.calculateTermFrequency(previousMemories)
 
@@ -500,7 +613,10 @@ export class EmotionalVocabularyExtractor {
   /**
    * Find decreasing terms between windows
    */
-  private findDecreasingTerms(currentMemories: ExtractedMemory[], previousMemories: ExtractedMemory[]): string[] {
+  private findDecreasingTerms(
+    currentMemories: ExtractedMemory[],
+    previousMemories: ExtractedMemory[],
+  ): string[] {
     const currentFreq = this.calculateTermFrequency(currentMemories)
     const previousFreq = this.calculateTermFrequency(previousMemories)
 
@@ -519,18 +635,20 @@ export class EmotionalVocabularyExtractor {
   /**
    * Calculate term frequency in memories
    */
-  private calculateTermFrequency(memories: ExtractedMemory[]): Map<string, number> {
+  private calculateTermFrequency(
+    memories: ExtractedMemory[],
+  ): Map<string, number> {
     const frequency = new Map<string, number>()
 
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach(desc => {
+      descriptors.forEach((desc) => {
         const term = this.normalizeMoodDescriptor(desc)
         frequency.set(term, (frequency.get(term) || 0) + 1)
       })
 
       const themes = memory.emotionalAnalysis.context.themes || []
-      themes.forEach(theme => {
+      themes.forEach((theme) => {
         const term = this.normalizeTheme(theme)
         frequency.set(term, (frequency.get(term) || 0) + 1)
       })

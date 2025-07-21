@@ -25,7 +25,7 @@ export class AgentContextAssembler {
   private readonly vocabularyExtractor: EmotionalVocabularyExtractor
 
   constructor(config: Partial<AgentContextConfig> = {}) {
-    this.config = {
+    const defaultConfig: AgentContextConfig = {
       maxTokens: 2000,
       relevanceThreshold: 0.6,
       includeRecommendations: true,
@@ -34,7 +34,15 @@ export class AgentContextAssembler {
         includeHistorical: false,
         prioritizeRecent: true,
       },
+    }
+
+    this.config = {
+      ...defaultConfig,
       ...config,
+      scope: {
+        ...defaultConfig.scope,
+        ...(config.scope || {}),
+      },
     }
 
     this.moodTokenizer = new MoodContextTokenizer({
@@ -62,19 +70,22 @@ export class AgentContextAssembler {
   async assembleContext(
     memories: ExtractedMemory[],
     participantId: string,
-    conversationGoal?: string
+    conversationGoal?: string,
   ): Promise<AgentContext> {
-    logger.info('Assembling agent context', { 
-      participantId, 
+    logger.info('Assembling agent context', {
+      participantId,
       memoryCount: memories.length,
-      conversationGoal 
+      conversationGoal,
     })
 
     if (memories.length === 0) {
       return this.createEmptyContext(participantId)
     }
 
-    const relevantMemories = await this.filterRelevantMemories(memories, participantId)
+    const relevantMemories = await this.filterRelevantMemories(
+      memories,
+      participantId,
+    )
     const scopedMemories = this.applyScopeFilters(relevantMemories)
 
     const [moodContext, timeline, vocabulary] = await Promise.all([
@@ -88,7 +99,7 @@ export class AgentContextAssembler {
       moodContext,
       timelineSummary,
       vocabulary,
-      scopedMemories
+      scopedMemories,
     )
 
     const recommendations = this.config.includeRecommendations
@@ -96,7 +107,7 @@ export class AgentContextAssembler {
           moodContext,
           timelineSummary,
           vocabulary,
-          conversationGoal
+          conversationGoal,
         )
       : this.getDefaultRecommendations()
 
@@ -125,36 +136,42 @@ export class AgentContextAssembler {
    */
   async optimizeContextSize(
     context: AgentContext,
-    maxTokens: number
+    maxTokens: number,
   ): Promise<AgentContext> {
     if (context.optimization.tokenCount <= maxTokens) {
       return context
     }
 
-    logger.info('Optimizing context size', { 
+    logger.info('Optimizing context size', {
       currentTokens: context.optimization.tokenCount,
-      targetTokens: maxTokens 
+      targetTokens: maxTokens,
     })
 
     const optimizedContext = { ...context }
 
-    optimizedContext.moodContext.recentMoodTags = context.moodContext.recentMoodTags.slice(0, 3)
+    optimizedContext.moodContext.recentMoodTags =
+      context.moodContext.recentMoodTags.slice(0, 3)
     optimizedContext.vocabulary.themes = context.vocabulary.themes.slice(0, 3)
-    optimizedContext.vocabulary.moodDescriptors = context.vocabulary.moodDescriptors.slice(0, 3)
-    optimizedContext.vocabulary.relationshipTerms = context.vocabulary.relationshipTerms.slice(0, 3)
+    optimizedContext.vocabulary.moodDescriptors =
+      context.vocabulary.moodDescriptors.slice(0, 3)
+    optimizedContext.vocabulary.relationshipTerms =
+      context.vocabulary.relationshipTerms.slice(0, 3)
 
     if (context.timelineSummary.recentEvents.length > 3) {
-      optimizedContext.timelineSummary.recentEvents = context.timelineSummary.recentEvents.slice(0, 3)
+      optimizedContext.timelineSummary.recentEvents =
+        context.timelineSummary.recentEvents.slice(0, 3)
     }
 
-    optimizedContext.timelineSummary.overview = context.timelineSummary.overview.substring(0, 50)
-    optimizedContext.moodContext.trajectoryOverview = context.moodContext.trajectoryOverview.substring(0, 50)
+    optimizedContext.timelineSummary.overview =
+      context.timelineSummary.overview.substring(0, 50)
+    optimizedContext.moodContext.trajectoryOverview =
+      context.moodContext.trajectoryOverview.substring(0, 50)
 
     const newOptimization = await this.calculateOptimization(
       optimizedContext.moodContext,
       optimizedContext.timelineSummary,
       optimizedContext.vocabulary,
-      []
+      [],
     )
 
     optimizedContext.optimization = {
@@ -177,7 +194,7 @@ export class AgentContextAssembler {
       coherence: 0.2,
     }
 
-    const score = 
+    const score =
       quality.completeness * weights.completeness +
       quality.relevance * weights.relevance +
       quality.recency * weights.recency +
@@ -197,12 +214,15 @@ export class AgentContextAssembler {
    */
   private async filterRelevantMemories(
     memories: ExtractedMemory[],
-    participantId: string
+    participantId: string,
   ): Promise<ExtractedMemory[]> {
-    return memories.filter(memory => {
-      const isParticipant = memory.participants.some((p: any) => p.id === participantId)
-      const significanceThreshold = memory.significance.overall >= this.config.relevanceThreshold * 10
-      
+    return memories.filter((memory) => {
+      const isParticipant = memory.participants.some(
+        (p: any) => p.id === participantId,
+      ) // eslint-disable-line @typescript-eslint/no-explicit-any
+      const significanceThreshold =
+        memory.significance.overall >= this.config.relevanceThreshold * 10
+
       return isParticipant && significanceThreshold
     })
   }
@@ -216,12 +236,17 @@ export class AgentContextAssembler {
     if (!this.config.scope.includeHistorical) {
       const timeWindowMs = this.getTimeWindowMs()
       const cutoffDate = new Date(Date.now() - timeWindowMs)
-      
-      filteredMemories = filteredMemories.filter(m => new Date(m.timestamp) >= cutoffDate)
+
+      filteredMemories = filteredMemories.filter(
+        (m) => new Date(m.timestamp) >= cutoffDate,
+      )
     }
 
     if (this.config.scope.prioritizeRecent) {
-      filteredMemories.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      filteredMemories.sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      )
     }
 
     return filteredMemories
@@ -231,11 +256,12 @@ export class AgentContextAssembler {
    * Create timeline summary from full timeline
    */
   private createTimelineSummary(timeline: any): TimelineSummary {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     return {
       overview: timeline.summary,
       recentEvents: timeline.events.slice(0, 10),
       relationshipPatterns: timeline.relationshipDynamics
-        .flatMap((rd: any) => rd.communicationPatterns)
+        .flatMap((rd: any) => rd.communicationPatterns) // eslint-disable-line @typescript-eslint/no-explicit-any
         .slice(0, 5),
       trajectoryTrend: this.analyzeTrendFromEvents(timeline.events),
     }
@@ -245,14 +271,22 @@ export class AgentContextAssembler {
    * Calculate context optimization metrics
    */
   private async calculateOptimization(
-    moodContext: any,
+    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     timelineSummary: TimelineSummary,
-    vocabulary: any,
-    memories: ExtractedMemory[]
+    vocabulary: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    memories: ExtractedMemory[],
   ): Promise<ContextOptimization> {
-    const tokenCount = this.estimateTokenCount(moodContext, timelineSummary, vocabulary)
+    const tokenCount = this.estimateTokenCount(
+      moodContext,
+      timelineSummary,
+      vocabulary,
+    )
     const relevanceScore = this.calculateRelevanceScore(memories)
-    const qualityMetrics = this.assessQualityMetrics(moodContext, timelineSummary, vocabulary)
+    const qualityMetrics = this.assessQualityMetrics(
+      moodContext,
+      timelineSummary,
+      vocabulary,
+    )
 
     return {
       tokenCount,
@@ -266,16 +300,19 @@ export class AgentContextAssembler {
    * Generate agent response recommendations
    */
   private async generateRecommendations(
-    moodContext: any,
+    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     timelineSummary: TimelineSummary,
-    vocabulary: any,
-    conversationGoal?: string
+    vocabulary: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    conversationGoal?: string,
   ): Promise<AgentRecommendations> {
     const tone = this.recommendTone(moodContext, vocabulary)
     const approach = this.recommendApproach(moodContext, conversationGoal)
     const emphasize = this.recommendEmphasis(timelineSummary, vocabulary)
     const avoid = this.recommendAvoidance(moodContext, timelineSummary)
-    const responseLength = this.recommendResponseLength(moodContext, conversationGoal)
+    const responseLength = this.recommendResponseLength(
+      moodContext,
+      conversationGoal,
+    )
 
     return {
       tone,
@@ -290,8 +327,9 @@ export class AgentContextAssembler {
    * Recommend communication tone
    */
   private recommendTone(moodContext: any, vocabulary: any): string[] {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     const tone: string[] = []
-    
+
     const moodScore = moodContext.currentMood.score
     const communicationTone = vocabulary.communicationStyle?.tone || []
 
@@ -313,8 +351,8 @@ export class AgentContextAssembler {
    * Recommend communication approach
    */
   private recommendApproach(
-    moodContext: any,
-    conversationGoal?: string
+    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    conversationGoal?: string,
   ): 'supportive' | 'analytical' | 'celebratory' | 'empathetic' {
     const moodScore = moodContext.currentMood.score
     const moodTrend = moodContext.moodTrend.direction
@@ -341,19 +379,24 @@ export class AgentContextAssembler {
   /**
    * Recommend topics to emphasize
    */
-  private recommendEmphasis(timelineSummary: TimelineSummary, vocabulary: any): string[] {
+  private recommendEmphasis(
+    timelineSummary: TimelineSummary,
+    vocabulary: any,
+  ): string[] {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     const emphasize: string[] = []
 
-    const positivePatterns = timelineSummary.relationshipPatterns.filter(p =>
-      p.includes('support') || p.includes('growth') || p.includes('positive')
+    const positivePatterns = timelineSummary.relationshipPatterns.filter(
+      (p) =>
+        p.includes('support') || p.includes('growth') || p.includes('positive'),
     )
     emphasize.push(...positivePatterns)
 
     const topThemes = vocabulary.themes.slice(0, 3)
     emphasize.push(...topThemes)
 
-    const recentPositiveEvents = timelineSummary.recentEvents.filter(e =>
-      e.type === 'support_exchange' || e.emotionalImpact > 5
+    const recentPositiveEvents = timelineSummary.recentEvents.filter(
+      (e) => e.type === 'support_exchange' || e.emotionalImpact > 5,
     )
     if (recentPositiveEvents.length > 0) {
       emphasize.push('recent achievements', 'positive moments')
@@ -365,7 +408,11 @@ export class AgentContextAssembler {
   /**
    * Recommend topics to avoid
    */
-  private recommendAvoidance(moodContext: any, timelineSummary: TimelineSummary): string[] {
+  private recommendAvoidance(
+    moodContext: any,
+    timelineSummary: TimelineSummary,
+  ): string[] {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     const avoid: string[] = []
 
     const moodScore = moodContext.currentMood.score
@@ -373,8 +420,8 @@ export class AgentContextAssembler {
       avoid.push('criticism', 'pressure', 'overwhelming topics')
     }
 
-    const negativeEvents = timelineSummary.recentEvents.filter(e =>
-      (e.emotionalImpact < 0)
+    const negativeEvents = timelineSummary.recentEvents.filter(
+      (e) => e.emotionalImpact < 0,
     )
     if (negativeEvents.length > 2) {
       avoid.push('dwelling on difficulties', 'past setbacks')
@@ -391,17 +438,19 @@ export class AgentContextAssembler {
    * Recommend response length
    */
   private recommendResponseLength(
-    moodContext: any,
-    conversationGoal?: string
+    moodContext: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    conversationGoal?: string,
   ): 'brief' | 'moderate' | 'detailed' {
     const moodScore = moodContext.currentMood.score
-    
+
     if (moodScore <= 3 || moodContext.moodTrend.direction === 'volatile') {
       return 'brief'
     }
 
-    if (conversationGoal?.toLowerCase().includes('detailed') || 
-        conversationGoal?.toLowerCase().includes('analyze')) {
+    if (
+      conversationGoal?.toLowerCase().includes('detailed') ||
+      conversationGoal?.toLowerCase().includes('analyze')
+    ) {
       return 'detailed'
     }
 
@@ -412,11 +461,16 @@ export class AgentContextAssembler {
    * Analyze trend from events
    */
   private analyzeTrendFromEvents(events: any[]): string {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     if (events.length === 0) return 'no data available'
 
     const recentEvents = events.slice(-5)
-    const positiveEvents = recentEvents.filter(e => e.emotionalImpact > 5).length
-    const negativeEvents = recentEvents.filter(e => e.emotionalImpact < 0).length
+    const positiveEvents = recentEvents.filter(
+      (e) => e.emotionalImpact > 5,
+    ).length
+    const negativeEvents = recentEvents.filter(
+      (e) => e.emotionalImpact < 0,
+    ).length
 
     if (positiveEvents > negativeEvents) return 'positive trajectory'
     if (negativeEvents > positiveEvents) return 'challenging period'
@@ -426,26 +480,33 @@ export class AgentContextAssembler {
   /**
    * Estimate token count for context
    */
-  private estimateTokenCount(moodContext: any, timelineSummary: any, vocabulary: any): number {
+  private estimateTokenCount(
+    moodContext: any,
+    timelineSummary: any,
+    vocabulary: any,
+  ): number {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     const baseTokens = 200
-    
-    const moodTokens = 
+
+    const moodTokens =
       moodContext.currentMood.descriptors.length * 2 +
       moodContext.recentMoodTags.length * 2 +
       moodContext.trajectoryOverview.length / 4
 
-    const timelineTokens = 
+    const timelineTokens =
       timelineSummary.overview.length / 4 +
       timelineSummary.recentEvents.length * 15 +
       timelineSummary.relationshipPatterns.length * 3
 
-    const vocabularyTokens = 
+    const vocabularyTokens =
       vocabulary.themes.length * 2 +
       vocabulary.moodDescriptors.length * 2 +
       vocabulary.relationshipTerms.length * 2 +
       vocabulary.communicationStyle.tone.length * 2
 
-    return Math.round(baseTokens + moodTokens + timelineTokens + vocabularyTokens)
+    return Math.round(
+      baseTokens + moodTokens + timelineTokens + vocabularyTokens,
+    )
   }
 
   /**
@@ -454,37 +515,51 @@ export class AgentContextAssembler {
   private calculateRelevanceScore(memories: ExtractedMemory[]): number {
     if (memories.length === 0) return 0
 
-    const significanceScores = memories.map(m => m.significance.overall)
-    const averageSignificance = significanceScores.reduce((sum, s) => sum + s, 0) / significanceScores.length
-    
-    const recentMemories = memories.filter(m => {
-      const daysSince = (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24)
+    const significanceScores = memories.map((m) => m.significance.overall)
+    const averageSignificance =
+      significanceScores.reduce((sum, s) => sum + s, 0) /
+      significanceScores.length
+
+    const recentMemories = memories.filter((m) => {
+      const daysSince =
+        (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24)
       return daysSince <= 7
     })
-    
-    const recencyFactor = Math.min(recentMemories.length / Math.min(memories.length, 5), 1)
-    
+
+    const recencyFactor = Math.min(
+      recentMemories.length / Math.min(memories.length, 5),
+      1,
+    )
+
     return Math.min((averageSignificance / 10) * recencyFactor, 1)
   }
 
   /**
    * Assess context quality metrics
    */
-  private assessQualityMetrics(moodContext: any, timelineSummary: any, vocabulary: any) {
+  private assessQualityMetrics(
+    moodContext: any,
+    timelineSummary: any,
+    vocabulary: any,
+  ) {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     const completeness = Math.min(
-      (moodContext.recentMoodTags.length / 5 + 
-       timelineSummary.recentEvents.length / 10 + 
-       vocabulary.themes.length / 8) / 3,
-      1
+      (moodContext.recentMoodTags.length / 5 +
+        timelineSummary.recentEvents.length / 10 +
+        vocabulary.themes.length / 8) /
+        3,
+      1,
     )
 
-    const relevance = moodContext.currentMood.confidence * 0.5 + 
-                     (timelineSummary.recentEvents.length > 0 ? 0.5 : 0)
+    const relevance =
+      moodContext.currentMood.confidence * 0.5 +
+      (timelineSummary.recentEvents.length > 0 ? 0.5 : 0)
 
     const recency = moodContext.moodTrend.duration !== 'no_data' ? 0.8 : 0.2
 
-    const coherence = (vocabulary.communicationStyle.tone.length > 0 ? 0.5 : 0) +
-                     (timelineSummary.trajectoryTrend !== 'no data available' ? 0.5 : 0)
+    const coherence =
+      (vocabulary.communicationStyle.tone.length > 0 ? 0.5 : 0) +
+      (timelineSummary.trajectoryTrend !== 'no data available' ? 0.5 : 0)
 
     return {
       completeness: Math.round(completeness * 100) / 100,
@@ -499,12 +574,16 @@ export class AgentContextAssembler {
    */
   private getTimeWindowMs(): number {
     const msPerDay = 24 * 60 * 60 * 1000
-    
+
     switch (this.config.scope.timeWindow) {
-      case 'week': return 7 * msPerDay
-      case 'month': return 30 * msPerDay
-      case 'quarter': return 90 * msPerDay
-      default: return 30 * msPerDay
+      case 'week':
+        return 7 * msPerDay
+      case 'month':
+        return 30 * msPerDay
+      case 'quarter':
+        return 90 * msPerDay
+      default:
+        return 30 * msPerDay
     }
   }
 

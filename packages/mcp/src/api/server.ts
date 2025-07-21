@@ -27,14 +27,17 @@ export class McpExpressServer {
 
     this.app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*')
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      res.header(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS',
+      )
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-      
+
       if (req.method === 'OPTIONS') {
         res.sendStatus(200)
         return
       }
-      
+
       next()
     })
 
@@ -53,10 +56,13 @@ export class McpExpressServer {
    * Setup API routes
    */
   private setupRoutes(): void {
-    this.app.use('/api/trpc', createExpressMiddleware({
-      router: mcpRouter,
-      createContext: () => ({}),
-    }))
+    this.app.use(
+      '/api/trpc',
+      createExpressMiddleware({
+        router: mcpRouter,
+        createContext: () => ({}),
+      }),
+    )
 
     this.app.get('/health', (req, res) => {
       res.json({
@@ -72,7 +78,7 @@ export class McpExpressServer {
         version: '0.1.0',
         features: [
           'mood_context_generation',
-          'relational_timeline_construction', 
+          'relational_timeline_construction',
           'emotional_vocabulary_extraction',
           'agent_context_assembly',
           'context_optimization',
@@ -85,7 +91,12 @@ export class McpExpressServer {
         },
         mcpSupport: {
           protocol: 'foundation',
-          resources: ['mood_context', 'timeline', 'vocabulary', 'agent_context'],
+          resources: [
+            'mood_context',
+            'timeline',
+            'vocabulary',
+            'agent_context',
+          ],
           tools: ['generate_context', 'build_timeline', 'extract_vocabulary'],
         },
       })
@@ -95,13 +106,15 @@ export class McpExpressServer {
       res.json({
         message: 'MCP Foundation Server',
         version: '0.1.0',
-        description: 'Emotional intelligence foundation layer for Phase 3 agent integration',
+        description:
+          'Emotional intelligence foundation layer for Phase 3 agent integration',
         endpoints: {
           api: '/api/trpc',
           health: '/health',
           capabilities: '/api/capabilities',
         },
-        documentation: 'https://github.com/nathanvale/mnemosyne/tree/main/packages/mcp',
+        documentation:
+          'https://github.com/nathanvale/mnemosyne/tree/main/packages/mcp',
       })
     })
 
@@ -111,27 +124,36 @@ export class McpExpressServer {
         message: `Endpoint ${req.method} ${req.path} not found`,
         availableEndpoints: [
           'GET /',
-          'GET /health', 
+          'GET /health',
           'GET /api/capabilities',
           'POST /api/trpc/*',
         ],
       })
     })
 
-    this.app.use((error: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-      logger.error('Express server error', {
-        error: error.message,
-        stack: error.stack,
-        method: req.method,
-        path: req.path,
-      })
+    this.app.use(
+      (
+        error: Error,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        // Error handler must include all 4 parameters for Express to recognize it
+        void next
+        logger.error('Express server error', {
+          error: error.message,
+          stack: error.stack,
+          method: req.method,
+          path: req.path,
+        })
 
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'An unexpected error occurred while processing your request',
-        timestamp: new Date().toISOString(),
-      })
-    })
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'An unexpected error occurred while processing your request',
+          timestamp: new Date().toISOString(),
+        })
+      },
+    )
   }
 
   /**

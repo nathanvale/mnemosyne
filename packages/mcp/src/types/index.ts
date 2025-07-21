@@ -293,6 +293,12 @@ export interface VocabularyConfig {
   sourceScope: 'recent' | 'all' | 'significant'
 }
 
+export interface AgentContextScope {
+  timeWindow?: 'week' | 'month' | 'quarter'
+  includeHistorical?: boolean
+  prioritizeRecent?: boolean
+}
+
 export interface AgentContextConfig {
   /** Maximum token count */
   maxTokens: number
@@ -301,11 +307,7 @@ export interface AgentContextConfig {
   /** Include recommendations */
   includeRecommendations: boolean
   /** Context scope */
-  scope: {
-    timeWindow: 'week' | 'month' | 'quarter'
-    includeHistorical: boolean
-    prioritizeRecent: boolean
-  }
+  scope: AgentContextScope
 }
 
 /**
