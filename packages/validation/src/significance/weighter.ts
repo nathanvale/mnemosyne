@@ -1,6 +1,15 @@
-import type { Memory } from '@studio/schema'
+import type {
+  Memory,
+  EmotionalContext,
+  RelationshipDynamics,
+} from '@studio/schema'
 
 import { createLogger } from '@studio/logger'
+import {
+  isEmotionalContext,
+  isRelationshipDynamics,
+  isParticipant,
+} from '@studio/schema'
 
 import type {
   EmotionalSignificanceWeighter,
@@ -12,12 +21,17 @@ import type {
 
 import { PriorityManager } from './priority-manager'
 
-const logger = createLogger({ tags: ['validation:significance'] })
+const logger = createLogger({
+  tags: ['validation:significance'],
+  level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
+})
 
 /**
  * Implementation of emotional significance weighting
  */
-class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter {
+class EmotionalSignificanceWeighterImpl
+  implements EmotionalSignificanceWeighter
+{
   private priorityManager: PriorityManager
 
   constructor() {
@@ -67,7 +81,7 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
 
     // Calculate significance for all memories
     const significanceScores = new Map<string, EmotionalSignificanceScore>()
-    
+
     for (const memory of memories) {
       try {
         const score = this.calculateSignificance(memory)
@@ -77,7 +91,7 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
           memoryId: memory.id,
           error: error instanceof Error ? error.message : 'Unknown error',
         })
-        
+
         // Assign default low significance on error
         significanceScores.set(memory.id, {
           overall: 0.3,
@@ -88,7 +102,8 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
             participantVulnerability: 0.3,
             temporalImportance: 0.3,
           },
-          narrative: 'Unable to calculate significance - requires manual review',
+          narrative:
+            'Unable to calculate significance - requires manual review',
         })
       }
     }
@@ -96,7 +111,7 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
     // Create prioritized list
     const prioritizedList = this.priorityManager.createPrioritizedList(
       memories,
-      significanceScores
+      significanceScores,
     )
 
     logger.info('Prioritization complete', {
@@ -118,9 +133,12 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
 
     // First prioritize the memories
     const prioritizedList = this.prioritizeMemories(queue.pendingMemories)
-    
+
     // Then optimize based on resources
-    const optimizedQueue = this.priorityManager.optimizeQueue(queue, prioritizedList)
+    const optimizedQueue = this.priorityManager.optimizeQueue(
+      queue,
+      prioritizedList,
+    )
 
     logger.info('Queue optimization complete', {
       queueId: queue.id,
@@ -135,8 +153,8 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
    * Calculate emotional intensity factor
    */
   private calculateEmotionalIntensity(memory: Memory): number {
-    const emotionalContext = memory.emotionalContext as any
-    if (!emotionalContext) return 0.3
+    const emotionalContext: EmotionalContext | unknown = memory.emotionalContext
+    if (!isEmotionalContext(emotionalContext)) return 0.3
 
     let score = 0.3 // Base score
 
@@ -146,8 +164,11 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
     }
 
     // Check for multiple emotions
-    if (emotionalContext.emotionalStates && Array.isArray(emotionalContext.emotionalStates)) {
-      const stateCount = emotionalContext.emotionalStates.length
+    if (
+      emotionalContext.secondaryEmotions &&
+      Array.isArray(emotionalContext.secondaryEmotions)
+    ) {
+      const stateCount = emotionalContext.secondaryEmotions.length
       if (stateCount > 2) {
         score += 0.2 // Complex emotional state
       }
@@ -156,8 +177,9 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
     // Check for emotional themes
     if (emotionalContext.themes && Array.isArray(emotionalContext.themes)) {
       const significantThemes = ['loss', 'love', 'achievement', 'trauma', 'joy']
-      const hasSignificantTheme = emotionalContext.themes.some((theme: string) =>
-        significantThemes.some(sig => theme.toLowerCase().includes(sig))
+      const hasSignificantTheme = emotionalContext.themes.some(
+        (theme: string) =>
+          significantThemes.some((sig) => theme.toLowerCase().includes(sig)),
       )
       if (hasSignificantTheme) {
         score += 0.2
@@ -171,8 +193,8 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
    * Assess relationship impact
    */
   private assessRelationshipImpact(memory: Memory): number {
-    const dynamics = memory.relationshipDynamics as any
-    if (!dynamics) return 0.3
+    const dynamics: RelationshipDynamics | unknown = memory.relationshipDynamics
+    if (!isRelationshipDynamics(dynamics)) return 0.3
 
     let score = 0.3 // Base score
 
@@ -186,11 +208,16 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
       }
     }
 
-    // Check communication patterns
-    if (dynamics.communicationPatterns && Array.isArray(dynamics.communicationPatterns)) {
-      const significantPatterns = ['conflict', 'breakthrough', 'reconciliation', 'confession']
-      const hasSignificantPattern = dynamics.communicationPatterns.some((pattern: string) =>
-        significantPatterns.some(sig => pattern.toLowerCase().includes(sig))
+    // Check communication pattern
+    if (dynamics.communicationPattern) {
+      const significantPatterns = [
+        'conflict',
+        'breakthrough',
+        'reconciliation',
+        'confession',
+      ]
+      const hasSignificantPattern = significantPatterns.some((sig) =>
+        dynamics.communicationPattern.toLowerCase().includes(sig),
       )
       if (hasSignificantPattern) {
         score += 0.2
@@ -213,15 +240,26 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
 
     // Check tags for life events
     const lifeEventTags = [
-      'wedding', 'birth', 'death', 'graduation', 'promotion',
-      'breakup', 'divorce', 'accident', 'diagnosis', 'achievement',
-      'milestone', 'anniversary', 'reunion', 'farewell'
+      'wedding',
+      'birth',
+      'death',
+      'graduation',
+      'promotion',
+      'breakup',
+      'divorce',
+      'accident',
+      'diagnosis',
+      'achievement',
+      'milestone',
+      'anniversary',
+      'reunion',
+      'farewell',
     ]
-    
-    const hasLifeEventTag = memory.tags.some(tag =>
-      lifeEventTags.some(event => tag.toLowerCase().includes(event))
+
+    const hasLifeEventTag = memory.tags.some((tag) =>
+      lifeEventTags.some((event) => tag.toLowerCase().includes(event)),
     )
-    
+
     if (hasLifeEventTag) {
       score += 0.3
     }
@@ -229,15 +267,24 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
     // Check content for life event keywords
     const contentLower = memory.content.toLowerCase()
     const lifeEventKeywords = [
-      'first time', 'last time', 'never forget', 'changed my life',
-      'turning point', 'milestone', 'announced', 'diagnosed',
-      'passed away', 'born', 'married', 'proposed'
+      'first time',
+      'last time',
+      'never forget',
+      'changed my life',
+      'turning point',
+      'milestone',
+      'announced',
+      'diagnosed',
+      'passed away',
+      'born',
+      'married',
+      'proposed',
     ]
-    
-    const keywordMatches = lifeEventKeywords.filter(keyword =>
-      contentLower.includes(keyword)
+
+    const keywordMatches = lifeEventKeywords.filter((keyword) =>
+      contentLower.includes(keyword),
     ).length
-    
+
     score += Math.min(0.3, keywordMatches * 0.1)
 
     return Math.min(1, score)
@@ -249,37 +296,52 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
   private assessParticipantVulnerability(memory: Memory): number {
     let score = 0.3 // Base score
 
-    const participants = memory.participants as any[]
-    if (!participants || participants.length === 0) return score
+    const participants: unknown[] = memory.participants || []
+    if (participants.length === 0) return score
 
     // Check for vulnerability indicators
     for (const participant of participants) {
-      if (!participant) continue
+      if (!isParticipant(participant)) continue
 
       // Check role-based vulnerability
       if (participant.role) {
         const vulnerableRoles = ['child', 'patient', 'elderly', 'dependent']
-        if (vulnerableRoles.some(role => participant.role.toLowerCase().includes(role))) {
+        if (
+          vulnerableRoles.some((role) =>
+            participant.role.toLowerCase().includes(role),
+          )
+        ) {
           score += 0.3
           break
         }
       }
 
       // Check relationship type for vulnerability
-      if (participant.relationship) {
-        const vulnerableRelationships = ['child', 'parent', 'grandparent', 'caregiver']
-        if (vulnerableRelationships.some(rel => participant.relationship.toLowerCase().includes(rel))) {
+      if (participant.metadata?.relationshipDescription) {
+        const vulnerableRelationships = [
+          'child',
+          'parent',
+          'grandparent',
+          'caregiver',
+        ]
+        if (
+          vulnerableRelationships.some((rel) =>
+            participant.metadata?.relationshipDescription
+              ?.toLowerCase()
+              .includes(rel),
+          )
+        ) {
           score += 0.2
         }
       }
     }
 
     // Check emotional context for vulnerability
-    const emotionalContext = memory.emotionalContext as any
-    if (emotionalContext?.themes) {
+    const emotionalContext: EmotionalContext | unknown = memory.emotionalContext
+    if (isEmotionalContext(emotionalContext) && emotionalContext.themes) {
       const vulnerableThemes = ['grief', 'trauma', 'illness', 'loss', 'abuse']
-      const hasVulnerableTheme = emotionalContext.themes.some((theme: string) =>
-        vulnerableThemes.some(vul => theme.toLowerCase().includes(vul))
+      const hasVulnerableTheme = emotionalContext.themes.some((theme) =>
+        vulnerableThemes.some((vul) => theme.toLowerCase().includes(vul)),
       )
       if (hasVulnerableTheme) {
         score += 0.2
@@ -298,9 +360,10 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
     try {
       const memoryDate = new Date(memory.timestamp)
       const now = new Date()
-      
+
       // Recent memories (last 30 days) get higher importance
-      const daysSince = (now.getTime() - memoryDate.getTime()) / (1000 * 60 * 60 * 24)
+      const daysSince =
+        (now.getTime() - memoryDate.getTime()) / (1000 * 60 * 60 * 24)
       if (daysSince <= 30) {
         score += 0.2
       } else if (daysSince <= 90) {
@@ -310,19 +373,19 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
       // Special dates get higher importance
       const month = memoryDate.getMonth()
       const day = memoryDate.getDate()
-      
+
       // Common celebration/remembrance dates
       const specialDates = [
         { month: 11, day: 25 }, // Christmas
-        { month: 0, day: 1 },   // New Year
-        { month: 1, day: 14 },  // Valentine's
+        { month: 0, day: 1 }, // New Year
+        { month: 1, day: 14 }, // Valentine's
         { month: 11, day: 31 }, // New Year's Eve
       ]
-      
-      const isSpecialDate = specialDates.some(special =>
-        special.month === month && special.day === day
+
+      const isSpecialDate = specialDates.some(
+        (special) => special.month === month && special.day === day,
       )
-      
+
       if (isSpecialDate) {
         score += 0.2
       }
@@ -343,15 +406,15 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
    * Calculate overall significance from factors
    */
   private calculateOverallSignificance(
-    factors: EmotionalSignificanceScore['factors']
+    factors: EmotionalSignificanceScore['factors'],
   ): number {
     // Weighted average with emphasis on emotional intensity and relationship impact
     const weights = {
-      emotionalIntensity: 0.30,
+      emotionalIntensity: 0.3,
       relationshipImpact: 0.25,
-      lifeEventSignificance: 0.20,
+      lifeEventSignificance: 0.2,
       participantVulnerability: 0.15,
-      temporalImportance: 0.10,
+      temporalImportance: 0.1,
     }
 
     let weightedSum = 0
@@ -372,7 +435,7 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
   private generateNarrative(
     memory: Memory,
     factors: EmotionalSignificanceScore['factors'],
-    overall: number
+    overall: number,
   ): string {
     const parts: string[] = []
 
@@ -399,7 +462,7 @@ class EmotionalSignificanceWeighterImpl implements EmotionalSignificanceWeighter
 
     if (sortedFactors.length > 0) {
       const descriptions = sortedFactors
-        .filter(([_, value]) => value > 0.6)
+        .filter(([, value]) => value > 0.6)
         .map(([factor]) => factorDescriptions[factor])
         .filter(Boolean)
 

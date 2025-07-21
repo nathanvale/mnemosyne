@@ -5,5 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['../test-config/src/vitest.setup.ts'],
+    env: {
+      NODE_ENV: 'test',
+    },
   },
 })

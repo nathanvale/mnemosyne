@@ -7,9 +7,16 @@ import type {
   SampledMemories,
 } from '../types'
 
-import { AccuracyTracker, type AccuracyMetrics, type AccuracyTrend } from './accuracy-tracker'
+import {
+  AccuracyTracker,
+  type AccuracyMetrics,
+  type AccuracyTrend,
+} from './accuracy-tracker'
 
-const logger = createLogger({ tags: ['validation:analytics'] })
+const logger = createLogger({
+  tags: ['validation:analytics'],
+  level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
+})
 
 /**
  * Comprehensive validation analytics and monitoring
@@ -71,9 +78,9 @@ export class ValidationAnalytics {
    */
   recordValidationFeedback(feedback: ValidationFeedback[]): void {
     logger.debug('Recording validation feedback', { count: feedback.length })
-    
+
     this.accuracyTracker.addFeedbackBatch(feedback)
-    
+
     logger.info('Validation feedback recorded', {
       feedbackCount: feedback.length,
       accuracy: this.accuracyTracker.getAccuracyMetrics().overallAccuracy,
@@ -88,7 +95,10 @@ export class ValidationAnalytics {
     const performanceMetrics = this.getPerformanceMetrics()
     const batchTrends = this.getBatchTrends()
     const systemHealth = this.getSystemHealth()
-    const recommendations = this.generateRecommendations(accuracyMetrics, performanceMetrics)
+    const recommendations = this.generateRecommendations(
+      accuracyMetrics,
+      performanceMetrics,
+    )
 
     return {
       timestamp: new Date().toISOString(),
@@ -115,7 +125,8 @@ export class ValidationAnalytics {
     const recentBatches = this.batchHistory.slice(-10)
 
     const autoApprovalRate = this.calculateAutoApprovalRate(recentBatches)
-    const humanWorkloadReduction = this.calculateWorkloadReduction(recentBatches)
+    const humanWorkloadReduction =
+      this.calculateWorkloadReduction(recentBatches)
     const qualityMaintenance = this.assessQualityMaintenance(accuracyMetrics)
     const timeEfficiency = this.calculateTimeEfficiency(recentBatches)
 
@@ -136,7 +147,9 @@ export class ValidationAnalytics {
   /**
    * Get sampling effectiveness analysis
    */
-  analyzeSamplingEffectiveness(samples: SampledMemories[]): SamplingEffectiveness {
+  analyzeSamplingEffectiveness(
+    samples: SampledMemories[],
+  ): SamplingEffectiveness {
     if (samples.length === 0) {
       return {
         averageCoverage: 0,
@@ -146,12 +159,13 @@ export class ValidationAnalytics {
       }
     }
 
-    const averageCoverage = samples.reduce(
-      (sum, sample) => sum + sample.coverage.overallScore, 0
-    ) / samples.length
+    const averageCoverage =
+      samples.reduce((sum, sample) => sum + sample.coverage.overallScore, 0) /
+      samples.length
 
     const samplingEfficiency = this.calculateSamplingEfficiency(samples)
-    const representativenessScore = this.calculateRepresentativenessScore(samples)
+    const representativenessScore =
+      this.calculateRepresentativenessScore(samples)
     const recommendations = this.generateSamplingRecommendations(samples)
 
     return {
@@ -186,14 +200,16 @@ export class ValidationAnalytics {
     this.performanceMetrics.totalValidationTime += result.processingTime
 
     if (this.performanceMetrics.totalMemoriesProcessed > 0) {
-      this.performanceMetrics.averageProcessingTime = 
-        this.performanceMetrics.totalValidationTime / this.performanceMetrics.totalMemoriesProcessed
+      this.performanceMetrics.averageProcessingTime =
+        this.performanceMetrics.totalValidationTime /
+        this.performanceMetrics.totalMemoriesProcessed
     }
 
     // Calculate throughput per hour
-    const hoursOfOperation = (Date.now() - this.performanceMetrics.systemUptime) / (1000 * 60 * 60)
+    const hoursOfOperation =
+      (Date.now() - this.performanceMetrics.systemUptime) / (1000 * 60 * 60)
     if (hoursOfOperation > 0) {
-      this.performanceMetrics.throughputPerHour = 
+      this.performanceMetrics.throughputPerHour =
         this.performanceMetrics.totalMemoriesProcessed / hoursOfOperation
     }
   }
@@ -201,7 +217,9 @@ export class ValidationAnalytics {
   /**
    * Analyze quality distribution in batch results
    */
-  private analyzeBatchQuality(results: AutoConfirmationResult[]): QualityDistribution {
+  private analyzeBatchQuality(
+    results: AutoConfirmationResult[],
+  ): QualityDistribution {
     const distribution = { high: 0, medium: 0, low: 0 }
 
     for (const result of results) {
@@ -228,7 +246,7 @@ export class ValidationAnalytics {
    * Get batch processing trends
    */
   private getBatchTrends(): BatchTrend[] {
-    return this.batchHistory.slice(-20).map(batch => ({
+    return this.batchHistory.slice(-20).map((batch) => ({
       timestamp: batch.timestamp,
       throughput: batch.throughput,
       averageConfidence: batch.batchConfidence,
@@ -245,15 +263,29 @@ export class ValidationAnalytics {
     const accuracyMetrics = this.accuracyTracker.getAccuracyMetrics()
 
     // Check for performance degradation
-    const avgThroughput = recentBatches.length > 0 
-      ? recentBatches.reduce((sum, b) => sum + b.throughput, 0) / recentBatches.length
-      : 0
+    const avgThroughput =
+      recentBatches.length > 0
+        ? recentBatches.reduce((sum, b) => sum + b.throughput, 0) /
+          recentBatches.length
+        : 0
 
-    const healthScore = this.calculateHealthScore(accuracyMetrics, avgThroughput)
-    const issues = this.identifyHealthIssues(accuracyMetrics, avgThroughput, recentBatches)
+    const healthScore = this.calculateHealthScore(
+      accuracyMetrics,
+      avgThroughput,
+    )
+    const issues = this.identifyHealthIssues(
+      accuracyMetrics,
+      avgThroughput,
+      recentBatches,
+    )
 
     return {
-      overall: healthScore > 0.8 ? 'healthy' : healthScore > 0.6 ? 'warning' : 'critical',
+      overall:
+        healthScore > 0.8
+          ? 'healthy'
+          : healthScore > 0.6
+            ? 'warning'
+            : 'critical',
       score: healthScore,
       issues,
       uptime: Date.now() - this.performanceMetrics.systemUptime,
@@ -263,34 +295,44 @@ export class ValidationAnalytics {
   /**
    * Calculate overall system health score
    */
-  private calculateHealthScore(accuracy: AccuracyMetrics, throughput: number): number {
+  private calculateHealthScore(
+    accuracy: AccuracyMetrics,
+    throughput: number,
+  ): number {
     const accuracyScore = accuracy.overallAccuracy
-    const errorScore = 1 - (accuracy.falsePositiveRate + accuracy.falseNegativeRate) / 2
+    const errorScore =
+      1 - (accuracy.falsePositiveRate + accuracy.falseNegativeRate) / 2
     const throughputScore = Math.min(1, throughput / 60) // Target 60 memories/minute
-    
-    return (accuracyScore * 0.5 + errorScore * 0.3 + throughputScore * 0.2)
+
+    return accuracyScore * 0.5 + errorScore * 0.3 + throughputScore * 0.2
   }
 
   /**
    * Identify system health issues
    */
   private identifyHealthIssues(
-    accuracy: AccuracyMetrics, 
-    throughput: number, 
-    recentBatches: BatchAnalytics[]
+    accuracy: AccuracyMetrics,
+    throughput: number,
+    recentBatches: BatchAnalytics[],
   ): string[] {
     const issues: string[] = []
 
     if (accuracy.overallAccuracy < 0.8) {
-      issues.push(`Low accuracy: ${(accuracy.overallAccuracy * 100).toFixed(1)}%`)
+      issues.push(
+        `Low accuracy: ${(accuracy.overallAccuracy * 100).toFixed(1)}%`,
+      )
     }
 
     if (accuracy.falsePositiveRate > 0.05) {
-      issues.push(`High false positive rate: ${(accuracy.falsePositiveRate * 100).toFixed(1)}%`)
+      issues.push(
+        `High false positive rate: ${(accuracy.falsePositiveRate * 100).toFixed(1)}%`,
+      )
     }
 
     if (accuracy.falseNegativeRate > 0.05) {
-      issues.push(`High false negative rate: ${(accuracy.falseNegativeRate * 100).toFixed(1)}%`)
+      issues.push(
+        `High false negative rate: ${(accuracy.falseNegativeRate * 100).toFixed(1)}%`,
+      )
     }
 
     if (throughput < 30) {
@@ -298,9 +340,13 @@ export class ValidationAnalytics {
     }
 
     if (recentBatches.length > 0) {
-      const avgConfidence = recentBatches.reduce((sum, b) => sum + b.batchConfidence, 0) / recentBatches.length
+      const avgConfidence =
+        recentBatches.reduce((sum, b) => sum + b.batchConfidence, 0) /
+        recentBatches.length
       if (avgConfidence < 0.6) {
-        issues.push(`Low batch confidence: ${(avgConfidence * 100).toFixed(1)}%`)
+        issues.push(
+          `Low batch confidence: ${(avgConfidence * 100).toFixed(1)}%`,
+        )
       }
     }
 
@@ -310,19 +356,28 @@ export class ValidationAnalytics {
   /**
    * Generate optimization recommendations
    */
-  private generateRecommendations(accuracy: AccuracyMetrics, performance: PerformanceMetrics): string[] {
+  private generateRecommendations(
+    accuracy: AccuracyMetrics,
+    performance: PerformanceMetrics,
+  ): string[] {
     const recommendations: string[] = []
 
     if (accuracy.overallAccuracy < 0.85) {
-      recommendations.push('Consider adjusting confidence thresholds to improve accuracy')
+      recommendations.push(
+        'Consider adjusting confidence thresholds to improve accuracy',
+      )
     }
 
     if (accuracy.falsePositiveRate > 0.05) {
-      recommendations.push('Increase auto-approval threshold to reduce false positives')
+      recommendations.push(
+        'Increase auto-approval threshold to reduce false positives',
+      )
     }
 
     if (accuracy.falseNegativeRate > 0.05) {
-      recommendations.push('Decrease auto-rejection threshold to reduce false negatives')
+      recommendations.push(
+        'Decrease auto-rejection threshold to reduce false negatives',
+      )
     }
 
     if (performance.averageProcessingTime > 100) {
@@ -330,9 +385,13 @@ export class ValidationAnalytics {
     }
 
     const confidencePerf = this.accuracyTracker.getPerformanceByConfidence()
-    const poorCalibration = confidencePerf.find(p => p.count > 10 && Math.abs(p.accuracy - p.averageConfidence) > 0.2)
+    const poorCalibration = confidencePerf.find(
+      (p) => p.count > 10 && Math.abs(p.accuracy - p.averageConfidence) > 0.2,
+    )
     if (poorCalibration) {
-      recommendations.push('Recalibrate confidence scoring - prediction accuracy mismatch detected')
+      recommendations.push(
+        'Recalibrate confidence scoring - prediction accuracy mismatch detected',
+      )
     }
 
     return recommendations
@@ -345,7 +404,10 @@ export class ValidationAnalytics {
     if (batches.length === 0) return 0
 
     const totalMemories = batches.reduce((sum, b) => sum + b.totalMemories, 0)
-    const totalAutoApproved = batches.reduce((sum, b) => sum + b.decisions.autoApproved, 0)
+    const totalAutoApproved = batches.reduce(
+      (sum, b) => sum + b.decisions.autoApproved,
+      0,
+    )
 
     return totalMemories > 0 ? totalAutoApproved / totalMemories : 0
   }
@@ -364,7 +426,10 @@ export class ValidationAnalytics {
    */
   private assessQualityMaintenance(accuracy: AccuracyMetrics): number {
     // Quality is maintained if accuracy is high and error rates are low
-    return accuracy.overallAccuracy * (1 - (accuracy.falsePositiveRate + accuracy.falseNegativeRate) / 2)
+    return (
+      accuracy.overallAccuracy *
+      (1 - (accuracy.falsePositiveRate + accuracy.falseNegativeRate) / 2)
+    )
   }
 
   /**
@@ -373,7 +438,8 @@ export class ValidationAnalytics {
   private calculateTimeEfficiency(batches: BatchAnalytics[]): number {
     if (batches.length === 0) return 0
 
-    const avgThroughput = batches.reduce((sum, b) => sum + b.throughput, 0) / batches.length
+    const avgThroughput =
+      batches.reduce((sum, b) => sum + b.throughput, 0) / batches.length
     // Normalize against target of 60 memories/minute
     return Math.min(1, avgThroughput / 60)
   }
@@ -396,7 +462,7 @@ export class ValidationAnalytics {
 
     return Object.entries(metrics).reduce(
       (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-      0
+      0,
     )
   }
 
@@ -426,12 +492,12 @@ export class ValidationAnalytics {
     let totalScore = 0
 
     for (const sample of samples) {
-      const { emotionalCoverage, temporalCoverage, participantCoverage } = sample.coverage
-      const score = (
-        emotionalCoverage.coveragePercentage / 100 * 0.4 +
+      const { emotionalCoverage, temporalCoverage, participantCoverage } =
+        sample.coverage
+      const score =
+        (emotionalCoverage.coveragePercentage / 100) * 0.4 +
         (temporalCoverage.distribution === 'even' ? 0.8 : 0.4) * 0.3 +
-        participantCoverage.coveragePercentage / 100 * 0.3
-      )
+        (participantCoverage.coveragePercentage / 100) * 0.3
       totalScore += score
     }
 
@@ -441,23 +507,33 @@ export class ValidationAnalytics {
   /**
    * Generate sampling recommendations
    */
-  private generateSamplingRecommendations(samples: SampledMemories[]): string[] {
+  private generateSamplingRecommendations(
+    samples: SampledMemories[],
+  ): string[] {
     const recommendations: string[] = []
 
     // Analyze common issues across samples
-    const lowEmotionalCoverage = samples.filter(s => s.coverage.emotionalCoverage.coveragePercentage < 60)
+    const lowEmotionalCoverage = samples.filter(
+      (s) => s.coverage.emotionalCoverage.coveragePercentage < 60,
+    )
     if (lowEmotionalCoverage.length > samples.length * 0.5) {
       recommendations.push('Increase emotional diversity in sampling strategy')
     }
 
-    const temporalGaps = samples.filter(s => s.coverage.temporalCoverage.gaps.length > 2)
+    const temporalGaps = samples.filter(
+      (s) => s.coverage.temporalCoverage.gaps.length > 2,
+    )
     if (temporalGaps.length > samples.length * 0.3) {
       recommendations.push('Improve temporal distribution in samples')
     }
 
-    const lowSamplingEfficiency = samples.filter(s => s.metadata.samplingRate > 0.5)
+    const lowSamplingEfficiency = samples.filter(
+      (s) => s.metadata.samplingRate > 0.5,
+    )
     if (lowSamplingEfficiency.length > 0) {
-      recommendations.push('Optimize sampling rate - current strategy may be over-sampling')
+      recommendations.push(
+        'Optimize sampling rate - current strategy may be over-sampling',
+      )
     }
 
     return recommendations

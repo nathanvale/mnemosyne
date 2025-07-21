@@ -25,7 +25,11 @@ import { getCallSite } from './stacktrace'
 
 // Create base logger configuration
 const baseConfig: pino.LoggerOptions = {
-  level: process.env.LOG_LEVEL || 'info',
+  level:
+    process.env.LOG_LEVEL ||
+    (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true'
+      ? 'silent'
+      : 'info'),
 }
 
 // Add pretty printing only in development, not in tests

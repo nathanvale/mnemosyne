@@ -2,10 +2,7 @@ import type { ExtractedMemory } from '@studio/memory'
 
 import { logger } from '@studio/logger'
 
-import type {
-  MoodContextTokens,
-  MoodContextConfig,
-} from '../types/index'
+import type { MoodContextTokens, MoodContextConfig } from '../types/index'
 
 /**
  * MoodContextTokenizer generates mood context tokens for agent consumption
@@ -25,19 +22,24 @@ export class MoodContextTokenizer {
   /**
    * Generate mood context tokens from extracted memories
    */
-  async generateMoodContext(memories: ExtractedMemory[]): Promise<MoodContextTokens> {
-    logger.info('Generating mood context from memories', { memoryCount: memories.length })
+  async generateMoodContext(
+    memories: ExtractedMemory[],
+  ): Promise<MoodContextTokens> {
+    logger.info('Generating mood context from memories', {
+      memoryCount: memories.length,
+    })
 
     if (memories.length === 0) {
       return this.getEmptyMoodContext()
     }
 
     const sortedMemories = this.sortMemoriesByRecency(memories)
-    
+
     const currentMood = await this.calculateCurrentMood(sortedMemories)
     const moodTrend = await this.analyzeMoodTrend(sortedMemories)
     const recentMoodTags = await this.extractRecentMoodTags(sortedMemories)
-    const trajectoryOverview = await this.generateTrajectoryOverview(sortedMemories)
+    const trajectoryOverview =
+      await this.generateTrajectoryOverview(sortedMemories)
 
     const moodContext: MoodContextTokens = {
       currentMood,
@@ -55,7 +57,7 @@ export class MoodContextTokenizer {
    */
   private async calculateCurrentMood(memories: ExtractedMemory[]) {
     const recentMemories = memories.slice(0, 5)
-    
+
     if (recentMemories.length === 0) {
       return {
         score: 5,
@@ -64,12 +66,13 @@ export class MoodContextTokenizer {
       }
     }
 
-    const moodScores = recentMemories.map(memory => 
-      memory.emotionalAnalysis.moodScoring.score
+    const moodScores = recentMemories.map(
+      (memory) => memory.emotionalAnalysis.moodScoring.score,
     )
-    
-    const averageScore = moodScores.reduce((sum, score) => sum + score, 0) / moodScores.length
-    
+
+    const averageScore =
+      moodScores.reduce((sum, score) => sum + score, 0) / moodScores.length
+
     const descriptors = this.extractMoodDescriptors(recentMemories)
     const confidence = this.calculateMoodConfidence(recentMemories)
 
@@ -93,21 +96,28 @@ export class MoodContextTokenizer {
     }
 
     const half = Math.floor(memories.length / 2)
-    const recentScores = memories.slice(0, half).map(m => m.emotionalAnalysis.moodScoring.score)
-    const olderScores = memories.slice(half).map(m => m.emotionalAnalysis.moodScoring.score)
+    const recentScores = memories
+      .slice(0, half)
+      .map((m) => m.emotionalAnalysis.moodScoring.score)
+    const olderScores = memories
+      .slice(half)
+      .map((m) => m.emotionalAnalysis.moodScoring.score)
 
-    const recentAverage = recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length
-    const olderAverage = olderScores.length > 0 
-      ? olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length
-      : recentAverage
+    const recentAverage =
+      recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length
+    const olderAverage =
+      olderScores.length > 0
+        ? olderScores.reduce((sum, score) => sum + score, 0) /
+          olderScores.length
+        : recentAverage
 
     const difference = recentAverage - olderAverage
     const magnitude = Math.abs(difference)
 
     let direction: 'improving' | 'declining' | 'stable' | 'volatile'
-    
-    const allScores = memories.map(m => m.emotionalAnalysis.moodScoring.score)
-    
+
+    const allScores = memories.map((m) => m.emotionalAnalysis.moodScoring.score)
+
     if (this.isVolatile(allScores)) {
       direction = 'volatile'
     } else if (magnitude < 0.5) {
@@ -130,16 +140,20 @@ export class MoodContextTokenizer {
   /**
    * Extract recent mood tags from memory descriptors
    */
-  private async extractRecentMoodTags(memories: ExtractedMemory[]): Promise<string[]> {
+  private async extractRecentMoodTags(
+    memories: ExtractedMemory[],
+  ): Promise<string[]> {
     const recentMemories = memories.slice(0, 10)
     const tagSet = new Set<string>()
 
     for (const memory of recentMemories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach(descriptor => tagSet.add(descriptor))
+      descriptors.forEach((descriptor) => tagSet.add(descriptor))
 
-      const themes = memory.emotionalAnalysis.context.themes?.map(t => t.toLowerCase()) || []
-      themes.forEach(theme => tagSet.add(theme))
+      const themes =
+        memory.emotionalAnalysis.context.themes?.map((t) => t.toLowerCase()) ||
+        []
+      themes.forEach((theme) => tagSet.add(theme))
     }
 
     return Array.from(tagSet).slice(0, 8)
@@ -148,7 +162,9 @@ export class MoodContextTokenizer {
   /**
    * Generate trajectory overview narrative
    */
-  private async generateTrajectoryOverview(memories: ExtractedMemory[]): Promise<string> {
+  private async generateTrajectoryOverview(
+    memories: ExtractedMemory[],
+  ): Promise<string> {
     if (memories.length === 0) {
       return 'No emotional trajectory data available.'
     }
@@ -158,18 +174,22 @@ export class MoodContextTokenizer {
     }
 
     const recentMemories = memories.slice(0, 5)
-    const recentAverage = recentMemories.reduce(
-      (sum, m) => sum + m.emotionalAnalysis.moodScoring.score, 0
-    ) / recentMemories.length
+    const recentAverage =
+      recentMemories.reduce(
+        (sum, m) => sum + m.emotionalAnalysis.moodScoring.score,
+        0,
+      ) / recentMemories.length
 
-    const allAverage = memories.reduce(
-      (sum, m) => sum + m.emotionalAnalysis.moodScoring.score, 0
-    ) / memories.length
+    const allAverage =
+      memories.reduce(
+        (sum, m) => sum + m.emotionalAnalysis.moodScoring.score,
+        0,
+      ) / memories.length
 
     const keyPatterns = this.identifyEmotionalPatterns(memories)
-    
+
     let overview = ''
-    
+
     if (recentAverage > allAverage + 0.5) {
       overview = 'Recent emotional trajectory shows improvement. '
     } else if (recentAverage < allAverage - 0.5) {
@@ -196,7 +216,10 @@ export class MoodContextTokenizer {
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
       for (const descriptor of descriptors) {
-        descriptorCounts.set(descriptor, (descriptorCounts.get(descriptor) || 0) + 1)
+        descriptorCounts.set(
+          descriptor,
+          (descriptorCounts.get(descriptor) || 0) + 1,
+        )
       }
     }
 
@@ -211,8 +234,12 @@ export class MoodContextTokenizer {
   private calculateMoodConfidence(memories: ExtractedMemory[]): number {
     if (memories.length === 0) return 0
 
-    const confidenceScores = memories.map(m => m.emotionalAnalysis.moodScoring.confidence)
-    const averageConfidence = confidenceScores.reduce((sum, conf) => sum + conf, 0) / confidenceScores.length
+    const confidenceScores = memories.map(
+      (m) => m.emotionalAnalysis.moodScoring.confidence,
+    )
+    const averageConfidence =
+      confidenceScores.reduce((sum, conf) => sum + conf, 0) /
+      confidenceScores.length
 
     const memoryCountFactor = Math.min(memories.length / 5, 1)
     const recentnessFactor = this.calculateRecentnessFactor(memories)
@@ -264,12 +291,12 @@ export class MoodContextTokenizer {
    * Identify emotional patterns in memories
    */
   private identifyEmotionalPatterns(memories: ExtractedMemory[]): string[] {
-    const patternTypes = memories.flatMap(m => 
-      m.emotionalAnalysis.patterns.map(p => p.type)
+    const patternTypes = memories.flatMap((m) =>
+      m.emotionalAnalysis.patterns.map((p) => p.type),
     )
-    
+
     const patternCounts = new Map<string, number>()
-    patternTypes.forEach(type => {
+    patternTypes.forEach((type) => {
       patternCounts.set(type, (patternCounts.get(type) || 0) + 1)
     })
 
@@ -288,8 +315,10 @@ export class MoodContextTokenizer {
     if (memories.length === 0) return 0
 
     const now = new Date()
-    const recentMemories = memories.filter(m => {
-      const daysDiff = (now.getTime() - m.processing.extractedAt.getTime()) / (1000 * 60 * 60 * 24)
+    const recentMemories = memories.filter((m) => {
+      const daysDiff =
+        (now.getTime() - m.processing.extractedAt.getTime()) /
+        (1000 * 60 * 60 * 24)
       return daysDiff <= 7
     })
 
@@ -299,9 +328,11 @@ export class MoodContextTokenizer {
   /**
    * Sort memories by recency (most recent first)
    */
-  private sortMemoriesByRecency(memories: ExtractedMemory[]): ExtractedMemory[] {
-    return [...memories].sort((a, b) => 
-      b.processing.extractedAt.getTime() - a.processing.extractedAt.getTime()
+  private sortMemoriesByRecency(
+    memories: ExtractedMemory[],
+  ): ExtractedMemory[] {
+    return [...memories].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
     )
   }
 

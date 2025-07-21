@@ -14,7 +14,10 @@ import type {
 import { DEFAULT_SAMPLING_STRATEGY } from '../config/defaults'
 import { CoverageAnalyzer } from './coverage-analyzer'
 
-const logger = createLogger({ tags: ['validation:sampling'] })
+const logger = createLogger({
+  tags: ['validation:sampling'],
+  level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
+})
 
 /**
  * Implementation of intelligent sampling for memory validation
@@ -42,7 +45,7 @@ class IntelligentSamplerImpl implements IntelligentSampler {
     const strategy = DEFAULT_SAMPLING_STRATEGY
 
     // Perform stratified sampling
-    const samples = this.performStratifiedSampling(memories, strategy, coverage)
+    const samples = this.performStratifiedSampling(memories, strategy)
 
     // Analyze coverage of the sample
     const sampleWithMetadata: SampledMemories = {
@@ -135,7 +138,6 @@ class IntelligentSamplerImpl implements IntelligentSampler {
   private performStratifiedSampling(
     memories: Memory[],
     strategy: SamplingStrategy,
-    coverage: CoverageRequirements,
   ): Memory[] {
     const { parameters } = strategy
     const targetSize = Math.min(parameters.targetSize, memories.length)
@@ -218,8 +220,10 @@ class IntelligentSamplerImpl implements IntelligentSampler {
     const keyParts: string[] = []
 
     if (stratification.byEmotion) {
-      const emotionalContext = memory.emotionalContext as any
-      const emotion = emotionalContext?.primaryEmotion || 'unknown'
+      const emotionalContext = memory.emotionalContext as unknown
+      const emotion =
+        (emotionalContext as Record<string, unknown>)?.primaryEmotion ||
+        'unknown'
       keyParts.push(`emotion:${emotion}`)
     }
 
@@ -338,9 +342,13 @@ class IntelligentSamplerImpl implements IntelligentSampler {
     const emotions = new Set<string>()
 
     for (const memory of memories) {
-      const emotionalContext = memory.emotionalContext as any
-      if (emotionalContext?.primaryEmotion) {
-        emotions.add(emotionalContext.primaryEmotion)
+      const emotionalContext = memory.emotionalContext as unknown
+      const context = emotionalContext as Record<string, unknown>
+      if (
+        context?.primaryEmotion &&
+        typeof context.primaryEmotion === 'string'
+      ) {
+        emotions.add(context.primaryEmotion)
       }
     }
 
@@ -396,8 +404,7 @@ class IntelligentSamplerImpl implements IntelligentSampler {
   private selectOptimalStrategy(
     characteristics: DatasetCharacteristics,
   ): SamplingStrategy {
-    const { size, emotionalDiversity, temporalSpread, qualityVariance } =
-      characteristics
+    const { size, emotionalDiversity, temporalSpread } = characteristics
 
     // Small dataset - use simple sampling
     if (size < 100) {
