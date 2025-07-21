@@ -10,38 +10,39 @@ export * from './types'
 
 // Memory extraction and processing
 export * from './extraction/enhanced-processor'
-export * from './extraction/context-analyzer'
-export * from './extraction/quality-assessor'
-export * from './extraction/batch-coordinator'
+// TODO: Implement these modules in future PRs
+// export * from './extraction/context-analyzer'
+// export * from './extraction/quality-assessor'
+// export * from './extraction/batch-coordinator'
 
-// Mood scoring system
-export * from './mood-scoring/analyzer'
-export * from './mood-scoring/delta-detector'
-export * from './mood-scoring/confidence-calculator'
-export * from './mood-scoring/pattern-recognizer'
+// TODO: Mood scoring system - implement in future PRs
+// export * from './mood-scoring/analyzer'
+// export * from './mood-scoring/delta-detector'
+// export * from './mood-scoring/confidence-calculator'
+// export * from './mood-scoring/pattern-recognizer'
 
-// Emotional significance assessment
-export * from './significance/analyzer'
-export * from './significance/salience-calculator'
-export * from './significance/relationship-impact'
-export * from './significance/prioritizer'
+// TODO: Emotional significance assessment - implement in future PRs
+// export * from './significance/analyzer'
+// export * from './significance/salience-calculator'
+// export * from './significance/relationship-impact'
+// export * from './significance/prioritizer'
 
-// Memory organization and clustering
-export * from './organization/clusterer'
-export * from './organization/query-builder'
-export * from './organization/timeline-builder'
-export * from './organization/relationship-mapper'
+// TODO: Memory organization and clustering - implement in future PRs
+// export * from './organization/clusterer'
+// export * from './organization/query-builder'
+// export * from './organization/timeline-builder'
+// export * from './organization/relationship-mapper'
 
 // Main interfaces for external integration
 export interface MemoryProcessingSystem {
   /** Enhanced memory processor */
   processor: import('./extraction/enhanced-processor').EnhancedMemoryProcessor
-  /** Mood scoring system */
-  moodScoring: import('./mood-scoring/analyzer').MoodScoringAnalyzer
-  /** Significance assessment */
-  significance: import('./significance/analyzer').EmotionalSignificanceAnalyzer
-  /** Memory organization */
-  organization: import('./organization/clusterer').MemoryClusterer
+  /** Mood scoring system - placeholder for future implementation */
+  moodScoring?: unknown // TODO: import('./mood-scoring/analyzer').MoodScoringAnalyzer
+  /** Significance assessment - placeholder for future implementation */
+  significance?: unknown // TODO: import('./significance/analyzer').EmotionalSignificanceAnalyzer
+  /** Memory organization - placeholder for future implementation */
+  organization?: unknown // TODO: import('./organization/clusterer').MemoryClusterer
 }
 
 // Export the enhanced processor class directly

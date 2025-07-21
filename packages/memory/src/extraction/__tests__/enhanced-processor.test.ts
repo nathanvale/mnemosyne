@@ -115,7 +115,7 @@ describe('EnhancedMemoryProcessor', () => {
         messages: [], // Empty messages array should be invalid
         participants: [],
         timestamp: 'invalid-date', // Invalid date
-      } as ConversationDataInput
+      } as unknown as ConversationDataInput
 
       const result = await processor.processConversation(invalidData)
 

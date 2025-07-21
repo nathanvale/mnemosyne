@@ -91,8 +91,7 @@ export class EnhancedMemoryProcessor {
   private readonly config: Required<ProcessorConfig>
 
   constructor(config: ProcessorConfig) {
-    this.logger =
-      config.logger ?? createLogger({ name: 'EnhancedMemoryProcessor' })
+    this.logger = config.logger ?? (createLogger() as unknown as pino.Logger)
 
     // Set default configuration values
     this.config = {
@@ -244,18 +243,12 @@ export class EnhancedMemoryProcessor {
     const memories: ExtractedMemory[] = []
 
     // Process conversations in configurable batch sizes
-    for (
-      let i = 0;
-      i < conversationBatch.length;
-      i += this.config.performance.batchSize
-    ) {
-      const chunk = conversationBatch.slice(
-        i,
-        i + this.config.performance.batchSize,
-      )
+    const batchSize = this.config.performance?.batchSize ?? 10
+    for (let i = 0; i < conversationBatch.length; i += batchSize) {
+      const chunk = conversationBatch.slice(i, i + batchSize)
 
       let chunkResults: ProcessingResult[]
-      if (this.config.performance.parallelProcessing) {
+      if (this.config.performance?.parallelProcessing) {
         chunkResults = await Promise.all(
           chunk.map((conversation) => this.processConversation(conversation)),
         )
@@ -354,7 +347,6 @@ export class EnhancedMemoryProcessor {
     // Actual emotional analysis will be implemented in subsequent components
 
     const extractedAt = new Date()
-    const contentHash = await this.calculateConversationHash(conversationData)
 
     // Placeholder emotional analysis
     const emotionalAnalysis: EmotionalAnalysis = {
@@ -399,17 +391,24 @@ export class EnhancedMemoryProcessor {
       validationPriority: 5.0,
     }
 
-    // Create base memory structure (simplified for foundation)
+    // Create base memory structure following schema
     const baseMemory = {
       id: this.generateMemoryId(),
-      contentHash,
       content: this.extractMemoryContent(conversationData),
-      timestamp: conversationData.timestamp,
-      context: emotionalAnalysis.context,
-      type: 'conversation' as const,
-      metadata: {},
-      createdAt: extractedAt,
-      updatedAt: extractedAt,
+      timestamp: conversationData.timestamp.toISOString(),
+      author:
+        conversationData.participants.find((p) => p.role === 'author') ??
+        conversationData.participants[0],
+      participants: conversationData.participants,
+      emotionalContext: emotionalAnalysis.context,
+      relationshipDynamics: {}, // Placeholder for relationship analysis
+      tags: ['conversation'], // Basic tags
+      metadata: {
+        processedAt: extractedAt.toISOString(),
+        schemaVersion: '1.0.0',
+        source: 'enhanced-memory-processor',
+        confidence: 0.8,
+      },
     }
 
     return {
@@ -464,11 +463,12 @@ export class EnhancedMemoryProcessor {
     significance: EmotionalSignificanceScore,
   ): boolean {
     const meetsQualityThreshold =
-      qualityScore.overall >= this.config.quality.minimumQualityScore
+      qualityScore.overall >= (this.config.quality?.minimumQualityScore ?? 6.0)
     const meetsConfidenceThreshold =
-      qualityScore.confidence >= this.config.quality.minimumConfidence
+      qualityScore.confidence >= (this.config.quality?.minimumConfidence ?? 0.7)
     const meetsSignificanceThreshold =
-      significance.overall >= this.config.emotional.minimumSignificanceScore
+      significance.overall >=
+      (this.config.emotional?.minimumSignificanceScore ?? 5.0)
 
     return (
       meetsQualityThreshold &&
@@ -481,20 +481,25 @@ export class EnhancedMemoryProcessor {
    * Store extracted memory in database
    */
   private async storeExtractedMemory(memory: ExtractedMemory): Promise<void> {
-    // Simplified storage - will be expanded to handle complex emotional data
+    // Store using the actual database schema
+    const contentHash = await this.calculateConversationHash(
+      memory.processing.sourceData,
+    )
+
     await this.config.database.memory.create({
       data: {
-        contentHash: memory.contentHash,
-        content: memory.content,
-        timestamp: memory.timestamp,
-        context: memory.context,
-        type: memory.type,
-        metadata: {
-          ...memory.metadata,
+        sourceMessageIds: JSON.stringify(
+          memory.processing.sourceData.messages.map((m) => m.id),
+        ),
+        participants: JSON.stringify(memory.participants),
+        summary: memory.content,
+        confidence: Math.round(memory.processing.confidence * 10), // Convert 0-1 to 1-10 scale
+        contentHash,
+        deduplicationMetadata: JSON.stringify({
           processing: memory.processing,
           emotionalAnalysis: memory.emotionalAnalysis,
           significance: memory.significance,
-        },
+        }),
       },
     })
   }
