@@ -138,14 +138,17 @@ export class AgentContextAssembler {
 
     const optimizedContext = { ...context }
 
-    optimizedContext.moodContext.recentMoodTags = context.moodContext.recentMoodTags.slice(0, 5)
-    optimizedContext.vocabulary.themes = context.vocabulary.themes.slice(0, 5)
-    optimizedContext.vocabulary.moodDescriptors = context.vocabulary.moodDescriptors.slice(0, 5)
-    optimizedContext.vocabulary.relationshipTerms = context.vocabulary.relationshipTerms.slice(0, 5)
+    optimizedContext.moodContext.recentMoodTags = context.moodContext.recentMoodTags.slice(0, 3)
+    optimizedContext.vocabulary.themes = context.vocabulary.themes.slice(0, 3)
+    optimizedContext.vocabulary.moodDescriptors = context.vocabulary.moodDescriptors.slice(0, 3)
+    optimizedContext.vocabulary.relationshipTerms = context.vocabulary.relationshipTerms.slice(0, 3)
 
-    if (context.timelineSummary.recentEvents.length > 5) {
-      optimizedContext.timelineSummary.recentEvents = context.timelineSummary.recentEvents.slice(0, 5)
+    if (context.timelineSummary.recentEvents.length > 3) {
+      optimizedContext.timelineSummary.recentEvents = context.timelineSummary.recentEvents.slice(0, 3)
     }
+
+    optimizedContext.timelineSummary.overview = context.timelineSummary.overview.substring(0, 50)
+    optimizedContext.moodContext.trajectoryOverview = context.moodContext.trajectoryOverview.substring(0, 50)
 
     const newOptimization = await this.calculateOptimization(
       optimizedContext.moodContext,
@@ -290,7 +293,7 @@ export class AgentContextAssembler {
     const tone: string[] = []
     
     const moodScore = moodContext.currentMood.score
-    const communicationTone = vocabulary.communicationStyle.tone
+    const communicationTone = vocabulary.communicationStyle?.tone || []
 
     if (moodScore <= 4) {
       tone.push('supportive', 'gentle', 'understanding')
