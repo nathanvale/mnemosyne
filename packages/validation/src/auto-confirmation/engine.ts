@@ -80,7 +80,7 @@ class AutoConfirmationEngineImpl implements AutoConfirmationEngine {
 
       // Suggest areas for review
       const weakestFactors = Object.entries(factors)
-        .filter(([_, value]) => value < 0.7)
+        .filter(([, value]) => value < 0.7)
         .sort((a, b) => a[1] - b[1])
         .slice(0, 3)
 
