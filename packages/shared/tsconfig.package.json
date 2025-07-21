@@ -4,6 +4,7 @@
     "paths": {
       "@studio/db": ["../db/src"],
       "@studio/logger": ["../logger/src"],
+      "@studio/memory": ["../memory/src"],
       "@studio/scripts": ["../scripts/src"],
       "@studio/test-config": ["../test-config/src"],
       "@studio/ui": ["../ui/src"],
