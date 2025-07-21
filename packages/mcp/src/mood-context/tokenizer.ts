@@ -1,9 +1,11 @@
 import type { ExtractedMemory } from '@studio/memory'
+
+import { logger } from '@studio/logger'
+
 import type {
   MoodContextTokens,
   MoodContextConfig,
 } from '../types/index'
-import { logger } from '@studio/logger'
 
 /**
  * MoodContextTokenizer generates mood context tokens for agent consumption

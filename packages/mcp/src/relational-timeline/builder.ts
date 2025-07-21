@@ -1,4 +1,8 @@
 import type { ExtractedMemory } from '@studio/memory'
+
+import { logger } from '@studio/logger'
+import { v4 as uuidv4 } from 'uuid'
+
 import type {
   RelationalTimeline,
   EmotionalEvent,
@@ -6,8 +10,6 @@ import type {
   RelationshipEvolution,
   TimelineConfig,
 } from '../types/index'
-import { logger } from '@studio/logger'
-import { v4 as uuidv4 } from 'uuid'
 
 /**
  * RelationalTimelineBuilder constructs emotional event timelines

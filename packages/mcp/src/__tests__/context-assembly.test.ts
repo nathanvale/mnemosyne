@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { AgentContextAssembler } from '../context-assembly/assembler'
 import type { ExtractedMemory } from '@studio/memory'
+
+import { describe, it, expect, beforeEach } from 'vitest'
+
+import { AgentContextAssembler } from '../context-assembly/assembler'
 
 describe('AgentContextAssembler', () => {
   let assembler: AgentContextAssembler

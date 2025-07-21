@@ -1,7 +1,8 @@
-import express from 'express'
-import { createExpressMiddleware } from '@trpc/server/adapters/express'
-import { mcpRouter } from './router'
 import { logger } from '@studio/logger'
+import { createExpressMiddleware } from '@trpc/server/adapters/express'
+import express from 'express'
+
+import { mcpRouter } from './router'
 
 /**
  * Express server for MCP HTTP endpoints

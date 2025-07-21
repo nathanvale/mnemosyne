@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { MoodContextTokenizer } from '../mood-context/tokenizer'
 import type { ExtractedMemory } from '@studio/memory'
+
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import { MoodContextTokenizer } from '../mood-context/tokenizer'
 
 describe('MoodContextTokenizer', () => {
   let tokenizer: MoodContextTokenizer

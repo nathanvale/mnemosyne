@@ -1,10 +1,12 @@
 import type { ExtractedMemory } from '@studio/memory'
+
+import { logger } from '@studio/logger'
+
 import type {
   EmotionalVocabulary,
   VocabularyEvolution,
   VocabularyConfig,
 } from '../types/index'
-import { logger } from '@studio/logger'
 
 /**
  * EmotionalVocabularyExtractor extracts tone-consistent vocabulary

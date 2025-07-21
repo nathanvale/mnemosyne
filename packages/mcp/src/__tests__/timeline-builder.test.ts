@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 import type { ExtractedMemory } from '@studio/memory'
+
+import { describe, it, expect, beforeEach } from 'vitest'
+
+import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 
 describe('RelationalTimelineBuilder', () => {
   let builder: RelationalTimelineBuilder

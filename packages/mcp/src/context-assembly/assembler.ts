@@ -1,4 +1,8 @@
 import type { ExtractedMemory } from '@studio/memory'
+
+import { logger } from '@studio/logger'
+import { v4 as uuidv4 } from 'uuid'
+
 import type {
   AgentContext,
   AgentContextConfig,
@@ -6,11 +10,10 @@ import type {
   ContextOptimization,
   AgentRecommendations,
 } from '../types/index'
+
 import { MoodContextTokenizer } from '../mood-context/tokenizer'
 import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 import { EmotionalVocabularyExtractor } from '../vocabulary/extractor'
-import { logger } from '@studio/logger'
-import { v4 as uuidv4 } from 'uuid'
 
 /**
  * AgentContextAssembler creates comprehensive contexts for AI agents

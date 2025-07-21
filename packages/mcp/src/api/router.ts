@@ -1,17 +1,20 @@
+import type { ExtractedMemory } from '@studio/memory'
+
+import { logger } from '@studio/logger'
 import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
-import type { ExtractedMemory } from '@studio/memory'
+
 import type {
   MoodContextTokens,
   RelationalTimeline,
   EmotionalVocabulary,
   AgentContext,
 } from '../types/index'
+
+import { AgentContextAssembler } from '../context-assembly/assembler'
 import { MoodContextTokenizer } from '../mood-context/tokenizer'
 import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 import { EmotionalVocabularyExtractor } from '../vocabulary/extractor'
-import { AgentContextAssembler } from '../context-assembly/assembler'
-import { logger } from '@studio/logger'
 
 const t = initTRPC.create()
 
