@@ -118,7 +118,7 @@ export class McpExpressServer {
       })
     })
 
-    this.app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    this.app.use((error: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
       logger.error('Express server error', {
         error: error.message,
         stack: error.stack,

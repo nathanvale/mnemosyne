@@ -98,7 +98,6 @@ export class RelationalTimelineBuilder {
   ): Promise<EmotionalEvent[]> {
     const events: EmotionalEvent[] = []
 
-    const moodScore = memory.emotionalAnalysis.moodScoring.score
     const significance = memory.significance.overall
 
     if (memory.emotionalAnalysis.moodScoring.delta) {
@@ -203,7 +202,7 @@ export class RelationalTimelineBuilder {
    */
   private async analyzeRelationshipEvolution(
     memories: ExtractedMemory[],
-    participantId: string
+    _participantId: string
   ): Promise<RelationshipEvolution[]> {
     const evolution: RelationshipEvolution[] = []
 

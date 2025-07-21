@@ -1,6 +1,6 @@
 import type { ExtractedMemory } from '@studio/memory'
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 import { MoodContextTokenizer } from '../mood-context/tokenizer'
 

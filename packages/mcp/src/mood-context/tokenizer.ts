@@ -261,8 +261,6 @@ export class MoodContextTokenizer {
    * Identify emotional patterns in memories
    */
   private identifyEmotionalPatterns(memories: ExtractedMemory[]): string[] {
-    const patterns: string[] = []
-    
     const patternTypes = memories.flatMap(m => 
       m.emotionalAnalysis.patterns.map(p => p.type)
     )

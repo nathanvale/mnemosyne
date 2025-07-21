@@ -5,9 +5,6 @@ import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
 
 import type {
-  MoodContextTokens,
-  RelationalTimeline,
-  EmotionalVocabulary,
   AgentContext,
 } from '../types/index'
 
