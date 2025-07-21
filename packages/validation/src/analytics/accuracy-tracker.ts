@@ -1,4 +1,4 @@
-import type { ValidationFeedback, AutoConfirmationResult } from '../types'
+import type { ValidationFeedback } from '../types'
 
 /**
  * Tracks and analyzes auto-confirmation accuracy over time
@@ -11,7 +11,7 @@ export class AccuracyTracker {
    */
   addFeedback(feedback: ValidationFeedback): void {
     this.feedbackHistory.push(feedback)
-    
+
     // Keep only recent feedback (last 1000 entries) for performance
     if (this.feedbackHistory.length > 1000) {
       this.feedbackHistory = this.feedbackHistory.slice(-1000)
@@ -39,7 +39,6 @@ export class AccuracyTracker {
     let correctDecisions = 0
     let falsePositives = 0
     let falseNegatives = 0
-    let needsReviewCorrect = 0
 
     const decisionCounts = {
       'auto-approve': 0,
@@ -61,18 +60,17 @@ export class AccuracyTracker {
       accuracyByDecision[autoDecision].total++
 
       const wasCorrect = this.isDecisionCorrect(autoDecision, humanDecision)
-      
+
       if (wasCorrect) {
         correctDecisions++
         accuracyByDecision[autoDecision].correct++
-        
-        if (autoDecision === 'needs-review') {
-          needsReviewCorrect++
-        }
       } else {
         if (autoDecision === 'auto-approve' && humanDecision !== 'validated') {
           falsePositives++
-        } else if (autoDecision === 'auto-reject' && humanDecision === 'validated') {
+        } else if (
+          autoDecision === 'auto-reject' &&
+          humanDecision === 'validated'
+        ) {
           falseNegatives++
         }
       }
@@ -89,7 +87,7 @@ export class AccuracyTracker {
         Object.entries(accuracyByDecision).map(([decision, data]) => [
           decision,
           data.total > 0 ? data.correct / data.total : 0,
-        ])
+        ]),
       ),
       confidenceCalibration: this.calculateConfidenceCalibration(),
       factorPerformance: this.analyzeFactorPerformance(),
@@ -105,11 +103,15 @@ export class AccuracyTracker {
     }
 
     const trend: AccuracyTrend[] = []
-    
-    for (let i = windowSize; i <= this.feedbackHistory.length; i += Math.floor(windowSize / 2)) {
+
+    for (
+      let i = windowSize;
+      i <= this.feedbackHistory.length;
+      i += Math.floor(windowSize / 2)
+    ) {
       const window = this.feedbackHistory.slice(i - windowSize, i)
       const windowMetrics = this.calculateWindowMetrics(window)
-      
+
       trend.push({
         timestamp: window[window.length - 1].timestamp,
         windowSize,
@@ -135,9 +137,11 @@ export class AccuracyTracker {
       { min: 0.8, max: 1.0, name: '80-100%' },
     ]
 
-    return buckets.map(bucket => {
+    return buckets.map((bucket) => {
       const feedbackInBucket = this.feedbackHistory.filter(
-        f => f.originalResult.confidence >= bucket.min && f.originalResult.confidence < bucket.max
+        (f) =>
+          f.originalResult.confidence >= bucket.min &&
+          f.originalResult.confidence < bucket.max,
       )
 
       if (feedbackInBucket.length === 0) {
@@ -149,13 +153,15 @@ export class AccuracyTracker {
         }
       }
 
-      const correct = feedbackInBucket.filter(
-        f => this.isDecisionCorrect(f.originalResult.decision, f.humanDecision)
+      const correct = feedbackInBucket.filter((f) =>
+        this.isDecisionCorrect(f.originalResult.decision, f.humanDecision),
       ).length
 
-      const avgConfidence = feedbackInBucket.reduce(
-        (sum, f) => sum + f.originalResult.confidence, 0
-      ) / feedbackInBucket.length
+      const avgConfidence =
+        feedbackInBucket.reduce(
+          (sum, f) => sum + f.originalResult.confidence,
+          0,
+        ) / feedbackInBucket.length
 
       return {
         confidenceRange: bucket.name,
@@ -183,7 +189,10 @@ export class AccuracyTracker {
   /**
    * Check if an auto-confirmation decision was correct
    */
-  private isDecisionCorrect(autoDecision: string, humanDecision: string): boolean {
+  private isDecisionCorrect(
+    autoDecision: string,
+    humanDecision: string,
+  ): boolean {
     switch (autoDecision) {
       case 'auto-approve':
         return humanDecision === 'validated'
@@ -203,7 +212,7 @@ export class AccuracyTracker {
   private calculateConfidenceCalibration(): number {
     // Measures how well confidence scores match actual accuracy
     const confidenceBuckets = this.getPerformanceByConfidence()
-    
+
     let totalError = 0
     let weightedCount = 0
 
@@ -217,28 +226,43 @@ export class AccuracyTracker {
     }
 
     // Return calibration score (1 = perfect, 0 = worst)
-    return weightedCount > 0 ? 1 - (totalError / weightedCount) : 0
+    return weightedCount > 0 ? 1 - totalError / weightedCount : 0
   }
 
   /**
    * Analyze performance of individual confidence factors
    */
   private analyzeFactorPerformance(): Record<string, FactorPerformance> {
-    const factors = ['claudeConfidence', 'emotionalCoherence', 'relationshipAccuracy', 'temporalConsistency', 'contentQuality']
+    const factors = [
+      'claudeConfidence',
+      'emotionalCoherence',
+      'relationshipAccuracy',
+      'temporalConsistency',
+      'contentQuality',
+    ]
     const performance: Record<string, FactorPerformance> = {}
 
     for (const factor of factors) {
       const correlationData: Array<{ value: number; correct: boolean }> = []
-      
+
       for (const feedback of this.feedbackHistory) {
-        const factorValue = feedback.originalResult.confidenceFactors[factor as keyof typeof feedback.originalResult.confidenceFactors]
-        const correct = this.isDecisionCorrect(feedback.originalResult.decision, feedback.humanDecision)
+        const factorValue =
+          feedback.originalResult.confidenceFactors[
+            factor as keyof typeof feedback.originalResult.confidenceFactors
+          ]
+        const correct = this.isDecisionCorrect(
+          feedback.originalResult.decision,
+          feedback.humanDecision,
+        )
         correlationData.push({ value: factorValue, correct })
       }
 
       const correlation = this.calculateCorrelation(correlationData)
-      const averageValue = correlationData.reduce((sum, d) => sum + d.value, 0) / correlationData.length
-      const correctRate = correlationData.filter(d => d.correct).length / correlationData.length
+      const averageValue =
+        correlationData.reduce((sum, d) => sum + d.value, 0) /
+        correlationData.length
+      const correctRate =
+        correlationData.filter((d) => d.correct).length / correlationData.length
 
       performance[factor] = {
         correlation,
@@ -254,14 +278,18 @@ export class AccuracyTracker {
   /**
    * Calculate correlation between factor value and correctness
    */
-  private calculateCorrelation(data: Array<{ value: number; correct: boolean }>): number {
+  private calculateCorrelation(
+    data: Array<{ value: number; correct: boolean }>,
+  ): number {
     if (data.length === 0) return 0
 
-    const values = data.map(d => d.value)
-    const correctness = data.map(d => d.correct ? 1 : 0)
+    const values = data.map((d) => d.value)
+    const correctness = data.map((d) => (d.correct ? 1 : 0))
 
     const avgValue = values.reduce((sum, v) => sum + v, 0) / values.length
-    const avgCorrect = correctness.reduce((sum: number, c: number) => sum + c, 0) / correctness.length
+    const avgCorrect =
+      correctness.reduce((sum: number, c: number) => sum + c, 0) /
+      correctness.length
 
     let numerator = 0
     let sumSquaredValue = 0
@@ -270,7 +298,7 @@ export class AccuracyTracker {
     for (let i = 0; i < data.length; i++) {
       const valueDiff = values[i] - avgValue
       const correctDiff = correctness[i] - avgCorrect
-      
+
       numerator += valueDiff * correctDiff
       sumSquaredValue += valueDiff * valueDiff
       sumSquaredCorrect += correctDiff * correctDiff
@@ -295,18 +323,27 @@ export class AccuracyTracker {
     let totalConfidence = 0
 
     for (const feedback of window) {
-      const wasCorrect = this.isDecisionCorrect(feedback.originalResult.decision, feedback.humanDecision)
-      
+      const wasCorrect = this.isDecisionCorrect(
+        feedback.originalResult.decision,
+        feedback.humanDecision,
+      )
+
       if (wasCorrect) {
         correct++
       } else {
-        if (feedback.originalResult.decision === 'auto-approve' && feedback.humanDecision !== 'validated') {
+        if (
+          feedback.originalResult.decision === 'auto-approve' &&
+          feedback.humanDecision !== 'validated'
+        ) {
           falsePositives++
-        } else if (feedback.originalResult.decision === 'auto-reject' && feedback.humanDecision === 'validated') {
+        } else if (
+          feedback.originalResult.decision === 'auto-reject' &&
+          feedback.humanDecision === 'validated'
+        ) {
           falseNegatives++
         }
       }
-      
+
       totalConfidence += feedback.originalResult.confidence
     }
 
