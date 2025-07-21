@@ -1,0 +1,26 @@
+{
+  "name": "@studio/validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@studio/schema": "workspace:*",
+    "@studio/logger": "workspace:*",
+    "zod": "^3.25.74"
+  },
+  "devDependencies": {
+    "@studio/test-config": "workspace:*",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
