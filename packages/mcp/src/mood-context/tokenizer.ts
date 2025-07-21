@@ -332,7 +332,8 @@ export class MoodContextTokenizer {
     memories: ExtractedMemory[],
   ): ExtractedMemory[] {
     return [...memories].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     )
   }
 
