@@ -55,10 +55,7 @@ export class MoodScoringAnalyzer {
     factors.push(emotionalWordsFactor)
 
     // Context clues analysis
-    const contextFactor = await this.analyzeContextClues(
-      messages,
-      conversation.context,
-    )
+    const contextFactor = this.analyzeContextClues(messages)
     factors.push(contextFactor)
 
     // Interaction pattern analysis

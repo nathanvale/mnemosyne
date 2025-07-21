@@ -3,12 +3,14 @@ import {
   EmotionalTheme,
   CommunicationPattern,
   InteractionQuality,
+  ParticipantRole,
   type RelationshipDynamics as SchemaRelationshipDynamics,
 } from '@studio/schema'
 
 import type {
   MoodAnalysisResult,
   ConversationData,
+  ConversationParticipant,
   ExtractedMemory,
   EmotionalAnalysis,
   RelationshipDynamics,
@@ -17,6 +19,32 @@ import type {
 /**
  * Helper functions for emotional analysis in the EnhancedMemoryProcessor
  */
+
+/**
+ * Convert conversation participant role to schema ParticipantRole
+ */
+function convertConversationRoleToParticipantRole(
+  role: ConversationParticipant['role'],
+): ParticipantRole {
+  switch (role) {
+    case 'author':
+      return ParticipantRole.SELF
+    case 'recipient':
+      return ParticipantRole.OTHER
+    case 'observer':
+      return ParticipantRole.OTHER
+    case 'supporter':
+      return ParticipantRole.FRIEND
+    case 'listener':
+      return ParticipantRole.OTHER
+    case 'vulnerable_sharer':
+      return ParticipantRole.OTHER
+    case 'emotional_leader':
+      return ParticipantRole.OTHER
+    default:
+      return ParticipantRole.OTHER
+  }
+}
 
 /**
  * Map mood score to EmotionalState enum
@@ -282,14 +310,16 @@ export function createPreliminaryMemory(
     author: {
       id: conversationData.participants[0]?.id || 'unknown',
       name: conversationData.participants[0]?.name || 'Unknown',
-      role: 'author',
+      role: ParticipantRole.SELF,
     },
     participants: conversationData.participants.map((p) => ({
       id: p.id,
       name: p.name,
-      role: p.role,
-      messageCount: p.messageCount || 0,
-      emotionalExpressions: p.emotionalExpressions || [],
+      role: convertConversationRoleToParticipantRole(p.role),
+      metadata: {
+        sourceId: p.id,
+        canonicalName: p.name,
+      },
     })),
     emotionalContext: emotionalAnalysis.context,
     relationshipDynamics: {
