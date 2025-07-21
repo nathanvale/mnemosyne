@@ -26,7 +26,7 @@ describe('Auto-confirmation Engine', () => {
       id: 'test-memory-1',
       content: 'This is a test memory with meaningful emotional content',
       timestamp: '2024-01-15T10:30:00.000Z',
-      author: { id: 'user-1', name: 'Test User' },
+      author: { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
       participants: [
         { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
         { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
@@ -86,7 +86,14 @@ describe('Auto-confirmation Engine', () => {
     it('routes low-confidence memories for review', () => {
       // Lower the confidence factors
       mockMemory.metadata.confidence = 0.3
-      mockMemory.emotionalContext = null
+      mockMemory.emotionalContext = {
+        primaryEmotion: EmotionalState.NEUTRAL,
+        secondaryEmotions: [],
+        intensity: 0.1,
+        valence: 0,
+        themes: [],
+        indicators: { phrases: [], emotionalWords: [], styleIndicators: [] },
+      }
 
       const result = engine.evaluateMemory(mockMemory)
 
@@ -98,8 +105,23 @@ describe('Auto-confirmation Engine', () => {
     it('auto-rejects very low confidence memories', () => {
       // Create a very poor quality memory
       mockMemory.metadata.confidence = 0.2
-      mockMemory.emotionalContext = null
-      mockMemory.relationshipDynamics = null
+      mockMemory.emotionalContext = {
+        primaryEmotion: EmotionalState.NEUTRAL,
+        secondaryEmotions: [],
+        intensity: 0.1,
+        valence: 0,
+        themes: [],
+        indicators: { phrases: [], emotionalWords: [], styleIndicators: [] },
+      }
+      mockMemory.relationshipDynamics = {
+        communicationPattern: CommunicationPattern.FORMAL,
+        interactionQuality: InteractionQuality.NEUTRAL,
+        powerDynamics: { isBalanced: true, concerningPatterns: [] },
+        attachmentIndicators: { secure: [], anxious: [], avoidant: [] },
+        healthIndicators: { positive: [], negative: [], repairAttempts: [] },
+        connectionStrength: 0.1,
+        participantDynamics: [],
+      }
       mockMemory.content = 'x'
 
       const result = engine.evaluateMemory(mockMemory)
@@ -128,13 +150,35 @@ describe('Auto-confirmation Engine', () => {
           ...mockMemory,
           id: 'test-memory-2',
           metadata: { ...mockMemory.metadata, confidence: 0.4 },
-          emotionalContext: null,
+          emotionalContext: {
+            primaryEmotion: EmotionalState.NEUTRAL,
+            secondaryEmotions: [],
+            intensity: 0.1,
+            valence: 0,
+            themes: [],
+            indicators: {
+              phrases: [],
+              emotionalWords: [],
+              styleIndicators: [],
+            },
+          },
         },
         {
           ...mockMemory,
           id: 'test-memory-3',
           metadata: { ...mockMemory.metadata, confidence: 0.2 },
-          emotionalContext: null,
+          emotionalContext: {
+            primaryEmotion: EmotionalState.NEUTRAL,
+            secondaryEmotions: [],
+            intensity: 0.1,
+            valence: 0,
+            themes: [],
+            indicators: {
+              phrases: [],
+              emotionalWords: [],
+              styleIndicators: [],
+            },
+          },
           relationshipDynamics: null,
         },
       ] as Memory[]
@@ -216,7 +260,7 @@ describe('ConfidenceCalculator', () => {
       id: 'test-memory-1',
       content: 'This is meaningful content with sufficient length and quality',
       timestamp: '2024-01-15T10:30:00.000Z',
-      author: { id: 'user-1', name: 'Test User' },
+      author: { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
       participants: [
         { id: 'user-1', name: 'Test User', role: ParticipantRole.SELF },
         { id: 'user-2', name: 'Friend', role: ParticipantRole.FRIEND },
@@ -275,7 +319,14 @@ describe('ConfidenceCalculator', () => {
   })
 
   it('handles missing emotional context', () => {
-    mockMemory.emotionalContext = null
+    mockMemory.emotionalContext = {
+      primaryEmotion: EmotionalState.NEUTRAL,
+      secondaryEmotions: [],
+      intensity: 0.1,
+      valence: 0,
+      themes: [],
+      indicators: { phrases: [], emotionalWords: [], styleIndicators: [] },
+    }
 
     const result = calculator.calculateConfidence(mockMemory)
 
