@@ -424,9 +424,6 @@ importers:
       '@studio/schema':
         specifier: workspace:*
         version: link:../schema
-      pino:
-        specifier: ^9.6.0
-        version: 9.7.0
       zod:
         specifier: ^3.25.74
         version: 3.25.74
@@ -434,6 +431,12 @@ importers:
       '@studio/test-config':
         specifier: workspace:*
         version: link:../test-config
+      '@types/node':
+        specifier: ^24.0.8
+        version: 24.0.8
+      pino:
+        specifier: ^9.7.0
+        version: 9.7.0
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
