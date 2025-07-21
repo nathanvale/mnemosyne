@@ -1,4 +1,8 @@
-import type { ThresholdConfig, ValidationFeedback, ThresholdUpdate } from '../types'
+import type {
+  ThresholdConfig,
+  ValidationFeedback,
+  ThresholdUpdate,
+} from '../types'
 
 import { DEFAULT_THRESHOLD_CONFIG } from '../config/defaults'
 
@@ -42,7 +46,10 @@ export class ThresholdManager {
     const analysis = this.analyzeFeedback(feedback)
     const recommendedThresholds = this.calculateNewThresholds(analysis)
     const updateReasons = this.generateUpdateReasons(analysis)
-    const expectedImprovement = this.estimateAccuracyImprovement(analysis, recommendedThresholds)
+    const expectedImprovement = this.estimateAccuracyImprovement(
+      analysis,
+      recommendedThresholds,
+    )
 
     return {
       previousThresholds: this.getConfig(),
@@ -80,7 +87,8 @@ export class ThresholdManager {
       const decision = originalResult.decision
 
       // Track confidence by decision type
-      analysis.averageConfidenceByDecision[decision].sum += originalResult.confidence
+      analysis.averageConfidenceByDecision[decision].sum +=
+        originalResult.confidence
       analysis.averageConfidenceByDecision[decision].count += 1
 
       // Determine if the decision was correct
@@ -90,17 +98,26 @@ export class ThresholdManager {
       } else {
         if (decision === 'auto-approve' && humanDecision !== 'validated') {
           analysis.falsePositives += 1
-        } else if (decision === 'auto-reject' && humanDecision === 'validated') {
+        } else if (
+          decision === 'auto-reject' &&
+          humanDecision === 'validated'
+        ) {
           analysis.falseNegatives += 1
         }
       }
 
       // Track factor performance
-      this.updateFactorPerformance(analysis.factorPerformance, originalResult.confidenceFactors, wasCorrect)
+      this.updateFactorPerformance(
+        analysis.factorPerformance,
+        originalResult.confidenceFactors,
+        wasCorrect,
+      )
     }
 
     // Calculate averages
-    for (const decision of Object.keys(analysis.averageConfidenceByDecision) as Array<keyof typeof analysis.averageConfidenceByDecision>) {
+    for (const decision of Object.keys(
+      analysis.averageConfidenceByDecision,
+    ) as Array<keyof typeof analysis.averageConfidenceByDecision>) {
       const data = analysis.averageConfidenceByDecision[decision]
       if (data.count > 0) {
         data.sum = data.sum / data.count
@@ -113,7 +130,10 @@ export class ThresholdManager {
   /**
    * Check if auto-confirmation decision matched human decision
    */
-  private wasDecisionCorrect(autoDecision: string, humanDecision: string): boolean {
+  private wasDecisionCorrect(
+    autoDecision: string,
+    humanDecision: string,
+  ): boolean {
     switch (autoDecision) {
       case 'auto-approve':
         return humanDecision === 'validated'
@@ -133,7 +153,7 @@ export class ThresholdManager {
   private updateFactorPerformance(
     performance: FeedbackAnalysis['factorPerformance'],
     factors: Record<string, number>,
-    wasCorrect: boolean
+    wasCorrect: boolean,
   ): void {
     for (const [factor, value] of Object.entries(factors)) {
       if (factor in performance) {
@@ -156,24 +176,38 @@ export class ThresholdManager {
     const falsePositiveRate = analysis.falsePositives / analysis.totalFeedback
     if (falsePositiveRate > 0.05) {
       // Too many false positives, increase threshold
-      newConfig.autoApproveThreshold = Math.min(0.95, this.config.autoApproveThreshold + 0.05)
-    } else if (falsePositiveRate < 0.02 && analysis.correctDecisions / analysis.totalFeedback > 0.9) {
+      newConfig.autoApproveThreshold = Math.min(
+        0.95,
+        this.config.autoApproveThreshold + 0.05,
+      )
+    } else if (
+      falsePositiveRate < 0.02 &&
+      analysis.correctDecisions / analysis.totalFeedback > 0.9
+    ) {
       // Very few false positives and high accuracy, can lower threshold slightly
-      newConfig.autoApproveThreshold = Math.max(0.65, this.config.autoApproveThreshold - 0.02)
+      newConfig.autoApproveThreshold = Math.max(
+        0.65,
+        this.config.autoApproveThreshold - 0.02,
+      )
     }
 
     // Adjust rejection threshold based on false negative rate
     const falseNegativeRate = analysis.falseNegatives / analysis.totalFeedback
     if (falseNegativeRate > 0.05) {
       // Too many false negatives, lower threshold
-      newConfig.autoRejectThreshold = Math.max(0.3, this.config.autoRejectThreshold - 0.05)
+      newConfig.autoRejectThreshold = Math.max(
+        0.3,
+        this.config.autoRejectThreshold - 0.05,
+      )
     }
 
     // Adjust weights based on factor performance
     const newWeights = { ...this.config.weights }
     let totalWeight = 0
 
-    for (const [factor, performance] of Object.entries(analysis.factorPerformance)) {
+    for (const [factor, performance] of Object.entries(
+      analysis.factorPerformance,
+    )) {
       if (performance.total > 0) {
         const accuracy = performance.correct / performance.total
         // Increase weight for high-performing factors
@@ -188,7 +222,9 @@ export class ThresholdManager {
     }
 
     // Normalize weights to sum to 1
-    for (const factor of Object.keys(newWeights) as Array<keyof typeof newWeights>) {
+    for (const factor of Object.keys(newWeights) as Array<
+      keyof typeof newWeights
+    >) {
       newWeights[factor] = newWeights[factor] / totalWeight
     }
 
@@ -208,22 +244,32 @@ export class ThresholdManager {
 
     const falsePositiveRate = analysis.falsePositives / analysis.totalFeedback
     if (falsePositiveRate > 0.05) {
-      reasons.push(`High false positive rate (${(falsePositiveRate * 100).toFixed(1)}%) - increasing approval threshold`)
+      reasons.push(
+        `High false positive rate (${(falsePositiveRate * 100).toFixed(1)}%) - increasing approval threshold`,
+      )
     }
 
     const falseNegativeRate = analysis.falseNegatives / analysis.totalFeedback
     if (falseNegativeRate > 0.05) {
-      reasons.push(`High false negative rate (${(falseNegativeRate * 100).toFixed(1)}%) - decreasing rejection threshold`)
+      reasons.push(
+        `High false negative rate (${(falseNegativeRate * 100).toFixed(1)}%) - decreasing rejection threshold`,
+      )
     }
 
     // Report on factor performance
-    for (const [factor, performance] of Object.entries(analysis.factorPerformance)) {
+    for (const [factor, performance] of Object.entries(
+      analysis.factorPerformance,
+    )) {
       if (performance.total > 0) {
         const accuracy = performance.correct / performance.total
         if (accuracy > 0.8) {
-          reasons.push(`${factor} performing well (${(accuracy * 100).toFixed(1)}% accuracy)`)
+          reasons.push(
+            `${factor} performing well (${(accuracy * 100).toFixed(1)}% accuracy)`,
+          )
         } else if (accuracy < 0.5) {
-          reasons.push(`${factor} underperforming (${(accuracy * 100).toFixed(1)}% accuracy)`)
+          reasons.push(
+            `${factor} underperforming (${(accuracy * 100).toFixed(1)}% accuracy)`,
+          )
         }
       }
     }
@@ -236,23 +282,25 @@ export class ThresholdManager {
    */
   private estimateAccuracyImprovement(
     analysis: FeedbackAnalysis,
-    newThresholds: ThresholdConfig
+    newThresholds: ThresholdConfig,
   ): number {
-    const currentAccuracy = analysis.correctDecisions / analysis.totalFeedback
-    
     // Estimate improvement based on threshold changes
     let estimatedImprovement = 0
 
     // If we're reducing false positives
-    const thresholdIncrease = newThresholds.autoApproveThreshold - this.config.autoApproveThreshold
+    const thresholdIncrease =
+      newThresholds.autoApproveThreshold - this.config.autoApproveThreshold
     if (thresholdIncrease > 0) {
-      estimatedImprovement += thresholdIncrease * (analysis.falsePositives / analysis.totalFeedback)
+      estimatedImprovement +=
+        thresholdIncrease * (analysis.falsePositives / analysis.totalFeedback)
     }
 
     // If we're reducing false negatives
-    const thresholdDecrease = this.config.autoRejectThreshold - newThresholds.autoRejectThreshold
+    const thresholdDecrease =
+      this.config.autoRejectThreshold - newThresholds.autoRejectThreshold
     if (thresholdDecrease > 0) {
-      estimatedImprovement += thresholdDecrease * (analysis.falseNegatives / analysis.totalFeedback)
+      estimatedImprovement +=
+        thresholdDecrease * (analysis.falseNegatives / analysis.totalFeedback)
     }
 
     // Cap improvement at realistic levels
