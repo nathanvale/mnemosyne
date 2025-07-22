@@ -6,7 +6,7 @@ import { AgentContextAssembler } from '../context-assembly/assembler'
 
 describe('AgentContextAssembler', () => {
   let assembler: AgentContextAssembler
-  
+
   beforeEach(() => {
     assembler = new AgentContextAssembler()
   })
@@ -14,10 +14,12 @@ describe('AgentContextAssembler', () => {
   describe('assembleContext', () => {
     it('should handle empty memories', async () => {
       const result = await assembler.assembleContext([], 'participant-1')
-      
+
       expect(result.participantId).toBe('participant-1')
       expect(result.moodContext.currentMood.score).toBe(5)
-      expect(result.timelineSummary.overview).toBe('No timeline data available.')
+      expect(result.timelineSummary.overview).toBe(
+        'No timeline data available.',
+      )
       expect(result.vocabulary.themes).toEqual([])
       expect(result.optimization.tokenCount).toBeGreaterThan(0)
       expect(result.recommendations.tone).toBeDefined()
@@ -40,7 +42,7 @@ describe('AgentContextAssembler', () => {
       ]
 
       const result = await assembler.assembleContext(memories, 'participant-1')
-      
+
       expect(result.moodContext.currentMood.score).toBeCloseTo(7, 0)
       expect(result.moodContext.recentMoodTags).toContain('growth')
       expect(result.vocabulary.themes).toContain('growth')
@@ -50,13 +52,13 @@ describe('AgentContextAssembler', () => {
 
     it('should include conversation goal in context', async () => {
       const memories = [createMockMemory({ moodScore: 7 })]
-      
+
       const result = await assembler.assembleContext(
-        memories, 
-        'participant-1', 
-        'celebrate achievements'
+        memories,
+        'participant-1',
+        'celebrate achievements',
       )
-      
+
       expect(result.recommendations.approach).toBe('celebratory')
     })
 
@@ -72,19 +74,21 @@ describe('AgentContextAssembler', () => {
           confidence: 0.8,
           factors: ['support received'],
         },
-        patterns: [{ type: 'support_seeking', significance: 7, confidence: 0.8 }],
+        patterns: [
+          { type: 'support_seeking', significance: 7, confidence: 0.8 },
+        ],
       })
-      
+
       const irrelevantMemory = createMockMemory({
         participantId: 'participant-2',
         significance: 8,
       })
 
       const result = await assembler.assembleContext(
-        [relevantMemory, irrelevantMemory], 
-        'participant-1'
+        [relevantMemory, irrelevantMemory],
+        'participant-1',
       )
-      
+
       expect(result.timelineSummary.recentEvents.length).toBeGreaterThan(0)
     })
 
@@ -104,10 +108,10 @@ describe('AgentContextAssembler', () => {
       })
 
       const result = await recentAssembler.assembleContext(
-        [oldMemory, recentMemory], 
-        'participant-1'
+        [oldMemory, recentMemory],
+        'participant-1',
       )
-      
+
       expect(result.optimization.qualityMetrics.recency).toBeGreaterThan(0.5)
     })
   })
@@ -115,30 +119,36 @@ describe('AgentContextAssembler', () => {
   describe('optimizeContextSize', () => {
     it('should return unchanged context when under token limit', async () => {
       const context = await assembler.assembleContext(
-        [createMockMemory({ moodScore: 7 })], 
-        'participant-1'
+        [createMockMemory({ moodScore: 7 })],
+        'participant-1',
       )
-      
+
       const originalTokenCount = context.optimization.tokenCount
-      const optimized = await assembler.optimizeContextSize(context, originalTokenCount + 1000)
-      
+      const optimized = await assembler.optimizeContextSize(
+        context,
+        originalTokenCount + 1000,
+      )
+
       expect(optimized.optimization.tokenCount).toBe(originalTokenCount)
     })
 
     it('should reduce context size when over token limit', async () => {
-      const memories = Array.from({ length: 10 }, () => 
+      const memories = Array.from({ length: 10 }, () =>
         createMockMemory({
           moodScore: 7,
           themes: ['theme1', 'theme2', 'theme3', 'theme4', 'theme5', 'theme6'],
           descriptors: ['desc1', 'desc2', 'desc3', 'desc4', 'desc5', 'desc6'],
-        })
+        }),
       )
 
       const context = await assembler.assembleContext(memories, 'participant-1')
       const originalTokenCount = context.optimization.tokenCount
-      
-      const optimized = await assembler.optimizeContextSize(context, originalTokenCount - 500)
-      
+
+      const optimized = await assembler.optimizeContextSize(
+        context,
+        originalTokenCount - 500,
+      )
+
       expect(optimized.optimization.tokenCount).toBeLessThan(originalTokenCount)
       expect(optimized.optimization.optimizations).toContain('size_reduction')
       expect(optimized.vocabulary.themes.length).toBeLessThanOrEqual(5)
@@ -154,7 +164,7 @@ describe('AgentContextAssembler', () => {
 
       const context = await assembler.assembleContext(memories, 'participant-1')
       const qualityScore = await assembler.validateContextQuality(context)
-      
+
       expect(qualityScore).toBeGreaterThan(0)
       expect(qualityScore).toBeLessThanOrEqual(1)
     })
@@ -162,7 +172,7 @@ describe('AgentContextAssembler', () => {
     it('should return lower quality for empty context', async () => {
       const context = await assembler.assembleContext([], 'participant-1')
       const qualityScore = await assembler.validateContextQuality(context)
-      
+
       expect(qualityScore).toBeLessThan(0.5)
     })
   })
@@ -174,13 +184,19 @@ describe('AgentContextAssembler', () => {
     // Issue: https://github.com/nathanvale/mnemosyne/issues/93
     it.skip('should recommend supportive tone for low mood', async () => {
       const memories = [
-        createMockMemory({ moodScore: 1, descriptors: ['devastated', 'hopeless'] }),
-        createMockMemory({ moodScore: 1, descriptors: ['depressed', 'overwhelmed'] }),
+        createMockMemory({
+          moodScore: 1,
+          descriptors: ['devastated', 'hopeless'],
+        }),
+        createMockMemory({
+          moodScore: 1,
+          descriptors: ['depressed', 'overwhelmed'],
+        }),
         createMockMemory({ moodScore: 2, descriptors: ['sad', 'anxious'] }),
       ]
-      
+
       const context = await assembler.assembleContext(memories, 'participant-1')
-      
+
       expect(context.recommendations.tone).toContain('supportive')
       expect(context.recommendations.approach).toBe('empathetic')
       expect(context.recommendations.avoid).toContain('criticism')
@@ -191,25 +207,26 @@ describe('AgentContextAssembler', () => {
         createMockMemory({ moodScore: 9, descriptors: ['excited', 'joyful'] }),
         createMockMemory({ moodScore: 8, descriptors: ['happy', 'confident'] }),
       ]
-      
+
       const context = await assembler.assembleContext(memories, 'participant-1')
-      
+
       expect(context.recommendations.tone).toContain('positive')
       expect(context.recommendations.approach).toBe('celebratory')
     })
 
     it.skip('should recommend brief responses for volatile mood', async () => {
       const now = new Date()
-      const memories = Array.from({ length: 6 }, (_, i) => 
-        createMockMemory({ 
+      const memories = Array.from({ length: 6 }, (_, i) =>
+        createMockMemory({
           moodScore: i % 2 === 0 ? 9 : 1,
           timestamp: new Date(now.getTime() - i * 60 * 60 * 1000), // hours apart instead of days
-          descriptors: i % 2 === 0 ? ['elated', 'energetic'] : ['devastated', 'hopeless'],
-        })
+          descriptors:
+            i % 2 === 0 ? ['elated', 'energetic'] : ['devastated', 'hopeless'],
+        }),
       )
-      
+
       const context = await assembler.assembleContext(memories, 'participant-1')
-      
+
       expect(context.recommendations.responseLength).toBe('brief')
       expect(context.recommendations.avoid).toContain('complex topics')
     })
@@ -221,10 +238,15 @@ describe('AgentContextAssembler', () => {
         maxTokens: 500,
       })
 
-      const memories = Array.from({ length: 10 }, () => createMockMemory({ significance: 8 }))
-      
-      const context = await limitedAssembler.assembleContext(memories, 'participant-1')
-      
+      const memories = Array.from({ length: 10 }, () =>
+        createMockMemory({ significance: 8 }),
+      )
+
+      const context = await limitedAssembler.assembleContext(
+        memories,
+        'participant-1',
+      )
+
       expect(context.optimization.tokenCount).toBeLessThanOrEqual(600)
     })
 
@@ -235,12 +257,12 @@ describe('AgentContextAssembler', () => {
 
       const lowRelevanceMemory = createMockMemory({ significance: 3 })
       const highRelevanceMemory = createMockMemory({ significance: 9 })
-      
+
       const context = await strictAssembler.assembleContext(
-        [lowRelevanceMemory, highRelevanceMemory], 
-        'participant-1'
+        [lowRelevanceMemory, highRelevanceMemory],
+        'participant-1',
       )
-      
+
       expect(context.optimization.relevanceScore).toBeGreaterThan(0.5)
     })
 
@@ -250,10 +272,10 @@ describe('AgentContextAssembler', () => {
       })
 
       const context = await basicAssembler.assembleContext(
-        [createMockMemory({ moodScore: 7 })], 
-        'participant-1'
+        [createMockMemory({ moodScore: 7 })],
+        'participant-1',
       )
-      
+
       expect(context.recommendations.tone).toEqual(['balanced', 'thoughtful'])
       expect(context.recommendations.approach).toBe('supportive')
     })
@@ -276,13 +298,18 @@ function createMockMemory(options: {
     factors: string[]
   }
   patterns?: Array<{
-    type: 'support_seeking' | 'mood_repair' | 'celebration' | 'vulnerability' | 'growth'
+    type:
+      | 'support_seeking'
+      | 'mood_repair'
+      | 'celebration'
+      | 'vulnerability'
+      | 'growth'
     significance: number
     confidence: number
   }>
 }): ExtractedMemory {
   const participantId = options.participantId || 'participant-1'
-  
+
   return {
     id: `memory-${Math.random().toString(36).substr(2, 9)}`,
     content: 'Test context memory content',
@@ -304,13 +331,17 @@ function createMockMemory(options: {
         score: options.moodScore || 5,
         descriptors: options.descriptors || ['neutral'],
         confidence: 0.8,
-        delta: options.moodDelta || (options.moodScore && Math.abs(options.moodScore - 5) > 1 ? {
-          magnitude: Math.abs(options.moodScore - 5),
-          direction: options.moodScore > 5 ? 'positive' : 'negative',
-          type: 'mood_repair',
-          confidence: 0.8,
-          factors: ['test factor'],
-        } : undefined),
+        delta:
+          options.moodDelta ||
+          (options.moodScore && Math.abs(options.moodScore - 5) > 1
+            ? {
+                magnitude: Math.abs(options.moodScore - 5),
+                direction: options.moodScore > 5 ? 'positive' : 'negative',
+                type: 'mood_repair',
+                confidence: 0.8,
+                factors: ['test factor'],
+              }
+            : undefined),
         factors: [],
       },
       trajectory: {
@@ -337,7 +368,8 @@ function createMockMemory(options: {
         temporalRelevance: options.significance || 5,
       },
       confidence: 0.8,
-      category: options.significance && options.significance > 7 ? 'high' : 'medium',
+      category:
+        options.significance && options.significance > 7 ? 'high' : 'medium',
       validationPriority: options.significance || 5,
     },
     processing: {

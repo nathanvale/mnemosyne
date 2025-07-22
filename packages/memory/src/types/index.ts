@@ -6,6 +6,8 @@ import { z } from 'zod'
  * Enhanced memory with processing metadata and emotional intelligence
  */
 export interface ExtractedMemory extends Memory {
+  /** Extended relationship dynamics for significance analysis */
+  extendedRelationshipDynamics?: RelationshipDynamics
   /** Processing metadata */
   processing: {
     /** When this memory was extracted */
@@ -72,7 +74,18 @@ export interface ConversationParticipant {
   /** Participant display name */
   name: string
   /** Participant role in conversation */
-  role: 'author' | 'recipient' | 'observer'
+  role:
+    | 'author'
+    | 'recipient'
+    | 'observer'
+    | 'supporter'
+    | 'listener'
+    | 'vulnerable_sharer'
+    | 'emotional_leader'
+  /** Number of messages sent by this participant */
+  messageCount?: number
+  /** Emotional expressions used by this participant */
+  emotionalExpressions?: string[]
   /** Participant metadata */
   metadata?: {
     avatar?: string
@@ -208,10 +221,12 @@ export interface TrajectoryPoint {
   timestamp: Date
   /** Mood score at this point */
   moodScore: number
+  /** Message ID for this point */
+  messageId?: string
   /** Emotional state descriptors */
-  emotions: string[]
+  emotions?: string[]
   /** Context at this point */
-  context: string
+  context?: string
 }
 
 /**
@@ -249,6 +264,30 @@ export interface EmotionalPattern {
   evidence: string[]
   /** Pattern significance */
   significance: number
+}
+
+/**
+ * Enhanced relationship dynamics for emotional analysis
+ */
+export interface RelationshipDynamics {
+  /** Type of relationship */
+  type:
+    | 'romantic'
+    | 'family'
+    | 'close_friend'
+    | 'friend'
+    | 'colleague'
+    | 'acquaintance'
+    | 'professional'
+    | 'therapeutic'
+  /** Support level in the relationship */
+  supportLevel: 'high' | 'medium' | 'low' | 'negative'
+  /** Intimacy level in the relationship */
+  intimacyLevel: 'high' | 'medium' | 'low'
+  /** Conflict level in the relationship */
+  conflictLevel: 'high' | 'medium' | 'low' | 'none'
+  /** Trust level in the relationship */
+  trustLevel: 'high' | 'medium' | 'low'
 }
 
 /**
@@ -423,7 +462,17 @@ export const ConversationDataSchema = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
-      role: z.enum(['author', 'recipient', 'observer']),
+      role: z.enum([
+        'author',
+        'recipient',
+        'observer',
+        'supporter',
+        'listener',
+        'vulnerable_sharer',
+        'emotional_leader',
+      ]),
+      messageCount: z.number().optional(),
+      emotionalExpressions: z.array(z.string()).optional(),
       metadata: z.record(z.unknown()).optional(),
     }),
   ),

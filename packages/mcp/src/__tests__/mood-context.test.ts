@@ -6,7 +6,7 @@ import { MoodContextTokenizer } from '../mood-context/tokenizer'
 
 describe('MoodContextTokenizer', () => {
   let tokenizer: MoodContextTokenizer
-  
+
   beforeEach(() => {
     tokenizer = new MoodContextTokenizer()
   })
@@ -14,13 +14,15 @@ describe('MoodContextTokenizer', () => {
   describe('generateMoodContext', () => {
     it('should handle empty memories', async () => {
       const result = await tokenizer.generateMoodContext([])
-      
+
       expect(result.currentMood.score).toBe(5)
       expect(result.currentMood.descriptors).toEqual(['neutral'])
       expect(result.currentMood.confidence).toBe(0)
       expect(result.moodTrend.direction).toBe('stable')
       expect(result.recentMoodTags).toEqual([])
-      expect(result.trajectoryOverview).toBe('No emotional history available for analysis.')
+      expect(result.trajectoryOverview).toBe(
+        'No emotional history available for analysis.',
+      )
     })
 
     it('should generate mood context from single memory', async () => {
@@ -31,7 +33,7 @@ describe('MoodContextTokenizer', () => {
       })
 
       const result = await tokenizer.generateMoodContext([mockMemory])
-      
+
       expect(result.currentMood.score).toBe(8)
       expect(result.currentMood.descriptors).toContain('happy')
       expect(result.currentMood.descriptors).toContain('excited')
@@ -41,13 +43,13 @@ describe('MoodContextTokenizer', () => {
 
     it('should detect improving mood trend', async () => {
       const memories = [
-        createMockMemory({ moodScore: 8, timestamp: new Date('2023-01-05') }),
-        createMockMemory({ moodScore: 6, timestamp: new Date('2023-01-04') }),
         createMockMemory({ moodScore: 4, timestamp: new Date('2023-01-03') }),
+        createMockMemory({ moodScore: 6, timestamp: new Date('2023-01-04') }),
+        createMockMemory({ moodScore: 8, timestamp: new Date('2023-01-05') }),
       ]
 
       const result = await tokenizer.generateMoodContext(memories)
-      
+
       expect(result.moodTrend.direction).toBe('improving')
       expect(result.moodTrend.magnitude).toBeGreaterThan(0)
     })
@@ -60,7 +62,7 @@ describe('MoodContextTokenizer', () => {
       ]
 
       const result = await tokenizer.generateMoodContext(memories)
-      
+
       expect(result.moodTrend.direction).toBe('declining')
       expect(result.moodTrend.magnitude).toBeGreaterThan(0)
     })
@@ -75,24 +77,24 @@ describe('MoodContextTokenizer', () => {
       ]
 
       const result = await tokenizer.generateMoodContext(memories)
-      
+
       expect(result.moodTrend.direction).toBe('volatile')
     })
 
     it('should extract mood tags from memory themes and descriptors', async () => {
       const memories = [
-        createMockMemory({ 
+        createMockMemory({
           themes: ['support', 'growth'],
           descriptors: ['optimistic', 'grateful'],
         }),
-        createMockMemory({ 
+        createMockMemory({
           themes: ['celebration'],
           descriptors: ['joyful'],
         }),
       ]
 
       const result = await tokenizer.generateMoodContext(memories)
-      
+
       expect(result.recentMoodTags).toContain('support')
       expect(result.recentMoodTags).toContain('celebration')
       expect(result.recentMoodTags).toContain('optimistic')
@@ -101,16 +103,20 @@ describe('MoodContextTokenizer', () => {
 
     it('should generate trajectory overview for sufficient data', async () => {
       const memories = Array.from({ length: 5 }, (_, i) =>
-        createMockMemory({ 
+        createMockMemory({
           moodScore: 6 + i * 0.5,
           timestamp: new Date(`2023-01-0${i + 1}`),
-        })
+        }),
       )
 
       const result = await tokenizer.generateMoodContext(memories)
-      
-      expect(result.trajectoryOverview).not.toBe('No emotional trajectory data available.')
-      expect(result.trajectoryOverview.toLowerCase()).toContain('emotional trajectory')
+
+      expect(result.trajectoryOverview).not.toBe(
+        'No emotional trajectory data available.',
+      )
+      expect(result.trajectoryOverview.toLowerCase()).toContain(
+        'emotional trajectory',
+      )
     })
 
     it('should respect maxDescriptors configuration', async () => {
@@ -122,8 +128,10 @@ describe('MoodContextTokenizer', () => {
         descriptors: ['happy', 'excited', 'grateful', 'optimistic', 'joyful'],
       })
 
-      const result = await configurableTokenizer.generateMoodContext([mockMemory])
-      
+      const result = await configurableTokenizer.generateMoodContext([
+        mockMemory,
+      ])
+
       expect(result.currentMood.descriptors).toHaveLength(2)
     })
   })
@@ -133,7 +141,7 @@ describe('MoodContextTokenizer', () => {
       const basicTokenizer = new MoodContextTokenizer({
         complexityLevel: 'basic',
       })
-      
+
       expect(basicTokenizer).toBeInstanceOf(MoodContextTokenizer)
     })
 
@@ -141,7 +149,7 @@ describe('MoodContextTokenizer', () => {
       const tokenizerWithoutTrajectory = new MoodContextTokenizer({
         includeTrajectory: false,
       })
-      
+
       expect(tokenizerWithoutTrajectory).toBeInstanceOf(MoodContextTokenizer)
     })
   })

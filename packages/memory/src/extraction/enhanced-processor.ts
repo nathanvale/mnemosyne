@@ -3,7 +3,6 @@ import type pino from 'pino'
 
 import { createLogger } from '@studio/logger'
 import {
-  EmotionalState,
   ParticipantRole,
   CommunicationPattern,
   InteractionQuality,
@@ -22,7 +21,21 @@ import type {
   ProcessingError,
 } from '../types'
 
+import { MoodScoringAnalyzer } from '../mood-scoring/analyzer'
+import { DeltaDetector } from '../mood-scoring/delta-detector'
+import { EmotionalSignificanceAnalyzer } from '../significance/analyzer'
 import { ConversationDataSchema, type ConversationDataInput } from '../types'
+import {
+  mapMoodToEmotionalState,
+  extractSecondaryEmotions,
+  calculateEmotionalIntensity,
+  calculateValence,
+  extractEmotionalThemes,
+  extractEmotionalPhrases,
+  extractEmotionalWords,
+  extractStyleIndicators,
+  createPreliminaryMemory,
+} from './emotional-helpers'
 
 /**
  * Configuration for EnhancedMemoryProcessor
@@ -97,8 +110,18 @@ export interface ProcessingResult {
 export class EnhancedMemoryProcessor {
   private readonly logger: pino.Logger
   private readonly config: Required<ProcessorConfig>
+  private readonly moodAnalyzer: MoodScoringAnalyzer
+  private readonly deltaDetector: DeltaDetector
+  private readonly significanceAnalyzer: EmotionalSignificanceAnalyzer
 
-  constructor(config: ProcessorConfig) {
+  constructor(
+    config: ProcessorConfig,
+    components?: {
+      moodAnalyzer?: MoodScoringAnalyzer
+      deltaDetector?: DeltaDetector
+      significanceAnalyzer?: EmotionalSignificanceAnalyzer
+    },
+  ) {
     this.logger = config.logger ?? (createLogger() as unknown as pino.Logger)
 
     // Set default configuration values
@@ -122,6 +145,12 @@ export class EnhancedMemoryProcessor {
         ...config.emotional,
       },
     }
+
+    // Initialize emotional analysis components with dependency injection support
+    this.moodAnalyzer = components?.moodAnalyzer ?? new MoodScoringAnalyzer()
+    this.deltaDetector = components?.deltaDetector ?? new DeltaDetector()
+    this.significanceAnalyzer =
+      components?.significanceAnalyzer ?? new EmotionalSignificanceAnalyzer()
 
     this.logger.info('EnhancedMemoryProcessor initialized', {
       config: {
@@ -351,53 +380,62 @@ export class EnhancedMemoryProcessor {
   private async extractMemoryWithEmotion(
     conversationData: ConversationData,
   ): Promise<ExtractedMemory> {
-    // This is a foundational implementation
-    // Actual emotional analysis will be implemented in subsequent components
-
     const extractedAt = new Date()
 
-    // Placeholder emotional analysis
+    this.logger.debug('Starting emotional analysis', {
+      conversationId: conversationData.id,
+      messageCount: conversationData.messages.length,
+    })
+
+    // Perform comprehensive mood analysis
+    const moodAnalysis =
+      await this.moodAnalyzer.analyzeConversation(conversationData)
+
+    // Recognize emotional patterns
+    const patternStrings = this.moodAnalyzer.recognizePatterns(conversationData)
+
+    // Build emotional trajectory
+    const trajectory =
+      this.moodAnalyzer.buildEmotionalTrajectory(conversationData)
+
+    // Convert pattern strings to EmotionalPattern objects
+    const patterns = patternStrings.map((patternString) => ({
+      type: this.mapPatternStringToType(patternString),
+      confidence: 0.7,
+      description: `Pattern detected: ${patternString}`,
+      evidence: [`Detected ${patternString} pattern in conversation`],
+      significance: 0.5,
+    }))
+
+    // Create comprehensive emotional analysis
     const emotionalAnalysis: EmotionalAnalysis = {
       context: {
-        primaryEmotion: EmotionalState.NEUTRAL,
-        secondaryEmotions: [],
-        intensity: 0.5,
-        valence: 0,
-        themes: [],
+        primaryEmotion: mapMoodToEmotionalState(moodAnalysis.score),
+        secondaryEmotions: extractSecondaryEmotions(moodAnalysis),
+        intensity: calculateEmotionalIntensity(moodAnalysis),
+        valence: calculateValence(moodAnalysis.score),
+        themes: extractEmotionalThemes(moodAnalysis),
         indicators: {
-          phrases: [],
-          emotionalWords: [],
-          styleIndicators: [],
+          phrases: extractEmotionalPhrases(conversationData),
+          emotionalWords: extractEmotionalWords(moodAnalysis),
+          styleIndicators: extractStyleIndicators(conversationData),
         },
       },
-      moodScoring: {
-        score: 5.0,
-        descriptors: ['neutral'],
-        confidence: 0.5,
-        factors: [],
-      },
-      trajectory: {
-        points: [],
-        direction: 'stable',
-        significance: 0.5,
-        turningPoints: [],
-      },
-      patterns: [],
+      moodScoring: moodAnalysis,
+      trajectory,
+      patterns,
     }
 
-    // Placeholder significance assessment
-    const significance: EmotionalSignificanceScore = {
-      overall: 5.0,
-      components: {
-        emotionalSalience: 5.0,
-        relationshipImpact: 5.0,
-        contextualImportance: 5.0,
-        temporalRelevance: 5.0,
-      },
-      confidence: 0.5,
-      category: 'medium',
-      validationPriority: 5.0,
-    }
+    // Create extracted memory for significance assessment
+    const preliminaryMemory = createPreliminaryMemory(
+      conversationData,
+      emotionalAnalysis,
+      extractedAt,
+    )
+
+    // Assess emotional significance using real analyzer
+    const significance =
+      await this.significanceAnalyzer.assessSignificance(preliminaryMemory)
 
     // Create base memory structure following schema
     const baseMemory = {
@@ -628,6 +666,47 @@ export class EnhancedMemoryProcessor {
     ]
 
     return emotionalKeywords.some((keyword) => messageContent.includes(keyword))
+  }
+
+  /**
+   * Map pattern strings to EmotionalPattern types
+   */
+  private mapPatternStringToType(
+    patternString: string,
+  ):
+    | 'support_seeking'
+    | 'mood_repair'
+    | 'celebration'
+    | 'vulnerability'
+    | 'growth' {
+    if (patternString.includes('support') || patternString.includes('help')) {
+      return 'support_seeking'
+    }
+    if (
+      patternString.includes('recovery') ||
+      patternString.includes('repair')
+    ) {
+      return 'mood_repair'
+    }
+    if (
+      patternString.includes('celebration') ||
+      patternString.includes('achievement')
+    ) {
+      return 'celebration'
+    }
+    if (
+      patternString.includes('vulnerability') ||
+      patternString.includes('openness')
+    ) {
+      return 'vulnerability'
+    }
+    if (
+      patternString.includes('growth') ||
+      patternString.includes('learning')
+    ) {
+      return 'growth'
+    }
+    return 'support_seeking' // Default fallback
   }
 
   /**
