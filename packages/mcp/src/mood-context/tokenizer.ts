@@ -1,4 +1,4 @@
-import type { ExtractedMemory } from '@studio/memory'
+import type { ExtractedMemory, EmotionalPattern } from '@studio/memory'
 
 import { logger } from '@studio/logger'
 
@@ -148,12 +148,13 @@ export class MoodContextTokenizer {
 
     for (const memory of recentMemories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach((descriptor) => tagSet.add(descriptor))
+      descriptors.forEach((descriptor: string) => tagSet.add(descriptor))
 
       const themes =
-        memory.emotionalAnalysis.context.themes?.map((t) => t.toLowerCase()) ||
-        []
-      themes.forEach((theme) => tagSet.add(theme))
+        memory.emotionalAnalysis.context.themes?.map((t: string) =>
+          t.toLowerCase(),
+        ) || []
+      themes.forEach((theme: string) => tagSet.add(theme))
     }
 
     return Array.from(tagSet).slice(0, 8)
@@ -292,7 +293,7 @@ export class MoodContextTokenizer {
    */
   private identifyEmotionalPatterns(memories: ExtractedMemory[]): string[] {
     const patternTypes = memories.flatMap((m) =>
-      m.emotionalAnalysis.patterns.map((p) => p.type),
+      m.emotionalAnalysis.patterns.map((p: EmotionalPattern) => p.type),
     )
 
     const patternCounts = new Map<string, number>()

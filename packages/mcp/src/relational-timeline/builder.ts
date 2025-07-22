@@ -1,4 +1,4 @@
-import type { ExtractedMemory } from '@studio/memory'
+import type { ExtractedMemory, EmotionalPattern } from '@studio/memory'
 
 import { logger } from '@studio/logger'
 import { v4 as uuidv4 } from 'uuid'
@@ -154,7 +154,8 @@ export class RelationalTimelineBuilder {
     }
 
     const supportPatterns = memory.emotionalAnalysis.patterns.filter(
-      (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+      (p: EmotionalPattern) =>
+        p.type === 'support_seeking' || p.type === 'mood_repair',
     )
 
     if (supportPatterns.length > 0) {
@@ -393,7 +394,8 @@ export class RelationalTimelineBuilder {
 
     const supportPatterns = memories.flatMap((m) =>
       m.emotionalAnalysis.patterns.filter(
-        (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+        (p: EmotionalPattern) =>
+          p.type === 'support_seeking' || p.type === 'mood_repair',
       ),
     )
 
@@ -421,7 +423,7 @@ export class RelationalTimelineBuilder {
         )
       }
 
-      memory.emotionalAnalysis.patterns.forEach((pattern) => {
+      memory.emotionalAnalysis.patterns.forEach((pattern: EmotionalPattern) => {
         patterns.add(pattern.type.replace('_', ' '))
       })
     }
@@ -441,7 +443,9 @@ export class RelationalTimelineBuilder {
       (m) => m.significance.overall > 7,
     )
     const growthPatterns = memories.filter((m) =>
-      m.emotionalAnalysis.patterns.some((p) => p.type === 'growth'),
+      m.emotionalAnalysis.patterns.some(
+        (p: EmotionalPattern) => p.type === 'growth',
+      ),
     )
 
     if (significantMemories.length > 0) {
