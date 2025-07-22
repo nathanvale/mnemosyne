@@ -191,12 +191,19 @@ export interface MoodFactor {
     | 'emotional_words'
     | 'context_clues'
     | 'interaction_pattern'
+    | 'sentiment_analysis'
+    | 'psychological_indicators'
+    | 'relationship_context'
+    | 'conversational_flow'
+    | 'historical_baseline'
   /** Factor weight in overall score */
   weight: number
   /** Factor description */
   description: string
   /** Evidence for this factor */
   evidence: string[]
+  /** Internal calculated score (optional) */
+  _score?: number
 }
 
 /**
@@ -506,6 +513,11 @@ export const MoodAnalysisResultSchema = z.object({
         'emotional_words',
         'context_clues',
         'interaction_pattern',
+        'sentiment_analysis',
+        'psychological_indicators',
+        'relationship_context',
+        'conversational_flow',
+        'historical_baseline',
       ]),
       weight: z.number(),
       description: z.string(),
@@ -526,6 +538,120 @@ export const EmotionalSignificanceScoreSchema = z.object({
   category: z.enum(['critical', 'high', 'medium', 'low']),
   validationPriority: z.number().min(0).max(10),
 })
+
+/**
+ * Sentiment analysis score for positive, negative, or neutral sentiment
+ */
+export interface SentimentScore {
+  /** Sentiment strength (0-1) */
+  score: number
+  /** Sentiment intensity (0-1) */
+  intensity: number
+  /** Confidence in assessment (0-1) */
+  confidence: number
+  /** Emotional indicators detected */
+  indicators: string[]
+  /** Linguistic markers that support this sentiment */
+  linguisticMarkers: string[]
+  /** Cultural context if applicable */
+  culturalContext?: 'direct' | 'indirect' | 'high-context' | 'low-context'
+}
+
+/**
+ * Mixed sentiment analysis for complex emotional states
+ */
+export interface MixedSentimentScore {
+  /** Positive sentiment component */
+  positive: SentimentScore
+  /** Negative sentiment component */
+  negative: SentimentScore
+  /** Emotional complexity (0-1) */
+  complexity: number
+  /** Dominant sentiment direction */
+  dominantSentiment: 'positive' | 'negative' | 'mixed' | 'neutral'
+  /** Combined emotional state descriptors */
+  emotionalState: string[]
+  /** Relationship context if relevant */
+  relationshipContext?: string
+}
+
+/**
+ * Psychological indicators for mood analysis
+ */
+export interface CopingIndicator {
+  /** Type of coping mechanism */
+  type: 'problem_focused' | 'emotion_focused' | 'meaning_focused'
+  /** Strength of indicator (0-1) */
+  strength: number
+  /** Effectiveness assessment (0-1) */
+  effectiveness: number
+  /** Emotional impact (0-1) */
+  emotionalImpact: number
+  /** Contextual relevance (0-1) */
+  contextualRelevance: number
+}
+
+/**
+ * Resilience assessment score
+ */
+export interface ResilienceScore {
+  /** Overall resilience (0-1) */
+  overall: number
+  /** Recovery capacity (0-1) */
+  recoveryCapacity: number
+  /** Adaptive flexibility (0-1) */
+  adaptiveFlexibility: number
+  /** Support utilization (0-1) */
+  supportUtilization: number
+  /** Confidence in assessment (0-1) */
+  confidence: number
+}
+
+/**
+ * Stress marker indicators
+ */
+export interface StressIndicator {
+  /** Type of stress marker */
+  type: 'physiological' | 'emotional' | 'cognitive' | 'behavioral'
+  /** Intensity level (0-1) */
+  intensity: number
+  /** Marker description */
+  description: string
+  /** Supporting evidence */
+  evidence: string[]
+}
+
+/**
+ * Support pattern evaluation
+ */
+export interface SupportIndicator {
+  /** Type of support */
+  type: 'emotional' | 'informational' | 'instrumental' | 'appraisal'
+  /** Support quality (0-1) */
+  quality: number
+  /** Support reciprocity (0-1) */
+  reciprocity: number
+  /** Support effectiveness (0-1) */
+  effectiveness: number
+}
+
+/**
+ * Growth pattern identification
+ */
+export interface GrowthIndicator {
+  /** Type of growth observed */
+  type:
+    | 'emotional_maturity'
+    | 'self_awareness'
+    | 'relationship_skills'
+    | 'resilience_building'
+  /** Growth evidence strength (0-1) */
+  strength: number
+  /** Growth trajectory direction */
+  direction: 'positive' | 'negative' | 'stable'
+  /** Supporting evidence */
+  evidence: string[]
+}
 
 // Type exports for convenience
 export type ConversationDataInput = z.input<typeof ConversationDataSchema>

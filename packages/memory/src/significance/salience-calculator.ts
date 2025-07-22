@@ -236,6 +236,11 @@ export class SalienceCalculator {
       language_sentiment: 0.2,
       interaction_pattern: 0.1,
       context_clues: 0.2,
+      sentiment_analysis: 0.25,
+      psychological_indicators: 0.25,
+      relationship_context: 0.15,
+      conversational_flow: 0.15,
+      historical_baseline: 0.1,
     }
 
     return typeBonuses[type] || 0
