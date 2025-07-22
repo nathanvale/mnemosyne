@@ -14,20 +14,41 @@ const logger = createLogger({
 })
 
 /**
+ * Configuration for MoodScoringAnalyzer
+ */
+export interface MoodScoringAnalyzerConfig {
+  /** Custom emotional keywords mapping */
+  emotionalKeywords?: Map<string, { valence: number; intensity: number }>
+  /** Custom contextual factors mapping */
+  contextualFactors?: Map<string, number>
+}
+
+/**
  * MoodScoringAnalyzer performs comprehensive mood analysis on conversations
  * to extract emotional intelligence and mood scores
  */
 export class MoodScoringAnalyzer {
+  // Magic number constants
+  private static readonly EVIDENCE_THRESHOLD_HIGH = 4
+  private static readonly EVIDENCE_THRESHOLD_MEDIUM = 3
+  private static readonly SCORE_HIGH = 7
+  private static readonly SCORE_MEDIUM = 6
+  private static readonly SCORE_LOW = 4
+  private static readonly SCORE_NEUTRAL = 5
+  private static readonly MAX_EVIDENCE_FOR_CONFIDENCE = 5
+
   private readonly emotionalKeywords: Map<
     string,
     { valence: number; intensity: number }
   >
   private readonly contextualFactors: Map<string, number>
 
-  constructor() {
-    // Initialize emotional keyword mappings
-    this.emotionalKeywords = this.initializeEmotionalKeywords()
-    this.contextualFactors = this.initializeContextualFactors()
+  constructor(config?: MoodScoringAnalyzerConfig) {
+    // Initialize emotional keyword mappings with configuration support
+    this.emotionalKeywords =
+      config?.emotionalKeywords ?? this.initializeEmotionalKeywords()
+    this.contextualFactors =
+      config?.contextualFactors ?? this.initializeContextualFactors()
   }
 
   /**
@@ -47,19 +68,22 @@ export class MoodScoringAnalyzer {
     const factors: MoodFactor[] = []
 
     // Language sentiment analysis
-    const sentimentFactor = await this.analyzeLanguageSentiment(messages)
+    const sentimentFactor = this.analyzeLanguageSentiment(messages)
     factors.push(sentimentFactor)
 
     // Emotional word analysis
-    const emotionalWordsFactor = await this.analyzeEmotionalWords(messages)
+    const emotionalWordsFactor = this.analyzeEmotionalWords(messages)
     factors.push(emotionalWordsFactor)
 
     // Context clues analysis
-    const contextFactor = this.analyzeContextClues(messages)
+    const contextFactor = this.analyzeContextClues(
+      messages,
+      conversation.context,
+    )
     factors.push(contextFactor)
 
     // Interaction pattern analysis
-    const interactionFactor = await this.analyzeInteractionPatterns(messages)
+    const interactionFactor = this.analyzeInteractionPatterns(messages)
     factors.push(interactionFactor)
 
     // Calculate overall mood score
@@ -167,7 +191,11 @@ export class MoodScoringAnalyzer {
     let totalWeight = 0
 
     for (const factor of factors) {
-      const evidenceStrength = Math.min(factor.evidence.length / 5, 1)
+      const evidenceStrength = Math.min(
+        factor.evidence.length /
+          MoodScoringAnalyzer.MAX_EVIDENCE_FOR_CONFIDENCE,
+        1,
+      )
       totalEvidence += evidenceStrength * factor.weight
       totalWeight += factor.weight
     }
@@ -436,7 +464,10 @@ export class MoodScoringAnalyzer {
     }
   }
 
-  private analyzeContextClues(messages: ConversationMessage[]): MoodFactor {
+  private analyzeContextClues(
+    messages: ConversationMessage[],
+    context?: ConversationData['context'],
+  ): MoodFactor {
     const evidence: string[] = []
 
     // Analyze message timing patterns
@@ -456,6 +487,19 @@ export class MoodScoringAnalyzer {
     const questions = messages.filter((m) => m.content.includes('?')).length
     if (questions > messages.length * 0.3) {
       evidence.push('High question frequency suggests support-seeking')
+    }
+
+    // Analyze conversation context if available
+    if (context) {
+      if (context.conversationType === 'direct') {
+        evidence.push('Direct conversation suggests personal connection')
+      } else if (context.conversationType === 'group') {
+        evidence.push('Group conversation may indicate social support context')
+      }
+
+      if (context.platform) {
+        evidence.push(`Platform context: ${context.platform}`)
+      }
     }
 
     return {
@@ -537,15 +581,25 @@ export class MoodScoringAnalyzer {
     // This is a simplified implementation
     switch (factor.type) {
       case 'language_sentiment':
-        return factor.evidence.length > 3 ? 7 : 5
+        return factor.evidence.length >
+          MoodScoringAnalyzer.EVIDENCE_THRESHOLD_MEDIUM
+          ? MoodScoringAnalyzer.SCORE_HIGH
+          : MoodScoringAnalyzer.SCORE_NEUTRAL
       case 'emotional_words':
-        return factor.evidence.length > 4 ? 6 : 5
+        return factor.evidence.length >
+          MoodScoringAnalyzer.EVIDENCE_THRESHOLD_HIGH
+          ? MoodScoringAnalyzer.SCORE_MEDIUM
+          : MoodScoringAnalyzer.SCORE_NEUTRAL
       case 'context_clues':
-        return factor.evidence.some((e) => e.includes('support')) ? 4 : 5
+        return factor.evidence.some((e) => e.includes('support'))
+          ? MoodScoringAnalyzer.SCORE_LOW
+          : MoodScoringAnalyzer.SCORE_NEUTRAL
       case 'interaction_pattern':
-        return factor.evidence.some((e) => e.includes('healthy')) ? 6 : 5
+        return factor.evidence.some((e) => e.includes('healthy'))
+          ? MoodScoringAnalyzer.SCORE_MEDIUM
+          : MoodScoringAnalyzer.SCORE_NEUTRAL
       default:
-        return 5
+        return MoodScoringAnalyzer.SCORE_NEUTRAL
     }
   }
 
@@ -587,7 +641,10 @@ export class MoodScoringAnalyzer {
     const averageEvidence = totalEvidence / factors.length
 
     // Base confidence on evidence quantity and factor agreement
-    const evidenceConfidence = Math.min(averageEvidence / 5, 1)
+    const evidenceConfidence = Math.min(
+      averageEvidence / MoodScoringAnalyzer.MAX_EVIDENCE_FOR_CONFIDENCE,
+      1,
+    )
 
     // Check factor agreement
     const scores = factors.map((f) => this.extractScoreFromFactor(f))

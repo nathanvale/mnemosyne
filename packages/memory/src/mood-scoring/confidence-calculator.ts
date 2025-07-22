@@ -7,6 +7,14 @@ const logger = createLogger({
 })
 
 /**
+ * Configuration for confidence calculation
+ */
+export interface ConfidenceCalculatorConfig {
+  /** Maximum evidence pieces for normalization */
+  maxEvidencePieces?: number
+}
+
+/**
  * Confidence calculation factors
  */
 export interface ConfidenceFactors {
@@ -24,6 +32,11 @@ export interface ConfidenceFactors {
  * ConfidenceCalculator assesses the reliability of mood analysis results
  */
 export class ConfidenceCalculator {
+  private readonly maxEvidencePieces: number
+
+  constructor(config?: ConfidenceCalculatorConfig) {
+    this.maxEvidencePieces = config?.maxEvidencePieces ?? 5
+  }
   /**
    * Calculate overall confidence in mood analysis
    */
@@ -79,8 +92,11 @@ export class ConfidenceCalculator {
     let totalStrength = 0
 
     for (const factor of factors) {
-      // Evidence quantity (normalized to 0-1, max at 5 pieces)
-      const quantity = Math.min(factor.evidence.length / 5, 1)
+      // Evidence quantity (normalized to 0-1)
+      const quantity = Math.min(
+        factor.evidence.length / this.maxEvidencePieces,
+        1,
+      )
 
       // Evidence quality based on factor type and weight
       const quality = this.assessEvidenceQuality(factor)

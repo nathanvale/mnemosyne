@@ -15,6 +15,32 @@ const logger = createLogger({
 })
 
 /**
+ * Special date configuration for significance analysis
+ */
+export interface SpecialDate {
+  /** Month (0-11) */
+  month: number
+  /** Day of month (1-31) */
+  day: number
+  /** Optional name for the date */
+  name?: string
+}
+
+/**
+ * Default special dates (US-centric)
+ */
+export const DEFAULT_SPECIAL_DATES: SpecialDate[] = [
+  { month: 0, day: 1, name: "New Year's Day" },
+  { month: 1, day: 14, name: "Valentine's Day" },
+  { month: 3, day: 1, name: "April Fool's Day" },
+  { month: 6, day: 4, name: 'Independence Day (US)' },
+  { month: 9, day: 31, name: 'Halloween' },
+  { month: 10, day: 11, name: 'Veterans Day' },
+  { month: 11, day: 25, name: 'Christmas' },
+  { month: 11, day: 31, name: "New Year's Eve" },
+]
+
+/**
  * Configuration for significance analysis
  */
 export interface SignificanceAnalyzerConfig {
@@ -30,6 +56,8 @@ export interface SignificanceAnalyzerConfig {
   highSignificanceThreshold: number
   /** Minimum score for medium significance (0-10) */
   mediumSignificanceThreshold: number
+  /** Custom special dates for cultural/regional relevance */
+  specialDates?: SpecialDate[]
 }
 
 /**
@@ -38,6 +66,7 @@ export interface SignificanceAnalyzerConfig {
  */
 export class EmotionalSignificanceAnalyzer {
   private readonly config: SignificanceAnalyzerConfig
+  private readonly specialDates: SpecialDate[]
   private readonly salienceCalculator: SalienceCalculator
   private readonly relationshipAnalyzer: RelationshipImpactAnalyzer
   private readonly prioritizer: MemoryPrioritizer
@@ -52,6 +81,8 @@ export class EmotionalSignificanceAnalyzer {
       mediumSignificanceThreshold: 5.0,
       ...config,
     }
+
+    this.specialDates = config?.specialDates || DEFAULT_SPECIAL_DATES
 
     this.salienceCalculator = new SalienceCalculator()
     this.relationshipAnalyzer = new RelationshipImpactAnalyzer()
@@ -392,19 +423,7 @@ export class EmotionalSignificanceAnalyzer {
     const month = date.getMonth()
     const day = date.getDate()
 
-    // Common special dates
-    const specialDates = [
-      { month: 0, day: 1 }, // New Year's Day
-      { month: 1, day: 14 }, // Valentine's Day
-      { month: 3, day: 1 }, // April Fool's Day
-      { month: 6, day: 4 }, // Independence Day (US)
-      { month: 9, day: 31 }, // Halloween
-      { month: 10, day: 11 }, // Veterans Day
-      { month: 11, day: 25 }, // Christmas
-      { month: 11, day: 31 }, // New Year's Eve
-    ]
-
-    return specialDates.some(
+    return this.specialDates.some(
       (special) => special.month === month && special.day === day,
     )
   }

@@ -114,7 +114,14 @@ export class EnhancedMemoryProcessor {
   private readonly deltaDetector: DeltaDetector
   private readonly significanceAnalyzer: EmotionalSignificanceAnalyzer
 
-  constructor(config: ProcessorConfig) {
+  constructor(
+    config: ProcessorConfig,
+    components?: {
+      moodAnalyzer?: MoodScoringAnalyzer
+      deltaDetector?: DeltaDetector
+      significanceAnalyzer?: EmotionalSignificanceAnalyzer
+    },
+  ) {
     this.logger = config.logger ?? (createLogger() as unknown as pino.Logger)
 
     // Set default configuration values
@@ -139,10 +146,11 @@ export class EnhancedMemoryProcessor {
       },
     }
 
-    // Initialize emotional analysis components
-    this.moodAnalyzer = new MoodScoringAnalyzer()
-    this.deltaDetector = new DeltaDetector()
-    this.significanceAnalyzer = new EmotionalSignificanceAnalyzer()
+    // Initialize emotional analysis components with dependency injection support
+    this.moodAnalyzer = components?.moodAnalyzer ?? new MoodScoringAnalyzer()
+    this.deltaDetector = components?.deltaDetector ?? new DeltaDetector()
+    this.significanceAnalyzer =
+      components?.significanceAnalyzer ?? new EmotionalSignificanceAnalyzer()
 
     this.logger.info('EnhancedMemoryProcessor initialized', {
       config: {

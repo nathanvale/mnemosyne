@@ -11,6 +11,18 @@ const logger = createLogger({
   tags: ['mood-scoring', 'pattern-recognizer'],
 })
 
+// Pattern template interface
+interface PatternTemplate {
+  description: string
+  keywords: string[]
+  behavioralIndicators: string[]
+  moodCriteria?: {
+    min?: number
+    max?: number
+  }
+  typicalDescriptors: string[]
+}
+
 /**
  * Pattern recognition configuration
  */
@@ -19,6 +31,8 @@ export interface PatternRecognizerConfig {
   minimumConfidence: number
   /** Minimum evidence pieces to confirm a pattern */
   minimumEvidence: number
+  /** Custom pattern templates */
+  patternTemplates?: Map<EmotionalPattern['type'], PatternTemplate>
 }
 
 /**
@@ -38,7 +52,8 @@ export class PatternRecognizer {
       ...config,
     }
 
-    this.patternTemplates = this.initializePatternTemplates()
+    this.patternTemplates =
+      config?.patternTemplates ?? this.initializePatternTemplates()
   }
 
   /**
@@ -639,17 +654,4 @@ export class PatternRecognizer {
 
     return templates
   }
-}
-
-// Internal types
-
-interface PatternTemplate {
-  description: string
-  keywords: string[]
-  behavioralIndicators: string[]
-  moodCriteria?: {
-    min?: number
-    max?: number
-  }
-  typicalDescriptors: string[]
 }

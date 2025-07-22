@@ -22,6 +22,16 @@ export interface DeltaDetectorConfig {
   timeWindow: number
   /** Confidence threshold for delta detection */
   confidenceThreshold: number
+  /** Magnitude threshold for triggering on celebrations */
+  celebrationThreshold?: number
+  /** Magnitude threshold for triggering on declines */
+  declineThreshold?: number
+  /** General magnitude multiplier for triggering */
+  generalTriggerMultiplier?: number
+  /** Variance threshold for plateau detection */
+  plateauVarianceThreshold?: number
+  /** Time threshold for merging turning points (in milliseconds) */
+  turningPointMergeThreshold?: number
 }
 
 /**
@@ -35,6 +45,11 @@ export class DeltaDetector {
       minimumMagnitude: 2.0,
       timeWindow: 3600000, // 1 hour
       confidenceThreshold: 0.7,
+      celebrationThreshold: 3.0,
+      declineThreshold: 2.5,
+      generalTriggerMultiplier: 1.5,
+      plateauVarianceThreshold: 0.5,
+      turningPointMergeThreshold: 1800000, // 30 minutes
       ...config,
     }
   }
@@ -143,17 +158,27 @@ export class DeltaDetector {
     }
 
     // Trigger for significant celebrations
-    if (delta.type === 'celebration' && delta.magnitude > 3) {
+    if (
+      delta.type === 'celebration' &&
+      delta.magnitude > (this.config.celebrationThreshold ?? 3.0)
+    ) {
       return true
     }
 
     // Trigger for concerning declines
-    if (delta.type === 'decline' && delta.magnitude > 2.5) {
+    if (
+      delta.type === 'decline' &&
+      delta.magnitude > (this.config.declineThreshold ?? 2.5)
+    ) {
       return true
     }
 
     // General magnitude-based trigger
-    return delta.magnitude >= this.config.minimumMagnitude * 1.5
+    return (
+      delta.magnitude >=
+      this.config.minimumMagnitude *
+        (this.config.generalTriggerMultiplier ?? 1.5)
+    )
   }
 
   /**
@@ -204,7 +229,7 @@ export class DeltaDetector {
     const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length
 
     // Plateau if variance is low
-    const isPlateau = variance < 0.5
+    const isPlateau = variance < (this.config.plateauVarianceThreshold ?? 0.5)
 
     const duration = isPlateau
       ? points[points.length - 1].timestamp.getTime() -
@@ -459,8 +484,11 @@ export class DeltaDetector {
       const next = points[i]
       const timeDiff = next.timestamp.getTime() - current.timestamp.getTime()
 
-      // Merge if within 30 minutes
-      if (timeDiff < 1800000 && current.type === next.type) {
+      // Merge if within configured threshold
+      if (
+        timeDiff < (this.config.turningPointMergeThreshold ?? 1800000) &&
+        current.type === next.type
+      ) {
         current = {
           ...current,
           magnitude: Math.max(current.magnitude, next.magnitude),

@@ -462,7 +462,17 @@ export const ConversationDataSchema = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
-      role: z.enum(['author', 'recipient', 'observer']),
+      role: z.enum([
+        'author',
+        'recipient',
+        'observer',
+        'supporter',
+        'listener',
+        'vulnerable_sharer',
+        'emotional_leader',
+      ]),
+      messageCount: z.number().optional(),
+      emotionalExpressions: z.array(z.string()).optional(),
       metadata: z.record(z.unknown()).optional(),
     }),
   ),

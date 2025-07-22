@@ -322,6 +322,8 @@ export function createPreliminaryMemory(
       },
     })),
     emotionalContext: emotionalAnalysis.context,
+    // TODO: Replace with actual relationship dynamics analysis
+    // These are placeholder values that should be replaced with actual analysis
     relationshipDynamics: {
       communicationPattern: CommunicationPattern.SUPPORTIVE,
       interactionQuality: InteractionQuality.POSITIVE,
