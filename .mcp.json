@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "wallaby": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "-c", "node ~/.wallaby/mcp/"],
+      "env": {}
+    },
+    "tavily-mcp": {
+      "command": "npx",
+      "args": ["-y", "tavily-mcp@0.1.2"],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      }
+    }
+  }
+}
