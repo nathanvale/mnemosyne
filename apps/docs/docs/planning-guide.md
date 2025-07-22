@@ -252,6 +252,7 @@ cp docs/template/* docs/features/my-feature/
 ```
 
 **Example Features:**
+
 - See [Logger API Unification](features/logger-api-unification/) for complete feature documentation
 - See [Dual Logging System](features/dual-logging/) for architecture-focused feature
 
@@ -291,19 +292,23 @@ Your documentation system is working when:
 ## 🔗 Quick Links
 
 ### Templates
+
 - [Intent Template](template/intent.md)
 - [Design Template](template/design.md)
 - [Pitch Template](template/pitch.md)
 
 ### Guides
+
 - [Focus vs. Task Churn](guides/focus-vs-churn.md)
 - [GitHub Integration Guide](github-integration.md)
 - [Architecture Overview](architecture/system-overview.md)
 
 ### Features
+
 - [Current Features](features/)
 - [Dual Logging System](features/dual-logging/)
 - [Logger API Unification](features/logger-api-unification/)
 
 ### Project Status
+
 - [Done List](README.md#what-weve-shipped)
