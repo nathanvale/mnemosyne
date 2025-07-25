@@ -57,6 +57,9 @@ model Memory {
   relationshipDynamics RelationshipDynamics?
   validationStatus ValidationStatus?
   qualityMetrics   QualityMetrics[]
+  moodScores       MoodScore[]
+  moodDeltas       MoodDelta[]
+  analysisMetadata AnalysisMetadata?
   
   @@index([contentHash])
 }
@@ -119,4 +122,73 @@ model QualityMetrics {
   memory                Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   
   @@index([memoryId])
+}
+
+// Phase 3: Mood Scoring and Analysis Schema
+
+model MoodScore {
+  id              String        @id @default(cuid())
+  memoryId        String
+  score           Float         // 0-10 scale
+  confidence      Float         // 0-1 scale
+  descriptors     String        // JSON array of descriptors
+  algorithmVersion String
+  processingTimeMs Int
+  calculatedAt    DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  memory          Memory        @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  factors         MoodFactor[]
+  
+  @@index([memoryId])
+  @@index([calculatedAt])
+}
+
+model MoodFactor {
+  id            String    @id @default(cuid())
+  moodScoreId   String
+  type          String    // sentiment_analysis, psychological_indicator, etc.
+  weight        Float     // 0-1 scale
+  description   String
+  evidence      String    // JSON array of evidence strings
+  internalScore Float?    // Internal factor score if available
+  createdAt     DateTime  @default(now())
+  
+  moodScore     MoodScore @relation(fields: [moodScoreId], references: [id], onDelete: Cascade)
+  
+  @@index([moodScoreId])
+}
+
+model MoodDelta {
+  id            String   @id @default(cuid())
+  memoryId      String
+  magnitude     Float
+  direction     String   // positive, negative, neutral
+  type          String   // mood_repair, celebration, decline, plateau
+  confidence    Float    // 0-1 scale
+  factors       String   // JSON array of factor strings
+  significance  Float
+  previousScore Float?
+  currentScore  Float
+  detectedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  
+  memory        Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  @@index([memoryId])
+  @@index([detectedAt])
+  @@index([significance])
+}
+
+model AnalysisMetadata {
+  id                  String   @id @default(cuid())
+  memoryId            String   @unique
+  processingDuration  Int      // milliseconds
+  confidence          Float    // 0-1 scale
+  qualityMetrics      String   // JSON quality metrics object
+  issues              String   // JSON array of issues
+  createdAt           DateTime @default(now())
+  
+  memory              Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 }
