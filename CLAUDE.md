@@ -68,6 +68,28 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 - **Tailwind CSS** for styling
 - **pnpm** as package manager with workspaces
 
+### ES Modules Architecture
+
+**This is a pure ES modules monorepo** - all packages use `"type": "module"` with modern import/export syntax.
+
+#### ES Modules Configuration
+
+- **Root package.json**: `"type": "module"` enforces ES modules throughout the monorepo
+- **All packages**: Every package.json contains `"type": "module"`
+- **TypeScript target**: ES2022 with ESNext modules for optimal tree-shaking
+- **Module resolution**: `"moduleResolution": "bundler"` strategy for compatibility
+- **Import syntax**: Only `import`/`export` statements - no `require()` or `module.exports`
+- **File extensions**: `.mjs` for config files, `.ts`/`.tsx` for source code
+- **Exports field**: All packages use modern `"exports"` field instead of legacy `"main"`
+
+#### Benefits of ES Modules
+
+- **Tree-shaking**: Better dead code elimination and smaller bundles
+- **Static analysis**: Tools can analyze dependencies at build time
+- **Future-proof**: Aligns with modern JavaScript standards
+- **Performance**: Faster loading with native browser support
+- **Tooling**: Better IDE support and type checking
+
 ### Monorepo Structure
 
 ```
@@ -318,6 +340,70 @@ In `turbo.json`, ensure proper task dependencies:
 **Problem**: `turbo format:check` fails because packages lack the script
 **Solution**: Ensure ALL packages have the required 5 scripts (even if no-ops)
 
+#### 6. ES Modules Import/Export Issues
+
+**File Extensions in Imports**:
+
+- **Problem**: TypeScript imports failing in compiled output
+- **Solution**: Use `.js` extensions in import statements for compiled output
+
+  ```typescript
+  // ✅ Correct - .js extension for compiled output
+  import { utils } from './utils.js'
+
+  // ❌ Wrong - will fail at runtime
+  import { utils } from './utils.ts'
+  ```
+
+**JSON Imports**:
+
+- **Problem**: Cannot import JSON files with standard syntax
+- **Solution**: Use import assertions
+
+  ```typescript
+  // ✅ ES Modules JSON import
+  import data from './config.json' assert { type: 'json' }
+
+  // ❌ Old CommonJS style
+  const data = require('./config.json')
+  ```
+
+**Dynamic Imports**:
+
+- **Problem**: Need conditional module loading
+- **Solution**: Use `await import()` for dynamic imports
+
+  ```typescript
+  // ✅ ES Modules dynamic import
+  const module = await import('./feature.js')
+
+  // ❌ CommonJS style
+  const module = require('./feature.js')
+  ```
+
+**Node.js Globals**:
+
+- **Problem**: `__dirname` and `__filename` not available in ES modules
+- **Solution**: Use `import.meta.url` with path utilities
+
+  ```typescript
+  // ✅ ES Modules approach
+  import { fileURLToPath } from 'node:url'
+  import { dirname } from 'node:path'
+
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+
+  // ❌ CommonJS globals (not available)
+  console.log(__dirname, __filename)
+  ```
+
+**Configuration Files**:
+
+- **ESLint**: Use `.mjs` extension for config files (`eslint.config.mjs`)
+- **Vitest**: Works with ES modules out of the box
+- **Package.json scripts**: Work normally with ES modules
+
 ### New Package Setup Template
 
 Use this template when creating new packages:
@@ -341,8 +427,9 @@ packages/your-package/
   "name": "@studio/your-package",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "type": "module", // ← CRITICAL: Required for ES modules
   "exports": {
+    // ← Use exports field, not main
     ".": "./src/index.ts"
   },
   "scripts": {
@@ -480,28 +567,65 @@ This command:
 - Keep test helpers within package boundaries
 - Use proper package imports instead of relative paths
 
+**"Cannot use import statement outside a module"**:
+
+- Ensure package.json has `"type": "module"`
+- Check file extensions are correct (`.mjs` for config files)
+- Verify TypeScript compilation target supports ES modules
+
+**"\_\_dirname is not defined"**:
+
+- Replace with `import.meta.url` and path utilities
+- Use `fileURLToPath(import.meta.url)` pattern for file paths
+- Cannot use CommonJS globals in ES modules
+
+**"require() of ES modules is not supported"**:
+
+- All packages use `"type": "module"` - cannot mix CommonJS
+- Convert `require()` calls to `import` statements
+- Use dynamic imports for conditional loading: `await import()`
+
+**"SyntaxError: Named export not found"**:
+
+- Check export names match import names exactly
+- Verify package is built and exports are available
+- Use `import * as name` for namespace imports if needed
+
 ## Development Patterns
 
 ### Import Patterns
 
-Use the new monorepo import patterns:
+Use the modern ES modules import patterns throughout this monorepo:
 
 ```typescript
-// Database operations
+// ✅ ES Modules (used throughout this repo)
 import { PrismaClient } from '@studio/db'
-
-// Logging
 import { logger, createLogger } from '@studio/logger'
-
-// Components
 import { Button, LoggerDemo } from '@studio/ui'
-
-// Scripts and utilities
 import { importMessages } from '@studio/scripts'
-
-// Mocking for tests
 import { server } from '@studio/mocks/server'
+
+// ✅ Default imports
+import defaultExport from '@studio/schema'
+
+// ✅ Type-only imports (for TypeScript)
+import type { User, Message } from '@studio/db'
+
+// ✅ Dynamic imports (when needed)
+const dynamicModule = await import('@studio/feature')
+
+// ❌ CommonJS (DO NOT USE - will fail at runtime)
+const { PrismaClient } = require('@studio/db')
+const logger = require('@studio/logger')
 ```
+
+**ES Modules Best Practices:**
+
+- Always use `import`/`export` syntax
+- Use `type` modifier for TypeScript type imports
+- Prefer named imports over default imports for better tree-shaking
+- Use dynamic imports (`await import()`) for code splitting
+- Never mix ES modules with CommonJS `require()`
 
 ### Component Development
 
