@@ -14,15 +14,27 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./src/persistence/__tests__/test-setup.ts'],
 
-    // Enable concurrent execution with worker-isolated databases
-    pool: 'threads',
-    poolOptions: {
-      threads: {
-        // Allow concurrent execution - each worker gets its own database
-        minThreads: 1,
-        maxThreads: 4, // Limit to 4 workers for optimal performance
-      },
-    },
+    // Use sequential execution in CI to avoid database concurrency issues
+    ...(process.env.CI
+      ? {
+          pool: 'forks',
+          poolOptions: {
+            forks: {
+              singleFork: true, // Run tests sequentially in CI
+            },
+          },
+        }
+      : {
+          // Enable concurrent execution with worker-isolated databases locally
+          pool: 'threads',
+          poolOptions: {
+            threads: {
+              // Allow concurrent execution - each worker gets its own database
+              minThreads: 1,
+              maxThreads: 4, // Limit to 4 workers for optimal performance
+            },
+          },
+        }),
 
     // Increase timeout for database operations
     testTimeout: 30000,
