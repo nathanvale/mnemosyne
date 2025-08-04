@@ -50,6 +50,8 @@ const mockConversationData: ConversationDataInput = {
     },
   ],
   timestamp: new Date('2024-01-01T10:00:00Z'),
+  startTime: new Date('2024-01-01T10:00:00Z'),
+  endTime: new Date('2024-01-01T10:02:00Z'),
   context: {
     platform: 'test-platform',
     conversationType: 'direct',

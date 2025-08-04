@@ -57,8 +57,19 @@ model Memory {
   relationshipDynamics RelationshipDynamics?
   validationStatus ValidationStatus?
   qualityMetrics   QualityMetrics[]
+  moodScores       MoodScore[]
+  moodDeltas       MoodDelta[]
+  deltaPatterns    DeltaPattern[]
+  turningPoints    TurningPoint[]
+  validationResults ValidationResult[]
+  analysisMetadata AnalysisMetadata?
   
+  // Optimized indexes for memory-based mood analysis
   @@index([contentHash])
+  @@index([extractedAt])                 // For temporal memory analysis
+  @@index([confidence])                  // For confidence-based filtering
+  @@index([extractedAt, confidence])     // For time-confidence correlation
+  @@index([createdAt])                   // For creation time analysis
 }
 
 model EmotionalContext {
@@ -119,4 +130,228 @@ model QualityMetrics {
   memory                Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   
   @@index([memoryId])
+}
+
+// Phase 3: Mood Scoring and Analysis Schema
+
+model MoodScore {
+  id              String        @id @default(cuid())
+  memoryId        String
+  score           Float         // 0-10 scale
+  confidence      Float         // 0-1 scale
+  descriptors     String        // JSON array of descriptors
+  algorithmVersion String
+  processingTimeMs Int
+  calculatedAt    DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  memory          Memory        @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  factors         MoodFactor[]
+  
+  // Optimized indexes for mood analysis queries
+  @@index([memoryId])
+  @@index([calculatedAt])
+  @@index([score])                          // For score range queries
+  @@index([confidence])                     // For confidence range queries
+  @@index([score, confidence])              // Composite index for combined filtering
+  @@index([memoryId, calculatedAt])         // For memory-specific time-based queries
+  @@index([calculatedAt, score])            // For time-based score analysis
+  @@index([algorithmVersion, calculatedAt]) // For algorithm performance tracking
+}
+
+model MoodFactor {
+  id            String    @id @default(cuid())
+  moodScoreId   String
+  type          String    // sentiment_analysis, psychological_indicator, etc.
+  weight        Float     // 0-1 scale
+  description   String
+  evidence      String    // JSON array of evidence strings
+  internalScore Float?    // Internal factor score if available
+  createdAt     DateTime  @default(now())
+  
+  moodScore     MoodScore @relation(fields: [moodScoreId], references: [id], onDelete: Cascade)
+  
+  // Optimized indexes for factor analysis
+  @@index([moodScoreId])
+  @@index([type])                           // For factor type filtering
+  @@index([type, weight])                   // For type-weighted analysis
+  @@index([moodScoreId, type])              // For mood-specific factor analysis
+  @@index([weight])                         // For weight-based filtering
+}
+
+model MoodDelta {
+  id            String   @id @default(cuid())
+  memoryId      String
+  conversationId String?  // Link to conversation for delta sequences
+  deltaSequence Int?      // Order within conversation
+  magnitude     Float
+  direction     String   // positive, negative, neutral
+  type          String   // mood_repair, celebration, decline, plateau
+  confidence    Float    // 0-1 scale
+  factors       String   // JSON array of factor strings
+  significance  Float
+  temporalContext String? // JSON temporal context data
+  previousScore Float?
+  currentScore  Float
+  detectedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  
+  memory        Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  patterns      DeltaPatternAssociation[]
+  turningPoints TurningPoint[]
+  
+  // Optimized indexes for delta detection and analysis
+  @@index([memoryId])
+  @@index([detectedAt])
+  @@index([significance])
+  @@index([conversationId, deltaSequence])
+  @@index([direction])                      // For directional delta analysis
+  @@index([type])                           // For delta type filtering
+  @@index([magnitude])                      // For magnitude-based queries
+  @@index([type, significance])             // For type-specific significance ranking
+  @@index([direction, magnitude])           // For directional magnitude analysis
+  @@index([memoryId, detectedAt])           // For memory-specific temporal queries
+  @@index([detectedAt, significance])       // For time-based significance tracking
+  @@index([confidence, significance])       // For confident significant deltas
+  @@index([currentScore, previousScore])    // For score transition analysis
+}
+
+model AnalysisMetadata {
+  id                  String   @id @default(cuid())
+  memoryId            String   @unique
+  processingDuration  Int      // milliseconds
+  confidence          Float    // 0-1 scale
+  qualityMetrics      String   // JSON quality metrics object
+  issues              String   // JSON array of issues
+  createdAt           DateTime @default(now())
+  
+  memory              Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+}
+
+// Delta Pattern Tracking Models
+
+model DeltaPattern {
+  id              String   @id @default(cuid())
+  memoryId        String
+  patternType     String   // recovery_sequence, decline_sequence, plateau_break, oscillation
+  significance    Float
+  confidence      Float
+  description     String
+  duration        Int      // milliseconds
+  averageMagnitude Float
+  metadata        String?  // JSON additional pattern data
+  createdAt       DateTime @default(now())
+  
+  memory          Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  deltaAssociations DeltaPatternAssociation[]
+  
+  // Optimized indexes for pattern analysis
+  @@index([memoryId])
+  @@index([significance])
+  @@index([patternType])
+  @@index([patternType, significance])      // For type-specific pattern ranking
+  @@index([confidence, significance])       // For confident significant patterns
+  @@index([duration])                       // For duration-based analysis
+  @@index([averageMagnitude])               // For magnitude-based pattern analysis
+  @@index([memoryId, patternType])          // For memory-specific pattern types
+  @@index([createdAt, significance])        // For temporal pattern analysis
+}
+
+model DeltaPatternAssociation {
+  id            String       @id @default(cuid())
+  patternId     String
+  deltaId       String
+  sequenceOrder Int          // Order of delta within pattern
+  createdAt     DateTime     @default(now())
+  
+  pattern       DeltaPattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  delta         MoodDelta    @relation(fields: [deltaId], references: [id], onDelete: Cascade)
+  
+  @@unique([patternId, deltaId])
+  @@index([patternId])
+  @@index([deltaId])
+  @@index([patternId, sequenceOrder])      // For ordered pattern retrieval
+  @@index([sequenceOrder])                 // For sequence-based analysis
+}
+
+model TurningPoint {
+  id              String   @id @default(cuid())
+  memoryId        String
+  deltaId         String?  // Associated delta if applicable
+  timestamp       DateTime
+  type            String   // breakthrough, setback, realization, support_received
+  magnitude       Float
+  description     String
+  factors         String   // JSON array of factor strings
+  significance    Float
+  temporalContext String   // JSON temporal context data
+  createdAt       DateTime @default(now())
+  
+  memory          Memory    @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  delta           MoodDelta? @relation(fields: [deltaId], references: [id], onDelete: SetNull)
+  
+  // Optimized indexes for turning point analysis
+  @@index([memoryId])
+  @@index([timestamp])
+  @@index([significance])
+  @@index([type])
+  @@index([type, significance])             // For type-specific significance ranking
+  @@index([magnitude])                      // For magnitude-based analysis
+  @@index([memoryId, timestamp])            // For memory-specific temporal analysis
+  @@index([timestamp, significance])        // For time-based significance tracking
+  @@index([type, magnitude])                // For type-specific magnitude analysis
+  @@index([deltaId])                        // For delta-associated turning points
+}
+
+// Validation History Models
+
+model ValidationResult {
+  id                String   @id @default(cuid())
+  memoryId          String
+  humanScore        Float    // Human-provided mood score for comparison
+  algorithmScore    Float    // Algorithm-generated mood score
+  agreement         Float    // 0-1 scale agreement metric
+  discrepancy       Float    // Absolute difference between scores
+  validatorId       String   // ID of person/system performing validation
+  validationMethod  String   // expert_review, crowd_sourced, comparative_analysis
+  feedback          String?  // Human feedback text
+  biasIndicators    String   // JSON array of bias indicator objects
+  accuracyMetrics   String   // JSON array of accuracy metric objects
+  validatedAt       DateTime // When validation was performed
+  createdAt         DateTime @default(now())
+  
+  memory            Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  // Optimized indexes for validation analysis
+  @@index([memoryId])
+  @@index([validatedAt])
+  @@index([validationMethod])
+  @@index([agreement])
+  @@index([discrepancy])
+  @@index([validatorId])                    // For validator-specific analysis
+  @@index([humanScore])                     // For human score distribution analysis
+  @@index([algorithmScore])                 // For algorithm score distribution analysis
+  @@index([validationMethod, agreement])    // For method-specific agreement analysis
+  @@index([validatorId, agreement])         // For validator performance analysis
+  @@index([validatedAt, agreement])         // For time-based agreement trends
+  @@index([humanScore, algorithmScore])     // For correlation analysis
+  @@index([discrepancy, validationMethod])  // For method-specific error analysis
+}
+
+model CalibrationHistory {
+  id                String   @id @default(cuid())
+  calibrationId     String   @unique
+  adjustmentType    String   // weight_adjustment, threshold_adjustment, algorithm_update
+  targetComponent   String   // sentiment_analysis, psychological_indicator, etc.
+  previousValue     String   // JSON previous configuration
+  newValue          String   // JSON new configuration
+  performanceMetrics String  // JSON performance before/after
+  status            String   // applied, rejected, pending
+  appliedAt         DateTime?
+  createdAt         DateTime @default(now())
+  
+  @@index([createdAt])
+  @@index([status])
+  @@index([targetComponent])
 }

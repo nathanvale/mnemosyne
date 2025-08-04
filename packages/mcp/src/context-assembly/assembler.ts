@@ -105,6 +105,7 @@ export class AgentContextAssembler {
       memories,
       participantId,
     )
+
     const scopedMemories = this.applyScopeFilters(relevantMemories)
 
     const [moodContext, timeline, vocabulary] = await Promise.all([

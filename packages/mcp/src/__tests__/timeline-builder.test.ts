@@ -6,7 +6,7 @@ import { RelationalTimelineBuilder } from '../relational-timeline/builder'
 
 describe('RelationalTimelineBuilder', () => {
   let builder: RelationalTimelineBuilder
-  
+
   beforeEach(() => {
     builder = new RelationalTimelineBuilder()
   })
@@ -14,11 +14,13 @@ describe('RelationalTimelineBuilder', () => {
   describe('buildTimeline', () => {
     it('should handle empty memories', async () => {
       const result = await builder.buildTimeline([], 'participant-1')
-      
+
       expect(result.participantId).toBe('participant-1')
       expect(result.events).toEqual([])
       expect(result.keyMoments).toEqual([])
-      expect(result.summary).toBe('No emotional events available for timeline construction.')
+      expect(result.summary).toBe(
+        'No emotional events available for timeline construction.',
+      )
       expect(result.relationshipDynamics).toEqual([])
     })
 
@@ -34,7 +36,7 @@ describe('RelationalTimelineBuilder', () => {
       })
 
       const result = await builder.buildTimeline([memory], 'participant-1')
-      
+
       expect(result.events).toHaveLength(1)
       expect(result.events[0].type).toBe('mood_change')
       expect(result.events[0].description).toContain('mood_repair')
@@ -47,10 +49,14 @@ describe('RelationalTimelineBuilder', () => {
       })
 
       const result = await builder.buildTimeline([memory], 'participant-1')
-      
-      const relationshipEvents = result.events.filter(e => e.type === 'relationship_shift')
+
+      const relationshipEvents = result.events.filter(
+        (e) => e.type === 'relationship_shift',
+      )
       expect(relationshipEvents).toHaveLength(1)
-      expect(relationshipEvents[0].description).toContain('Positive relationship dynamics')
+      expect(relationshipEvents[0].description).toContain(
+        'Positive relationship dynamics',
+      )
     })
 
     it('should extract significant moments', async () => {
@@ -59,8 +65,10 @@ describe('RelationalTimelineBuilder', () => {
       })
 
       const result = await builder.buildTimeline([memory], 'participant-1')
-      
-      const significantEvents = result.events.filter(e => e.type === 'significant_moment')
+
+      const significantEvents = result.events.filter(
+        (e) => e.type === 'significant_moment',
+      )
       expect(significantEvents).toHaveLength(1)
       expect(significantEvents[0].emotionalImpact).toBe(9)
     })
@@ -73,8 +81,10 @@ describe('RelationalTimelineBuilder', () => {
       })
 
       const result = await builder.buildTimeline([memory], 'participant-1')
-      
-      const supportEvents = result.events.filter(e => e.type === 'support_exchange')
+
+      const supportEvents = result.events.filter(
+        (e) => e.type === 'support_exchange',
+      )
       expect(supportEvents).toHaveLength(1)
       expect(supportEvents[0].description).toContain('support_seeking')
     })
@@ -100,11 +110,13 @@ describe('RelationalTimelineBuilder', () => {
       })
 
       const result = await builder.buildTimeline([memory], 'participant-1')
-      
+
       expect(result.keyMoments).toHaveLength(1)
       expect(result.keyMoments[0].type).toBe('breakthrough')
       expect(result.keyMoments[0].significance).toBe(7)
-      expect(result.keyMoments[0].description).toBe('Major emotional breakthrough')
+      expect(result.keyMoments[0].description).toBe(
+        'Major emotional breakthrough',
+      )
     })
 
     it('should analyze relationship evolution when enabled', async () => {
@@ -118,14 +130,19 @@ describe('RelationalTimelineBuilder', () => {
         createMockMemory({
           timestamp: new Date(now.getTime() - i * 24 * 60 * 60 * 1000), // i days ago
           relationshipQuality: 6 + Math.sin(i) * 2,
-        })
+        }),
       )
 
-      const result = await builderWithEvolution.buildTimeline(memories, 'participant-1')
-      
+      const result = await builderWithEvolution.buildTimeline(
+        memories,
+        'participant-1',
+      )
+
       expect(result.relationshipDynamics.length).toBeGreaterThan(0)
       expect(result.relationshipDynamics[0]).toHaveProperty('qualityMetrics')
-      expect(result.relationshipDynamics[0]).toHaveProperty('communicationPatterns')
+      expect(result.relationshipDynamics[0]).toHaveProperty(
+        'communicationPatterns',
+      )
     })
 
     it('should respect maxEvents configuration', async () => {
@@ -145,11 +162,14 @@ describe('RelationalTimelineBuilder', () => {
             confidence: 0.8,
             factors: [`factor-${i}`],
           },
-        })
+        }),
       )
 
-      const result = await limitedBuilder.buildTimeline(memories, 'participant-1')
-      
+      const result = await limitedBuilder.buildTimeline(
+        memories,
+        'participant-1',
+      )
+
       expect(result.events).toHaveLength(3)
     })
 
@@ -183,24 +203,39 @@ describe('RelationalTimelineBuilder', () => {
         },
       })
 
-      const result = await weeklyBuilder.buildTimeline([oldMemory, recentMemory], 'participant-1')
-      
-      const recentEvents = result.events.filter(e => 
-        new Date(e.timestamp).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+      const result = await weeklyBuilder.buildTimeline(
+        [oldMemory, recentMemory],
+        'participant-1',
+      )
+
+      const recentEvents = result.events.filter(
+        (e) =>
+          new Date(e.timestamp).getTime() >
+          Date.now() - 7 * 24 * 60 * 60 * 1000,
       )
       expect(recentEvents.length).toBeGreaterThan(0)
     })
 
     it('should generate meaningful timeline summary', async () => {
       const memories = [
-        createMockMemory({ significance: 8, patterns: [{ type: 'support_seeking', significance: 6, confidence: 0.8 }] }),
-        createMockMemory({ significance: 7, patterns: [{ type: 'mood_repair', significance: 5, confidence: 0.7 }] }),
+        createMockMemory({
+          significance: 8,
+          patterns: [
+            { type: 'support_seeking', significance: 6, confidence: 0.8 },
+          ],
+        }),
+        createMockMemory({
+          significance: 7,
+          patterns: [{ type: 'mood_repair', significance: 5, confidence: 0.7 }],
+        }),
       ]
 
       const result = await builder.buildTimeline(memories, 'participant-1')
-      
+
       expect(result.summary).toContain('emotional events')
-      expect(result.summary).not.toBe('No emotional events available for timeline construction.')
+      expect(result.summary).not.toBe(
+        'No emotional events available for timeline construction.',
+      )
     })
   })
 
@@ -209,7 +244,7 @@ describe('RelationalTimelineBuilder', () => {
       const yearBuilder = new RelationalTimelineBuilder({
         timeWindow: 'year',
       })
-      
+
       expect(yearBuilder).toBeInstanceOf(RelationalTimelineBuilder)
     })
 
@@ -217,7 +252,7 @@ describe('RelationalTimelineBuilder', () => {
       const simpleBuilder = new RelationalTimelineBuilder({
         includeRelationshipEvolution: false,
       })
-      
+
       expect(simpleBuilder).toBeInstanceOf(RelationalTimelineBuilder)
     })
   })
@@ -236,7 +271,12 @@ function createMockMemory(options: {
   }
   relationshipQuality?: number
   patterns?: Array<{
-    type: 'support_seeking' | 'mood_repair' | 'celebration' | 'vulnerability' | 'growth'
+    type:
+      | 'support_seeking'
+      | 'mood_repair'
+      | 'celebration'
+      | 'vulnerability'
+      | 'growth'
     significance: number
     confidence: number
   }>
@@ -280,13 +320,15 @@ function createMockMemory(options: {
       },
       patterns: options.patterns || [],
     },
-    relationshipDynamics: options.relationshipQuality ? {
-      quality: options.relationshipQuality,
-      trust: options.relationshipQuality * 0.9,
-      intimacy: options.relationshipQuality * 0.8,
-      patterns: ['supportive', 'collaborative'],
-      stability: options.relationshipQuality / 10,
-    } : undefined,
+    relationshipDynamics: options.relationshipQuality
+      ? {
+          quality: options.relationshipQuality,
+          trust: options.relationshipQuality * 0.9,
+          intimacy: options.relationshipQuality * 0.8,
+          patterns: ['supportive', 'collaborative'],
+          stability: options.relationshipQuality / 10,
+        }
+      : undefined,
     significance: {
       overall: options.significance || 5,
       components: {
@@ -296,7 +338,8 @@ function createMockMemory(options: {
         temporalRelevance: options.significance || 5,
       },
       confidence: 0.8,
-      category: options.significance && options.significance > 7 ? 'high' : 'medium',
+      category:
+        options.significance && options.significance > 7 ? 'high' : 'medium',
       validationPriority: options.significance || 5,
     },
     processing: {

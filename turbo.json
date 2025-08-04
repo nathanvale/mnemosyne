@@ -117,41 +117,6 @@
     },
     "clean": {
       "cache": false
-    },
-    "docs:dev": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["^build"],
-      "inputs": [
-        "docs/**",
-        "src/**",
-        "docusaurus.config.ts",
-        "sidebars.ts",
-        "package.json"
-      ]
-    },
-    "docs:build": {
-      "dependsOn": ["^build"],
-      "inputs": [
-        "docs/**",
-        "src/**",
-        "static/**",
-        "docusaurus.config.ts",
-        "sidebars.ts",
-        "package.json",
-        "tsconfig.json"
-      ],
-      "outputs": ["build/**"]
-    },
-    "docs:serve": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["docs:build"]
-    },
-    "docs:deploy": {
-      "cache": false,
-      "dependsOn": ["docs:build"],
-      "inputs": ["build/**", "package.json"]
     }
   }
 }

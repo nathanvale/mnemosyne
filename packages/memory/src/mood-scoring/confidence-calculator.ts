@@ -242,6 +242,11 @@ export class ConfidenceCalculator {
       language_sentiment: 0.8,
       interaction_pattern: 0.7,
       context_clues: 0.6,
+      sentiment_analysis: 0.85,
+      psychological_indicators: 0.75,
+      relationship_context: 0.7,
+      conversational_flow: 0.65,
+      historical_baseline: 0.6,
     }
 
     let quality = typeQuality[factor.type] || 0.5

@@ -27,6 +27,7 @@
     "storybook": "pnpm --filter @studio/app storybook",
     "build-storybook": "pnpm --filter @studio/app build-storybook",
     "prepare": "husky",
+    "postinstall": "playwright install chromium",
     "import:messages": "tsx packages/scripts/src/import-messages.ts --in packages/scripts/src/data/messages.csv",
     "studio:dev": "pnpm --filter \"@studio/*\" dev",
     "studio:build": "pnpm --filter \"@studio/*\" build",
@@ -36,7 +37,7 @@
     "clean:cache": "turbo clean && rm -rf node_modules/.cache",
     "clean:all": "pnpm clean && pnpm clean:cache && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
-    "check": "turbo lint type-check test -- --run",
+    "check": "turbo format:check lint type-check && turbo test -- --run",
     "check:packages": "pnpm --filter \"@studio/*\" run check",
     "workspace:info": "pnpm list --depth=0",
     "workspace:outdated": "pnpm outdated --recursive"

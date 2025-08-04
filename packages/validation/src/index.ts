@@ -1,6 +1,6 @@
 /**
  * @studio/validation - Smart validation system for emotional memories
- * 
+ *
  * This package provides intelligent validation automation for emotional memories
  * with auto-confirmation, multi-factor confidence scoring, and emotional
  * significance weighting to reduce manual validation burden while maintaining

@@ -1,3 +1,0 @@
-apps/studio/.next/
-packages/logger/dist/
-packages/db/generated/

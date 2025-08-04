@@ -267,7 +267,7 @@ export class MemoryDatabase {
         data: null,
         validation,
         success: false,
-        error: `Memory validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+        error: `Memory validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
       }
     }
 
@@ -321,7 +321,7 @@ export class MemoryDatabase {
         data: null,
         validation,
         success: false,
-        error: `Emotional context validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+        error: `Emotional context validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
       }
     }
 
@@ -368,7 +368,7 @@ export class MemoryDatabase {
         data: null,
         validation,
         success: false,
-        error: `Relationship dynamics validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+        error: `Relationship dynamics validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
       }
     }
 
@@ -432,7 +432,7 @@ export class MemoryDatabase {
         data: null,
         validation,
         success: false,
-        error: `Memory update validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+        error: `Memory update validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
       }
     }
 

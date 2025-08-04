@@ -1,5 +1,6 @@
 import type { ExtractedMemory } from '@studio/memory'
 
+import { isolateTest } from '@studio/test-config'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { AgentContextAssembler } from '../context-assembly/assembler'
@@ -8,6 +9,8 @@ describe('AgentContextAssembler', () => {
   let assembler: AgentContextAssembler
 
   beforeEach(() => {
+    // Isolate test state to prevent race conditions
+    isolateTest()
     assembler = new AgentContextAssembler()
   })
 
@@ -178,21 +181,23 @@ describe('AgentContextAssembler', () => {
   })
 
   describe('recommendations', () => {
-    // TODO: Fix mood score calculation in MoodContextTokenizer
-    // The tokenizer is returning a score of 5 regardless of input mood scores
-    // This causes recommendation logic to always suggest 'balanced' tone
-    // Issue: https://github.com/nathanvale/mnemosyne/issues/93
-    it.skip('should recommend supportive tone for low mood', async () => {
+    it('should recommend supportive tone for low mood', async () => {
       const memories = [
         createMockMemory({
           moodScore: 1,
           descriptors: ['devastated', 'hopeless'],
+          significance: 7, // Ensure it passes relevance threshold (0.6 * 10 = 6)
         }),
         createMockMemory({
           moodScore: 1,
           descriptors: ['depressed', 'overwhelmed'],
+          significance: 7,
         }),
-        createMockMemory({ moodScore: 2, descriptors: ['sad', 'anxious'] }),
+        createMockMemory({
+          moodScore: 2,
+          descriptors: ['sad', 'anxious'],
+          significance: 7,
+        }),
       ]
 
       const context = await assembler.assembleContext(memories, 'participant-1')
@@ -202,10 +207,18 @@ describe('AgentContextAssembler', () => {
       expect(context.recommendations.avoid).toContain('criticism')
     })
 
-    it.skip('should recommend celebratory approach for high mood', async () => {
+    it('should recommend celebratory approach for high mood', async () => {
       const memories = [
-        createMockMemory({ moodScore: 9, descriptors: ['excited', 'joyful'] }),
-        createMockMemory({ moodScore: 8, descriptors: ['happy', 'confident'] }),
+        createMockMemory({
+          moodScore: 9,
+          descriptors: ['excited', 'joyful'],
+          significance: 7, // Ensure it passes relevance threshold
+        }),
+        createMockMemory({
+          moodScore: 8,
+          descriptors: ['happy', 'confident'],
+          significance: 7,
+        }),
       ]
 
       const context = await assembler.assembleContext(memories, 'participant-1')
@@ -214,7 +227,7 @@ describe('AgentContextAssembler', () => {
       expect(context.recommendations.approach).toBe('celebratory')
     })
 
-    it.skip('should recommend brief responses for volatile mood', async () => {
+    it('should recommend brief responses for volatile mood', async () => {
       const now = new Date()
       const memories = Array.from({ length: 6 }, (_, i) =>
         createMockMemory({
@@ -222,6 +235,7 @@ describe('AgentContextAssembler', () => {
           timestamp: new Date(now.getTime() - i * 60 * 60 * 1000), // hours apart instead of days
           descriptors:
             i % 2 === 0 ? ['elated', 'energetic'] : ['devastated', 'hopeless'],
+          significance: 7, // Ensure all memories pass relevance threshold
         }),
       )
 

@@ -1,0 +1,31 @@
+{
+  "hashes": {
+    "/Users/nathanvale/code/mnemosyne/tsconfig.json": "ef01ff6d972c3904196417524d0e48f4023a07ae9d55e1c350b68e9d171531b0"
+  },
+  "mappings": {
+    "next-env.d.ts": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    },
+    "**/*.ts": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    },
+    "**/*.tsx": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    },
+    ".next/types/**/*.ts": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    },
+    "vite.config.ts": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    },
+    "vitest.config.ts": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/tsconfig.json",
+      "excludes": []
+    }
+  }
+}

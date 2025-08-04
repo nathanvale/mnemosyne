@@ -1,4 +1,4 @@
-import type { ExtractedMemory } from '@studio/memory'
+import type { ExtractedMemory, EmotionalPattern } from '@studio/memory'
 import type { Participant } from '@studio/schema'
 
 import { logger } from '@studio/logger'
@@ -172,7 +172,8 @@ export class EmotionalVocabularyExtractor {
       }
 
       const supportPatterns = memory.emotionalAnalysis.patterns.filter(
-        (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+        (p: EmotionalPattern) =>
+          p.type === 'support_seeking' || p.type === 'mood_repair',
       )
 
       for (const pattern of supportPatterns) {
@@ -447,7 +448,8 @@ export class EmotionalVocabularyExtractor {
 
     const patterns = memory.emotionalAnalysis.patterns
     const hasSupport = patterns.some(
-      (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+      (p: EmotionalPattern) =>
+        p.type === 'support_seeking' || p.type === 'mood_repair',
     )
     if (hasSupport) tones.push('supportive', 'caring')
 
@@ -526,7 +528,8 @@ export class EmotionalVocabularyExtractor {
 
     const patterns = memory.emotionalAnalysis.patterns
     const supportPatterns = patterns.filter(
-      (p) => p.type === 'support_seeking' || p.type === 'mood_repair',
+      (p: EmotionalPattern) =>
+        p.type === 'support_seeking' || p.type === 'mood_repair',
     )
 
     if (supportPatterns.length > 0) {
@@ -578,12 +581,12 @@ export class EmotionalVocabularyExtractor {
 
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach((desc) =>
+      descriptors.forEach((desc: string) =>
         terms.add(this.normalizeMoodDescriptor(desc)),
       )
 
       const themes = memory.emotionalAnalysis.context.themes || []
-      themes.forEach((theme) => terms.add(this.normalizeTheme(theme)))
+      themes.forEach((theme: string) => terms.add(this.normalizeTheme(theme)))
     }
 
     return Array.from(terms)
@@ -643,13 +646,13 @@ export class EmotionalVocabularyExtractor {
 
     for (const memory of memories) {
       const descriptors = memory.emotionalAnalysis.moodScoring.descriptors
-      descriptors.forEach((desc) => {
+      descriptors.forEach((desc: string) => {
         const term = this.normalizeMoodDescriptor(desc)
         frequency.set(term, (frequency.get(term) || 0) + 1)
       })
 
       const themes = memory.emotionalAnalysis.context.themes || []
-      themes.forEach((theme) => {
+      themes.forEach((theme: string) => {
         const term = this.normalizeTheme(theme)
         frequency.set(term, (frequency.get(term) || 0) + 1)
       })

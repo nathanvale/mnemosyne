@@ -15,17 +15,24 @@ export * from './extraction/enhanced-processor'
 // export * from './extraction/quality-assessor'
 // export * from './extraction/batch-coordinator'
 
-// TODO: Mood scoring system - implement in future PRs
-// export * from './mood-scoring/analyzer'
-// export * from './mood-scoring/delta-detector'
-// export * from './mood-scoring/confidence-calculator'
-// export * from './mood-scoring/pattern-recognizer'
+// Mood scoring system
+export * from './mood-scoring/analyzer'
+export * from './mood-scoring/delta-detector'
+export * from './mood-scoring/confidence-calculator'
+export * from './mood-scoring/calibration-system'
+export * from './mood-scoring/edge-case-handler'
+export * from './mood-scoring/emotional-baseline-manager'
+export * from './mood-scoring/emotional-context-builder'
+export * from './mood-scoring/relationship-context-analyzer'
+export * from './mood-scoring/validation-framework'
 
-// TODO: Emotional significance assessment - implement in future PRs
-// export * from './significance/analyzer'
-// export * from './significance/salience-calculator'
-// export * from './significance/relationship-impact'
-// export * from './significance/prioritizer'
+// Emotional significance assessment
+export * from './significance/analyzer'
+export * from './significance/salience-calculator'
+export * from './significance/prioritizer'
+
+// Persistence layer
+export * from './persistence'
 
 // TODO: Memory organization and clustering - implement in future PRs
 // export * from './organization/clusterer'
