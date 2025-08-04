@@ -587,7 +587,7 @@ describe('Mood Score Storage - Task 6.1', () => {
       }
 
       // Mock transaction context - in real implementation this would be a Prisma transaction
-      const mockTransaction = {}
+      const _mockTransaction = {}
 
       // Test that the method accepts transaction context without throwing
       expect(async () => {
@@ -611,7 +611,7 @@ describe('Mood Score Storage - Task 6.1', () => {
       ]
 
       // Mock transaction context
-      const mockTransaction = {}
+      const _mockTransaction = {}
 
       // Test that the method accepts transaction context without throwing
       expect(async () => {

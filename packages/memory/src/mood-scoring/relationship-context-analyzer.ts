@@ -1,10 +1,6 @@
 import { createLogger } from '@studio/logger'
 
-import type {
-  ConversationData,
-  RelationshipDynamics,
-  MoodAnalysisResult,
-} from '../types'
+import type { ConversationData, RelationshipDynamics } from '../types'
 
 const logger = createLogger({
   tags: ['mood-scoring', 'relationship-context'],

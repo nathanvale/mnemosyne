@@ -26,4 +26,11 @@ export default [
       'no-console': 'off',
     },
   },
+  {
+    files: ['src/mood-scoring/validation-framework.ts'],
+    rules: {
+      // Wallaby.js debug output needs console access
+      'no-console': 'off',
+    },
+  },
 ]

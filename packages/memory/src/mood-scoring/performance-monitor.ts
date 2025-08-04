@@ -21,7 +21,7 @@ interface PerformanceMetric {
   confidence?: number
   throughput: number // Operations per second
   errorCount: number
-  metadata: Record<string, any>
+  metadata: Record<string, string | number | boolean>
 }
 
 interface QualityMetric {
@@ -33,7 +33,7 @@ interface QualityMetric {
   performanceRating: 'excellent' | 'good' | 'satisfactory' | 'needs_improvement'
   trendDirection: 'improving' | 'stable' | 'declining'
   context: string
-  metadata: Record<string, any>
+  metadata: Record<string, string | number | boolean>
 }
 
 interface PerformanceTrend {
@@ -73,7 +73,7 @@ interface PerformanceAlert {
   threshold: number
   isResolved: boolean
   resolvedAt?: Date
-  metadata: Record<string, any>
+  metadata: Record<string, string | number | boolean>
 }
 
 interface PerformanceDashboard {
@@ -116,9 +116,9 @@ export class PerformanceMonitoringService {
       accuracyScore?: number
       confidence?: number
       errorCount?: number
-      metadata?: Record<string, any>
+      metadata?: Record<string, string | number | boolean>
     } = {},
-    transaction?: PrismaTransaction,
+    _transaction?: PrismaTransaction,
   ): Promise<PerformanceMetric> {
     const throughput = inputSize / (processingTimeMs / 1000) // Operations per second
 
@@ -149,8 +149,8 @@ export class PerformanceMonitoringService {
     value: number,
     baseline: number,
     context: string,
-    metadata: Record<string, any> = {},
-    transaction?: PrismaTransaction,
+    metadata: Record<string, string | number | boolean> = {},
+    _transaction?: PrismaTransaction,
   ): Promise<QualityMetric> {
     const performanceRating = this.calculatePerformanceRating(
       value,
@@ -296,7 +296,7 @@ export class PerformanceMonitoringService {
     const recentMetrics = this.metrics.filter(
       (metric) => metric.timestamp >= cutoffDate,
     )
-    const recentQualityMetrics = this.qualityMetrics.filter(
+    const _recentQualityMetrics = this.qualityMetrics.filter(
       (metric) => metric.timestamp >= cutoffDate,
     )
 
@@ -540,7 +540,7 @@ export class PerformanceMonitoringService {
   private async createAlert(
     condition: AlertCondition,
     metricValue: number,
-    metadata: Record<string, any>,
+    metadata: Record<string, string | number | boolean>,
   ): Promise<void> {
     // Check if similar alert already exists and is not resolved
     const existingAlert = this.activeAlerts.find(
@@ -595,7 +595,7 @@ export class PerformanceMonitoringService {
 
   private async calculateTrendDirection(
     metricType: string,
-    currentValue: number,
+    _currentValue: number,
   ): Promise<QualityMetric['trendDirection']> {
     const recentMetrics = this.qualityMetrics
       .filter((m) => m.metricType === metricType)

@@ -1,13 +1,5 @@
 import { PrismaClient } from '@studio/db'
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  beforeAll,
-  afterAll,
-} from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { ValidationResultStorageService } from '../validation-result-storage'
 import { TestDataFactory } from './test-data-factory'
@@ -54,37 +46,9 @@ interface AccuracyMetric {
   trendDirection: 'improving' | 'stable' | 'declining'
 }
 
-interface ValidationTrend {
-  metricType: string
-  timeWindow: string // '7d', '30d', '90d'
-  dataPoints: Array<{
-    timestamp: Date
-    value: number
-  }>
-  trendSlope: number // Positive = improving, negative = declining
-  correlationCoefficient: number
-  significanceLevel: number
-}
-
-interface BiasAnalysis {
-  overallBiasScore: number // 0-1 scale, 0 = no bias
-  biasPatterns: Array<{
-    pattern: string
-    frequency: number
-    impact: 'low' | 'medium' | 'high'
-    recommendations: string[]
-  }>
-  demographicBias?: {
-    detected: boolean
-    affectedGroups: string[]
-    magnitude: number
-  }
-  temporalBias?: {
-    detected: boolean
-    timePatterns: string[]
-    magnitude: number
-  }
-}
+// Commented out unused interfaces - will be implemented when needed
+// interface ValidationTrend { ... }
+// interface BiasAnalysis { ... }
 
 describe('Validation Result Storage - Task 6.5', () => {
   let storageService: ValidationResultStorageService
@@ -593,7 +557,7 @@ describe('Validation Result Storage - Task 6.5', () => {
 
     it('should handle cascade deletion when memory is removed', async () => {
       // Store validation result
-      const stored = await storageService.storeValidationResult({
+      const _stored = await storageService.storeValidationResult({
         memoryId: testMemoryId,
         humanScore: 8.0,
         algorithmScore: 7.8,

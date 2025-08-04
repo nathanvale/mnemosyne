@@ -1,4 +1,4 @@
-import { afterAll, beforeEach } from 'vitest'
+import { afterAll } from 'vitest'
 
 import { WorkerDatabaseFactory } from './worker-database-factory'
 

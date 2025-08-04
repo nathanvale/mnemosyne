@@ -57,7 +57,7 @@ describe('Database Integration - Task 6.9', () => {
     testMemoryId = memory.id
   })
 
-  async function cleanupTestData() {
+  async function _cleanupTestData() {
     await prisma.deltaPatternAssociation.deleteMany()
     await prisma.deltaPattern.deleteMany()
     await prisma.turningPoint.deleteMany()

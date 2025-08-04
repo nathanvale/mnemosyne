@@ -9,7 +9,7 @@ import { WorkerDatabaseFactory } from './worker-database-factory'
 
 describe('Concurrency Validation Tests - Phase 2', () => {
   let prisma: PrismaClient
-  let moodAnalyzer: MoodScoringAnalyzer
+  let _moodAnalyzer: MoodScoringAnalyzer
   let deltaDetector: DeltaDetector
 
   beforeEach(async () => {
@@ -30,7 +30,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
   describe('Worker Isolation Under Stress', () => {
     it('should handle concurrent memory creation across multiple workers without conflicts', async () => {
       const concurrentOperations = 10 // Reduced for Wallaby.js performance
-      const workerPromises: Promise<any>[] = []
+      const workerPromises: Promise<void>[] = []
 
       // Simulate multiple operations creating memories simultaneously
       for (let i = 0; i < concurrentOperations; i++) {
@@ -75,7 +75,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
       // Analyze results
       const successes = results.filter((r) => r.success)
-      const failures = results.filter((r) => !r.success)
+      const _failures = results.filter((r) => !r.success)
 
       // Should have high success rate (allow for some expected failures due to timing)
       const successRate = successes.length / concurrentOperations
@@ -109,7 +109,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       }
 
       // Perform concurrent operations on the memories
-      const operationPromises = memoryIds.map(async (memoryId, index) => {
+      const operationPromises = memoryIds.map(async (memoryId, _index) => {
         try {
           // Verify the memory exists
           const verification = await prisma.memory.findUnique({
@@ -144,7 +144,11 @@ describe('Concurrency Validation Tests - Phase 2', () => {
     it('should handle simultaneous database writes without data corruption', async () => {
       const workerId = WorkerDatabaseFactory.getWorkerId()
       const concurrentWrites = 8 // Reduced for Wallaby.js performance
-      const writePromises: Promise<any>[] = []
+      const writePromises: Promise<{
+        success: boolean
+        memoryId?: string
+        error?: unknown
+      }>[] = []
 
       for (let i = 0; i < concurrentWrites; i++) {
         const writePromise = (async () => {
@@ -198,7 +202,12 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
     it('should handle concurrent delta detection without interference', async () => {
       const concurrentAnalyses = 8 // Reduced for Wallaby.js performance
-      const analysisPromises: Promise<any>[] = []
+      const analysisPromises: Promise<{
+        success: boolean
+        conversation?: ConversationData
+        delta?: { detected: boolean }
+        error?: unknown
+      }>[] = []
 
       for (let i = 0; i < concurrentAnalyses; i++) {
         const analysisPromise = (async () => {
@@ -282,7 +291,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       // Create data in current worker's database
       const memoryId = `isolation-memory-${currentWorkerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-      const memory = await prisma.memory.create({
+      const _memory = await prisma.memory.create({
         data: {
           id: memoryId,
           sourceMessageIds: JSON.stringify([1, 2, 3]),

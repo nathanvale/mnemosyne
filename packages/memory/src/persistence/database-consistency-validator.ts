@@ -230,7 +230,7 @@ export class DatabaseConsistencyValidator {
       for (const factor of moodFactors) {
         try {
           JSON.parse(factor.evidence)
-        } catch (error) {
+        } catch {
           inconsistencies.push({
             type: 'data_format_error',
             details: `MoodFactor ${factor.id} has invalid JSON in evidence field`,
@@ -243,7 +243,7 @@ export class DatabaseConsistencyValidator {
       for (const delta of moodDeltas) {
         try {
           JSON.parse(delta.factors)
-        } catch (error) {
+        } catch {
           inconsistencies.push({
             type: 'data_format_error',
             details: `MoodDelta ${delta.id} has invalid JSON in factors field`,
@@ -254,7 +254,7 @@ export class DatabaseConsistencyValidator {
         if (delta.temporalContext) {
           try {
             JSON.parse(delta.temporalContext)
-          } catch (error) {
+          } catch {
             inconsistencies.push({
               type: 'data_format_error',
               details: `MoodDelta ${delta.id} has invalid JSON in temporalContext field`,

@@ -162,7 +162,7 @@ export class TransactionTestHelper {
             },
           })
         })
-      } catch (transactionError) {
+      } catch {
         rollbackTriggered = true
         // This is expected - the transaction should fail and rollback
       }
@@ -201,7 +201,7 @@ export class TransactionTestHelper {
       // Attempt cleanup
       try {
         await this.cleanupRollbackTest(testMemoryId)
-      } catch (cleanupError) {
+      } catch {
         // Ignore cleanup errors in this case
       }
 
@@ -292,7 +292,21 @@ export class TransactionTestHelper {
     }
   }
 
-  private checkForDataCorruption(memoryData: any): boolean {
+  private checkForDataCorruption(memoryData: {
+    moodScores?: Array<{
+      descriptors: string
+      confidence?: number
+    }>
+    moodFactors?: Array<{ evidence: string }>
+    moodDeltas?: Array<{
+      confidence: number
+      significance: number
+    }>
+    validationResults?: Array<{
+      agreement: number
+      discrepancy: number
+    }>
+  }): boolean {
     if (!memoryData) return true
 
     // Check for various data corruption indicators
@@ -329,7 +343,7 @@ export class TransactionTestHelper {
       }
 
       return false
-    } catch (error) {
+    } catch {
       return true // JSON parsing errors indicate corruption
     }
   }
