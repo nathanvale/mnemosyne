@@ -282,6 +282,10 @@ export class MemoryDatabase {
           contentHash: memoryData.contentHash,
           deduplicationMetadata: memoryData.deduplicationMetadata,
           extractedAt: memoryData.extractedAt ?? new Date(),
+          // Initialize clustering fields with defaults
+          clusteringMetadata: null,
+          lastClusteredAt: null,
+          clusterParticipationCount: 0,
         },
         include: {
           messages: true,
@@ -515,6 +519,10 @@ export class MemoryDatabase {
               contentHash: memory.contentHash,
               deduplicationMetadata: memory.deduplicationMetadata,
               extractedAt: memory.extractedAt ?? new Date(),
+              // Initialize clustering fields with defaults
+              clusteringMetadata: null,
+              lastClusteredAt: null,
+              clusterParticipationCount: 0,
             },
           }),
         ),

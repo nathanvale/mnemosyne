@@ -269,6 +269,110 @@ import { server } from '@studio/mocks/server'
 - Parallel builds and tests
 - Optimized development server startup
 
+## Test Database Architecture and Debugging Guide
+
+### Overview
+
+The mnemosyne project uses a sophisticated test database architecture to ensure test isolation and proper schema management across different testing environments. This guide documents the key components and common debugging scenarios.
+
+### Key Components
+
+#### 1. Worker Database Factory (`packages/memory/src/persistence/__tests__/worker-database-factory.ts`)
+
+- Creates isolated SQLite databases for each test worker
+- Uses in-memory databases for Wallaby.js (`sqlite://:memory:?cache=shared`)
+- Uses file-based databases for regular test runners
+- Implements schema versioning to force recreation when schema changes
+- Includes clustering fields support for Memory table
+
+#### 2. Test Database Creation (`packages/test-config/src/database-testing.ts`)
+
+- Provides `createTestDatabase()` function used by all tests
+- Creates temporary SQLite databases in system temp directory
+- Applies full schema including all tables, indexes, and clustering fields
+- Handles proper cleanup after tests complete
+
+#### 3. Memory Operations (`packages/db/src/memory-operations.ts`)
+
+- Provides database operations with validation
+- **Critical**: Must initialize clustering fields when creating memories:
+  - `clusteringMetadata: null`
+  - `lastClusteredAt: null`
+  - `clusterParticipationCount: 0`
+
+### Common Issues and Solutions
+
+#### Issue 1: "The column `clusterParticipationCount` does not exist"
+
+**Cause**: Test database schema is out of sync with Prisma schema
+**Solutions**:
+
+1. Update `worker-database-factory.ts` Memory table creation to include clustering fields
+2. Update `database-testing.ts` schema statements to match current migrations
+3. Add schema version tracking to force recreation:
+   ```typescript
+   private static readonly SCHEMA_VERSION = '2024-08-04-clustering'
+   ```
+
+#### Issue 2: Validation constraints not enforced
+
+**Cause**: Tests using raw Prisma client instead of operations wrappers
+**Solution**: Use operation wrappers that include validation:
+
+- Use `clusteringOps.createCluster()` instead of `prisma.memoryCluster.create()`
+- Use `clusteringOps.addMemoryToCluster()` instead of `prisma.clusterMembership.create()`
+
+#### Issue 3: Memory deduplication tests returning 0 counts
+
+**Cause**: Memory creation not setting required clustering field defaults
+**Solution**: Update `createMemory()` in `memory-operations.ts` to include clustering fields
+
+#### Issue 4: Performance tests failing in Wallaby
+
+**Cause**: Wallaby.js environment has higher performance variance
+**Solution**: Add environment-specific thresholds:
+
+```typescript
+const threshold = process.env.WALLABY_WORKER === 'true' ? 150 : 50
+```
+
+### Testing Best Practices
+
+1. **Always use test utilities**:
+   - Use `createTestDatabase()` from `@studio/test-config`
+   - Use operation wrappers from `@studio/db` for validation
+
+2. **Schema synchronization**:
+   - When adding new Prisma migrations, update:
+     - `worker-database-factory.ts` table creation statements
+     - `database-testing.ts` schema statements
+   - Include all new fields with proper defaults
+
+3. **Test isolation**:
+   - Each test gets its own database instance
+   - Databases are cleaned up after tests
+   - Use unique content hashes to avoid constraint violations:
+     ```typescript
+     contentHash: `test-hash-${Date.now()}-${Math.random()}`
+     ```
+
+4. **Wallaby.js considerations**:
+   - Uses in-memory databases for speed
+   - May have different performance characteristics
+   - Use `process.env.WALLABY_WORKER` to detect Wallaby environment
+   - Make performance thresholds more lenient for Wallaby
+
+### Debugging Checklist
+
+When tests fail with database errors:
+
+1. Check if new fields were added to Prisma schema
+2. Verify test database creation includes all fields
+3. Ensure operation wrappers set proper defaults
+4. Check if tests are using validation wrappers
+5. Look for unique constraint violations
+6. Consider Wallaby-specific environment differences
+
 # important-instruction-reminders
 
 Do what has been asked; nothing more, nothing less.

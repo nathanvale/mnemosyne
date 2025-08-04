@@ -1,7 +1,10 @@
 import { PrismaClient, MemoryCluster, Memory } from '@studio/db'
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
 
+import { PrismaClusteringOperations } from '../clustering-operations.js'
+
 const prisma = new PrismaClient()
+const clusteringOps = new PrismaClusteringOperations(prisma)
 
 describe('Clustering Schema Tests', () => {
   beforeEach(async () => {
@@ -49,37 +52,39 @@ describe('Clustering Schema Tests', () => {
     it('should enforce coherence score constraints', async () => {
       // Test minimum coherence threshold (0.6)
       await expect(
-        prisma.memoryCluster.create({
-          data: {
-            clusterId: 'test-cluster-low-coherence',
-            clusterTheme: 'Low Coherence Test',
-            emotionalTone: 'mixed',
-            coherenceScore: 0.5, // Below minimum threshold
-            psychologicalSignificance: 0.75,
-            participantPatterns: JSON.stringify([]),
-            clusterMetadata: JSON.stringify({}),
-            memoryCount: 0,
+        clusteringOps.createCluster({
+          clusterId: 'test-cluster-low-coherence',
+          clusterTheme: 'Low Coherence Test',
+          emotionalTone: 'mixed',
+          coherenceScore: 0.5, // Below minimum threshold
+          psychologicalSignificance: 0.75,
+          participantPatterns: [],
+          clusterMetadata: {
+            algorithmVersion: '1.0',
+            creationMethod: 'test',
           },
+          memoryCount: 0,
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Coherence score must be at least 0.6')
     })
 
     it('should enforce psychological significance constraints', async () => {
       // Test zero psychological significance
       await expect(
-        prisma.memoryCluster.create({
-          data: {
-            clusterId: 'test-cluster-zero-significance',
-            clusterTheme: 'Zero Significance Test',
-            emotionalTone: 'neutral',
-            coherenceScore: 0.7,
-            psychologicalSignificance: 0.0, // Not allowed
-            participantPatterns: JSON.stringify([]),
-            clusterMetadata: JSON.stringify({}),
-            memoryCount: 0,
+        clusteringOps.createCluster({
+          clusterId: 'test-cluster-zero-significance',
+          clusterTheme: 'Zero Significance Test',
+          emotionalTone: 'neutral',
+          coherenceScore: 0.7,
+          psychologicalSignificance: 0.0, // Not allowed
+          participantPatterns: [],
+          clusterMetadata: {
+            algorithmVersion: '1.0',
+            creationMethod: 'test',
           },
+          memoryCount: 0,
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Psychological significance must be greater than 0.0')
     })
 
     it('should enforce unique cluster IDs', async () => {
@@ -122,14 +127,14 @@ describe('Clustering Schema Tests', () => {
         },
       })
 
-      // Create test memory
+      // Create test memory with unique content hash
       testMemory = await prisma.memory.create({
         data: {
           sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
           participants: JSON.stringify([{ id: 'user1', name: 'Test User' }]),
           summary: 'Test memory for clustering',
           confidence: 8,
-          contentHash: 'test-hash-membership-001',
+          contentHash: `test-hash-membership-${Date.now()}-${Math.random()}`,
         },
       })
     })
@@ -153,15 +158,13 @@ describe('Clustering Schema Tests', () => {
     it('should enforce membership strength constraints', async () => {
       // Test minimum membership strength (0.5)
       await expect(
-        prisma.clusterMembership.create({
-          data: {
-            clusterId: testCluster.clusterId,
-            memoryId: testMemory.id,
-            membershipStrength: 0.4, // Below minimum threshold
-            contributionScore: 0.75,
-          },
+        clusteringOps.addMemoryToCluster({
+          clusterId: testCluster.clusterId,
+          memoryId: testMemory.id,
+          membershipStrength: 0.4, // Below minimum threshold
+          contributionScore: 0.75,
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Membership strength must be at least 0.5')
     })
 
     it('should enforce unique cluster-memory pairs', async () => {
@@ -250,58 +253,52 @@ describe('Clustering Schema Tests', () => {
 
     it('should enforce pattern type constraints', async () => {
       await expect(
-        prisma.patternAnalysis.create({
-          data: {
-            patternId: 'invalid-pattern-type',
-            clusterId: testCluster.clusterId,
-            patternType: 'invalid_type', // Not in allowed enum
-            description: 'Invalid pattern type test',
-            frequency: 3,
-            strength: 0.7,
-            confidenceLevel: 0.85,
-            psychologicalIndicators: JSON.stringify([]),
-            emotionalCharacteristics: JSON.stringify([]),
-          },
+        clusteringOps.createPatternAnalysis({
+          patternId: 'invalid-pattern-type',
+          clusterId: testCluster.clusterId,
+          patternType: 'invalid_type' as unknown as 'emotional_theme', // Not in allowed enum
+          description: 'Invalid pattern type test',
+          frequency: 3,
+          strength: 0.7,
+          confidenceLevel: 0.85,
+          psychologicalIndicators: [],
+          emotionalCharacteristics: [],
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Pattern type must be one of:')
     })
 
     it('should enforce confidence level constraints', async () => {
       // Test minimum confidence threshold (0.8)
       await expect(
-        prisma.patternAnalysis.create({
-          data: {
-            patternId: 'low-confidence-pattern',
-            clusterId: testCluster.clusterId,
-            patternType: 'coping_style',
-            description: 'Low confidence pattern test',
-            frequency: 2,
-            strength: 0.6,
-            confidenceLevel: 0.7, // Below minimum threshold
-            psychologicalIndicators: JSON.stringify([]),
-            emotionalCharacteristics: JSON.stringify([]),
-          },
+        clusteringOps.createPatternAnalysis({
+          patternId: 'low-confidence-pattern',
+          clusterId: testCluster.clusterId,
+          patternType: 'coping_style',
+          description: 'Low confidence pattern test',
+          frequency: 2,
+          strength: 0.6,
+          confidenceLevel: 0.7, // Below minimum threshold
+          psychologicalIndicators: [],
+          emotionalCharacteristics: [],
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Confidence level must be at least 0.8')
     })
 
     it('should enforce strength constraints', async () => {
       // Test minimum strength threshold (0.3)
       await expect(
-        prisma.patternAnalysis.create({
-          data: {
-            patternId: 'low-strength-pattern',
-            clusterId: testCluster.clusterId,
-            patternType: 'relationship_dynamic',
-            description: 'Low strength pattern test',
-            frequency: 1,
-            strength: 0.2, // Below minimum threshold
-            confidenceLevel: 0.85,
-            psychologicalIndicators: JSON.stringify([]),
-            emotionalCharacteristics: JSON.stringify([]),
-          },
+        clusteringOps.createPatternAnalysis({
+          patternId: 'low-strength-pattern',
+          clusterId: testCluster.clusterId,
+          patternType: 'relationship_dynamic',
+          description: 'Low strength pattern test',
+          frequency: 1,
+          strength: 0.2, // Below minimum threshold
+          confidenceLevel: 0.85,
+          psychologicalIndicators: [],
+          emotionalCharacteristics: [],
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Strength must be at least 0.3')
     })
   })
 
@@ -349,39 +346,35 @@ describe('Clustering Schema Tests', () => {
     it('should enforce coherence threshold constraints', async () => {
       // Test minimum coherence threshold (0.6)
       await expect(
-        prisma.clusterQualityMetrics.create({
-          data: {
-            clusterId: testCluster.clusterId,
-            overallCoherence: 0.5, // Below minimum threshold
-            emotionalConsistency: 0.8,
-            thematicUnity: 0.9,
-            psychologicalMeaningfulness: 0.8,
-            incoherentMemoryCount: 0,
-            strengthAreas: JSON.stringify([]),
-            improvementAreas: JSON.stringify([]),
-            confidenceLevel: 0.75,
-          },
+        clusteringOps.createQualityMetrics({
+          clusterId: testCluster.clusterId,
+          overallCoherence: 0.5, // Below minimum threshold
+          emotionalConsistency: 0.8,
+          thematicUnity: 0.9,
+          psychologicalMeaningfulness: 0.8,
+          incoherentMemoryCount: 0,
+          strengthAreas: [],
+          improvementAreas: [],
+          confidenceLevel: 0.75,
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Overall coherence must be at least 0.6')
     })
 
     it('should enforce meaningfulness threshold constraints', async () => {
       // Test minimum meaningfulness threshold (0.7)
       await expect(
-        prisma.clusterQualityMetrics.create({
-          data: {
-            clusterId: testCluster.clusterId,
-            overallCoherence: 0.8,
-            emotionalConsistency: 0.75,
-            thematicUnity: 0.85,
-            psychologicalMeaningfulness: 0.65, // Below minimum threshold
-            incoherentMemoryCount: 0,
-            strengthAreas: JSON.stringify([]),
-            improvementAreas: JSON.stringify([]),
-            confidenceLevel: 0.8,
-          },
+        clusteringOps.createQualityMetrics({
+          clusterId: testCluster.clusterId,
+          overallCoherence: 0.8,
+          emotionalConsistency: 0.75,
+          thematicUnity: 0.85,
+          psychologicalMeaningfulness: 0.65, // Below minimum threshold
+          incoherentMemoryCount: 0,
+          strengthAreas: [],
+          improvementAreas: [],
+          confidenceLevel: 0.8,
         }),
-      ).rejects.toThrow()
+      ).rejects.toThrow('Psychological meaningfulness must be at least 0.7')
     })
 
     it('should enforce unique cluster ID constraint', async () => {
@@ -422,14 +415,14 @@ describe('Clustering Schema Tests', () => {
         },
       })
 
-      // Create memory
+      // Create memory with unique content hash
       const memory = await prisma.memory.create({
         data: {
           sourceMessageIds: JSON.stringify(['msg1']),
           participants: JSON.stringify([{ id: 'user1', name: 'Test User' }]),
           summary: 'Integrity test memory',
           confidence: 8,
-          contentHash: 'integrity-test-hash',
+          contentHash: `integrity-test-hash-${Date.now()}-${Math.random()}`,
         },
       })
 
