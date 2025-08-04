@@ -14,13 +14,13 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./src/persistence/__tests__/test-setup.ts'],
 
-    // Use sequential execution in CI to avoid database concurrency issues
+    // Use limited concurrency in CI to avoid database issues
     ...(process.env.CI
       ? {
           pool: 'forks',
           poolOptions: {
             forks: {
-              singleFork: true, // Run tests sequentially in CI
+              maxForks: 2, // Use 2 workers in CI (GitHub Actions has 4 vCPUs)
             },
           },
         }
