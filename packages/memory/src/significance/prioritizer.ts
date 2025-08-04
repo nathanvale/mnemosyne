@@ -1,10 +1,25 @@
 import { createLogger } from '@studio/logger'
 
-import type { ExtractedMemory, EmotionalSignificanceScore } from '../types'
+import type {
+  ExtractedMemory,
+  EmotionalSignificanceScore,
+  MoodAnalysisResult,
+  MoodDelta,
+} from '../types'
 
 const logger = createLogger({
   tags: ['significance', 'prioritizer'],
 })
+
+/**
+ * Extended MoodDelta with additional properties for prioritization
+ */
+interface ExtendedMoodDelta extends MoodDelta {
+  significance?: number
+  previousScore?: number
+  currentScore?: number
+  detectedAt?: Date | string
+}
 
 /**
  * Priority scoring factors
@@ -193,10 +208,14 @@ export class MemoryPrioritizer {
   private assessDeltaFactors(memory: ExtractedMemory): DeltaFactors {
     // Try both delta (singular) and deltas (array) for compatibility
     const delta = memory.emotionalAnalysis.moodScoring.delta
-    const deltas = (memory.emotionalAnalysis.moodScoring as any).deltas
+    const deltas = (
+      memory.emotionalAnalysis.moodScoring as MoodAnalysisResult & {
+        deltas?: ExtendedMoodDelta[]
+      }
+    ).deltas
 
     // Determine which structure to use
-    let mostSignificantDelta: any
+    let mostSignificantDelta: ExtendedMoodDelta | undefined
     let deltaCount = 0
 
     if (delta) {
@@ -204,11 +223,12 @@ export class MemoryPrioritizer {
       deltaCount = 1
     } else if (deltas && Array.isArray(deltas) && deltas.length > 0) {
       // Find the most significant delta from the array
-      mostSignificantDelta = deltas.reduce((max: any, current: any) =>
-        (current.significance || current.magnitude || 0) >
-        (max.significance || max.magnitude || 0)
-          ? current
-          : max,
+      mostSignificantDelta = deltas.reduce(
+        (max: ExtendedMoodDelta, current: ExtendedMoodDelta) =>
+          (current.significance || current.magnitude || 0) >
+          (max.significance || max.magnitude || 0)
+            ? current
+            : max,
       )
       deltaCount = deltas.length
     } else {
@@ -253,7 +273,9 @@ export class MemoryPrioritizer {
     impact = Math.min(10, impact)
 
     // Calculate delta recency (0-10)
-    const deltaTime = new Date(mostSignificantDelta.detectedAt || Date.now())
+    const deltaTime = new Date(
+      (mostSignificantDelta as ExtendedMoodDelta).detectedAt || Date.now(),
+    )
     const now = new Date()
     const hoursSince = (now.getTime() - deltaTime.getTime()) / (1000 * 60 * 60)
 

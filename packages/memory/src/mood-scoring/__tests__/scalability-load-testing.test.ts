@@ -4,6 +4,7 @@ import type {
   ConversationData,
   ConversationMessage,
   ConversationParticipant,
+  MoodAnalysisResult,
 } from '../../types'
 
 import { MoodScoringAnalyzer } from '../analyzer'
@@ -240,16 +241,16 @@ describe('Scalability and Load Testing - Task 7.5', () => {
 
       // Process in batches of 25 to simulate real-world usage patterns
       const batchSize = 25
-      const batches: any[][] = []
+      const batches: ConversationData[][] = []
       for (let i = 0; i < stressTestConversations.length; i += batchSize) {
         batches.push(stressTestConversations.slice(i, i + batchSize))
       }
 
       const { result, timeMs, memoryUsage } = await measurePerformance(
         async () => {
-          const batchPromises = batches.map((batch: any[]) =>
+          const batchPromises = batches.map((batch) =>
             Promise.all(
-              batch.map((conversation: any) =>
+              batch.map((conversation) =>
                 moodAnalyzer.analyzeConversation(conversation),
               ),
             ),
@@ -325,16 +326,16 @@ describe('Scalability and Load Testing - Task 7.5', () => {
 
       let totalProcessed = 0
       const chunkSize = 10
-      const chunks: any[][] = []
+      const chunks: ConversationData[][] = []
       for (let i = 0; i < largeDatasetConversations.length; i += chunkSize) {
         chunks.push(largeDatasetConversations.slice(i, i + chunkSize))
       }
 
       const { result, timeMs, memoryUsage } = await measurePerformance(
         async () => {
-          const allResults: any[] = []
+          const allResults: MoodAnalysisResult[] = []
           for (const chunk of chunks) {
-            const chunkPromises = chunk.map((conversation: any) =>
+            const chunkPromises = chunk.map((conversation) =>
               moodAnalyzer.analyzeConversation(conversation),
             )
             const chunkResults = await Promise.all(chunkPromises)
@@ -510,7 +511,7 @@ describe('Scalability and Load Testing - Task 7.5', () => {
         const promises = testConversations.map(async (conversation) => {
           try {
             return await moodAnalyzer.analyzeConversation(conversation)
-          } catch (error) {
+          } catch {
             // Return a default result for failed analyses
             return {
               score: 5.0,
@@ -530,7 +531,9 @@ describe('Scalability and Load Testing - Task 7.5', () => {
 
       // Count successful vs failed analyses
       const successfulAnalyses = result.filter(
-        (r) => !(r as any).metadata?.error,
+        (r) =>
+          !(r as MoodAnalysisResult & { metadata?: { error?: boolean } })
+            .metadata?.error,
       ).length
       const successRate = (successfulAnalyses / result.length) * 100
 

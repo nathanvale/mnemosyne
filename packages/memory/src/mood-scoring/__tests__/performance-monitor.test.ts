@@ -1,5 +1,5 @@
 import { PrismaClient } from '@studio/db'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { PerformanceMonitoringService } from '../performance-monitor'
 

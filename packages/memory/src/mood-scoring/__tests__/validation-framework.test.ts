@@ -9,10 +9,7 @@ import type {
   // BiasAnalysis,
 } from '../../types'
 
-import {
-  createTestConversationData,
-  createTestMoodAnalysisResult,
-} from '../../__tests__/test-helpers'
+import { createTestConversationData } from '../../__tests__/test-helpers'
 // import { MoodScoringAnalyzer } from '../analyzer'
 import { ValidationFramework } from '../validation-framework'
 

@@ -13,6 +13,8 @@ import type {
   ConversationParticipant,
   ExtractedMemory,
   EmotionalSignificanceScore,
+  MoodAnalysisResult,
+  MoodDelta,
 } from '../../types'
 
 import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
@@ -26,7 +28,28 @@ import { MemoryPrioritizer } from '../../significance/prioritizer'
 // Performance and quality targets
 const PERFORMANCE_THRESHOLD_MS = 2000
 const CORRELATION_TARGET = 0.8
-const DELTA_ACCURACY_TARGET = 0.85
+// const DELTA_ACCURACY_TARGET = 0.85 // Unused for now
+
+// Helper function to map delta types to pattern types
+function mapDeltaTypeToPatternType(
+  deltaType: 'mood_repair' | 'celebration' | 'decline' | 'plateau',
+):
+  | 'support_seeking'
+  | 'mood_repair'
+  | 'celebration'
+  | 'vulnerability'
+  | 'growth' {
+  switch (deltaType) {
+    case 'mood_repair':
+      return 'mood_repair'
+    case 'celebration':
+      return 'celebration'
+    case 'decline':
+      return 'vulnerability'
+    case 'plateau':
+      return 'growth'
+  }
+}
 
 describe('End-to-End Mood Integration - Task 7.7', () => {
   let prisma: PrismaClient
@@ -931,8 +954,8 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
   async function createExtractedMemoryFromConversation(
     conversation: ConversationData,
-    moodAnalysis: any,
-    deltas: any[],
+    moodAnalysis: MoodAnalysisResult,
+    deltas: MoodDelta[],
   ): Promise<ExtractedMemory> {
     // Create emotional analysis from mood analysis and deltas
     const emotionalAnalysis = {
@@ -965,8 +988,8 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           deltas.length > 0 && deltas[0].direction === 'positive'
             ? ('improving' as const)
             : ('stable' as const),
-        strength: deltas.length > 0 ? deltas[0].significance : 0.5,
-        significance: deltas.length > 0 ? deltas[0].significance : 0.5,
+        strength: deltas.length > 0 ? deltas[0].magnitude : 0.5,
+        significance: deltas.length > 0 ? deltas[0].confidence : 0.5,
         trend: 'stable' as const,
         points: [
           {
@@ -981,7 +1004,7 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
                 {
                   timestamp: conversation.endTime,
                   type: 'breakthrough' as const,
-                  magnitude: deltas[0].significance || 0.7,
+                  magnitude: deltas[0].magnitude || 0.7,
                   description: 'Emotional shift detected during conversation',
                   factors: ['conversation_delta', 'mood_change'],
                 },
@@ -989,10 +1012,10 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
             : [],
       },
       patterns: deltas.map((delta) => ({
-        type: delta.type || 'general',
+        type: mapDeltaTypeToPatternType(delta.type),
         confidence: delta.confidence || 0.7,
-        description: `${delta.type || 'general'} pattern detected`,
-        significance: delta.significance || 0.7,
+        description: `${delta.type} pattern detected`,
+        significance: delta.confidence || 0.7,
         evidence: delta.factors || ['mood_change'],
       })),
     }
@@ -1124,44 +1147,45 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
     return memory
   }
 
-  function determineRelationshipDynamics(conversation: ConversationData) {
-    // Determine relationship type based on conversation characteristics
-    const isTherapeutic = conversation.id.includes('therapeutic')
-    const isCrisis = conversation.id.includes('crisis')
-
-    return {
-      type: isTherapeutic ? 'therapeutic' : ('friend' as const),
-      intimacy: isTherapeutic ? 'high' : ('medium' as const),
-      supportLevel: isCrisis || isTherapeutic ? 'high' : ('medium' as const),
-      conflictPresent: false,
-      trustLevel: isTherapeutic ? 'high' : ('medium' as const),
-      intimacyLevel: isTherapeutic ? 'high' : ('medium' as const),
-      conflictLevel: 'low' as const,
-      conflictIntensity: 'low' as const,
-      communicationStyle: 'supportive' as const,
-      communicationStyleDetails: {
-        vulnerabilityLevel: isTherapeutic ? 'high' : ('medium' as const),
-        emotionalSafety: isTherapeutic ? 'high' : ('medium' as const),
-        supportPatterns: [],
-        conflictPatterns: [],
-        professionalBoundaries: isTherapeutic,
-        guidancePatterns: [],
-        therapeuticElements: [],
-      },
-      participantDynamics: {
-        supportBalance: isTherapeutic
-          ? 'unidirectional'
-          : ('balanced' as const),
-        mutualVulnerability: !isTherapeutic,
-      },
-      emotionalSafety: {
-        overall: isTherapeutic ? 'high' : ('medium' as const),
-        acceptanceLevel: isTherapeutic ? 'high' : ('medium' as const),
-        judgmentRisk: 'low' as const,
-        validationPresent: true,
-      },
-    }
-  }
+  // Commented out unused function - may be needed later
+  // function determineRelationshipDynamics(conversation: ConversationData) {
+  //   // Determine relationship type based on conversation characteristics
+  //   const isTherapeutic = conversation.id.includes('therapeutic')
+  //   const isCrisis = conversation.id.includes('crisis')
+  //
+  //   return {
+  //     type: isTherapeutic ? 'therapeutic' : ('friend' as const),
+  //     intimacy: isTherapeutic ? 'high' : ('medium' as const),
+  //     supportLevel: isCrisis || isTherapeutic ? 'high' : ('medium' as const),
+  //     conflictPresent: false,
+  //     trustLevel: isTherapeutic ? 'high' : ('medium' as const),
+  //     intimacyLevel: isTherapeutic ? 'high' : ('medium' as const),
+  //     conflictLevel: 'low' as const,
+  //     conflictIntensity: 'low' as const,
+  //     communicationStyle: 'supportive' as const,
+  //     communicationStyleDetails: {
+  //       vulnerabilityLevel: isTherapeutic ? 'high' : ('medium' as const),
+  //       emotionalSafety: isTherapeutic ? 'high' : ('medium' as const),
+  //       supportPatterns: [],
+  //       conflictPatterns: [],
+  //       professionalBoundaries: isTherapeutic,
+  //       guidancePatterns: [],
+  //       therapeuticElements: [],
+  //     },
+  //     participantDynamics: {
+  //       supportBalance: isTherapeutic
+  //         ? 'unidirectional'
+  //         : ('balanced' as const),
+  //       mutualVulnerability: !isTherapeutic,
+  //     },
+  //     emotionalSafety: {
+  //       overall: isTherapeutic ? 'high' : ('medium' as const),
+  //       acceptanceLevel: isTherapeutic ? 'high' : ('medium' as const),
+  //       judgmentRisk: 'low' as const,
+  //       validationPresent: true,
+  //     },
+  //   }
+  // }
 
   function createTestConversations(): ConversationData[] {
     const participants: ConversationParticipant[] = [

@@ -1,4 +1,10 @@
-import { EmotionalState, EmotionalTheme, ParticipantRole } from '@studio/schema'
+import {
+  EmotionalState,
+  EmotionalTheme,
+  ParticipantRole,
+  CommunicationPattern,
+  InteractionQuality,
+} from '@studio/schema'
 
 import type {
   ConversationData,
@@ -136,8 +142,8 @@ export function createTestExtractedMemory(
       },
     },
     relationshipDynamics: {
-      communicationPattern: 'supportive' as any, // Using any to match existing test patterns
-      interactionQuality: 'positive' as any,
+      communicationPattern: CommunicationPattern.SUPPORTIVE,
+      interactionQuality: InteractionQuality.POSITIVE,
       powerDynamics: {
         isBalanced: true,
         concerningPatterns: [],

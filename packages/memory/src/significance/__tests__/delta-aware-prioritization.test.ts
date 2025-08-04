@@ -1,4 +1,10 @@
-import { EmotionalState, EmotionalTheme, ParticipantRole } from '@studio/schema'
+import {
+  EmotionalState,
+  EmotionalTheme,
+  ParticipantRole,
+  CommunicationPattern,
+  InteractionQuality,
+} from '@studio/schema'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import type {
@@ -61,14 +67,14 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 3.2,
         current: 5.1, // 1.9 point increase
         significance: 0.85,
-        type: 'improvement',
+        type: 'mood_repair',
       })
 
       const minorDeltaMemory = createMemoryWithMoodDelta({
         previous: 5.0,
         current: 5.8, // 0.8 point increase
         significance: 0.45,
-        type: 'gradual',
+        type: 'plateau',
       })
 
       const memories = [minorDeltaMemory, significantDeltaMemory]
@@ -83,7 +89,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 7.5,
         current: 4.8, // 2.7 point sudden drop
         significance: 0.92,
-        type: 'sudden',
+        type: 'decline',
         transitionType: 'decline',
       })
 
@@ -91,7 +97,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.0,
         current: 6.2, // 2.2 point gradual improvement
         significance: 0.75,
-        type: 'gradual',
+        type: 'plateau',
         transitionType: 'improvement',
       })
 
@@ -114,7 +120,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 5.0,
         current: 7.2, // 2.2 point increase but not repair
         significance: 0.68,
-        type: 'improvement',
+        type: 'mood_repair',
       })
 
       const memories = [standardMemory, moodRepairMemory]
@@ -126,7 +132,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
 
     it('should handle memories with multiple delta types and prioritize by emotional impact', async () => {
       const volatileMemory = createMemoryWithComplexDeltas([
-        { previous: 6.0, current: 3.5, type: 'sudden', significance: 0.88 },
+        { previous: 6.0, current: 3.5, type: 'decline', significance: 0.88 },
         { previous: 3.5, current: 7.2, type: 'recovery', significance: 0.91 },
         {
           previous: 7.2,
@@ -140,7 +146,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 5.0,
         current: 8.5, // Large but single delta
         significance: 0.8,
-        type: 'improvement',
+        type: 'mood_repair',
       })
 
       const memories = [simpleMemory, volatileMemory]
@@ -157,7 +163,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 7.2,
         current: 2.1, // 5.1 point crisis drop
         significance: 0.95,
-        type: 'sudden',
+        type: 'decline',
         transitionType: 'crisis',
         urgencyIndicators: ['distress', 'help-seeking'],
       })
@@ -166,7 +172,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.0,
         current: 9.1, // 5.1 point celebration increase
         significance: 0.85,
-        type: 'sudden',
+        type: 'celebration',
         transitionType: 'breakthrough',
       })
 
@@ -182,7 +188,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.5,
         current: 7.2, // 2.7 point delta
         significance: 0.92,
-        type: 'improvement',
+        type: 'mood_repair',
         confidence: 0.95, // Very confident delta detection
       })
 
@@ -190,7 +196,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.0,
         current: 7.5, // 3.5 point delta (larger)
         significance: 0.88,
-        type: 'improvement',
+        type: 'mood_repair',
         confidence: 0.52, // Low confidence delta detection
       })
 
@@ -208,7 +214,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 5.0,
         current: 7.8,
         significance: 0.85,
-        type: 'recent_improvement',
+        type: 'mood_repair',
         deltaTimestamp: recentTime,
       })
 
@@ -220,7 +226,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.5,
         current: 8.2,
         significance: 0.88, // Higher significance but older
-        type: 'historical_pattern',
+        type: 'mood_repair',
         deltaTimestamp: historicalTime,
       })
 
@@ -298,14 +304,14 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 5.4,
         current: 5.9, // 0.5 point subtle change
         significance: 0.42,
-        type: 'subtle',
+        type: 'plateau',
       })
 
       const significantDeltaMemory = createMemoryWithMoodDelta({
         previous: 4.2,
         current: 7.1, // 2.9 point significant change
         significance: 0.87,
-        type: 'improvement',
+        type: 'mood_repair',
       })
 
       const memories = [
@@ -342,7 +348,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         previous: 4.1,
         current: 7.8, // Large positive delta
         significance: 0.82,
-        type: 'improvement',
+        type: 'mood_repair',
       })
 
       const memories = [simplePositiveMemory, mixedEmotionalMemory]
@@ -356,11 +362,31 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
 
   // Helper functions to create test memories with various delta characteristics
 
+  function mapDeltaTypeToPatternType(
+    deltaType: 'mood_repair' | 'celebration' | 'decline' | 'plateau',
+  ):
+    | 'support_seeking'
+    | 'mood_repair'
+    | 'celebration'
+    | 'vulnerability'
+    | 'growth' {
+    switch (deltaType) {
+      case 'mood_repair':
+        return 'mood_repair'
+      case 'celebration':
+        return 'celebration'
+      case 'decline':
+        return 'vulnerability'
+      case 'plateau':
+        return 'growth'
+    }
+  }
+
   function createMemoryWithMoodDelta(deltaConfig: {
     previous: number
     current: number
     significance: number
-    type: string
+    type: 'mood_repair' | 'celebration' | 'decline' | 'plateau'
     transitionType?: string
     confidence?: number
     urgencyIndicators?: string[]
@@ -370,7 +396,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       direction:
         deltaConfig.current > deltaConfig.previous ? 'positive' : 'negative',
       confidence: deltaConfig.confidence || 0.8,
-      type: deltaConfig.type as any,
+      type: deltaConfig.type,
       factors: [`${deltaConfig.type}_transition`],
     }
 
@@ -449,7 +475,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       },
       patterns: [
         {
-          type: deltaConfig.type as any,
+          type: mapDeltaTypeToPatternType(deltaConfig.type),
           confidence: deltaConfig.significance,
           description: `${deltaConfig.type} mood pattern detected`,
           evidence: [
@@ -493,8 +519,8 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         },
       },
       relationshipDynamics: {
-        communicationPattern: 'SUPPORTIVE' as any,
-        interactionQuality: 'POSITIVE' as any,
+        communicationPattern: CommunicationPattern.SUPPORTIVE,
+        interactionQuality: InteractionQuality.POSITIVE,
         powerDynamics: {
           isBalanced: true,
           concerningPatterns: [],
@@ -584,7 +610,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       previous: primaryDelta.previous,
       current: primaryDelta.current,
       significance: primaryDelta.significance,
-      type: 'volatile',
+      type: 'decline',
       transitionType: 'complex',
       confidence: 0.85,
     })
@@ -594,7 +620,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
     previous: number
     current: number
     significance: number
-    type: string
+    type: 'mood_repair' | 'celebration' | 'decline' | 'plateau'
     deltaTimestamp: string
   }): ExtractedMemory {
     const memory = createMemoryWithMoodDelta({
@@ -607,7 +633,13 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
 
     // Add detectedAt property to delta for recency calculation
     if (memory.emotionalAnalysis.moodScoring.delta) {
-      const deltaObj = memory.emotionalAnalysis.moodScoring.delta as any
+      const deltaObj = memory.emotionalAnalysis.moodScoring
+        .delta as MoodDelta & {
+        detectedAt?: Date
+        previousScore?: number
+        currentScore?: number
+        significance?: number
+      }
       deltaObj.detectedAt = new Date(config.deltaTimestamp)
       deltaObj.previousScore = config.previous
       deltaObj.currentScore = config.current
@@ -630,24 +662,40 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       previous: config.moodDelta.previous,
       current: config.moodDelta.current,
       significance: config.moodDelta.significance,
-      type: 'relationship_context',
+      type: 'mood_repair',
       confidence: 0.87,
     })
 
     // Override relationship dynamics to match the test requirements
     memory.extendedRelationshipDynamics = {
       type: 'friend',
-      supportLevel: config.relationshipContext.supportLevel as any,
-      intimacyLevel: config.relationshipContext.intimacyLevel as any,
-      intimacy: config.relationshipContext.intimacyLevel as any, // Backwards compatibility
+      supportLevel: config.relationshipContext.supportLevel as
+        | 'high'
+        | 'medium'
+        | 'low'
+        | 'negative',
+      intimacyLevel: config.relationshipContext.intimacyLevel as
+        | 'high'
+        | 'medium'
+        | 'low',
+      intimacy: config.relationshipContext.intimacyLevel as
+        | 'high'
+        | 'medium'
+        | 'low', // Backwards compatibility
       conflictLevel: 'low',
-      trustLevel: config.relationshipContext.trustLevel as any,
+      trustLevel: config.relationshipContext.trustLevel as
+        | 'high'
+        | 'medium'
+        | 'low',
       conflictPresent: false,
       conflictIntensity: 'low',
       communicationStyle: 'supportive',
       communicationStyleDetails: {
         vulnerabilityLevel: 'medium',
-        emotionalSafety: config.relationshipContext.emotionalSafety as any,
+        emotionalSafety: config.relationshipContext.emotionalSafety as
+          | 'high'
+          | 'medium'
+          | 'low',
         supportPatterns: [],
         conflictPatterns: [],
         professionalBoundaries: false,
@@ -659,7 +707,10 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
         mutualVulnerability: true,
       },
       emotionalSafety: {
-        overall: config.relationshipContext.emotionalSafety as any,
+        overall: config.relationshipContext.emotionalSafety as
+          | 'high'
+          | 'medium'
+          | 'low',
         acceptanceLevel: 'high',
         judgmentRisk: 'low',
         validationPresent: true,
@@ -680,7 +731,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       previous: config.moodDelta.previous,
       current: config.moodDelta.current,
       significance: config.moodDelta.significance,
-      type: config.conflictType,
+      type: config.conflictType === 'escalation' ? 'decline' : 'mood_repair',
       transitionType:
         config.conflictType === 'escalation' ? 'crisis' : 'resolution',
       confidence: 0.89,
@@ -700,7 +751,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       previous: config.stableMoodScore,
       current: config.stableMoodScore, // No change
       significance: config.conversationalSignificance,
-      type: 'stable',
+      type: 'plateau',
       confidence: config.confidence,
     })
   }
@@ -733,7 +784,7 @@ describe('Delta-Aware Memory Prioritization - Task 5.5', () => {
       previous: 5.0, // Baseline
       current: 5.0 + netDelta,
       significance: config.overallComplexity,
-      type: 'mixed_emotional',
+      type: 'mood_repair',
       transitionType: 'complex',
       confidence: 0.85,
     })

@@ -9,23 +9,15 @@ import { describe, it, expect, beforeEach } from 'vitest'
 
 import type {
   ExtractedMemory,
-  EmotionalSignificanceScore,
-  EmotionalAnalysis,
-  MoodAnalysisResult,
   ConversationData,
-  ConversationParticipant,
   RelationshipDynamics,
-  MoodDelta,
-  EmotionalPattern,
-  TrajectoryPoint,
-  TurningPoint,
 } from '../../types'
 
 import { EmotionalSignificanceAnalyzer } from '../analyzer'
 
 describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
   let analyzer: EmotionalSignificanceAnalyzer
-  let baseMemory: ExtractedMemory
+  // let baseMemory: ExtractedMemory // Unused for now
 
   beforeEach(() => {
     analyzer = new EmotionalSignificanceAnalyzer({
@@ -35,7 +27,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
       temporalRelevanceWeight: 0.1,
     })
 
-    baseMemory = createBaseMemory()
+    // baseMemory = createBaseMemory() // Unused for now
   })
 
   describe('Task 5.1: Memory Significance Enhancement with Mood Analysis', () => {
@@ -288,7 +280,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
       })
 
       it('should maintain performance under 500ms per memory for batch processing', async () => {
-        const memories = Array.from({ length: 10 }, (_, i) =>
+        const memories = Array.from({ length: 10 }, () =>
           createMemoryWithMoodScore(
             5 + Math.random() * 3,
             0.7 + Math.random() * 0.2,
@@ -486,7 +478,16 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
 
   function createMemoryWithMultipleMoodFactors(
     factors: Array<{
-      type: string
+      type:
+        | 'sentiment_analysis'
+        | 'language_sentiment'
+        | 'emotional_words'
+        | 'context_clues'
+        | 'interaction_pattern'
+        | 'psychological_indicators'
+        | 'relationship_context'
+        | 'conversational_flow'
+        | 'historical_baseline'
       weight: number
       evidence: string[]
     }>,
@@ -497,7 +498,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
       confidence: 0.88,
       descriptors: ['complex', 'multi-dimensional'],
       factors: factors.map((f) => ({
-        type: f.type as any,
+        type: f.type,
         weight: f.weight,
         description: `${f.type} analysis`,
         evidence: f.evidence,

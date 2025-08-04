@@ -56,7 +56,7 @@ export function clearGlobalState(): void {
   )
 
   globalKeys.forEach((key) => {
-    delete (global as any)[key]
+    delete (global as Record<string, unknown>)[key]
   })
 
   // Force garbage collection if available
