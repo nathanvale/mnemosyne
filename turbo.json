@@ -1,7 +1,22 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
-  "globalEnv": ["NODE_ENV", "WALLABY_WORKER", "CI"],
+  "globalEnv": [
+    "NODE_ENV",
+    "WALLABY_WORKER",
+    "CI",
+    "VITEST_WORKER_ID",
+    "WALLABY_WORKER_ID",
+    "TMPDIR",
+    "DATABASE_URL",
+    "TEST_VERBOSE",
+    "VITEST",
+    "NEXT_PUBLIC_BUILD_VERSION",
+    "LOG_LEVEL",
+    "LOGGER_MODE",
+    "LOGGER_PRETTY",
+    "LOGGER_CALLSITE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
