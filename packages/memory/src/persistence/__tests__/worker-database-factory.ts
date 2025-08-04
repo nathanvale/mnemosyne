@@ -721,6 +721,34 @@ export class WorkerDatabaseFactory {
     await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "ClusterQualityMetrics_clusterId_key" ON "ClusterQualityMetrics"("clusterId")`
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterQualityMetrics_overallCoherence_assessedAt_idx" ON "ClusterQualityMetrics"("overallCoherence", "assessedAt")`
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterQualityMetrics_psychologicalMeaningfulness_confidenceLevel_idx" ON "ClusterQualityMetrics"("psychologicalMeaningfulness", "confidenceLevel")`
+
+    // Create triggers for automatic memoryCount maintenance
+    await prisma.$executeRaw`
+      CREATE TRIGGER IF NOT EXISTS increment_memory_count_on_insert
+      AFTER INSERT ON ClusterMembership
+      FOR EACH ROW
+      BEGIN
+        UPDATE MemoryCluster
+        SET memoryCount = memoryCount + 1,
+            updatedAt = CURRENT_TIMESTAMP
+        WHERE clusterId = NEW.clusterId;
+      END
+    `
+
+    await prisma.$executeRaw`
+      CREATE TRIGGER IF NOT EXISTS decrement_memory_count_on_delete
+      AFTER DELETE ON ClusterMembership
+      FOR EACH ROW
+      BEGIN
+        UPDATE MemoryCluster
+        SET memoryCount = CASE 
+            WHEN memoryCount > 0 THEN memoryCount - 1
+            ELSE 0
+          END,
+          updatedAt = CURRENT_TIMESTAMP
+        WHERE clusterId = OLD.clusterId;
+      END
+    `
   }
 
   /**

@@ -1,26 +1,40 @@
-import { PrismaClient, MemoryCluster, Memory } from '@studio/db'
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
+import {
+  describe,
+  expect,
+  it,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+} from 'vitest'
 
+import { PrismaClient, MemoryCluster, Memory } from '../../generated/index.js'
 import { PrismaClusteringOperations } from '../clustering-operations.js'
+import { TestDatabaseSetup } from './test-database-setup.js'
 
-const prisma = new PrismaClient()
-const clusteringOps = new PrismaClusteringOperations(prisma)
+let prisma: PrismaClient
+let clusteringOps: PrismaClusteringOperations
 
 describe('Clustering Schema Tests', () => {
+  beforeAll(async () => {
+    // Create test-specific database with migrations
+    prisma = await TestDatabaseSetup.createTestDatabase()
+    clusteringOps = new PrismaClusteringOperations(prisma)
+  }, 30000)
+
+  afterAll(async () => {
+    // Clean up test database
+    await TestDatabaseSetup.cleanup(prisma)
+  })
+
   beforeEach(async () => {
     // Clean up any existing test data
-    await prisma.clusterQualityMetrics.deleteMany()
-    await prisma.patternAnalysis.deleteMany()
-    await prisma.clusterMembership.deleteMany()
-    await prisma.memoryCluster.deleteMany()
+    await TestDatabaseSetup.cleanTestData(prisma)
   })
 
   afterEach(async () => {
     // Clean up test data after each test
-    await prisma.clusterQualityMetrics.deleteMany()
-    await prisma.patternAnalysis.deleteMany()
-    await prisma.clusterMembership.deleteMany()
-    await prisma.memoryCluster.deleteMany()
+    await TestDatabaseSetup.cleanTestData(prisma)
   })
 
   describe('MemoryCluster Table', () => {

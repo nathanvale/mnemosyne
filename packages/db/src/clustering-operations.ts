@@ -540,6 +540,7 @@ export class PrismaClusteringOperations implements ClusteringOperations {
       )
     }
 
+    // The database trigger will automatically update memoryCount
     return this.prisma.clusterMembership.create({
       data: {
         clusterId: data.clusterId,
@@ -554,6 +555,7 @@ export class PrismaClusteringOperations implements ClusteringOperations {
     clusterId: string,
     memoryId: string,
   ): Promise<void> {
+    // The database trigger will automatically update memoryCount
     await this.prisma.clusterMembership.delete({
       where: {
         clusterId_memoryId: {

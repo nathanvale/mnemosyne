@@ -18,7 +18,7 @@ This is the database schema implementation for the spec detailed in @.agent-os/s
 #### ClusterMembership
 
 - **Purpose**: Many-to-many relationship between memories and clusters
-- **Relationships**: Belongs to MemoryCluster, belongs to ExtractedMemory
+- **Relationships**: Belongs to MemoryCluster, belongs to Memory
 - **Indexes**: clusterId + memoryId (composite unique), clusterId, memoryId
 
 #### PatternAnalysis
@@ -35,7 +35,7 @@ This is the database schema implementation for the spec detailed in @.agent-os/s
 
 ### Schema Modifications
 
-#### ExtractedMemory (Enhanced)
+#### Memory (Enhanced)
 
 - **New columns**: Add clustering metadata and pattern participation tracking
 - **Relationships**: Has many ClusterMembership (new many-to-many with clusters)
@@ -75,7 +75,7 @@ CREATE TABLE ClusterMembership (
 
   -- Foreign keys
   FOREIGN KEY (clusterId) REFERENCES MemoryCluster(clusterId) ON DELETE CASCADE,
-  FOREIGN KEY (memoryId) REFERENCES ExtractedMemory(id) ON DELETE CASCADE,
+  FOREIGN KEY (memoryId) REFERENCES Memory(id) ON DELETE CASCADE,
 
   -- Constraints
   UNIQUE(clusterId, memoryId), -- Memory can only belong to a cluster once
@@ -126,10 +126,10 @@ CREATE TABLE ClusterQualityMetrics (
   CONSTRAINT quality_meaningfulness_threshold CHECK (psychologicalMeaningfulness >= 0.7) -- High meaningfulness required
 );
 
--- Enhanced ExtractedMemory table with clustering metadata
-ALTER TABLE ExtractedMemory ADD COLUMN clusteringMetadata TEXT; -- JSON object with clustering information
-ALTER TABLE ExtractedMemory ADD COLUMN lastClusteredAt DATETIME;
-ALTER TABLE ExtractedMemory ADD COLUMN clusterParticipationCount INTEGER DEFAULT 0;
+-- Enhanced Memory table with clustering metadata
+ALTER TABLE Memory ADD COLUMN clusteringMetadata TEXT; -- JSON object with clustering information
+ALTER TABLE Memory ADD COLUMN lastClusteredAt DATETIME;
+ALTER TABLE Memory ADD COLUMN clusterParticipationCount INTEGER DEFAULT 0;
 ```
 
 ## Indexes and Performance Optimization
@@ -156,7 +156,7 @@ CREATE INDEX idx_cluster_quality_coherence ON ClusterQualityMetrics(overallCoher
 CREATE INDEX idx_cluster_quality_meaningfulness ON ClusterQualityMetrics(psychologicalMeaningfulness DESC, confidenceLevel DESC);
 
 -- Enhanced memory indexes
-CREATE INDEX idx_extracted_memory_clustering ON ExtractedMemory(lastClusteredAt DESC, clusterParticipationCount DESC);
+CREATE INDEX idx_memory_clustering ON Memory(lastClusteredAt DESC, clusterParticipationCount DESC);
 ```
 
 ## Migration Scripts
@@ -170,10 +170,10 @@ BEGIN TRANSACTION;
 -- Create new clustering tables
 -- (MemoryCluster, ClusterMembership, PatternAnalysis, ClusterQualityMetrics tables as defined above)
 
--- Add clustering metadata to existing ExtractedMemory table
-ALTER TABLE ExtractedMemory ADD COLUMN clusteringMetadata TEXT DEFAULT '{}';
-ALTER TABLE ExtractedMemory ADD COLUMN lastClusteredAt DATETIME;
-ALTER TABLE ExtractedMemory ADD COLUMN clusterParticipationCount INTEGER DEFAULT 0;
+-- Add clustering metadata to existing Memory table
+ALTER TABLE Memory ADD COLUMN clusteringMetadata TEXT DEFAULT '{}';
+ALTER TABLE Memory ADD COLUMN lastClusteredAt DATETIME;
+ALTER TABLE Memory ADD COLUMN clusterParticipationCount INTEGER DEFAULT 0;
 
 -- Create all indexes
 -- (All index definitions as specified above)
