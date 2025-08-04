@@ -21,6 +21,7 @@
     "dev": "echo 'Scripts package dev placeholder'",
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

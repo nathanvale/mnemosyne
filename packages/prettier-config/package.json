@@ -9,6 +9,10 @@
   },
   "scripts": {
     "build": "echo 'Prettier config - no build needed'",
+    "lint": "echo 'Prettier config - no linting needed'",
+    "format:check": "prettier --check *.js",
+    "test": "echo 'Prettier config - no tests needed'",
+    "type-check": "echo 'Prettier config - no TypeScript to check'",
     "clean": "echo 'Prettier config - no clean needed'"
   },
   "peerDependencies": {

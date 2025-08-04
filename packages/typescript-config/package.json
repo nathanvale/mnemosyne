@@ -11,6 +11,10 @@
   },
   "scripts": {
     "build": "echo 'TypeScript config - no build needed'",
+    "lint": "echo 'TypeScript config - no linting needed'",
+    "format:check": "prettier --check *.json",
+    "test": "echo 'TypeScript config - no tests needed'",
+    "type-check": "echo 'TypeScript config - no TypeScript to check'",
     "clean": "echo 'TypeScript config - no clean needed'"
   },
   "devDependencies": {

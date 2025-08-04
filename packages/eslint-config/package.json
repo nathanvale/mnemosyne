@@ -11,6 +11,9 @@
   "scripts": {
     "build": "echo 'ESLint config - no build needed'",
     "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
+    "test": "echo 'ESLint config - no tests needed'",
+    "type-check": "echo 'ESLint config - no TypeScript to check'",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {

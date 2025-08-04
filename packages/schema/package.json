@@ -22,6 +22,7 @@
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
     "test:ci": "vitest run"
   },
   "dependencies": {

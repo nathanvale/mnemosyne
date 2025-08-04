@@ -66,6 +66,9 @@ importers:
       '@studio/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
+      '@studio/prettier-config':
+        specifier: workspace:*
+        version: link:packages/prettier-config
       '@tailwindcss/postcss':
         specifier: ^4.1.11
         version: 4.1.11
@@ -539,6 +542,12 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  packages/prettier-config:
+    dependencies:
+      prettier:
+        specifier: ^3.0.0
+        version: 3.6.2
+
   packages/schema:
     dependencies:
       zod:
@@ -605,6 +614,12 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
+
+  packages/typescript-config:
     devDependencies:
       typescript:
         specifier: ^5.8.3
