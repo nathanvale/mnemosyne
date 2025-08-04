@@ -197,13 +197,13 @@ export class WorkerDatabaseFactory {
       // Configure SQLite for better concurrent access
       // WAL mode allows readers and writers to work concurrently
       await prisma.$queryRaw`PRAGMA journal_mode = WAL`
-      
+
       // Increase busy timeout to 5 seconds to handle concurrent access
       await prisma.$queryRaw`PRAGMA busy_timeout = 5000`
-      
+
       // Use NORMAL synchronous mode for better performance while maintaining safety
       await prisma.$queryRaw`PRAGMA synchronous = NORMAL`
-      
+
       // Enable foreign keys
       await prisma.$queryRaw`PRAGMA foreign_keys = ON`
 
@@ -546,8 +546,8 @@ export class WorkerDatabaseFactory {
 
       try {
         // Ensure all pending transactions are completed
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
         // Disconnect the client
         await prisma.$disconnect()
       } catch (error) {
@@ -565,7 +565,10 @@ export class WorkerDatabaseFactory {
       try {
         await prisma.$disconnect()
       } catch (error) {
-        console.warn(`Error disconnecting Wallaby worker ${workerId} database:`, error)
+        console.warn(
+          `Error disconnecting Wallaby worker ${workerId} database:`,
+          error,
+        )
       }
 
       this.instances.delete(wallabyKey)

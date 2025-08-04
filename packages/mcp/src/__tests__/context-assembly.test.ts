@@ -193,8 +193,8 @@ describe('AgentContextAssembler', () => {
           descriptors: ['depressed', 'overwhelmed'],
           significance: 7,
         }),
-        createMockMemory({ 
-          moodScore: 2, 
+        createMockMemory({
+          moodScore: 2,
           descriptors: ['sad', 'anxious'],
           significance: 7,
         }),
@@ -209,13 +209,13 @@ describe('AgentContextAssembler', () => {
 
     it('should recommend celebratory approach for high mood', async () => {
       const memories = [
-        createMockMemory({ 
-          moodScore: 9, 
+        createMockMemory({
+          moodScore: 9,
           descriptors: ['excited', 'joyful'],
           significance: 7, // Ensure it passes relevance threshold
         }),
-        createMockMemory({ 
-          moodScore: 8, 
+        createMockMemory({
+          moodScore: 8,
           descriptors: ['happy', 'confident'],
           significance: 7,
         }),

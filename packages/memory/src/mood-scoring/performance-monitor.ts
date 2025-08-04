@@ -9,7 +9,11 @@ type PrismaTransaction = Omit<
 interface PerformanceMetric {
   id: string
   timestamp: Date
-  operationType: 'mood_analysis' | 'delta_detection' | 'validation' | 'batch_processing'
+  operationType:
+    | 'mood_analysis'
+    | 'delta_detection'
+    | 'validation'
+    | 'batch_processing'
   processingTimeMs: number
   inputSize: number // Number of conversations/messages processed
   memoryUsageMB: number
@@ -117,7 +121,7 @@ export class PerformanceMonitoringService {
     transaction?: PrismaTransaction,
   ): Promise<PerformanceMetric> {
     const throughput = inputSize / (processingTimeMs / 1000) // Operations per second
-    
+
     const metric: PerformanceMetric = {
       id: `perf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
@@ -148,7 +152,11 @@ export class PerformanceMonitoringService {
     metadata: Record<string, any> = {},
     transaction?: PrismaTransaction,
   ): Promise<QualityMetric> {
-    const performanceRating = this.calculatePerformanceRating(value, baseline, metricType)
+    const performanceRating = this.calculatePerformanceRating(
+      value,
+      baseline,
+      metricType,
+    )
     const trendDirection = await this.calculateTrendDirection(metricType, value)
 
     const qualityMetric: QualityMetric = {
@@ -190,7 +198,7 @@ export class PerformanceMonitoringService {
       trends.processing_time = this.calculateTrend(
         'processing_time',
         timeWindow,
-        filteredMetrics.map(m => ({
+        filteredMetrics.map((m) => ({
           timestamp: m.timestamp,
           value: m.processingTimeMs,
         })),
@@ -202,7 +210,7 @@ export class PerformanceMonitoringService {
       trends.throughput = this.calculateTrend(
         'throughput',
         timeWindow,
-        filteredMetrics.map(m => ({
+        filteredMetrics.map((m) => ({
           timestamp: m.timestamp,
           value: m.throughput,
         })),
@@ -214,7 +222,7 @@ export class PerformanceMonitoringService {
       trends.memory_usage = this.calculateTrend(
         'memory_usage',
         timeWindow,
-        filteredMetrics.map(m => ({
+        filteredMetrics.map((m) => ({
           timestamp: m.timestamp,
           value: m.memoryUsageMB,
         })),
@@ -226,7 +234,7 @@ export class PerformanceMonitoringService {
       trends.error_rate = this.calculateTrend(
         'error_rate',
         timeWindow,
-        filteredMetrics.map(m => ({
+        filteredMetrics.map((m) => ({
           timestamp: m.timestamp,
           value: (m.errorCount / m.inputSize) * 100, // Error percentage
         })),
@@ -244,34 +252,44 @@ export class PerformanceMonitoringService {
     const cutoffDate = new Date(Date.now() - windowMs)
 
     const filteredMetrics = this.qualityMetrics.filter(
-      (metric) => metric.timestamp >= cutoffDate &&
+      (metric) =>
+        metric.timestamp >= cutoffDate &&
         (!metricTypes || metricTypes.includes(metric.metricType)),
     )
 
     const trends: Record<string, PerformanceTrend> = {}
 
     // Group by metric type
-    const metricsByType = filteredMetrics.reduce((acc, metric) => {
-      if (!acc[metric.metricType]) {
-        acc[metric.metricType] = []
-      }
-      acc[metric.metricType].push({
-        timestamp: metric.timestamp,
-        value: metric.value,
-      })
-      return acc
-    }, {} as Record<string, Array<{ timestamp: Date; value: number }>>)
+    const metricsByType = filteredMetrics.reduce(
+      (acc, metric) => {
+        if (!acc[metric.metricType]) {
+          acc[metric.metricType] = []
+        }
+        acc[metric.metricType].push({
+          timestamp: metric.timestamp,
+          value: metric.value,
+        })
+        return acc
+      },
+      {} as Record<string, Array<{ timestamp: Date; value: number }>>,
+    )
 
     // Calculate trends for each metric type
     Object.entries(metricsByType).forEach(([metricType, dataPoints]) => {
-      trends[metricType] = this.calculateTrend(metricType, timeWindow, dataPoints)
+      trends[metricType] = this.calculateTrend(
+        metricType,
+        timeWindow,
+        dataPoints,
+      )
     })
 
     return trends
   }
 
   // Performance Dashboard
-  async generatePerformanceDashboard(timeWindow: string = '24h'): Promise<PerformanceDashboard> {
+  async generatePerformanceDashboard(
+    timeWindow: string = '24h',
+  ): Promise<PerformanceDashboard> {
     const windowMs = this.parseTimeWindow(timeWindow)
     const cutoffDate = new Date(Date.now() - windowMs)
 
@@ -283,28 +301,40 @@ export class PerformanceMonitoringService {
     )
 
     // Calculate key metrics
-    const avgProcessingTime = recentMetrics.length > 0
-      ? recentMetrics.reduce((sum, m) => sum + m.processingTimeMs, 0) / recentMetrics.length
-      : 0
+    const avgProcessingTime =
+      recentMetrics.length > 0
+        ? recentMetrics.reduce((sum, m) => sum + m.processingTimeMs, 0) /
+          recentMetrics.length
+        : 0
 
-    const avgThroughput = recentMetrics.length > 0
-      ? recentMetrics.reduce((sum, m) => sum + m.throughput, 0) / recentMetrics.length
-      : 0
+    const avgThroughput =
+      recentMetrics.length > 0
+        ? recentMetrics.reduce((sum, m) => sum + m.throughput, 0) /
+          recentMetrics.length
+        : 0
 
     const totalErrors = recentMetrics.reduce((sum, m) => sum + m.errorCount, 0)
-    const totalOperations = recentMetrics.reduce((sum, m) => sum + m.inputSize, 0)
-    const errorRate = totalOperations > 0 ? (totalErrors / totalOperations) * 100 : 0
+    const totalOperations = recentMetrics.reduce(
+      (sum, m) => sum + m.inputSize,
+      0,
+    )
+    const errorRate =
+      totalOperations > 0 ? (totalErrors / totalOperations) * 100 : 0
 
     const accuracyScores = recentMetrics
-      .filter(m => m.accuracyScore !== undefined)
-      .map(m => m.accuracyScore!)
-    const avgAccuracy = accuracyScores.length > 0
-      ? accuracyScores.reduce((sum, score) => sum + score, 0) / accuracyScores.length
-      : 0
+      .filter((m) => m.accuracyScore !== undefined)
+      .map((m) => m.accuracyScore!)
+    const avgAccuracy =
+      accuracyScores.length > 0
+        ? accuracyScores.reduce((sum, score) => sum + score, 0) /
+          accuracyScores.length
+        : 0
 
-    const avgMemoryUsage = recentMetrics.length > 0
-      ? recentMetrics.reduce((sum, m) => sum + m.memoryUsageMB, 0) / recentMetrics.length
-      : 0
+    const avgMemoryUsage =
+      recentMetrics.length > 0
+        ? recentMetrics.reduce((sum, m) => sum + m.memoryUsageMB, 0) /
+          recentMetrics.length
+        : 0
 
     // Calculate system health
     const systemHealth = this.calculateSystemHealth({
@@ -324,9 +354,17 @@ export class PerformanceMonitoringService {
     })
 
     // Get trends
-    const performanceTrends = await this.getPerformanceTrends(timeWindow, ['processing_time'])
-    const qualityTrends = await this.getQualityTrends(timeWindow, ['correlation', 'accuracy'])
-    const efficiencyTrends = await this.getPerformanceTrends(timeWindow, ['throughput', 'memory_usage'])
+    const performanceTrends = await this.getPerformanceTrends(timeWindow, [
+      'processing_time',
+    ])
+    const qualityTrends = await this.getQualityTrends(timeWindow, [
+      'correlation',
+      'accuracy',
+    ])
+    const efficiencyTrends = await this.getPerformanceTrends(timeWindow, [
+      'throughput',
+      'memory_usage',
+    ])
 
     // Generate recommendations
     const recommendations = this.generateRecommendations({
@@ -350,11 +388,17 @@ export class PerformanceMonitoringService {
         memoryEfficiency: 100 - Math.min(avgMemoryUsage / 100, 1) * 100,
       },
       trends: {
-        performance: performanceTrends.processing_time || this.getEmptyTrend('processing_time', timeWindow),
-        quality: qualityTrends.correlation || this.getEmptyTrend('correlation', timeWindow),
-        efficiency: efficiencyTrends.throughput || this.getEmptyTrend('throughput', timeWindow),
+        performance:
+          performanceTrends.processing_time ||
+          this.getEmptyTrend('processing_time', timeWindow),
+        quality:
+          qualityTrends.correlation ||
+          this.getEmptyTrend('correlation', timeWindow),
+        efficiency:
+          efficiencyTrends.throughput ||
+          this.getEmptyTrend('throughput', timeWindow),
       },
-      activeAlerts: this.activeAlerts.filter(alert => !alert.isResolved),
+      activeAlerts: this.activeAlerts.filter((alert) => !alert.isResolved),
       recommendations,
     }
   }
@@ -415,19 +459,22 @@ export class PerformanceMonitoringService {
     ]
   }
 
-  private async checkPerformanceAlerts(metric: PerformanceMetric): Promise<void> {
+  private async checkPerformanceAlerts(
+    metric: PerformanceMetric,
+  ): Promise<void> {
     const relevantConditions = this.alertConditions.filter(
-      condition => condition.isActive && (
-        (condition.metricType === 'processing_time' && metric.processingTimeMs) ||
-        (condition.metricType === 'memory_usage' && metric.memoryUsageMB) ||
-        (condition.metricType === 'throughput' && metric.throughput) ||
-        (condition.metricType === 'error_rate' && metric.errorCount)
-      )
+      (condition) =>
+        condition.isActive &&
+        ((condition.metricType === 'processing_time' &&
+          metric.processingTimeMs) ||
+          (condition.metricType === 'memory_usage' && metric.memoryUsageMB) ||
+          (condition.metricType === 'throughput' && metric.throughput) ||
+          (condition.metricType === 'error_rate' && metric.errorCount)),
     )
 
     for (const condition of relevantConditions) {
       let metricValue = 0
-      
+
       switch (condition.metricType) {
         case 'processing_time':
           metricValue = metric.processingTimeMs
@@ -453,9 +500,12 @@ export class PerformanceMonitoringService {
     }
   }
 
-  private async checkQualityAlerts(qualityMetric: QualityMetric): Promise<void> {
+  private async checkQualityAlerts(
+    qualityMetric: QualityMetric,
+  ): Promise<void> {
     const relevantConditions = this.alertConditions.filter(
-      condition => condition.isActive && condition.metricType === qualityMetric.metricType
+      (condition) =>
+        condition.isActive && condition.metricType === qualityMetric.metricType,
     )
 
     for (const condition of relevantConditions) {
@@ -469,7 +519,10 @@ export class PerformanceMonitoringService {
     }
   }
 
-  private evaluateAlertCondition(value: number, condition: AlertCondition): boolean {
+  private evaluateAlertCondition(
+    value: number,
+    condition: AlertCondition,
+  ): boolean {
     switch (condition.operator) {
       case 'greater_than':
         return value > condition.threshold
@@ -491,7 +544,7 @@ export class PerformanceMonitoringService {
   ): Promise<void> {
     // Check if similar alert already exists and is not resolved
     const existingAlert = this.activeAlerts.find(
-      alert => alert.alertConditionId === condition.id && !alert.isResolved
+      (alert) => alert.alertConditionId === condition.id && !alert.isResolved,
     )
 
     if (existingAlert) {
@@ -523,9 +576,9 @@ export class PerformanceMonitoringService {
 
     // For correlation and accuracy, higher is better
     if (metricType === 'correlation' || metricType === 'accuracy') {
-      if (ratio >= 1.08) return 'excellent'  // 8% or more above baseline
+      if (ratio >= 1.08) return 'excellent' // 8% or more above baseline
       if (ratio >= 1.0) return 'good'
-      if (ratio >= 0.92) return 'satisfactory'  // Adjusted threshold for test
+      if (ratio >= 0.92) return 'satisfactory' // Adjusted threshold for test
       return 'needs_improvement'
     }
 
@@ -545,14 +598,14 @@ export class PerformanceMonitoringService {
     currentValue: number,
   ): Promise<QualityMetric['trendDirection']> {
     const recentMetrics = this.qualityMetrics
-      .filter(m => m.metricType === metricType)
+      .filter((m) => m.metricType === metricType)
       .slice(-5) // Last 5 measurements
 
     if (recentMetrics.length < 2) {
       return 'stable'
     }
 
-    const values = recentMetrics.map(m => m.value)
+    const values = recentMetrics.map((m) => m.value)
     const trend = this.calculateLinearTrend(values)
 
     if (trend > 0.05) return 'improving'
@@ -569,13 +622,15 @@ export class PerformanceMonitoringService {
       return this.getEmptyTrend(metricName, timeWindow)
     }
 
-    const values = dataPoints.map(p => p.value)
+    const values = dataPoints.map((p) => p.value)
     const avgValue = values.reduce((sum, val) => sum + val, 0) / values.length
     const minValue = Math.min(...values)
     const maxValue = Math.max(...values)
-    
+
     // Calculate standard deviation
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - avgValue, 2), 0) / values.length
+    const variance =
+      values.reduce((sum, val) => sum + Math.pow(val - avgValue, 2), 0) /
+      values.length
     const standardDeviation = Math.sqrt(variance)
 
     // Calculate trend slope
@@ -596,7 +651,9 @@ export class PerformanceMonitoringService {
     // Calculate confidence level based on data points and consistency
     const confidenceLevel = Math.min(
       0.95,
-      0.5 + (dataPoints.length / 20) * 0.3 + (1 - (standardDeviation / avgValue)) * 0.2
+      0.5 +
+        (dataPoints.length / 20) * 0.3 +
+        (1 - standardDeviation / avgValue) * 0.2,
     )
 
     return {
@@ -702,42 +759,59 @@ export class PerformanceMonitoringService {
 
     // Processing time recommendations
     if (data.avgProcessingTime > 2000) {
-      recommendations.push('Consider optimizing algorithms - processing time exceeds 2 second threshold')
+      recommendations.push(
+        'Consider optimizing algorithms - processing time exceeds 2 second threshold',
+      )
     }
 
     // Error rate recommendations
     if (data.errorRate > 5) {
-      recommendations.push('Investigate error sources - error rate is above acceptable threshold')
+      recommendations.push(
+        'Investigate error sources - error rate is above acceptable threshold',
+      )
     }
 
     // Accuracy recommendations
     if (data.avgAccuracy < 0.8) {
-      recommendations.push('Review model calibration - accuracy below 80% target')
+      recommendations.push(
+        'Review model calibration - accuracy below 80% target',
+      )
     }
 
     // Memory recommendations
     if (data.avgMemoryUsage > 300) {
-      recommendations.push('Monitor memory usage - consider implementing memory optimization strategies')
+      recommendations.push(
+        'Monitor memory usage - consider implementing memory optimization strategies',
+      )
     }
 
     // Trend-based recommendations
     Object.entries(data.trends).forEach(([metricName, trend]) => {
       if (trend.trendDirection === 'declining' && trend.confidenceLevel > 0.7) {
-        recommendations.push(`Address declining trend in ${metricName} - consistent downward pattern detected`)
+        recommendations.push(
+          `Address declining trend in ${metricName} - consistent downward pattern detected`,
+        )
       }
     })
 
     // System health recommendations
     if (data.systemHealth === 'critical') {
-      recommendations.push('System requires immediate attention - multiple performance issues detected')
+      recommendations.push(
+        'System requires immediate attention - multiple performance issues detected',
+      )
     } else if (data.systemHealth === 'degraded') {
-      recommendations.push('Schedule maintenance window to address performance degradation')
+      recommendations.push(
+        'Schedule maintenance window to address performance degradation',
+      )
     }
 
     return recommendations
   }
 
-  private getEmptyTrend(metricName: string, timeWindow: string): PerformanceTrend {
+  private getEmptyTrend(
+    metricName: string,
+    timeWindow: string,
+  ): PerformanceTrend {
     return {
       metricName,
       timeWindow,
@@ -770,7 +844,7 @@ export class PerformanceMonitoringService {
 
   // Public methods for managing alerts
   async resolveAlert(alertId: string): Promise<void> {
-    const alert = this.activeAlerts.find(a => a.id === alertId)
+    const alert = this.activeAlerts.find((a) => a.id === alertId)
     if (alert) {
       alert.isResolved = true
       alert.resolvedAt = new Date()
@@ -778,7 +852,7 @@ export class PerformanceMonitoringService {
   }
 
   async getActiveAlerts(): Promise<PerformanceAlert[]> {
-    return this.activeAlerts.filter(alert => !alert.isResolved)
+    return this.activeAlerts.filter((alert) => !alert.isResolved)
   }
 
   async getMetricHistory(
@@ -789,15 +863,18 @@ export class PerformanceMonitoringService {
     const cutoffDate = new Date(Date.now() - windowMs)
 
     return this.metrics
-      .filter(metric => metric.timestamp >= cutoffDate)
-      .map(metric => ({
+      .filter((metric) => metric.timestamp >= cutoffDate)
+      .map((metric) => ({
         timestamp: metric.timestamp,
         value: this.extractMetricValue(metric, metricType),
       }))
-      .filter(item => item.value !== null)
+      .filter((item) => item.value !== null)
   }
 
-  private extractMetricValue(metric: PerformanceMetric, metricType: string): number {
+  private extractMetricValue(
+    metric: PerformanceMetric,
+    metricType: string,
+  ): number {
     switch (metricType) {
       case 'processing_time':
         return metric.processingTimeMs
@@ -825,9 +902,11 @@ export class PerformanceMonitoringService {
     const exportData = {
       exportTimestamp: new Date().toISOString(),
       timeWindow,
-      performanceMetrics: this.metrics.filter(m => m.timestamp >= cutoffDate),
-      qualityMetrics: this.qualityMetrics.filter(m => m.timestamp >= cutoffDate),
-      alerts: this.activeAlerts.filter(a => a.timestamp >= cutoffDate),
+      performanceMetrics: this.metrics.filter((m) => m.timestamp >= cutoffDate),
+      qualityMetrics: this.qualityMetrics.filter(
+        (m) => m.timestamp >= cutoffDate,
+      ),
+      alerts: this.activeAlerts.filter((a) => a.timestamp >= cutoffDate),
     }
 
     if (format === 'json') {

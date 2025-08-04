@@ -28,7 +28,7 @@ export function clearConsoleState(): void {
   if (console.clear) {
     console.clear()
   }
-  
+
   // Reset console methods to prevent interference
   if (process.env.NODE_ENV === 'test') {
     const originalMethods = {
@@ -37,7 +37,7 @@ export function clearConsoleState(): void {
       warn: console.warn,
       info: console.info,
     }
-    
+
     // Restore original methods if they were mocked
     Object.assign(console, originalMethods)
   }
@@ -48,16 +48,17 @@ export function clearConsoleState(): void {
  */
 export function clearGlobalState(): void {
   // Clear any global test variables
-  const globalKeys = Object.keys(global).filter(key => 
-    key.startsWith('test') || 
-    key.startsWith('mock') ||
-    key.startsWith('_test')
+  const globalKeys = Object.keys(global).filter(
+    (key) =>
+      key.startsWith('test') ||
+      key.startsWith('mock') ||
+      key.startsWith('_test'),
   )
-  
-  globalKeys.forEach(key => {
+
+  globalKeys.forEach((key) => {
     delete (global as any)[key]
   })
-  
+
   // Force garbage collection if available
   if (global.gc) {
     global.gc()
@@ -76,9 +77,9 @@ export function resetProcessEnv(): void {
     'VITEST',
     'VITEST_WORKER_ID',
   ]
-  
+
   // Remove any test-specific env vars that might persist
-  Object.keys(process.env).forEach(key => {
+  Object.keys(process.env).forEach((key) => {
     if (key.startsWith('TEST_') && !preserveKeys.includes(key)) {
       delete process.env[key]
     }
@@ -102,15 +103,15 @@ export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
     return obj
   }
-  
+
   if (obj instanceof Date) {
     return new Date(obj.getTime()) as unknown as T
   }
-  
+
   if (obj instanceof Array) {
-    return obj.map(item => deepClone(item)) as unknown as T
+    return obj.map((item) => deepClone(item)) as unknown as T
   }
-  
+
   if (typeof obj === 'object') {
     const cloned = {} as T
     for (const key in obj) {
@@ -120,7 +121,7 @@ export function deepClone<T>(obj: T): T {
     }
     return cloned
   }
-  
+
   return obj
 }
 
@@ -139,7 +140,7 @@ export function trackMemoryUsage(): {
   check: () => { current: NodeJS.MemoryUsage; growth: NodeJS.MemoryUsage }
 } {
   const initial = process.memoryUsage()
-  
+
   return {
     initial,
     check: () => {
@@ -152,6 +153,6 @@ export function trackMemoryUsage(): {
         arrayBuffers: current.arrayBuffers - initial.arrayBuffers,
       }
       return { current, growth }
-    }
+    },
   }
 }

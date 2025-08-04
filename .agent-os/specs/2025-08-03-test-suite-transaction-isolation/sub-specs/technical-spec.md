@@ -17,7 +17,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### TestDataFactory Robustness
 
 - **Error handling** for all Memory creation operations
-- **Validation checks** before returning Memory objects  
+- **Validation checks** before returning Memory objects
 - **Retry logic** for transient database issues
 - **Comprehensive logging** for debugging failures
 
@@ -37,16 +37,19 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ## Approach Options
 
 **Option A:** Minimal Transaction Context (Selected)
+
 - Add optional transaction parameter to storage service methods
 - Pass context from TestDataFactory when needed
 - Maintain existing method signatures for backward compatibility
 
 **Option B:** Complete Transaction Refactor
+
 - Restructure all storage services around transactions
 - Require transaction context for all operations
 - Major breaking changes to existing codebase
 
 **Option C:** Test-Only Transaction Handling
+
 - Special transaction handling only in test environments
 - Production code remains unchanged
 - Risk of test/production behavior divergence
@@ -60,16 +63,19 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ## Implementation Strategy
 
 ### Phase 1: Storage Service Enhancement
+
 1. Add optional transaction context parameter to all storage methods
 2. Update internal Prisma calls to use provided transaction context
 3. Maintain method overloads for backward compatibility
 
-### Phase 2: TestDataFactory Robustness  
+### Phase 2: TestDataFactory Robustness
+
 1. Implement comprehensive error handling in Memory creation
 2. Add validation checks and retry logic
 3. Update test helper methods to use transaction context
 
 ### Phase 3: Test Alignment and Validation
+
 1. Review and update database integration test expectations
 2. Fix precision issues in delta history calculations
 3. Validate complete test suite functionality

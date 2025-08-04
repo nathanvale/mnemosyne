@@ -37,22 +37,34 @@ describe('Concurrency Validation Tests - Phase 2', () => {
         const promise = (async () => {
           const workerId = WorkerDatabaseFactory.getWorkerId()
           const uniqueId = `stress-memory-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-          
+
           try {
             const memory = await prisma.memory.create({
               data: {
                 id: uniqueId,
                 sourceMessageIds: JSON.stringify([i, i + 1, i + 2]),
-                participants: JSON.stringify([{ id: `user-${i}`, name: `Test User ${i}` }]),
+                participants: JSON.stringify([
+                  { id: `user-${i}`, name: `Test User ${i}` },
+                ]),
                 summary: `Stress test memory ${i} from worker ${workerId}`,
                 confidence: 7 + (i % 3),
                 contentHash: `stress-hash-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               },
             })
 
-            return { success: true, memoryId: memory.id, workerId, iteration: i }
+            return {
+              success: true,
+              memoryId: memory.id,
+              workerId,
+              iteration: i,
+            }
           } catch (error) {
-            return { success: false, error: error instanceof Error ? error.message : 'Unknown error', workerId, iteration: i }
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+              workerId,
+              iteration: i,
+            }
           }
         })()
 
@@ -60,15 +72,15 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       }
 
       const results = await Promise.all(workerPromises)
-      
+
       // Analyze results
-      const successes = results.filter(r => r.success)
-      const failures = results.filter(r => !r.success)
+      const successes = results.filter((r) => r.success)
+      const failures = results.filter((r) => !r.success)
 
       // Should have high success rate (allow for some expected failures due to timing)
       const successRate = successes.length / concurrentOperations
       expect(successRate).toBeGreaterThan(0.8) // 80%+ success rate (relaxed for Wallaby.js)
-      
+
       // Verify data integrity - all successful operations should have created data
       const memoryCount = await prisma.memory.count()
       expect(memoryCount).toBe(successes.length)
@@ -82,7 +94,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       for (let i = 0; i < baseMemoryCount; i++) {
         const workerId = WorkerDatabaseFactory.getWorkerId()
         const uniqueId = `integrity-memory-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        
+
         const memory = await prisma.memory.create({
           data: {
             id: uniqueId,
@@ -109,12 +121,16 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
           return { success: true, memoryId }
         } catch (error) {
-          return { success: false, memoryId, error: error instanceof Error ? error.message : 'Unknown error' }
+          return {
+            success: false,
+            memoryId,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }
         }
       })
 
       const operationResults = await Promise.all(operationPromises)
-      const operationSuccesses = operationResults.filter(r => r.success)
+      const operationSuccesses = operationResults.filter((r) => r.success)
 
       expect(operationSuccesses).toHaveLength(baseMemoryCount)
 
@@ -134,12 +150,14 @@ describe('Concurrency Validation Tests - Phase 2', () => {
         const writePromise = (async () => {
           try {
             const uniqueId = `race-memory-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            
+
             const memory = await prisma.memory.create({
               data: {
                 id: uniqueId,
                 sourceMessageIds: JSON.stringify([i]),
-                participants: JSON.stringify([{ id: `user-${i}`, name: `Race Test User ${i}` }]),
+                participants: JSON.stringify([
+                  { id: `user-${i}`, name: `Race Test User ${i}` },
+                ]),
                 summary: `Race condition test memory ${i}`,
                 confidence: 8,
                 contentHash: `race-hash-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -148,7 +166,11 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
             return { success: true, iteration: i, memoryId: memory.id }
           } catch (error) {
-            return { success: false, iteration: i, error: error instanceof Error ? error.message : 'Unknown error' }
+            return {
+              success: false,
+              iteration: i,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            }
           }
         })()
 
@@ -156,7 +178,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       }
 
       const writeResults = await Promise.all(writePromises)
-      const writeSuccesses = writeResults.filter(r => r.success)
+      const writeSuccesses = writeResults.filter((r) => r.success)
 
       // Should have reasonable success rate
       const successRate = writeSuccesses.length / concurrentWrites
@@ -168,9 +190,9 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       })
 
       expect(memories.length).toBe(writeSuccesses.length)
-      
+
       // Verify all memories have unique IDs
-      const uniqueIds = new Set(memories.map(m => m.id))
+      const uniqueIds = new Set(memories.map((m) => m.id))
       expect(uniqueIds.size).toBe(memories.length)
     }, 30000)
 
@@ -214,11 +236,21 @@ describe('Concurrency Validation Tests - Phase 2', () => {
             ]
 
             // Perform delta detection
-            const deltas = deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
-            
-            return { success: true, iteration: i, deltaCount: deltas.length, deltas }
+            const deltas =
+              deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
+
+            return {
+              success: true,
+              iteration: i,
+              deltaCount: deltas.length,
+              deltas,
+            }
           } catch (error) {
-            return { success: false, iteration: i, error: error instanceof Error ? error.message : 'Unknown error' }
+            return {
+              success: false,
+              iteration: i,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            }
           }
         })()
 
@@ -226,12 +258,12 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       }
 
       const analysisResults = await Promise.all(analysisPromises)
-      const analysisSuccesses = analysisResults.filter(r => r.success)
+      const analysisSuccesses = analysisResults.filter((r) => r.success)
 
       expect(analysisSuccesses).toHaveLength(concurrentAnalyses)
 
       // Verify all deltas were detected properly
-      analysisSuccesses.forEach(result => {
+      analysisSuccesses.forEach((result) => {
         expect(result.deltaCount).toBeGreaterThanOrEqual(0)
         if (result.deltaCount > 0) {
           expect(result.deltas[0]).toHaveProperty('magnitude')
@@ -244,17 +276,19 @@ describe('Concurrency Validation Tests - Phase 2', () => {
   })
 
   describe('Cross-Worker Data Isolation', () => {
-    it('should ensure workers cannot access each other\'s data', async () => {
+    it("should ensure workers cannot access each other's data", async () => {
       const currentWorkerId = WorkerDatabaseFactory.getWorkerId()
 
       // Create data in current worker's database
       const memoryId = `isolation-memory-${currentWorkerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
+
       const memory = await prisma.memory.create({
         data: {
           id: memoryId,
           sourceMessageIds: JSON.stringify([1, 2, 3]),
-          participants: JSON.stringify([{ id: 'user-isolation', name: 'Isolation Test User' }]),
+          participants: JSON.stringify([
+            { id: 'user-isolation', name: 'Isolation Test User' },
+          ]),
           summary: `Isolation test memory for worker ${currentWorkerId}`,
           confidence: 9,
           contentHash: `isolation-hash-${currentWorkerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -287,15 +321,17 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
     it('should maintain separate database states across worker lifecycles', async () => {
       const workerId = WorkerDatabaseFactory.getWorkerId()
-      
+
       // Create initial data
       const initialMemoryId = `lifecycle-memory-1-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
+
       await prisma.memory.create({
         data: {
           id: initialMemoryId,
           sourceMessageIds: JSON.stringify([1]),
-          participants: JSON.stringify([{ id: 'user-lifecycle', name: 'Lifecycle Test User' }]),
+          participants: JSON.stringify([
+            { id: 'user-lifecycle', name: 'Lifecycle Test User' },
+          ]),
           summary: 'Initial lifecycle test memory',
           confidence: 7,
           contentHash: `lifecycle-hash-1-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -315,12 +351,14 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
       // Create new data after cleanup
       const newMemoryId = `lifecycle-memory-2-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
+
       await prisma.memory.create({
         data: {
           id: newMemoryId,
           sourceMessageIds: JSON.stringify([2]),
-          participants: JSON.stringify([{ id: 'user-lifecycle', name: 'Lifecycle Test User' }]),
+          participants: JSON.stringify([
+            { id: 'user-lifecycle', name: 'Lifecycle Test User' },
+          ]),
           summary: 'New lifecycle test memory after cleanup',
           confidence: 8,
           contentHash: `lifecycle-hash-2-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -341,17 +379,19 @@ describe('Concurrency Validation Tests - Phase 2', () => {
   describe('Worker Database Cleanup Validation', () => {
     it('should thoroughly clean all data without affecting other workers', async () => {
       const workerId = WorkerDatabaseFactory.getWorkerId()
-      
+
       // Create multiple memories
       const memoryIds: string[] = []
       for (let i = 0; i < 5; i++) {
         const memoryId = `cleanup-memory-${i}-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        
+
         await prisma.memory.create({
           data: {
             id: memoryId,
             sourceMessageIds: JSON.stringify([i]),
-            participants: JSON.stringify([{ id: 'cleanup-user', name: 'Cleanup Test User' }]),
+            participants: JSON.stringify([
+              { id: 'cleanup-user', name: 'Cleanup Test User' },
+            ]),
             summary: `Cleanup test memory ${i}`,
             confidence: 8,
             contentHash: `cleanup-hash-${i}-${workerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -374,7 +414,9 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
     it('should handle cleanup gracefully with no data present', async () => {
       // Perform cleanup on empty database
-      await expect(WorkerDatabaseFactory.cleanWorkerData(prisma)).resolves.not.toThrow()
+      await expect(
+        WorkerDatabaseFactory.cleanWorkerData(prisma),
+      ).resolves.not.toThrow()
 
       // Verify database is still clean
       const memoryCount = await prisma.memory.count()

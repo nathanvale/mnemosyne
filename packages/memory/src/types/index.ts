@@ -308,7 +308,12 @@ export interface RelationshipDynamics {
   /** Intensity of conflict if present */
   conflictIntensity: 'high' | 'medium' | 'low'
   /** Communication style summary */
-  communicationStyle: 'reflective' | 'supportive' | 'directive' | 'conflicting' | 'professional'
+  communicationStyle:
+    | 'reflective'
+    | 'supportive'
+    | 'directive'
+    | 'conflicting'
+    | 'professional'
   /** Detailed communication style analysis */
   communicationStyleDetails: {
     /** Level of vulnerability displayed in communication */
@@ -773,7 +778,10 @@ export interface ValidationMetrics {
  */
 export interface DiscrepancyAnalysis {
   /** Overall systematic bias direction */
-  systematicBias: 'algorithmic_over_estimation' | 'algorithmic_under_estimation' | 'no_systematic_bias'
+  systematicBias:
+    | 'algorithmic_over_estimation'
+    | 'algorithmic_under_estimation'
+    | 'no_systematic_bias'
   /** Magnitude and consistency of bias pattern */
   biasPattern: {
     magnitude: number
@@ -788,9 +796,9 @@ export interface DiscrepancyAnalysis {
   improvementRecommendations: string[]
   /** Distribution of discrepancy magnitudes */
   discrepancyDistribution: {
-    small: number  // 0-0.5 points
-    medium: number // 0.5-1.5 points  
-    large: number  // 1.5+ points
+    small: number // 0-0.5 points
+    medium: number // 0.5-1.5 points
+    large: number // 1.5+ points
   }
 }
 
@@ -807,7 +815,10 @@ export interface IndividualValidationAnalysis {
   /** Absolute error between scores */
   absoluteError: number
   /** Type of discrepancy */
-  discrepancyType: 'algorithmic_over_estimation' | 'algorithmic_under_estimation' | 'close_agreement'
+  discrepancyType:
+    | 'algorithmic_over_estimation'
+    | 'algorithmic_under_estimation'
+    | 'close_agreement'
   /** Factors contributing to discrepancy */
   discrepancyFactors: string[]
   /** Human expert's rationale */
@@ -838,12 +849,15 @@ export interface ValidatorConsistency {
     flagReason: string
   }>
   /** Validator-specific performance metrics */
-  validatorMetrics: Record<string, {
-    averageCorrelationWithAlgorithm: number
-    averageCorrelationWithPeers: number
-    consistencyScore: number
-    validationCount: number
-  }>
+  validatorMetrics: Record<
+    string,
+    {
+      averageCorrelationWithAlgorithm: number
+      averageCorrelationWithPeers: number
+      consistencyScore: number
+      validationCount: number
+    }
+  >
 }
 
 /**
@@ -884,9 +898,17 @@ export interface BiasAnalysis {
   biasDetected: boolean
   /** Types of bias identified */
   biasTypes: Array<{
-    type: 'demographic' | 'contextual' | 'linguistic' | 'temporal' | 'emotional_complexity' |
-          'emotional_minimization' | 'sarcasm_detection_failure' | 'repetitive_pattern_blindness' |
-          'mixed_emotion_oversimplification' | 'defensive_language_blindness'
+    type:
+      | 'demographic'
+      | 'contextual'
+      | 'linguistic'
+      | 'temporal'
+      | 'emotional_complexity'
+      | 'emotional_minimization'
+      | 'sarcasm_detection_failure'
+      | 'repetitive_pattern_blindness'
+      | 'mixed_emotion_oversimplification'
+      | 'defensive_language_blindness'
     severity: 'low' | 'medium' | 'high'
     description: string
     affectedSamples: number
@@ -913,10 +935,19 @@ export interface CalibrationAdjustment {
   /** Source validation result that triggered this calibration */
   sourceValidationId: string
   /** Type of calibration adjustment */
-  adjustmentType: 'weight_adjustment' | 'threshold_adjustment' | 'bias_correction' | 'confidence_recalibration'
+  adjustmentType:
+    | 'weight_adjustment'
+    | 'threshold_adjustment'
+    | 'bias_correction'
+    | 'confidence_recalibration'
   /** Target component to adjust */
-  targetComponent: 'sentiment_analysis' | 'psychological_indicators' | 'relationship_context' | 
-                   'conversational_flow' | 'historical_baseline' | 'confidence_calculator'
+  targetComponent:
+    | 'sentiment_analysis'
+    | 'psychological_indicators'
+    | 'relationship_context'
+    | 'conversational_flow'
+    | 'historical_baseline'
+    | 'confidence_calculator'
   /** Specific parameter adjustments */
   parameterAdjustments: {
     parameterName: string
@@ -982,7 +1013,12 @@ export interface EmotionalComplexityAssessment {
   complexityScore: number
   /** Types of complexity detected */
   complexityTypes: Array<{
-    type: 'mixed_emotions' | 'contradictory_signals' | 'temporal_inconsistency' | 'contextual_ambiguity' | 'cultural_nuance'
+    type:
+      | 'mixed_emotions'
+      | 'contradictory_signals'
+      | 'temporal_inconsistency'
+      | 'contextual_ambiguity'
+      | 'cultural_nuance'
     severity: 'low' | 'medium' | 'high'
     confidence: number
     description: string
@@ -991,7 +1027,11 @@ export interface EmotionalComplexityAssessment {
   /** Confidence in complexity assessment */
   assessmentConfidence: number
   /** Recommended handling approach */
-  recommendedApproach: 'standard_analysis' | 'multi_interpretation' | 'uncertainty_flagging' | 'human_review'
+  recommendedApproach:
+    | 'standard_analysis'
+    | 'multi_interpretation'
+    | 'uncertainty_flagging'
+    | 'human_review'
 }
 
 /**
@@ -1002,7 +1042,12 @@ export interface UncertaintyQuantification {
   uncertaintyLevel: number
   /** Sources of uncertainty */
   uncertaintySources: Array<{
-    source: 'insufficient_context' | 'conflicting_signals' | 'cultural_ambiguity' | 'temporal_inconsistency' | 'extreme_emotional_state'
+    source:
+      | 'insufficient_context'
+      | 'conflicting_signals'
+      | 'cultural_ambiguity'
+      | 'temporal_inconsistency'
+      | 'extreme_emotional_state'
     impact: number
     description: string
     mitigationSuggestions: string[]
@@ -1051,13 +1096,23 @@ export interface EdgeCaseDetection {
   /** Whether an edge case was detected */
   isEdgeCase: boolean
   /** Type of edge case */
-  edgeCaseType?: 'extreme_emotion' | 'mixed_complex' | 'cultural_specific' | 'sarcasm_heavy' | 'ambiguous_context' | 'contradictory_signals'
+  edgeCaseType?:
+    | 'extreme_emotion'
+    | 'mixed_complex'
+    | 'cultural_specific'
+    | 'sarcasm_heavy'
+    | 'ambiguous_context'
+    | 'contradictory_signals'
   /** Severity of the edge case */
   severity?: 'low' | 'medium' | 'high' | 'critical'
   /** Detection confidence */
   detectionConfidence?: number
   /** Handling strategy */
-  handlingStrategy?: 'enhanced_analysis' | 'multi_interpretation' | 'uncertainty_flagging' | 'human_escalation'
+  handlingStrategy?:
+    | 'enhanced_analysis'
+    | 'multi_interpretation'
+    | 'uncertainty_flagging'
+    | 'human_escalation'
   /** Additional context needed */
   additionalContextNeeded?: string[]
 }
@@ -1067,7 +1122,13 @@ export interface EdgeCaseDetection {
  */
 export interface CulturalContextAnalysis {
   /** Detected cultural context */
-  culturalContext: 'western_direct' | 'eastern_indirect' | 'high_context' | 'low_context' | 'mixed' | 'unknown'
+  culturalContext:
+    | 'western_direct'
+    | 'eastern_indirect'
+    | 'high_context'
+    | 'low_context'
+    | 'mixed'
+    | 'unknown'
   /** Cultural confidence */
   culturalConfidence: number
   /** Cultural considerations */
@@ -1094,7 +1155,12 @@ export interface AmbiguityDetection {
   ambiguityLevel: number
   /** Ambiguity sources */
   ambiguitySources: Array<{
-    source: 'linguistic' | 'contextual' | 'emotional' | 'temporal' | 'relational'
+    source:
+      | 'linguistic'
+      | 'contextual'
+      | 'emotional'
+      | 'temporal'
+      | 'relational'
     severity: number
     description: string
     clarificationNeeded: string[]

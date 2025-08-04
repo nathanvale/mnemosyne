@@ -72,7 +72,10 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     })
 
     // Check if we have sufficient validation data
-    if (validationResult.overallMetrics.sampleSize < this.config.minValidationSampleSize) {
+    if (
+      validationResult.overallMetrics.sampleSize <
+      this.config.minValidationSampleSize
+    ) {
       logger.warn('Insufficient validation sample size for calibration', {
         sampleSize: validationResult.overallMetrics.sampleSize,
         required: this.config.minValidationSampleSize,
@@ -83,20 +86,31 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     const calibrationAdjustments: CalibrationAdjustment[] = []
 
     // Generate weight adjustments for systematic biases
-    const weightAdjustments = this.generateWeightAdjustments(validationResult, sessionId)
+    const weightAdjustments = this.generateWeightAdjustments(
+      validationResult,
+      sessionId,
+    )
     calibrationAdjustments.push(...weightAdjustments)
 
     // Generate threshold adjustments for confidence issues
-    const thresholdAdjustments = this.generateThresholdAdjustments(validationResult, sessionId)
+    const thresholdAdjustments = this.generateThresholdAdjustments(
+      validationResult,
+      sessionId,
+    )
     calibrationAdjustments.push(...thresholdAdjustments)
 
     // Generate bias-specific corrections
-    const biasCorrections = this.generateBiasCorrections(validationResult, sessionId)
+    const biasCorrections = this.generateBiasCorrections(
+      validationResult,
+      sessionId,
+    )
     calibrationAdjustments.push(...biasCorrections)
 
     // Limit to maximum calibrations per session
-    const limitedAdjustments = calibrationAdjustments
-      .slice(0, this.config.maxCalibrationsPerSession)
+    const limitedAdjustments = calibrationAdjustments.slice(
+      0,
+      this.config.maxCalibrationsPerSession,
+    )
 
     logger.debug('Generated calibration adjustments', {
       sessionId,
@@ -123,12 +137,12 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
       try {
         // Apply the parameter adjustments
         const success = await this.applyParameterAdjustments(adjustment)
-        
+
         if (success) {
           adjustment.status = 'applied'
           applied.push(adjustment)
           this.activeCalibrations.push(adjustment)
-          
+
           logger.info('Applied calibration adjustment', {
             calibrationId: adjustment.calibrationId,
             adjustmentType: adjustment.adjustmentType,
@@ -137,7 +151,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
         } else {
           adjustment.status = 'rejected'
           rejected.push(adjustment)
-          
+
           logger.warn('Rejected calibration adjustment', {
             calibrationId: adjustment.calibrationId,
             reason: 'Parameter adjustment failed',
@@ -146,7 +160,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
       } catch (error) {
         adjustment.status = 'rejected'
         rejected.push(adjustment)
-        
+
         logger.error('Failed to apply calibration adjustment', {
           calibrationId: adjustment.calibrationId,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -167,9 +181,14 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     const beforeMetrics = this.performanceTracking.currentMetrics
     const afterMetrics = afterValidationResult.overallMetrics
 
-    const actualCorrelationImprovement = afterMetrics.pearsonCorrelation - beforeMetrics.pearsonCorrelation
-    const actualAccuracyImprovement = beforeMetrics.meanAbsoluteError - afterMetrics.meanAbsoluteError
-    const actualBiasReduction = this.calculateBiasReduction(beforeMetrics, afterMetrics)
+    const actualCorrelationImprovement =
+      afterMetrics.pearsonCorrelation - beforeMetrics.pearsonCorrelation
+    const actualAccuracyImprovement =
+      beforeMetrics.meanAbsoluteError - afterMetrics.meanAbsoluteError
+    const actualBiasReduction = this.calculateBiasReduction(
+      beforeMetrics,
+      afterMetrics,
+    )
 
     adjustment.validationResults = {
       actualCorrelationImprovement,
@@ -179,7 +198,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     }
 
     // Determine if calibration was successful
-    const isSuccessful = 
+    const isSuccessful =
       actualCorrelationImprovement >= -this.config.minImprovementThreshold &&
       actualAccuracyImprovement >= this.config.minImprovementThreshold
 
@@ -188,7 +207,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     if (isSuccessful) {
       // Update current metrics
       this.performanceTracking.currentMetrics = afterMetrics
-      
+
       // Add to improvement trend
       this.performanceTracking.improvementTrend.push({
         date: new Date(),
@@ -205,7 +224,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     } else {
       // Revert the calibration if it didn't improve performance
       await this.revertCalibrationAdjustment(adjustment)
-      
+
       logger.warn('Calibration rejected due to poor performance', {
         calibrationId: adjustment.calibrationId,
         correlationImprovement: actualCorrelationImprovement,
@@ -216,7 +235,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     // Move to calibration history
     this.calibrationHistory.push(adjustment)
     this.activeCalibrations = this.activeCalibrations.filter(
-      a => a.calibrationId !== adjustment.calibrationId
+      (a) => a.calibrationId !== adjustment.calibrationId,
     )
 
     return adjustment
@@ -234,14 +253,16 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
   } {
     const totalCalibrations = this.calibrationHistory.length
     const successfulCalibrations = this.calibrationHistory.filter(
-      c => c.status === 'validated'
+      (c) => c.status === 'validated',
     ).length
 
     const baseline = this.performanceTracking.baselineMetrics
     const current = this.performanceTracking.currentMetrics
 
-    const overallCorrelationImprovement = current.pearsonCorrelation - baseline.pearsonCorrelation
-    const overallAccuracyImprovement = baseline.meanAbsoluteError - current.meanAbsoluteError
+    const overallCorrelationImprovement =
+      current.pearsonCorrelation - baseline.pearsonCorrelation
+    const overallAccuracyImprovement =
+      baseline.meanAbsoluteError - current.meanAbsoluteError
 
     return {
       totalCalibrations,
@@ -261,15 +282,23 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     const adjustments: CalibrationAdjustment[] = []
 
     // Check for systematic over/under estimation
-    if (validationResult.discrepancyAnalysis.systematicBias !== 'no_systematic_bias') {
+    if (
+      validationResult.discrepancyAnalysis.systematicBias !==
+      'no_systematic_bias'
+    ) {
       const biasDirection = validationResult.discrepancyAnalysis.systematicBias
-      const biaseMagnitude = validationResult.discrepancyAnalysis.biasPattern.magnitude
+      const biaseMagnitude =
+        validationResult.discrepancyAnalysis.biasPattern.magnitude
 
       // Suggest sentiment weight adjustment if bias is significant
       if (biaseMagnitude > 1.0) {
         const currentWeight = 0.35 // Default sentiment weight
-        const adjustment = biasDirection === 'algorithmic_over_estimation' ? -0.05 : 0.05
-        const recommendedWeight = Math.max(0.1, Math.min(0.6, currentWeight + adjustment))
+        const adjustment =
+          biasDirection === 'algorithmic_over_estimation' ? -0.05 : 0.05
+        const recommendedWeight = Math.max(
+          0.1,
+          Math.min(0.6, currentWeight + adjustment),
+        )
 
         adjustments.push({
           calibrationId: `weight-adj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -277,13 +306,15 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
           sourceValidationId: sessionId,
           adjustmentType: 'weight_adjustment',
           targetComponent: 'sentiment_analysis',
-          parameterAdjustments: [{
-            parameterName: 'sentiment_weight',
-            currentValue: currentWeight,
-            recommendedValue: recommendedWeight,
-            adjustmentReason: `Address ${biasDirection} with magnitude ${biaseMagnitude.toFixed(2)}`,
-            expectedImpact: `Reduce systematic bias by ${Math.abs(adjustment * 10).toFixed(1)}%`,
-          }],
+          parameterAdjustments: [
+            {
+              parameterName: 'sentiment_weight',
+              currentValue: currentWeight,
+              recommendedValue: recommendedWeight,
+              adjustmentReason: `Address ${biasDirection} with magnitude ${biaseMagnitude.toFixed(2)}`,
+              expectedImpact: `Reduce systematic bias by ${Math.abs(adjustment * 10).toFixed(1)}%`,
+            },
+          ],
           predictedImprovements: {
             correlationImprovement: 0.05,
             biasReduction: Math.abs(adjustment),
@@ -305,10 +336,14 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
 
     // Check for confidence calibration issues
     const overconfidenceIndicators = validationResult.individualAnalyses.filter(
-      analysis => analysis.algorithmicConfidence > 0.8 && analysis.absoluteError > 1.5
+      (analysis) =>
+        analysis.algorithmicConfidence > 0.8 && analysis.absoluteError > 1.5,
     )
 
-    if (overconfidenceIndicators.length > validationResult.individualAnalyses.length * 0.3) {
+    if (
+      overconfidenceIndicators.length >
+      validationResult.individualAnalyses.length * 0.3
+    ) {
       // More than 30% of high-confidence predictions have high error
       adjustments.push({
         calibrationId: `threshold-adj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -316,13 +351,15 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
         sourceValidationId: sessionId,
         adjustmentType: 'threshold_adjustment',
         targetComponent: 'confidence_calculator',
-        parameterAdjustments: [{
-          parameterName: 'confidence_threshold_high',
-          currentValue: 0.8,
-          recommendedValue: 0.85,
-          adjustmentReason: `Reduce overconfidence: ${overconfidenceIndicators.length} cases with high confidence but high error`,
-          expectedImpact: 'Improve confidence calibration accuracy by 10-15%',
-        }],
+        parameterAdjustments: [
+          {
+            parameterName: 'confidence_threshold_high',
+            currentValue: 0.8,
+            recommendedValue: 0.85,
+            adjustmentReason: `Reduce overconfidence: ${overconfidenceIndicators.length} cases with high confidence but high error`,
+            expectedImpact: 'Improve confidence calibration accuracy by 10-15%',
+          },
+        ],
         predictedImprovements: {
           correlationImprovement: 0.02,
           biasReduction: 0.1,
@@ -350,13 +387,15 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
           sourceValidationId: sessionId,
           adjustmentType: 'bias_correction',
           targetComponent: this.getBiasTargetComponent(biasType.type),
-          parameterAdjustments: [{
-            parameterName: `${biasType.type}_correction_factor`,
-            currentValue: 1.0,
-            recommendedValue: this.getBiasCorrectionFactor(biasType),
-            adjustmentReason: biasType.description,
-            expectedImpact: biasType.correctionRecommendation,
-          }],
+          parameterAdjustments: [
+            {
+              parameterName: `${biasType.type}_correction_factor`,
+              currentValue: 1.0,
+              recommendedValue: this.getBiasCorrectionFactor(biasType),
+              adjustmentReason: biasType.description,
+              expectedImpact: biasType.correctionRecommendation,
+            },
+          ],
           predictedImprovements: {
             correlationImprovement: 0.08,
             biasReduction: 0.3,
@@ -370,27 +409,39 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     return adjustments
   }
 
-  private getBiasTargetComponent(biasType: string): CalibrationAdjustment['targetComponent'] {
-    const targetMap: Record<string, CalibrationAdjustment['targetComponent']> = {
-      'emotional_minimization': 'sentiment_analysis',
-      'sarcasm_detection_failure': 'sentiment_analysis',
-      'repetitive_pattern_blindness': 'psychological_indicators',
-      'mixed_emotion_oversimplification': 'sentiment_analysis',
-      'defensive_language_blindness': 'psychological_indicators',
-      'emotional_complexity': 'sentiment_analysis',
-    }
+  private getBiasTargetComponent(
+    biasType: string,
+  ): CalibrationAdjustment['targetComponent'] {
+    const targetMap: Record<string, CalibrationAdjustment['targetComponent']> =
+      {
+        emotional_minimization: 'sentiment_analysis',
+        sarcasm_detection_failure: 'sentiment_analysis',
+        repetitive_pattern_blindness: 'psychological_indicators',
+        mixed_emotion_oversimplification: 'sentiment_analysis',
+        defensive_language_blindness: 'psychological_indicators',
+        emotional_complexity: 'sentiment_analysis',
+      }
 
     return targetMap[biasType] || 'sentiment_analysis'
   }
 
-  private getBiasCorrectionFactor(biasType: BiasAnalysis['biasTypes'][0]): number {
-    const severityMultiplier = biasType.severity === 'high' ? 1.2 : biasType.severity === 'medium' ? 1.1 : 1.05
-    const sampleMultiplier = Math.min(1.3, 1 + (biasType.affectedSamples * 0.05))
-    
+  private getBiasCorrectionFactor(
+    biasType: BiasAnalysis['biasTypes'][0],
+  ): number {
+    const severityMultiplier =
+      biasType.severity === 'high'
+        ? 1.2
+        : biasType.severity === 'medium'
+          ? 1.1
+          : 1.05
+    const sampleMultiplier = Math.min(1.3, 1 + biasType.affectedSamples * 0.05)
+
     return severityMultiplier * sampleMultiplier
   }
 
-  private async applyParameterAdjustments(adjustment: CalibrationAdjustment): Promise<boolean> {
+  private async applyParameterAdjustments(
+    adjustment: CalibrationAdjustment,
+  ): Promise<boolean> {
     // In a real implementation, this would update the actual algorithm parameters
     // For now, we simulate the application
     logger.debug('Applying parameter adjustments', {
@@ -402,18 +453,25 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     return Math.random() > 0.1 // 90% success rate
   }
 
-  private async revertCalibrationAdjustment(adjustment: CalibrationAdjustment): Promise<void> {
+  private async revertCalibrationAdjustment(
+    adjustment: CalibrationAdjustment,
+  ): Promise<void> {
     // In a real implementation, this would revert the parameter changes
     logger.debug('Reverting calibration adjustment', {
       calibrationId: adjustment.calibrationId,
     })
   }
 
-  private calculateBiasReduction(before: ValidationMetrics, after: ValidationMetrics): number {
+  private calculateBiasReduction(
+    before: ValidationMetrics,
+    after: ValidationMetrics,
+  ): number {
     // Simplified bias calculation based on correlation and accuracy
-    const beforeBias = 1 - (before.pearsonCorrelation * (1 - before.meanAbsoluteError / 10))
-    const afterBias = 1 - (after.pearsonCorrelation * (1 - after.meanAbsoluteError / 10))
-    
+    const beforeBias =
+      1 - before.pearsonCorrelation * (1 - before.meanAbsoluteError / 10)
+    const afterBias =
+      1 - after.pearsonCorrelation * (1 - after.meanAbsoluteError / 10)
+
     return Math.max(0, beforeBias - afterBias)
   }
 

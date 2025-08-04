@@ -9,18 +9,21 @@ import type {
   // BiasAnalysis,
 } from '../../types'
 
-import { createTestConversationData, createTestMoodAnalysisResult } from '../../__tests__/test-helpers'
+import {
+  createTestConversationData,
+  createTestMoodAnalysisResult,
+} from '../../__tests__/test-helpers'
 // import { MoodScoringAnalyzer } from '../analyzer'
 import { ValidationFramework } from '../validation-framework'
 
 // Helper function to convert old test format to proper MoodAnalysisResult format
 function createMoodAnalysisResult(data: {
-  score: number;
-  confidence: number;
-  primaryEmotions?: string[];
-  sentiment?: string;
-  factors?: MoodFactor[];
-  descriptors?: string[];
+  score: number
+  confidence: number
+  primaryEmotions?: string[]
+  sentiment?: string
+  factors?: MoodFactor[]
+  descriptors?: string[]
 }): MoodAnalysisResult {
   // If already in correct format, return as is
   if (data.descriptors && data.factors) {
@@ -31,7 +34,7 @@ function createMoodAnalysisResult(data: {
       factors: data.factors,
     }
   }
-  
+
   // Convert old format to new format
   const descriptors: string[] = []
   if (data.primaryEmotions) {
@@ -40,7 +43,7 @@ function createMoodAnalysisResult(data: {
   if (data.sentiment) {
     descriptors.push(data.sentiment)
   }
-  
+
   return {
     score: data.score,
     confidence: data.confidence,
@@ -57,7 +60,9 @@ function createMoodAnalysisResult(data: {
 }
 
 // Helper to add default validator credentials if missing
-function addDefaultCredentials(validation: HumanValidationRecord): HumanValidationRecord {
+function addDefaultCredentials(
+  validation: HumanValidationRecord,
+): HumanValidationRecord {
   if (validation.validatorCredentials) {
     return validation
   }
@@ -351,7 +356,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
               messages: [
                 {
                   id: 'msg7',
-                  content: 'This is really frustrating, nothing is going right.',
+                  content:
+                    'This is really frustrating, nothing is going right.',
                   authorId: 'user7',
                   timestamp: new Date('2024-01-02T15:00:00Z'),
                 },
@@ -624,7 +630,10 @@ describe('ValidationFramework - Human Validation Framework', () => {
             validatorCredentials: {
               title: 'Clinical Social Worker',
               yearsExperience: 15,
-              specializations: ['workplace_psychology', 'communication_patterns'],
+              specializations: [
+                'workplace_psychology',
+                'communication_patterns',
+              ],
             },
             humanMoodScore: 9.2, // Human recognizes deeper therapeutic breakthrough
             confidence: 0.92,
@@ -825,7 +834,12 @@ describe('ValidationFramework - Human Validation Framework', () => {
               id: 'conv-under-1',
               timestamp: new Date('2024-01-05T14:00:00Z'),
               participants: [
-                { id: 'user10', name: 'Robin', role: 'author', messageCount: 3 },
+                {
+                  id: 'user10',
+                  name: 'Robin',
+                  role: 'author',
+                  messageCount: 3,
+                },
               ],
               messages: [
                 {
@@ -900,7 +914,10 @@ describe('ValidationFramework - Human Validation Framework', () => {
             validatorCredentials: {
               title: 'Clinical Psychologist',
               yearsExperience: 15,
-              specializations: ['therapeutic_processes', 'emotional_transformation'],
+              specializations: [
+                'therapeutic_processes',
+                'emotional_transformation',
+              ],
             },
             humanMoodScore: 8.5, // Human detects cognitive-emotional shift
             confidence: 0.88,
@@ -1867,12 +1884,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
             humanMoodScore: 3.5, // Another over-estimation
             confidence: 0.92,
-            rationale:
-              'Mixed emotions indicate significant internal conflict',
-            emotionalFactors: [
-              'internal_conflict',
-              'mixed_emotions',
-            ],
+            rationale: 'Mixed emotions indicate significant internal conflict',
+            emotionalFactors: ['internal_conflict', 'mixed_emotions'],
             timestamp: new Date(),
             validationSession: 'correction-testing',
           },
@@ -1885,13 +1898,9 @@ describe('ValidationFramework - Human Validation Framework', () => {
               specializations: ['mood_assessment'],
             },
             humanMoodScore: 3.8, // Consistent over-estimation pattern
-            confidence: 0.90,
-            rationale:
-              'Uncertainty and conflict suggest lower mood state',
-            emotionalFactors: [
-              'uncertainty',
-              'emotional_conflict',
-            ],
+            confidence: 0.9,
+            rationale: 'Uncertainty and conflict suggest lower mood state',
+            emotionalFactors: ['uncertainty', 'emotional_conflict'],
             timestamp: new Date(),
             validationSession: 'correction-testing',
           },
@@ -1911,7 +1920,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
           validationResult.biasAnalysis.biasTypes[0].correctionRecommendation,
         ).toContain('mixed-emotion')
         expect(validationResult.recommendations.length).toBeGreaterThan(0)
-        
+
         // Check for specific recommendation categories
         // Since we have a single specific bias type, it will generate focused recommendations
         expect(
@@ -2127,7 +2136,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
               messages: [
                 {
                   id: 'msg3',
-                  content: 'Oh great, another wonderful day at this amazing job',
+                  content:
+                    'Oh great, another wonderful day at this amazing job',
                   authorId: 'user3',
                   timestamp: new Date(),
                 },
@@ -2501,7 +2511,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-1',
               },
             ],
-            participants: [{ id: 'user-1', name: 'User One', role: 'vulnerable_sharer' as const }],
+            participants: [
+              {
+                id: 'user-1',
+                name: 'User One',
+                role: 'vulnerable_sharer' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2513,8 +2529,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Strong positive sentiment detected',
-                  evidence: ['positive_language']
-                }
+                  evidence: ['positive_language'],
+                },
               ],
             },
           },
@@ -2529,7 +2545,9 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-2',
               },
             ],
-            participants: [{ id: 'user-2', name: 'User Two', role: 'author' as const }],
+            participants: [
+              { id: 'user-2', name: 'User Two', role: 'author' as const },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2541,8 +2559,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Achievement-focused positive sentiment',
-                  evidence: ['achievement_language']
-                }
+                  evidence: ['achievement_language'],
+                },
               ],
             },
           },
@@ -2557,7 +2575,9 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-3',
               },
             ],
-            participants: [{ id: 'user-3', name: 'User Three', role: 'author' as const }],
+            participants: [
+              { id: 'user-3', name: 'User Three', role: 'author' as const },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2569,8 +2589,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
-                  evidence: ['satisfaction_language']
-                }
+                  evidence: ['satisfaction_language'],
+                },
               ],
             },
           },
@@ -2605,7 +2625,10 @@ describe('ValidationFramework - Human Validation Framework', () => {
             humanMoodScore: 7.5, // Human validation lower than algorithm
             confidence: 0.85,
             rationale: 'Achievement satisfaction but not extreme happiness',
-            emotionalFactors: ['accomplishment_satisfaction', 'controlled_positivity'],
+            emotionalFactors: [
+              'accomplishment_satisfaction',
+              'controlled_positivity',
+            ],
             timestamp: new Date(),
             validationSession: 'calibration-systematic-2',
           },
@@ -2634,21 +2657,32 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         // Should detect systematic bias that requires calibration
         expect(validationResult.biasAnalysis.biasDetected).toBe(true)
-        expect(validationResult.discrepancyAnalysis.systematicBias).toBe('algorithmic_over_estimation')
-        
+        expect(validationResult.discrepancyAnalysis.systematicBias).toBe(
+          'algorithmic_over_estimation',
+        )
+
         // Mean difference should be significant (algorithm consistently higher)
-        const algorithmicScores = testConversations.map(c => c.moodAnalysis.score)
-        const humanScores = humanValidations.map(v => v.humanMoodScore)
-        const meanDifference = algorithmicScores.reduce((sum, score, i) => sum + (score - humanScores[i]), 0) / algorithmicScores.length
-        
+        const algorithmicScores = testConversations.map(
+          (c) => c.moodAnalysis.score,
+        )
+        const humanScores = humanValidations.map((v) => v.humanMoodScore)
+        const meanDifference =
+          algorithmicScores.reduce(
+            (sum, score, i) => sum + (score - humanScores[i]),
+            0,
+          ) / algorithmicScores.length
+
         expect(meanDifference).toBeGreaterThan(1.0) // Systematic over-estimation by >1 point
-        expect(validationResult.overallMetrics.meanAbsoluteError).toBeGreaterThan(1.0)
-        
+        expect(
+          validationResult.overallMetrics.meanAbsoluteError,
+        ).toBeGreaterThan(1.0)
+
         // Should provide calibration recommendations
-        const calibrationRecs = validationResult.recommendations.filter(r => 
-          r.description.toLowerCase().includes('calibrat') || 
-          r.description.toLowerCase().includes('adjust') ||
-          r.category === 'systematic_bias_correction'
+        const calibrationRecs = validationResult.recommendations.filter(
+          (r) =>
+            r.description.toLowerCase().includes('calibrat') ||
+            r.description.toLowerCase().includes('adjust') ||
+            r.category === 'systematic_bias_correction',
         )
         expect(calibrationRecs.length).toBeGreaterThan(0)
       })
@@ -2662,12 +2696,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-trend-1',
-                content: 'I am doing well today, feeling positive about things.',
+                content:
+                  'I am doing well today, feeling positive about things.',
                 timestamp: new Date(),
                 authorId: 'user-trend-1',
               },
             ],
-            participants: [{ id: 'user-trend-1', name: 'Trend User One', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-trend-1',
+                name: 'Trend User One',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2679,8 +2720,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
-                  evidence: ['positive_expression']
-                }
+                  evidence: ['positive_expression'],
+                },
               ],
             },
           },
@@ -2695,7 +2736,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-1b',
               },
             ],
-            participants: [{ id: 'user-trend-1b', name: 'Trend User 1B', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-trend-1b',
+                name: 'Trend User 1B',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2707,8 +2754,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
-                  evidence: ['positive_expression']
-                }
+                  evidence: ['positive_expression'],
+                },
               ],
             },
           },
@@ -2757,12 +2804,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-trend-2',
-                content: 'I am doing well today, feeling positive about things.',
+                content:
+                  'I am doing well today, feeling positive about things.',
                 timestamp: new Date(),
                 authorId: 'user-trend-2',
               },
             ],
-            participants: [{ id: 'user-trend-2', name: 'Trend User Two', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-trend-2',
+                name: 'Trend User Two',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2774,8 +2828,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
-                  evidence: ['positive_expression']
-                }
+                  evidence: ['positive_expression'],
+                },
               ],
             },
           },
@@ -2790,7 +2844,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-2b',
               },
             ],
-            participants: [{ id: 'user-trend-2b', name: 'Trend User 2B', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-trend-2b',
+                name: 'Trend User 2B',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2802,8 +2862,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
-                  evidence: ['positive_expression']
-                }
+                  evidence: ['positive_expression'],
+                },
               ],
             },
           },
@@ -2859,15 +2919,21 @@ describe('ValidationFramework - Human Validation Framework', () => {
           beforeResult.overallMetrics.meanAbsoluteError,
         )
         // Both correlations are very high due to consistent patterns, but after should be at least as good
-        expect(afterResult.overallMetrics.pearsonCorrelation).toBeGreaterThanOrEqual(
+        expect(
+          afterResult.overallMetrics.pearsonCorrelation,
+        ).toBeGreaterThanOrEqual(
           beforeResult.overallMetrics.pearsonCorrelation - 0.01, // Allow small numerical precision differences
         )
-        
+
         // Before calibration should show systematic bias
-        expect(beforeResult.discrepancyAnalysis.systematicBias).toBe('algorithmic_over_estimation')
-        
+        expect(beforeResult.discrepancyAnalysis.systematicBias).toBe(
+          'algorithmic_over_estimation',
+        )
+
         // After calibration should show reduced bias
-        expect(afterResult.discrepancyAnalysis.systematicBias).toBe('no_systematic_bias')
+        expect(afterResult.discrepancyAnalysis.systematicBias).toBe(
+          'no_systematic_bias',
+        )
       })
 
       it('should provide specific parameter adjustment recommendations based on bias patterns', async () => {
@@ -2879,12 +2945,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-param-1',
-                content: 'I am happy about the promotion but worried about the increased responsibility and stress.',
+                content:
+                  'I am happy about the promotion but worried about the increased responsibility and stress.',
                 timestamp: new Date(),
                 authorId: 'user-param-1',
               },
             ],
-            participants: [{ id: 'user-param-1', name: 'Param User One', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-param-1',
+                name: 'Param User One',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -2896,8 +2969,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
-                  evidence: ['achievement_language', 'anxiety_indicators']
-                }
+                  evidence: ['achievement_language', 'anxiety_indicators'],
+                },
               ],
             },
           },
@@ -2915,8 +2988,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
             humanMoodScore: 5.8, // Human recognizes the emotional conflict more accurately
             confidence: 0.9,
-            rationale: 'Mixed emotions with significant anxiety component not fully captured',
-            emotionalFactors: ['mixed_emotion_complexity', 'achievement_anxiety', 'responsibility_fear'],
+            rationale:
+              'Mixed emotions with significant anxiety component not fully captured',
+            emotionalFactors: [
+              'mixed_emotion_complexity',
+              'achievement_anxiety',
+              'responsibility_fear',
+            ],
             timestamp: new Date(),
             validationSession: 'parameter-adjustment',
           },
@@ -2929,19 +3007,24 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         // Should identify mixed emotion oversimplification bias
         expect(validationResult.biasAnalysis.biasDetected).toBe(true)
-        expect(validationResult.biasAnalysis.biasTypes.some(bias => 
-          bias.type === 'mixed_emotion_oversimplification'
-        )).toBe(true)
+        expect(
+          validationResult.biasAnalysis.biasTypes.some(
+            (bias) => bias.type === 'mixed_emotion_oversimplification',
+          ),
+        ).toBe(true)
 
         // Should provide specific parameter adjustment recommendations
-        const parameterRecs = validationResult.recommendations.filter(r => 
-          r.description.toLowerCase().includes('mixed-emotion') ||
-          r.description.toLowerCase().includes('conflict detection') ||
-          r.category === 'algorithm_enhancement'
+        const parameterRecs = validationResult.recommendations.filter(
+          (r) =>
+            r.description.toLowerCase().includes('mixed-emotion') ||
+            r.description.toLowerCase().includes('conflict detection') ||
+            r.category === 'algorithm_enhancement',
         )
         expect(parameterRecs.length).toBeGreaterThan(0)
-        
-        const algorithmRec = parameterRecs.find(r => r.category === 'algorithm_enhancement')
+
+        const algorithmRec = parameterRecs.find(
+          (r) => r.category === 'algorithm_enhancement',
+        )
         expect(algorithmRec).toBeDefined()
         expect(algorithmRec!.description).toContain('mixed-emotion processing')
         expect(algorithmRec!.expectedImpact).toContain('medium severity bias')
@@ -2960,22 +3043,28 @@ describe('ValidationFramework - Human Validation Framework', () => {
               authorId: `user-quality-${i + 1}`,
             },
           ],
-          participants: [{ id: `user-quality-${i + 1}`, name: `Quality User ${i + 1}`, role: 'author' as const }],
+          participants: [
+            {
+              id: `user-quality-${i + 1}`,
+              name: `Quality User ${i + 1}`,
+              role: 'author' as const,
+            },
+          ],
           startTime: new Date(),
           endTime: new Date(),
           moodAnalysis: {
-              score: 5.0 + i * 0.5, // Varied scores
-              descriptors: ['neutral'],
-              confidence: 0.8,
-              factors: [
-                {
-                  type: 'sentiment_analysis' as const,
-                  weight: 0.35,
-                  description: 'Detected neutral sentiment',
-                  evidence: ['neutral_language']
-                }
-              ],
-            },
+            score: 5.0 + i * 0.5, // Varied scores
+            descriptors: ['neutral'],
+            confidence: 0.8,
+            factors: [
+              {
+                type: 'sentiment_analysis' as const,
+                weight: 0.35,
+                description: 'Detected neutral sentiment',
+                evidence: ['neutral_language'],
+              },
+            ],
+          },
         }))
 
         const highQualityValidations = Array.from({ length: 10 }, (_, i) => ({
@@ -3013,7 +3102,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-low-1',
               },
             ],
-            participants: [{ id: 'user-low-1', name: 'Low Quality User', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-low-1',
+                name: 'Low Quality User',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
@@ -3066,18 +3161,25 @@ describe('ValidationFramework - Human Validation Framework', () => {
         )
 
         // High quality data should produce higher calibration confidence
-        expect(highQualityResult.overallMetrics.pearsonCorrelation).toBeGreaterThan(
-          lowQualityResult.overallMetrics.pearsonCorrelation,
-        )
+        expect(
+          highQualityResult.overallMetrics.pearsonCorrelation,
+        ).toBeGreaterThan(lowQualityResult.overallMetrics.pearsonCorrelation)
         expect(highQualityResult.overallMetrics.sampleSize).toBeGreaterThan(
           lowQualityResult.overallMetrics.sampleSize,
         )
-        expect(highQualityResult.validatorConsistency.consensusLevel).toBe('high')
+        expect(highQualityResult.validatorConsistency.consensusLevel).toBe(
+          'high',
+        )
         expect(lowQualityResult.validatorConsistency.consensusLevel).toBe('low')
-        
+
         // Should reflect data quality in statistical significance
-        expect(highQualityResult.overallMetrics.statisticalSignificance.isSignificant).toBe(true)
-        expect(highQualityResult.overallMetrics.statisticalSignificance.pValue).toBeLessThan(0.05)
+        expect(
+          highQualityResult.overallMetrics.statisticalSignificance
+            .isSignificant,
+        ).toBe(true)
+        expect(
+          highQualityResult.overallMetrics.statisticalSignificance.pValue,
+        ).toBeLessThan(0.05)
       })
     })
 
@@ -3091,12 +3193,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-weight-1',
-                content: 'I feel fantastic today! But I have been struggling with some underlying issues.',
+                content:
+                  'I feel fantastic today! But I have been struggling with some underlying issues.',
                 timestamp: new Date(),
                 authorId: 'user-weight-1',
               },
             ],
-            participants: [{ id: 'user-weight-1', name: 'Weight User One', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-weight-1',
+                name: 'Weight User One',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -3108,8 +3217,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
-                  evidence: ['positive_language', 'struggle_indicators']
-                }
+                  evidence: ['positive_language', 'struggle_indicators'],
+                },
               ],
             },
           },
@@ -3119,12 +3228,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-weight-2',
-                content: 'Amazing day! Though I keep thinking about my problems.',
+                content:
+                  'Amazing day! Though I keep thinking about my problems.',
                 timestamp: new Date(),
                 authorId: 'user-weight-2',
               },
             ],
-            participants: [{ id: 'user-weight-2', name: 'Weight User Two', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-weight-2',
+                name: 'Weight User Two',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: {
@@ -3136,8 +3252,8 @@ describe('ValidationFramework - Human Validation Framework', () => {
                   type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
-                  evidence: ['enthusiasm_language', 'worry_indicators']
-                }
+                  evidence: ['enthusiasm_language', 'worry_indicators'],
+                },
               ],
             },
           },
@@ -3155,8 +3271,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
             humanMoodScore: 5.5, // Human recognizes underlying struggle better
             confidence: 0.9,
-            rationale: 'Positive surface language masks significant underlying concerns',
-            emotionalFactors: ['surface_positivity', 'underlying_distress', 'emotional_masking'],
+            rationale:
+              'Positive surface language masks significant underlying concerns',
+            emotionalFactors: [
+              'surface_positivity',
+              'underlying_distress',
+              'emotional_masking',
+            ],
             timestamp: new Date(),
             validationSession: 'weighted-adjustment-1',
           },
@@ -3167,12 +3288,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             validatorCredentials: {
               title: 'Licensed Clinical Social Worker',
               yearsExperience: 14,
-              specializations: ['emotional_complexity', 'psychological_indicators'],
+              specializations: [
+                'emotional_complexity',
+                'psychological_indicators',
+              ],
             },
             humanMoodScore: 5.8, // Similar pattern - human sees through surface positivity
             confidence: 0.85,
             rationale: 'Enthusiasm conflicts with persistent worry patterns',
-            emotionalFactors: ['conflicted_emotions', 'persistent_worry', 'forced_positivity'],
+            emotionalFactors: [
+              'conflicted_emotions',
+              'persistent_worry',
+              'forced_positivity',
+            ],
             timestamp: new Date(),
             validationSession: 'weighted-adjustment-2',
           },
@@ -3185,26 +3313,31 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         // Should detect systematic over-estimation bias
         expect(validationResult.biasAnalysis.biasDetected).toBe(true)
-        expect(validationResult.discrepancyAnalysis.systematicBias).toBe('algorithmic_over_estimation')
+        expect(validationResult.discrepancyAnalysis.systematicBias).toBe(
+          'algorithmic_over_estimation',
+        )
 
         // Should identify the need for sentiment weighting adjustment
-        const weightingRecs = validationResult.recommendations.filter(r =>
-          r.description.toLowerCase().includes('weight') ||
-          r.description.toLowerCase().includes('sentiment') ||
-          r.description.toLowerCase().includes('mixed-emotion')
+        const weightingRecs = validationResult.recommendations.filter(
+          (r) =>
+            r.description.toLowerCase().includes('weight') ||
+            r.description.toLowerCase().includes('sentiment') ||
+            r.description.toLowerCase().includes('mixed-emotion'),
         )
         expect(weightingRecs.length).toBeGreaterThan(0)
 
         // Mean absolute error should be significant (>2.0 points difference)
-        expect(validationResult.overallMetrics.meanAbsoluteError).toBeGreaterThan(2.0)
-        
+        expect(
+          validationResult.overallMetrics.meanAbsoluteError,
+        ).toBeGreaterThan(2.0)
+
         // Should suggest reducing sentiment analysis weight or increasing psychological indicators weight
-        const algorithmRec = validationResult.recommendations.find(r => 
-          r.category === 'algorithm_enhancement'
+        const algorithmRec = validationResult.recommendations.find(
+          (r) => r.category === 'algorithm_enhancement',
         )
         expect(algorithmRec).toBeDefined()
         expect(algorithmRec!.description.toLowerCase()).toMatch(
-          /mixed-emotion|conflict|psychological|sentiment/
+          /mixed-emotion|conflict|psychological|sentiment/,
         )
       })
 
@@ -3217,12 +3350,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-conf-1',
-                content: 'I guess I am okay... not sure really. Maybe things are fine.',
+                content:
+                  'I guess I am okay... not sure really. Maybe things are fine.',
                 timestamp: new Date(),
                 authorId: 'user-conf-1',
               },
             ],
-            participants: [{ id: 'user-conf-1', name: 'Confidence User One', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-conf-1',
+                name: 'Confidence User One',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
@@ -3238,12 +3378,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             messages: [
               {
                 id: 'msg-conf-2',
-                content: 'Things might be getting better, I think... hard to tell.',
+                content:
+                  'Things might be getting better, I think... hard to tell.',
                 timestamp: new Date(),
                 authorId: 'user-conf-2',
               },
             ],
-            participants: [{ id: 'user-conf-2', name: 'Confidence User Two', role: 'author' as const }],
+            participants: [
+              {
+                id: 'user-conf-2',
+                name: 'Confidence User Two',
+                role: 'author' as const,
+              },
+            ],
             startTime: new Date(),
             endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
@@ -3263,12 +3410,20 @@ describe('ValidationFramework - Human Validation Framework', () => {
             validatorCredentials: {
               title: 'Clinical Psychologist',
               yearsExperience: 16,
-              specializations: ['uncertainty_assessment', 'confidence_calibration'],
+              specializations: [
+                'uncertainty_assessment',
+                'confidence_calibration',
+              ],
             },
             humanMoodScore: 5.0, // Human more conservative with uncertain content
             confidence: 0.4, // Human appropriately low confidence
-            rationale: 'Language indicates significant uncertainty and ambivalence',
-            emotionalFactors: ['emotional_uncertainty', 'ambivalent_expression', 'low_self_awareness'],
+            rationale:
+              'Language indicates significant uncertainty and ambivalence',
+            emotionalFactors: [
+              'emotional_uncertainty',
+              'ambivalent_expression',
+              'low_self_awareness',
+            ],
             timestamp: new Date(),
             validationSession: 'confidence-calibration-1',
           },
@@ -3283,8 +3438,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
             humanMoodScore: 5.2, // Human conservative assessment
             confidence: 0.5, // Appropriately uncertain
-            rationale: 'Tentative language suggests emotional confusion and uncertainty',
-            emotionalFactors: ['tentative_optimism', 'emotional_confusion', 'self_doubt'],
+            rationale:
+              'Tentative language suggests emotional confusion and uncertainty',
+            emotionalFactors: [
+              'tentative_optimism',
+              'emotional_confusion',
+              'self_doubt',
+            ],
             timestamp: new Date(),
             validationSession: 'confidence-calibration-2',
           },
@@ -3297,15 +3457,17 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         // Should identify confidence calibration issues
         expect(validationResult.biasAnalysis.biasDetected).toBe(true)
-        
+
         // Algorithm confidence should be significantly higher than human confidence
-        const avgAlgorithmConfidence = testConversations.reduce(
-          (sum, conv) => sum + conv.moodAnalysis.confidence, 0
-        ) / testConversations.length
-        
-        const avgHumanConfidence = humanValidations.reduce(
-          (sum, val) => sum + val.confidence, 0
-        ) / humanValidations.length
+        const avgAlgorithmConfidence =
+          testConversations.reduce(
+            (sum, conv) => sum + conv.moodAnalysis.confidence,
+            0,
+          ) / testConversations.length
+
+        const avgHumanConfidence =
+          humanValidations.reduce((sum, val) => sum + val.confidence, 0) /
+          humanValidations.length
 
         expect(avgAlgorithmConfidence).toBeGreaterThan(avgHumanConfidence + 0.2)
 
@@ -3315,10 +3477,12 @@ describe('ValidationFramework - Human Validation Framework', () => {
         //   r.description.toLowerCase().includes('uncertainty') ||
         //   r.description.toLowerCase().includes('threshold')
         // )
-        
+
         // Since this is a generic emotional_complexity bias, we expect comprehensive recommendations
         expect(validationResult.recommendations.length).toBeGreaterThan(0)
-        expect(validationResult.discrepancyAnalysis.systematicBias).toBe('algorithmic_over_estimation')
+        expect(validationResult.discrepancyAnalysis.systematicBias).toBe(
+          'algorithmic_over_estimation',
+        )
       })
     })
   })

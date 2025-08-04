@@ -38,10 +38,10 @@ describe('Database Integration - Task 6.9', () => {
   beforeEach(async () => {
     // Clean data before each test for isolation
     await WorkerDatabaseFactory.cleanWorkerData(prisma)
-    
+
     // Create a base Memory for tests to use - worker isolation ensures no conflicts
     const uniqueId = `test-memory-${Date.now()}-${WorkerDatabaseFactory.getWorkerId()}-${Math.random().toString(36).substr(2, 9)}`
-    
+
     // Create memory - worker database isolation ensures no conflicts
     const memory = await prisma.memory.create({
       data: {

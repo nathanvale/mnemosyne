@@ -277,7 +277,8 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
       const { result, timeMs } = await measurePerformance(async () => {
         // Step 1: Mood Analysis
         const moodStartTime = Date.now()
-        const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
+        const moodAnalysis =
+          await moodAnalyzer.analyzeConversation(conversation)
         const moodTimeMs = Date.now() - moodStartTime
 
         // Record mood analysis performance
@@ -313,7 +314,8 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           },
           moodAnalysis, // Current analysis
         ]
-        const deltaResults = deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
+        const deltaResults =
+          deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
         const deltaTimeMs = Date.now() - deltaStartTime
 
         // Record delta detection performance
@@ -346,7 +348,10 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
         const deltas = deltaDetector.detectConversationalDeltas([
           {
-            score: 5.0, confidence: 0.8, descriptors: ['baseline'], factors: [],
+            score: 5.0,
+            confidence: 0.8,
+            descriptors: ['baseline'],
+            factors: [],
           },
           moodAnalysisWithDescriptors,
         ])
@@ -379,22 +384,38 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
       expect(result.moodTimeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS)
       expect(result.deltaTimeMs).toBeLessThan(1000)
 
-      console.log(`Full pipeline: total=${timeMs}ms, mood=${result.moodTimeMs}ms, delta=${result.deltaTimeMs}ms`)
+      console.log(
+        `Full pipeline: total=${timeMs}ms, mood=${result.moodTimeMs}ms, delta=${result.deltaTimeMs}ms`,
+      )
     })
 
     it('should handle multiple conversation scenarios with quality assurance', async () => {
       const scenarios = [
-        { conversation: testConversations[0], expectedScoreRange: [4, 8], name: 'mixed-emotional' },
-        { conversation: testConversations[1], expectedScoreRange: [2, 5], name: 'crisis' },
-        { conversation: testConversations[2], expectedScoreRange: [5, 8], name: 'therapeutic' },
+        {
+          conversation: testConversations[0],
+          expectedScoreRange: [4, 8],
+          name: 'mixed-emotional',
+        },
+        {
+          conversation: testConversations[1],
+          expectedScoreRange: [2, 5],
+          name: 'crisis',
+        },
+        {
+          conversation: testConversations[2],
+          expectedScoreRange: [5, 8],
+          name: 'therapeutic',
+        },
       ]
 
       const { result, timeMs } = await measurePerformance(async () => {
         const results = []
 
         for (const scenario of scenarios) {
-          const moodAnalysis = await moodAnalyzer.analyzeConversation(scenario.conversation)
-          
+          const moodAnalysis = await moodAnalyzer.analyzeConversation(
+            scenario.conversation,
+          )
+
           // Create mock mood analyses for delta detection
           const mockMoodAnalyses = [
             {
@@ -413,11 +434,14 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
             },
             moodAnalysis, // Current analysis
           ]
-          const deltaResults = deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
-          
+          const deltaResults =
+            deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
+
           // Simulate human validation
-          const humanScore = scenario.expectedScoreRange[0] + 
-            Math.random() * (scenario.expectedScoreRange[1] - scenario.expectedScoreRange[0])
+          const humanScore =
+            scenario.expectedScoreRange[0] +
+            Math.random() *
+              (scenario.expectedScoreRange[1] - scenario.expectedScoreRange[0])
           const agreement = 1 - Math.abs(moodAnalysis.score - humanScore) / 10
 
           // Record quality metrics
@@ -443,7 +467,8 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
       // Verify quality across scenarios
       expect(result).toHaveLength(3)
-      const avgAgreement = result.reduce((sum, r) => sum + r.agreement, 0) / result.length
+      const avgAgreement =
+        result.reduce((sum, r) => sum + r.agreement, 0) / result.length
       expect(avgAgreement).toBeGreaterThan(0.6) // More realistic expectation for random variance
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS * 2)
 
@@ -452,10 +477,14 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
         const scenario = scenarios[i]
         expect(r.moodAnalysis.score).toBeGreaterThanOrEqual(1) // Minimum possible score
         expect(r.moodAnalysis.score).toBeLessThanOrEqual(10) // Maximum possible score
-        console.log(`${scenario.name}: expected=${scenario.expectedScoreRange}, actual=${r.moodAnalysis.score.toFixed(2)}`)
+        console.log(
+          `${scenario.name}: expected=${scenario.expectedScoreRange}, actual=${r.moodAnalysis.score.toFixed(2)}`,
+        )
       })
 
-      console.log(`Multi-scenario quality: avg agreement=${avgAgreement.toFixed(3)}`)
+      console.log(
+        `Multi-scenario quality: avg agreement=${avgAgreement.toFixed(3)}`,
+      )
     })
 
     it('should integrate validation framework with full pipeline', async () => {
@@ -463,11 +492,12 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
       const { result, timeMs } = await measurePerformance(async () => {
         // Step 1: Mood analysis
-        const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
-        
+        const moodAnalysis =
+          await moodAnalyzer.analyzeConversation(conversation)
+
         // Step 2: Simulate human validation
         const humanScore = moodAnalysis.score + (Math.random() - 0.5) * 2 // Add some variance
-        
+
         // Step 3: Validate with framework
         const conversationWithMoodAnalysis = {
           ...conversation,
@@ -481,7 +511,7 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
             yearsExperience: 5,
             specializations: ['mood disorders', 'cognitive therapy'],
             certifications: ['PhD Psychology'],
-            institutionAffiliation: 'Test University'
+            institutionAffiliation: 'Test University',
           },
           humanMoodScore: humanScore,
           confidence: 0.9,
@@ -489,7 +519,7 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           emotionalFactors: ['optimism', 'engagement', 'social connection'],
           timestamp: new Date(),
           validationSession: 'integration-test-session',
-          additionalNotes: 'integration-test'
+          additionalNotes: 'integration-test',
         }
         const validationResult = await validationFramework.validateMoodScore(
           [conversationWithMoodAnalysis],
@@ -504,9 +534,12 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           patterns: [],
           recommendations: ['Consider validator training'],
         }
-        
+
         // Step 5: Get improvement recommendations (mock recommendations)
-        const recommendations = ['Increase validation sample size', 'Review edge case handling']
+        const recommendations = [
+          'Increase validation sample size',
+          'Review edge case handling',
+        ]
 
         return {
           moodAnalysis,
@@ -525,7 +558,9 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
       expect(Array.isArray(result.recommendations)).toBe(true)
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS)
 
-      console.log(`Validation integration: correlation=${result.validationResult.overallMetrics.pearsonCorrelation}, bias=${result.validationResult.biasAnalysis.biasDetected}`)
+      console.log(
+        `Validation integration: correlation=${result.validationResult.overallMetrics.pearsonCorrelation}, bias=${result.validationResult.biasAnalysis.biasDetected}`,
+      )
     })
 
     it('should prioritize memories based on integrated mood and delta analysis', async () => {
@@ -535,15 +570,21 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
         const processedMemories = []
 
         for (const conversation of conversations) {
-          const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
-          
+          const moodAnalysis =
+            await moodAnalyzer.analyzeConversation(conversation)
+
           const moodAnalysisWithDescriptors = {
             ...moodAnalysis,
             descriptors: moodAnalysis.descriptors || ['neutral', 'stable'],
           }
 
           const deltas = deltaDetector.detectConversationalDeltas([
-            { score: 5.0, confidence: 0.8, descriptors: ['baseline'], factors: [] },
+            {
+              score: 5.0,
+              confidence: 0.8,
+              descriptors: ['baseline'],
+              factors: [],
+            },
             moodAnalysisWithDescriptors,
           ])
           const deltaResults = deltas // Use delta results for consistency
@@ -555,16 +596,22 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           )
 
           // Enhanced significance with delta awareness
-          const deltaSignificance = deltaResults.reduce((max, delta) => 
-            Math.max(max, delta.magnitude || 0), 0)
-          
-          memory.significance.overall = Math.min(10, memory.significance.overall + deltaSignificance * 0.3) // Delta bonus capped at 10
+          const deltaSignificance = deltaResults.reduce(
+            (max, delta) => Math.max(max, delta.magnitude || 0),
+            0,
+          )
+
+          memory.significance.overall = Math.min(
+            10,
+            memory.significance.overall + deltaSignificance * 0.3,
+          ) // Delta bonus capped at 10
 
           processedMemories.push(memory)
         }
 
         // Prioritize by significance
-        const prioritized = await prioritizer.prioritizeBySignificance(processedMemories)
+        const prioritized =
+          await prioritizer.prioritizeBySignificance(processedMemories)
 
         return prioritized
       })
@@ -581,84 +628,96 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
       console.log(`Memory prioritization: ${result.length} memories processed`)
       result.forEach((memory, i) => {
-        console.log(`${i + 1}. ${memory.id}: significance=${memory.significance.overall.toFixed(2)}`)
+        console.log(
+          `${i + 1}. ${memory.id}: significance=${memory.significance.overall.toFixed(2)}`,
+        )
       })
     })
 
     it('should handle concurrent pipeline processing efficiently', async () => {
       const concurrentCount = 5
-      const conversations = Array.from({ length: concurrentCount }, (_, i) => 
-        testConversations[i % testConversations.length]
+      const conversations = Array.from(
+        { length: concurrentCount },
+        (_, i) => testConversations[i % testConversations.length],
       )
 
       const { result, timeMs } = await measurePerformance(async () => {
-        const concurrentPromises = conversations.map(async (conversation, index) => {
-          try {
-            const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
-            
-            // Create mock mood analyses for delta detection
-            const mockMoodAnalyses = [
-              {
-                score: 5.0,
-                confidence: 0.8,
-                descriptors: ['neutral', 'baseline'],
-                factors: [
-                  {
-                    type: 'sentiment_analysis' as const,
-                    weight: 0.5,
-                    description: 'Baseline neutral sentiment',
-                    evidence: ['neutral language'],
-                    _score: 5.0,
-                  },
-                ],
-              },
-              moodAnalysis, // Current analysis
-            ]
-            const deltaResults = deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
-            
-            // Record performance for this concurrent operation
-            await performanceMonitor.recordPerformanceMetric(
-              'mood_analysis',
-              100 + index * 50, // Simulated processing time
-              1,
-              40 + index * 5,
-              {
-                accuracyScore: moodAnalysis.confidence,
-                errorCount: 0,
-                metadata: { concurrentIndex: index },
-              },
-            )
+        const concurrentPromises = conversations.map(
+          async (conversation, index) => {
+            try {
+              const moodAnalysis =
+                await moodAnalyzer.analyzeConversation(conversation)
 
-            return {
-              index,
-              success: true,
-              moodAnalysis,
-              deltaResults,
+              // Create mock mood analyses for delta detection
+              const mockMoodAnalyses = [
+                {
+                  score: 5.0,
+                  confidence: 0.8,
+                  descriptors: ['neutral', 'baseline'],
+                  factors: [
+                    {
+                      type: 'sentiment_analysis' as const,
+                      weight: 0.5,
+                      description: 'Baseline neutral sentiment',
+                      evidence: ['neutral language'],
+                      _score: 5.0,
+                    },
+                  ],
+                },
+                moodAnalysis, // Current analysis
+              ]
+              const deltaResults =
+                deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
+
+              // Record performance for this concurrent operation
+              await performanceMonitor.recordPerformanceMetric(
+                'mood_analysis',
+                100 + index * 50, // Simulated processing time
+                1,
+                40 + index * 5,
+                {
+                  accuracyScore: moodAnalysis.confidence,
+                  errorCount: 0,
+                  metadata: { concurrentIndex: index },
+                },
+              )
+
+              return {
+                index,
+                success: true,
+                moodAnalysis,
+                deltaResults,
+              }
+            } catch (error) {
+              return {
+                index,
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              }
             }
-          } catch (error) {
-            return {
-              index,
-              success: false,
-              error: error instanceof Error ? error.message : 'Unknown error',
-            }
-          }
-        })
+          },
+        )
 
         return await Promise.all(concurrentPromises)
       })
 
       // Verify concurrent processing
       expect(result).toHaveLength(concurrentCount)
-      expect(result.every(r => r.success)).toBe(true)
-      expect(result.every(r => r.moodAnalysis?.score !== undefined)).toBe(true)
+      expect(result.every((r) => r.success)).toBe(true)
+      expect(result.every((r) => r.moodAnalysis?.score !== undefined)).toBe(
+        true,
+      )
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS) // Should be faster than sequential
 
       // Generate performance dashboard
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
       expect(dashboard.keyMetrics.avgProcessingTime).toBeGreaterThan(0)
       expect(dashboard.systemHealth).toMatch(/^(healthy|degraded|critical)$/)
 
-      console.log(`Concurrent processing: ${concurrentCount} operations in ${timeMs}ms`)
+      console.log(
+        `Concurrent processing: ${concurrentCount} operations in ${timeMs}ms`,
+      )
       console.log(`System health: ${dashboard.systemHealth}`)
     })
 
@@ -670,7 +729,10 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
         },
         {
           name: 'single_message',
-          conversation: { ...testConversations[0], messages: testConversations[0].messages.slice(0, 1) },
+          conversation: {
+            ...testConversations[0],
+            messages: testConversations[0].messages.slice(0, 1),
+          },
         },
         {
           name: 'very_long_message',
@@ -679,7 +741,10 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
             messages: [
               {
                 ...testConversations[0].messages[0],
-                content: testConversations[0].messages[0].content + ' '.repeat(1000) + 'Extended content.',
+                content:
+                  testConversations[0].messages[0].content +
+                  ' '.repeat(1000) +
+                  'Extended content.',
               },
             ],
           },
@@ -691,8 +756,10 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
         for (const edgeCase of edgeCases) {
           try {
-            const moodAnalysis = await moodAnalyzer.analyzeConversation(edgeCase.conversation)
-            
+            const moodAnalysis = await moodAnalyzer.analyzeConversation(
+              edgeCase.conversation,
+            )
+
             // Create mock mood analyses for delta detection
             const mockMoodAnalyses = [
               {
@@ -711,8 +778,9 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
               },
               moodAnalysis, // Current analysis
             ]
-            const deltaResults = deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
-            
+            const deltaResults =
+              deltaDetector.detectConversationalDeltas(mockMoodAnalyses)
+
             edgeResults.push({
               name: edgeCase.name,
               success: true,
@@ -734,12 +802,14 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
       // Verify edge case handling
       expect(result).toHaveLength(3)
-      expect(result.every(r => r.success)).toBe(true) // All should handle gracefully
+      expect(result.every((r) => r.success)).toBe(true) // All should handle gracefully
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS)
 
       console.log('Edge case handling:')
-      result.forEach(r => {
-        console.log(`${r.name}: success=${r.success}, score=${r.moodAnalysis?.score?.toFixed(2) || 'N/A'}`)
+      result.forEach((r) => {
+        console.log(
+          `${r.name}: success=${r.success}, score=${r.moodAnalysis?.score?.toFixed(2) || 'N/A'}`,
+        )
       })
     })
   })

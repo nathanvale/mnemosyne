@@ -957,8 +957,8 @@ export class EmotionalContextBuilder {
   private createContextualSummary(
     primaryTriggers: string[],
     relationshipSpecificFactors: {
-      supportLevel?: string;
-      conflictHistory?: string;
+      supportLevel?: string
+      conflictHistory?: string
     },
     conversation: ConversationData & { moodAnalysis: MoodAnalysisResult },
   ) {

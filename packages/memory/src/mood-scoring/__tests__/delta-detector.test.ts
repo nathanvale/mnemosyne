@@ -192,7 +192,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        const deltas = deltaDetector.detectConversationalDeltas(conversationAnalyses)
+        const deltas =
+          deltaDetector.detectConversationalDeltas(conversationAnalyses)
 
         expect(deltas).toHaveLength(2)
         expect(deltas[0].magnitude).toBeCloseTo(1.8, 1)
@@ -231,7 +232,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        const deltas = deltaDetector.detectConversationalDeltas(conversationAnalyses)
+        const deltas =
+          deltaDetector.detectConversationalDeltas(conversationAnalyses)
 
         expect(deltas).toHaveLength(1)
         expect(deltas[0].type).toBe('mood_repair')
@@ -282,7 +284,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        const deltas = deltaDetector.detectConversationalDeltas(conversationAnalyses)
+        const deltas =
+          deltaDetector.detectConversationalDeltas(conversationAnalyses)
 
         // Should only detect the second delta (1.6 points), not the first (1.2 points)
         expect(deltas).toHaveLength(1)
@@ -291,21 +294,23 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
 
       it('should handle empty or single analysis arrays', () => {
         expect(deltaDetector.detectConversationalDeltas([])).toHaveLength(0)
-        expect(deltaDetector.detectConversationalDeltas([
-          {
-            score: 5.0,
-            descriptors: ['neutral'],
-            confidence: 0.8,
-            factors: [
-              {
-                type: 'emotional_words',
-                weight: 0.5,
-                description: 'Single analysis',
-                evidence: ['okay'],
-              },
-            ],
-          },
-        ])).toHaveLength(0)
+        expect(
+          deltaDetector.detectConversationalDeltas([
+            {
+              score: 5.0,
+              descriptors: ['neutral'],
+              confidence: 0.8,
+              factors: [
+                {
+                  type: 'emotional_words',
+                  weight: 0.5,
+                  description: 'Single analysis',
+                  evidence: ['okay'],
+                },
+              ],
+            },
+          ]),
+        ).toHaveLength(0)
       })
 
       it('should add positional context to delta factors', () => {
@@ -351,7 +356,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        const deltas = deltaDetector.detectConversationalDeltas(conversationAnalyses)
+        const deltas =
+          deltaDetector.detectConversationalDeltas(conversationAnalyses)
 
         expect(deltas).toHaveLength(2)
         expect(deltas[0].factors).toContain('Early conversation shift')
@@ -817,7 +823,11 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         })
 
         expect(turningPoints).toHaveLength(1)
-        expect(turningPoints[0].type).toBeOneOf(['support_received', 'realization', 'breakthrough'])
+        expect(turningPoints[0].type).toBeOneOf([
+          'support_received',
+          'realization',
+          'breakthrough',
+        ])
         expect(turningPoints[0].magnitude).toBeGreaterThan(2.0)
       })
 
@@ -875,7 +885,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        suddenTransitions.forEach(transition => {
+        suddenTransitions.forEach((transition) => {
           const points: TrajectoryPoint[] = [
             {
               timestamp: transition.before.time,
@@ -893,9 +903,12 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
 
           const velocity = deltaDetector.calculateMoodVelocity(points)
           expect(Math.abs(velocity)).toBeGreaterThan(20) // Sudden threshold
-          
+
           // Should be classified as sudden based on velocity
-          const isSudden = deltaDetector.classifyTransitionType(velocity, points)
+          const isSudden = deltaDetector.classifyTransitionType(
+            velocity,
+            points,
+          )
           expect(isSudden).toBe('sudden')
         })
       })
@@ -931,23 +944,31 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        testCases.forEach(testCase => {
-          const trajectoryPoints: TrajectoryPoint[] = testCase.points.map((p, i) => ({
-            timestamp: new Date(`2024-01-01T${p.time}:00Z`),
-            moodScore: p.score,
-            messageId: `msg${i}`,
-            emotions: p.emotions,
-          }))
+        testCases.forEach((testCase) => {
+          const trajectoryPoints: TrajectoryPoint[] = testCase.points.map(
+            (p, i) => ({
+              timestamp: new Date(`2024-01-01T${p.time}:00Z`),
+              moodScore: p.score,
+              messageId: `msg${i}`,
+              emotions: p.emotions,
+            }),
+          )
 
-          const transitions = deltaDetector.detectSuddenTransitions(trajectoryPoints)
-          
+          const transitions =
+            deltaDetector.detectSuddenTransitions(trajectoryPoints)
+
           if (testCase.expectedClassification === 'sudden') {
             expect(transitions).toHaveLength(1)
             expect(transitions[0].type).toBe('sudden')
-            expect(transitions[0].magnitude).toBeCloseTo(testCase.expectedMagnitude, 1)
+            expect(transitions[0].magnitude).toBeCloseTo(
+              testCase.expectedMagnitude,
+              1,
+            )
           } else {
             // Gradual changes should not be classified as sudden
-            const suddenTransitions = transitions.filter(t => t.type === 'sudden')
+            const suddenTransitions = transitions.filter(
+              (t) => t.type === 'sudden',
+            )
             expect(suddenTransitions).toHaveLength(0)
           }
         })
@@ -996,18 +1017,23 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        transitionTypes.forEach(pattern => {
-          const trajectoryPoints: TrajectoryPoint[] = pattern.points.map((p, i) => ({
-            timestamp: new Date(`2024-01-01T${p.time}:00Z`),
-            moodScore: p.score,
-            messageId: `msg${i}`,
-            emotions: p.emotions,
-          }))
+        transitionTypes.forEach((pattern) => {
+          const trajectoryPoints: TrajectoryPoint[] = pattern.points.map(
+            (p, i) => ({
+              timestamp: new Date(`2024-01-01T${p.time}:00Z`),
+              moodScore: p.score,
+              messageId: `msg${i}`,
+              emotions: p.emotions,
+            }),
+          )
 
-          const transitions = deltaDetector.detectSuddenTransitions(trajectoryPoints)
-          
+          const transitions =
+            deltaDetector.detectSuddenTransitions(trajectoryPoints)
+
           if (pattern.expectedType === 'sudden') {
-            const suddenTransitions = transitions.filter(t => t.type === 'sudden')
+            const suddenTransitions = transitions.filter(
+              (t) => t.type === 'sudden',
+            )
             expect(suddenTransitions).toHaveLength(1)
           }
 
@@ -1015,7 +1041,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           if (pattern.expectedTurningPoints > 0) {
             const turningPoints = deltaDetector.identifyTurningPoints({
               points: trajectoryPoints,
-              direction: pattern.expectedType === 'recovery' ? 'improving' : 'declining',
+              direction:
+                pattern.expectedType === 'recovery' ? 'improving' : 'declining',
               significance: 0.7,
               turningPoints: [],
             })
@@ -1053,13 +1080,15 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        velocityTests.forEach(test => {
-          const trajectoryPoints: TrajectoryPoint[] = test.points.map((p, i) => ({
-            timestamp: new Date(`2024-01-01T${p.time}:00Z`),
-            moodScore: p.score,
-            messageId: `msg${i}`,
-            emotions: ['test'],
-          }))
+        velocityTests.forEach((test) => {
+          const trajectoryPoints: TrajectoryPoint[] = test.points.map(
+            (p, i) => ({
+              timestamp: new Date(`2024-01-01T${p.time}:00Z`),
+              moodScore: p.score,
+              messageId: `msg${i}`,
+              emotions: ['test'],
+            }),
+          )
 
           const velocity = deltaDetector.calculateMoodVelocity(trajectoryPoints)
           expect(velocity).toBeCloseTo(test.expectedVelocity, test.tolerance)
@@ -1234,7 +1263,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           const delta = deltaDetector.detectMoodDelta(
             afterAnalysis,
             beforeAnalysis,
-            )
+          )
 
           if (delta) {
             if (scenario.expectedEffectiveness === 'high') {
@@ -1255,73 +1284,153 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           // True Positives - Should be identified as mood repair
           {
             name: 'Classic crisis to support repair',
-            before: { score: 2.1, descriptors: ['desperate', 'alone'], type: 'crisis' },
-            after: { score: 6.8, descriptors: ['supported', 'hopeful'], type: 'recovery' },
+            before: {
+              score: 2.1,
+              descriptors: ['desperate', 'alone'],
+              type: 'crisis',
+            },
+            after: {
+              score: 6.8,
+              descriptors: ['supported', 'hopeful'],
+              type: 'recovery',
+            },
             expectedDetection: true,
             repairType: 'emotional_support',
           },
           {
             name: 'Anxiety to relief repair',
-            before: { score: 3.0, descriptors: ['anxious', 'overwhelmed'], type: 'anxiety' },
-            after: { score: 6.2, descriptors: ['calm', 'reassured'], type: 'relief' },
+            before: {
+              score: 3.0,
+              descriptors: ['anxious', 'overwhelmed'],
+              type: 'anxiety',
+            },
+            after: {
+              score: 6.2,
+              descriptors: ['calm', 'reassured'],
+              type: 'relief',
+            },
             expectedDetection: true,
             repairType: 'anxiety_relief',
           },
           {
             name: 'Trauma processing to acceptance',
-            before: { score: 2.5, descriptors: ['traumatized', 'broken'], type: 'trauma' },
-            after: { score: 5.8, descriptors: ['processing', 'understood'], type: 'healing' },
+            before: {
+              score: 2.5,
+              descriptors: ['traumatized', 'broken'],
+              type: 'trauma',
+            },
+            after: {
+              score: 5.8,
+              descriptors: ['processing', 'understood'],
+              type: 'healing',
+            },
             expectedDetection: true,
             repairType: 'trauma_processing',
           },
           {
             name: 'Grief to comfort repair',
-            before: { score: 1.8, descriptors: ['grieving', 'devastated'], type: 'grief' },
-            after: { score: 5.5, descriptors: ['comforted', 'remembered'], type: 'comfort' },
+            before: {
+              score: 1.8,
+              descriptors: ['grieving', 'devastated'],
+              type: 'grief',
+            },
+            after: {
+              score: 5.5,
+              descriptors: ['comforted', 'remembered'],
+              type: 'comfort',
+            },
             expectedDetection: true,
             repairType: 'grief_comfort',
           },
           {
             name: 'Rejection to validation repair',
-            before: { score: 2.9, descriptors: ['rejected', 'worthless'], type: 'rejection' },
-            after: { score: 6.4, descriptors: ['valued', 'accepted'], type: 'validation' },
+            before: {
+              score: 2.9,
+              descriptors: ['rejected', 'worthless'],
+              type: 'rejection',
+            },
+            after: {
+              score: 6.4,
+              descriptors: ['valued', 'accepted'],
+              type: 'validation',
+            },
             expectedDetection: true,
             repairType: 'validation',
           },
           // True Negatives - Should NOT be identified as mood repair
           {
             name: 'Small gradual improvement',
-            before: { score: 4.5, descriptors: ['okay', 'neutral'], type: 'stable' },
-            after: { score: 5.8, descriptors: ['good', 'content'], type: 'improvement' },
+            before: {
+              score: 4.5,
+              descriptors: ['okay', 'neutral'],
+              type: 'stable',
+            },
+            after: {
+              score: 5.8,
+              descriptors: ['good', 'content'],
+              type: 'improvement',
+            },
             expectedDetection: false,
             repairType: 'gradual_improvement',
           },
           {
             name: 'High to higher celebration',
-            before: { score: 7.2, descriptors: ['happy', 'excited'], type: 'positive' },
-            after: { score: 8.5, descriptors: ['ecstatic', 'thrilled'], type: 'celebration' },
+            before: {
+              score: 7.2,
+              descriptors: ['happy', 'excited'],
+              type: 'positive',
+            },
+            after: {
+              score: 8.5,
+              descriptors: ['ecstatic', 'thrilled'],
+              type: 'celebration',
+            },
             expectedDetection: false,
             repairType: 'celebration',
           },
           {
             name: 'Moderate fluctuation',
-            before: { score: 5.0, descriptors: ['average', 'neutral'], type: 'baseline' },
-            after: { score: 6.0, descriptors: ['slightly better', 'okay'], type: 'minor_change' },
+            before: {
+              score: 5.0,
+              descriptors: ['average', 'neutral'],
+              type: 'baseline',
+            },
+            after: {
+              score: 6.0,
+              descriptors: ['slightly better', 'okay'],
+              type: 'minor_change',
+            },
             expectedDetection: false,
             repairType: 'minor_fluctuation',
           },
           // Edge Cases - Challenging scenarios
           {
             name: 'Borderline repair case',
-            before: { score: 3.9, descriptors: ['down', 'discouraged'], type: 'mild_distress' },
-            after: { score: 6.1, descriptors: ['encouraged', 'hopeful'], type: 'mild_repair' },
+            before: {
+              score: 3.9,
+              descriptors: ['down', 'discouraged'],
+              type: 'mild_distress',
+            },
+            after: {
+              score: 6.1,
+              descriptors: ['encouraged', 'hopeful'],
+              type: 'mild_repair',
+            },
             expectedDetection: true,
             repairType: 'borderline_repair',
           },
           {
             name: 'False recovery attempt',
-            before: { score: 2.8, descriptors: ['depressed', 'lost'], type: 'depression' },
-            after: { score: 4.2, descriptors: ['trying', 'forcing'], type: 'forced_positive' },
+            before: {
+              score: 2.8,
+              descriptors: ['depressed', 'lost'],
+              type: 'depression',
+            },
+            after: {
+              score: 4.2,
+              descriptors: ['trying', 'forcing'],
+              type: 'forced_positive',
+            },
             expectedDetection: false, // Not genuine repair
             repairType: 'false_recovery',
           },
@@ -1330,7 +1439,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         let correctDetections = 0
         const totalCases = moodRepairTestCases.length
 
-        moodRepairTestCases.forEach(testCase => {
+        moodRepairTestCases.forEach((testCase) => {
           const beforeAnalysis: MoodAnalysisResult = {
             score: testCase.before.score,
             descriptors: testCase.before.descriptors,
@@ -1357,7 +1466,9 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             confidence: 0.9,
             factors: [
               {
-                type: testCase.expectedDetection ? 'relationship_context' : 'emotional_words',
+                type: testCase.expectedDetection
+                  ? 'relationship_context'
+                  : 'emotional_words',
                 weight: 0.85,
                 description: `${testCase.after.type} indicators`,
                 evidence: testCase.after.descriptors,
@@ -1371,19 +1482,23 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           )
 
           const detectedAsMoodRepair = delta?.type === 'mood_repair'
-          
+
           if (detectedAsMoodRepair === testCase.expectedDetection) {
             correctDetections++
           } else {
-            console.warn(`Failed case: ${testCase.name} - Expected: ${testCase.expectedDetection}, Got: ${detectedAsMoodRepair}`)
+            console.warn(
+              `Failed case: ${testCase.name} - Expected: ${testCase.expectedDetection}, Got: ${detectedAsMoodRepair}`,
+            )
           }
         })
 
         const accuracy = correctDetections / totalCases
         expect(accuracy).toBeGreaterThanOrEqual(0.9) // 90%+ accuracy target
-        
+
         // Log accuracy for debugging
-        console.log(`Mood repair detection accuracy: ${(accuracy * 100).toFixed(1)}% (${correctDetections}/${totalCases})`)
+        console.log(
+          `Mood repair detection accuracy: ${(accuracy * 100).toFixed(1)}% (${correctDetections}/${totalCases})`,
+        )
       })
 
       it('should detect mood repair moments with specific trigger patterns', () => {
@@ -1404,21 +1519,29 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
           {
             name: 'Emotional reassurance',
-            triggers: ['its going to be okay', 'youre not alone', 'we care about you'],
+            triggers: [
+              'its going to be okay',
+              'youre not alone',
+              'we care about you',
+            ],
             beforeScore: 2.5,
             afterScore: 6.2,
             expectedConfidence: 0.88,
           },
           {
             name: 'Perspective shift',
-            triggers: ['helped me see', 'different way to think', 'new perspective'],
+            triggers: [
+              'helped me see',
+              'different way to think',
+              'new perspective',
+            ],
             beforeScore: 2.9,
             afterScore: 6.0,
             expectedConfidence: 0.82,
           },
         ]
 
-        repairTriggerPatterns.forEach(pattern => {
+        repairTriggerPatterns.forEach((pattern) => {
           const beforeAnalysis: MoodAnalysisResult = {
             score: pattern.beforeScore,
             descriptors: ['struggling', 'distressed'],
@@ -1450,13 +1573,15 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           const delta = deltaDetector.detectMoodDelta(
             afterAnalysis,
             beforeAnalysis,
-            )
+          )
 
           expect(delta).toBeDefined()
           expect(delta!.type).toBe('mood_repair')
-          expect(delta!.confidence).toBeGreaterThanOrEqual(pattern.expectedConfidence)
+          expect(delta!.confidence).toBeGreaterThanOrEqual(
+            pattern.expectedConfidence,
+          )
           expect(delta!.magnitude).toBeGreaterThan(3.0) // Significant repair
-          
+
           // Should always trigger extraction for mood repair
           expect(deltaDetector.shouldTriggerExtraction(delta!)).toBe(true)
         })
@@ -1493,7 +1618,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        effectivenessMetrics.forEach(metric => {
+        effectivenessMetrics.forEach((metric) => {
           const points: TrajectoryPoint[] = [
             {
               timestamp: new Date('2024-01-01T10:00:00Z'),
@@ -1502,7 +1627,9 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
               emotions: ['distressed'],
             },
             {
-              timestamp: new Date(new Date('2024-01-01T10:00:00Z').getTime() + metric.timeElapsed),
+              timestamp: new Date(
+                new Date('2024-01-01T10:00:00Z').getTime() + metric.timeElapsed,
+              ),
               moodScore: metric.afterScore,
               messageId: 'after',
               emotions: ['recovered'],
@@ -2047,7 +2174,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           const delta = deltaDetector.detectMoodDelta(
             afterAnalysis,
             beforeAnalysis,
-            )
+          )
 
           if (delta) {
             if (delta.type === testCase.expectedType) {
@@ -2118,7 +2245,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           const delta = deltaDetector.detectMoodDelta(
             afterAnalysis,
             beforeAnalysis,
-            )
+          )
 
           if (delta && deltaDetector.shouldTriggerExtraction(delta)) {
             falsePositives++
@@ -2173,10 +2300,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           ],
         }
 
-        const delta = deltaDetector.detectMoodDelta(
-          analysis2,
-          analysis1,
-        )
+        const delta = deltaDetector.detectMoodDelta(analysis2, analysis1)
 
         const end = performance.now()
         const processingTime = end - start
@@ -2203,7 +2327,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           {
             timestamp: new Date('2024-01-01T11:00:00Z'),
             moodScore: 6.2,
-            messageId: 'phase1-2', 
+            messageId: 'phase1-2',
             emotions: ['focused', 'slightly_tired'],
             context: 'work_progress',
           },
@@ -2214,10 +2338,10 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['stressed', 'overwhelmed'],
             context: 'work_pressure',
           },
-          
+
           // Phase 2: Crisis point (bottom)
           {
-            timestamp: new Date('2024-01-01T15:00:00Z'), 
+            timestamp: new Date('2024-01-01T15:00:00Z'),
             moodScore: 3.2,
             messageId: 'phase2-1',
             emotions: ['exhausted', 'defeated'],
@@ -2230,7 +2354,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['hopeless', 'burned_out'],
             context: 'crisis',
           },
-          
+
           // Phase 3: Support intervention
           {
             timestamp: new Date('2024-01-01T17:00:00Z'),
@@ -2246,7 +2370,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['hopeful', 'relieved'],
             context: 'improvement',
           },
-          
+
           // Phase 4: Recovery and growth
           {
             timestamp: new Date('2024-01-01T20:00:00Z'),
@@ -2279,15 +2403,19 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         const phase1Points = timelinePoints.slice(0, 3) // Decline phase
         const phase3Points = timelinePoints.slice(5, 7) // Recovery phase
 
-        const declineVelocity = deltaDetector.calculateMoodVelocity(phase1Points)
-        const recoveryVelocity = deltaDetector.calculateMoodVelocity(phase3Points)
+        const declineVelocity =
+          deltaDetector.calculateMoodVelocity(phase1Points)
+        const recoveryVelocity =
+          deltaDetector.calculateMoodVelocity(phase3Points)
 
         expect(declineVelocity).toBeLessThan(-0.3) // Declining trend
         expect(recoveryVelocity).toBeGreaterThan(1.0) // Strong recovery
 
         // Test resilience metrics
-        const lowestPoint = Math.min(...timelinePoints.map(p => p.moodScore))
-        const highestRecovery = Math.max(...timelinePoints.slice(5).map(p => p.moodScore))
+        const lowestPoint = Math.min(...timelinePoints.map((p) => p.moodScore))
+        const highestRecovery = Math.max(
+          ...timelinePoints.slice(5).map((p) => p.moodScore),
+        )
         const resilienceScore = highestRecovery - lowestPoint
 
         expect(resilienceScore).toBeGreaterThan(4.0) // Strong bounce-back
@@ -2315,7 +2443,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             messageId: 'w1-3',
             emotions: ['discouraged', 'tired'],
           },
-          
+
           // Week 2: Steady improvement
           {
             timestamp: new Date('2024-01-08T10:00:00Z'),
@@ -2335,7 +2463,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             messageId: 'w2-3',
             emotions: ['cautious', 'uncertain'],
           },
-          
+
           // Week 3: Breakthrough period (hourly data)
           {
             timestamp: new Date('2024-01-15T10:00:00Z'),
@@ -2360,13 +2488,13 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Test micro-trend analysis within overall improvement
         const weeklyTrends = [
           progressivePoints.slice(0, 3), // Week 1
-          progressivePoints.slice(3, 6), // Week 2  
+          progressivePoints.slice(3, 6), // Week 2
           progressivePoints.slice(6, 9), // Week 3
         ]
 
         weeklyTrends.forEach((weekPoints, weekIndex) => {
           const weekVelocity = deltaDetector.calculateMoodVelocity(weekPoints)
-          
+
           if (weekIndex === 0) {
             // Week 1: Minimal progress with setback
             expect(Math.abs(weekVelocity)).toBeLessThan(0.5)
@@ -2380,14 +2508,17 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         })
 
         // Test overall progressive trend despite setbacks
-        const overallVelocity = deltaDetector.calculateMoodVelocity(progressivePoints)
+        const overallVelocity =
+          deltaDetector.calculateMoodVelocity(progressivePoints)
         expect(overallVelocity).toBeGreaterThan(0.005) // Clear improvement over time (realistic for 14-day span)
 
         // Test setback recovery patterns
         const setbackIndices = [2, 5] // Days with minor setbacks
-        setbackIndices.forEach(index => {
+        setbackIndices.forEach((index) => {
           if (index + 1 < progressivePoints.length) {
-            const recoveryDelta = progressivePoints[index + 1].moodScore - progressivePoints[index].moodScore
+            const recoveryDelta =
+              progressivePoints[index + 1].moodScore -
+              progressivePoints[index].moodScore
             // Should recover within reasonable time
             expect(recoveryDelta).toBeGreaterThanOrEqual(0) // Bounces back
           }
@@ -2408,7 +2539,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           {
             timestamp: new Date('2024-01-08T09:00:00Z'), // Monday
             moodScore: 4.3,
-            messageId: 'mon2', 
+            messageId: 'mon2',
             emotions: ['sluggish', 'unmotivated'],
             context: 'work_week_start',
           },
@@ -2419,7 +2550,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['tired', 'starting_slow'],
             context: 'work_week_start',
           },
-          
+
           // Wednesday midweek pattern
           {
             timestamp: new Date('2024-01-03T14:00:00Z'), // Wednesday
@@ -2436,13 +2567,13 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             context: 'midweek_flow',
           },
           {
-            timestamp: new Date('2024-01-17T14:00:00Z'), // Wednesday  
+            timestamp: new Date('2024-01-17T14:00:00Z'), // Wednesday
             moodScore: 6.1,
             messageId: 'wed3',
             emotions: ['steady', 'capable'],
             context: 'midweek_flow',
           },
-          
+
           // Friday relief pattern
           {
             timestamp: new Date('2024-01-05T17:00:00Z'), // Friday
@@ -2468,13 +2599,25 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         ]
 
         // Test contextual pattern recognition
-        const mondayPoints = contextualPoints.filter(p => p.context === 'work_week_start')
-        const wednesdayPoints = contextualPoints.filter(p => p.context === 'midweek_flow')
-        const fridayPoints = contextualPoints.filter(p => p.context === 'weekend_approach')
+        const mondayPoints = contextualPoints.filter(
+          (p) => p.context === 'work_week_start',
+        )
+        const wednesdayPoints = contextualPoints.filter(
+          (p) => p.context === 'midweek_flow',
+        )
+        const fridayPoints = contextualPoints.filter(
+          (p) => p.context === 'weekend_approach',
+        )
 
-        const mondayAvg = mondayPoints.reduce((sum, p) => sum + p.moodScore, 0) / mondayPoints.length
-        const wednesdayAvg = wednesdayPoints.reduce((sum, p) => sum + p.moodScore, 0) / wednesdayPoints.length
-        const fridayAvg = fridayPoints.reduce((sum, p) => sum + p.moodScore, 0) / fridayPoints.length
+        const mondayAvg =
+          mondayPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          mondayPoints.length
+        const wednesdayAvg =
+          wednesdayPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          wednesdayPoints.length
+        const fridayAvg =
+          fridayPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          fridayPoints.length
 
         // Validate weekly mood pattern
         expect(fridayAvg).toBeGreaterThan(wednesdayAvg) // Friday higher than Wednesday
@@ -2482,8 +2625,11 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         expect(fridayAvg - mondayAvg).toBeGreaterThan(3.0) // Significant weekly swing
 
         // Test pattern consistency across weeks
-        const mondayVariance = mondayPoints.reduce((sum, p) => 
-          sum + Math.pow(p.moodScore - mondayAvg, 2), 0) / mondayPoints.length
+        const mondayVariance =
+          mondayPoints.reduce(
+            (sum, p) => sum + Math.pow(p.moodScore - mondayAvg, 2),
+            0,
+          ) / mondayPoints.length
         expect(mondayVariance).toBeLessThan(0.5) // Consistent Monday pattern
       })
     })
@@ -2507,7 +2653,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['waking_up', 'coffee_helping'],
             context: 'morning_routine',
           },
-          
+
           // Morning productivity peak
           {
             timestamp: new Date('2024-01-01T10:00:00Z'),
@@ -2523,7 +2669,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['focused', 'efficient'],
             context: 'morning_peak',
           },
-          
+
           // Afternoon energy dip
           {
             timestamp: new Date('2024-01-01T14:00:00Z'),
@@ -2539,12 +2685,12 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['sluggish', 'need_break'],
             context: 'afternoon_dip',
           },
-          
+
           // Evening recovery
           {
             timestamp: new Date('2024-01-01T17:00:00Z'),
             moodScore: 6.8,
-            messageId: 'evening1', 
+            messageId: 'evening1',
             emotions: ['relieved', 'second_wind'],
             context: 'evening_recovery',
           },
@@ -2558,13 +2704,25 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         ]
 
         // Test circadian rhythm detection
-        const morningPeakPoints = intradayPoints.filter(p => p.context === 'morning_peak')
-        const afternoonDipPoints = intradayPoints.filter(p => p.context === 'afternoon_dip')
-        const eveningPoints = intradayPoints.filter(p => p.context?.includes('evening'))
+        const morningPeakPoints = intradayPoints.filter(
+          (p) => p.context === 'morning_peak',
+        )
+        const afternoonDipPoints = intradayPoints.filter(
+          (p) => p.context === 'afternoon_dip',
+        )
+        const eveningPoints = intradayPoints.filter((p) =>
+          p.context?.includes('evening'),
+        )
 
-        const morningPeakAvg = morningPeakPoints.reduce((sum, p) => sum + p.moodScore, 0) / morningPeakPoints.length
-        const afternoonDipAvg = afternoonDipPoints.reduce((sum, p) => sum + p.moodScore, 0) / afternoonDipPoints.length
-        const eveningAvg = eveningPoints.reduce((sum, p) => sum + p.moodScore, 0) / eveningPoints.length
+        const morningPeakAvg =
+          morningPeakPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          morningPeakPoints.length
+        const afternoonDipAvg =
+          afternoonDipPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          afternoonDipPoints.length
+        const eveningAvg =
+          eveningPoints.reduce((sum, p) => sum + p.moodScore, 0) /
+          eveningPoints.length
 
         // Validate circadian pattern
         expect(morningPeakAvg).toBeGreaterThan(afternoonDipAvg) // Morning peak > afternoon dip
@@ -2574,8 +2732,11 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Test pattern regularity
         const allVelocities = []
         for (let i = 1; i < intradayPoints.length; i++) {
-          const timeDiff = intradayPoints[i].timestamp.getTime() - intradayPoints[i-1].timestamp.getTime()
-          const scoreDiff = intradayPoints[i].moodScore - intradayPoints[i-1].moodScore
+          const timeDiff =
+            intradayPoints[i].timestamp.getTime() -
+            intradayPoints[i - 1].timestamp.getTime()
+          const scoreDiff =
+            intradayPoints[i].moodScore - intradayPoints[i - 1].moodScore
           const velocity = (scoreDiff / timeDiff) * 3600000 // points per hour
           allVelocities.push(velocity)
         }
@@ -2583,7 +2744,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Should show predictable velocity patterns
         const morningRiseVelocity = allVelocities[1] // 7am to 8:30am rise
         const afternoonDropVelocity = allVelocities[4] // 2pm to 3:30pm drop
-        
+
         expect(morningRiseVelocity).toBeGreaterThan(0.5) // Clear morning improvement
         expect(afternoonDropVelocity).toBeLessThan(-0.2) // Clear afternoon decline
       })
@@ -2620,7 +2781,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['relieved', 'free'],
             context: 'weekend',
           },
-          
+
           // Week 2: Building stress
           {
             timestamp: new Date('2024-01-08T09:00:00Z'), // Monday W2
@@ -2650,7 +2811,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['recovering', 'resting'],
             context: 'weekend',
           },
-          
+
           // Week 3: Crisis and intervention
           {
             timestamp: new Date('2024-01-15T09:00:00Z'), // Monday W3
@@ -2683,9 +2844,15 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         ]
 
         // Test stress accumulation pattern
-        const mondayScores = weeklyStressPoints.filter(p => p.context === 'week_start').map(p => p.moodScore)
-        const fridayScores = weeklyStressPoints.filter(p => p.context === 'week_end').map(p => p.moodScore)
-        const weekendScores = weeklyStressPoints.filter(p => p.context === 'weekend').map(p => p.moodScore)
+        const mondayScores = weeklyStressPoints
+          .filter((p) => p.context === 'week_start')
+          .map((p) => p.moodScore)
+        const fridayScores = weeklyStressPoints
+          .filter((p) => p.context === 'week_end')
+          .map((p) => p.moodScore)
+        const weekendScores = weeklyStressPoints
+          .filter((p) => p.context === 'weekend')
+          .map((p) => p.moodScore)
 
         // Each week should show declining Monday energy (except after intervention)
         expect(mondayScores[1]).toBeLessThan(mondayScores[0]) // Week 2 < Week 1
@@ -2696,7 +2863,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         expect(fridayScores[2]).toBeGreaterThan(fridayScores[1]) // Week 3 recovery
 
         // Weekends should consistently provide recovery
-        weekendScores.forEach(score => {
+        weekendScores.forEach((score) => {
           expect(score).toBeGreaterThan(6.5) // Always good recovery
         })
 
@@ -2730,7 +2897,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['cabin_fever', 'sluggish'],
             context: 'winter_season',
           },
-          
+
           // Spring emergence - improvement
           {
             timestamp: new Date('2024-03-15T12:00:00Z'),
@@ -2746,7 +2913,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['energetic', 'renewed'],
             context: 'spring_season',
           },
-          
+
           // Summer peaks - high energy
           {
             timestamp: new Date('2024-06-15T12:00:00Z'),
@@ -2762,7 +2929,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['joyful', 'peak_energy'],
             context: 'summer_season',
           },
-          
+
           // Fall transition - gradual decline
           {
             timestamp: new Date('2024-09-15T12:00:00Z'),
@@ -2781,14 +2948,22 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         ]
 
         // Test seasonal baseline differences
-        const winterAvg = seasonalPoints.filter(p => p.context === 'winter_season')
-          .reduce((sum, p) => sum + p.moodScore, 0) / 2
-        const springAvg = seasonalPoints.filter(p => p.context === 'spring_season')
-          .reduce((sum, p) => sum + p.moodScore, 0) / 2
-        const summerAvg = seasonalPoints.filter(p => p.context === 'summer_season')
-          .reduce((sum, p) => sum + p.moodScore, 0) / 2
-        const fallAvg = seasonalPoints.filter(p => p.context === 'fall_season')
-          .reduce((sum, p) => sum + p.moodScore, 0) / 2
+        const winterAvg =
+          seasonalPoints
+            .filter((p) => p.context === 'winter_season')
+            .reduce((sum, p) => sum + p.moodScore, 0) / 2
+        const springAvg =
+          seasonalPoints
+            .filter((p) => p.context === 'spring_season')
+            .reduce((sum, p) => sum + p.moodScore, 0) / 2
+        const summerAvg =
+          seasonalPoints
+            .filter((p) => p.context === 'summer_season')
+            .reduce((sum, p) => sum + p.moodScore, 0) / 2
+        const fallAvg =
+          seasonalPoints
+            .filter((p) => p.context === 'fall_season')
+            .reduce((sum, p) => sum + p.moodScore, 0) / 2
 
         // Validate seasonal pattern
         expect(summerAvg).toBeGreaterThan(springAvg) // Summer > Spring
@@ -2801,7 +2976,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         expect(seasonalAmplitude).toBeGreaterThan(2.5) // Significant seasonal variation
 
         // Test transition velocities
-        const seasonalVelocity = deltaDetector.calculateMoodVelocity(seasonalPoints)
+        const seasonalVelocity =
+          deltaDetector.calculateMoodVelocity(seasonalPoints)
         expect(seasonalVelocity).toBeGreaterThan(-0.1) // Overall slight decline over year
         expect(seasonalVelocity).toBeLessThan(0.1) // But relatively stable
       })
@@ -2849,18 +3025,22 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           },
         ]
 
-        stabilityTestCases.forEach(testCase => {
-          const trajectoryPoints: TrajectoryPoint[] = testCase.points.map((p, i) => ({
-            timestamp: new Date(`2024-01-01T${p.time}:00Z`),
-            moodScore: p.score,
-            messageId: `stability-${i}`,
-            emotions: p.emotions,
-          }))
+        stabilityTestCases.forEach((testCase) => {
+          const trajectoryPoints: TrajectoryPoint[] = testCase.points.map(
+            (p, i) => ({
+              timestamp: new Date(`2024-01-01T${p.time}:00Z`),
+              moodScore: p.score,
+              messageId: `stability-${i}`,
+              emotions: p.emotions,
+            }),
+          )
 
           const plateau = deltaDetector.detectEmotionalPlateau(trajectoryPoints)
-          const scores = trajectoryPoints.map(p => p.moodScore)
+          const scores = trajectoryPoints.map((p) => p.moodScore)
           const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-          const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length
+          const variance =
+            scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) /
+            scores.length
 
           if (testCase.expectedStability === 'high') {
             expect(plateau.isPlateau).toBe(true)
@@ -2881,10 +3061,30 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           {
             name: 'High resilience - quick bounce back',
             points: [
-              { score: 7.0, time: '10:00', emotions: ['confident'], phase: 'baseline' },
-              { score: 3.0, time: '10:30', emotions: ['shocked'], phase: 'crisis' },
-              { score: 6.8, time: '11:00', emotions: ['recovering'], phase: 'recovery' },
-              { score: 7.2, time: '11:30', emotions: ['resilient'], phase: 'growth' },
+              {
+                score: 7.0,
+                time: '10:00',
+                emotions: ['confident'],
+                phase: 'baseline',
+              },
+              {
+                score: 3.0,
+                time: '10:30',
+                emotions: ['shocked'],
+                phase: 'crisis',
+              },
+              {
+                score: 6.8,
+                time: '11:00',
+                emotions: ['recovering'],
+                phase: 'recovery',
+              },
+              {
+                score: 7.2,
+                time: '11:30',
+                emotions: ['resilient'],
+                phase: 'growth',
+              },
             ],
             expectedResilience: 'high',
             expectedRecoveryTime: 60, // minutes
@@ -2892,10 +3092,30 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           {
             name: 'Moderate resilience - gradual recovery',
             points: [
-              { score: 6.5, time: '10:00', emotions: ['stable'], phase: 'baseline' },
-              { score: 3.5, time: '10:30', emotions: ['upset'], phase: 'crisis' },
-              { score: 4.8, time: '12:00', emotions: ['coping'], phase: 'recovery' },
-              { score: 6.0, time: '14:00', emotions: ['stable'], phase: 'recovered' },
+              {
+                score: 6.5,
+                time: '10:00',
+                emotions: ['stable'],
+                phase: 'baseline',
+              },
+              {
+                score: 3.5,
+                time: '10:30',
+                emotions: ['upset'],
+                phase: 'crisis',
+              },
+              {
+                score: 4.8,
+                time: '12:00',
+                emotions: ['coping'],
+                phase: 'recovery',
+              },
+              {
+                score: 6.0,
+                time: '14:00',
+                emotions: ['stable'],
+                phase: 'recovered',
+              },
             ],
             expectedResilience: 'moderate',
             expectedRecoveryTime: 240, // minutes
@@ -2903,38 +3123,75 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           {
             name: 'Low resilience - slow recovery',
             points: [
-              { score: 6.0, time: '10:00', emotions: ['okay'], phase: 'baseline' },
-              { score: 2.5, time: '10:30', emotions: ['devastated'], phase: 'crisis' },
-              { score: 3.2, time: '16:00', emotions: ['struggling'], phase: 'partial_recovery' },
-              { score: 3.8, time: '21:00', emotions: ['struggling'], phase: 'partial_recovery' },
-              { score: 5.2, time: '23:00', emotions: ['managing'], phase: 'slow_recovery' },
+              {
+                score: 6.0,
+                time: '10:00',
+                emotions: ['okay'],
+                phase: 'baseline',
+              },
+              {
+                score: 2.5,
+                time: '10:30',
+                emotions: ['devastated'],
+                phase: 'crisis',
+              },
+              {
+                score: 3.2,
+                time: '16:00',
+                emotions: ['struggling'],
+                phase: 'partial_recovery',
+              },
+              {
+                score: 3.8,
+                time: '21:00',
+                emotions: ['struggling'],
+                phase: 'partial_recovery',
+              },
+              {
+                score: 5.2,
+                time: '23:00',
+                emotions: ['managing'],
+                phase: 'slow_recovery',
+              },
             ],
             expectedResilience: 'low',
             expectedRecoveryTime: 630, // minutes (10.5 hours)
           },
         ]
 
-        resilienceScenarios.forEach(scenario => {
-          const trajectoryPoints: TrajectoryPoint[] = scenario.points.map((p, i) => ({
-            timestamp: new Date(`2024-01-01T${p.time}:00Z`),
-            moodScore: p.score,
-            messageId: `resilience-${i}`,
-            emotions: p.emotions,
-            context: p.phase,
-          }))
+        resilienceScenarios.forEach((scenario) => {
+          const trajectoryPoints: TrajectoryPoint[] = scenario.points.map(
+            (p, i) => ({
+              timestamp: new Date(`2024-01-01T${p.time}:00Z`),
+              moodScore: p.score,
+              messageId: `resilience-${i}`,
+              emotions: p.emotions,
+              context: p.phase,
+            }),
+          )
 
           // Find crisis and recovery points
-          const crisisPoint = trajectoryPoints.find(p => p.context === 'crisis')
-          const recoveryPoint = trajectoryPoints.find(p => p.context?.includes('recovery'))
-          const baselinePoint = trajectoryPoints.find(p => p.context === 'baseline')
+          const crisisPoint = trajectoryPoints.find(
+            (p) => p.context === 'crisis',
+          )
+          const recoveryPoint = trajectoryPoints.find((p) =>
+            p.context?.includes('recovery'),
+          )
+          const baselinePoint = trajectoryPoints.find(
+            (p) => p.context === 'baseline',
+          )
 
           if (crisisPoint && recoveryPoint && baselinePoint) {
             // Calculate resilience metrics
-            const dropMagnitude = baselinePoint.moodScore - crisisPoint.moodScore
-            const recoveryMagnitude = recoveryPoint.moodScore - crisisPoint.moodScore
+            const dropMagnitude =
+              baselinePoint.moodScore - crisisPoint.moodScore
+            const recoveryMagnitude =
+              recoveryPoint.moodScore - crisisPoint.moodScore
             const recoveryPercentage = recoveryMagnitude / dropMagnitude
 
-            const recoveryTime = recoveryPoint.timestamp.getTime() - crisisPoint.timestamp.getTime()
+            const recoveryTime =
+              recoveryPoint.timestamp.getTime() -
+              crisisPoint.timestamp.getTime()
             const recoveryTimeMinutes = recoveryTime / (1000 * 60)
 
             if (scenario.expectedResilience === 'high') {
@@ -2977,7 +3234,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['coping', 'learning'],
             context: 'challenge1_recovery',
           },
-          
+
           // Second challenge - improved response
           {
             timestamp: new Date('2024-01-08T10:00:00Z'),
@@ -3000,7 +3257,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['managed', 'proud'],
             context: 'challenge2_recovery',
           },
-          
+
           // Third challenge - mastery response
           {
             timestamp: new Date('2024-01-15T10:00:00Z'),
@@ -3036,13 +3293,14 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
           const baseline = challenge[0].moodScore
           const crisis = challenge[1].moodScore
           const recovery = challenge[2].moodScore
-          
+
           const impactMagnitude = baseline - crisis
           const recoveryMagnitude = recovery - crisis
           const resilience = recoveryMagnitude / impactMagnitude
-          
-          const recoveryTime = challenge[2].timestamp.getTime() - challenge[1].timestamp.getTime()
-          
+
+          const recoveryTime =
+            challenge[2].timestamp.getTime() - challenge[1].timestamp.getTime()
+
           return {
             challengeNumber: index + 1,
             impactMagnitude,
@@ -3053,19 +3311,33 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         })
 
         // Test adaptive improvement
-        expect(adaptiveMetrics[1].resilience).toBeGreaterThan(adaptiveMetrics[0].resilience) // Challenge 2 > 1
-        expect(adaptiveMetrics[2].resilience).toBeGreaterThan(adaptiveMetrics[1].resilience) // Challenge 3 > 2
+        expect(adaptiveMetrics[1].resilience).toBeGreaterThan(
+          adaptiveMetrics[0].resilience,
+        ) // Challenge 2 > 1
+        expect(adaptiveMetrics[2].resilience).toBeGreaterThan(
+          adaptiveMetrics[1].resilience,
+        ) // Challenge 3 > 2
 
         // Test reduced impact over time (better coping)
-        expect(adaptiveMetrics[1].impactMagnitude).toBeLessThan(adaptiveMetrics[0].impactMagnitude)
-        expect(adaptiveMetrics[2].impactMagnitude).toBeLessThan(adaptiveMetrics[1].impactMagnitude)
+        expect(adaptiveMetrics[1].impactMagnitude).toBeLessThan(
+          adaptiveMetrics[0].impactMagnitude,
+        )
+        expect(adaptiveMetrics[2].impactMagnitude).toBeLessThan(
+          adaptiveMetrics[1].impactMagnitude,
+        )
 
         // Test faster recovery times
-        expect(adaptiveMetrics[1].recoveryTime).toBeLessThan(adaptiveMetrics[0].recoveryTime)
-        expect(adaptiveMetrics[2].recoveryTime).toBeLessThan(adaptiveMetrics[1].recoveryTime)
+        expect(adaptiveMetrics[1].recoveryTime).toBeLessThan(
+          adaptiveMetrics[0].recoveryTime,
+        )
+        expect(adaptiveMetrics[2].recoveryTime).toBeLessThan(
+          adaptiveMetrics[1].recoveryTime,
+        )
 
         // Test growth (higher final scores after learning)
-        expect(adaptiveMetrics[2].finalScore).toBeGreaterThan(adaptiveMetrics[0].finalScore)
+        expect(adaptiveMetrics[2].finalScore).toBeGreaterThan(
+          adaptiveMetrics[0].finalScore,
+        )
       })
     })
 
@@ -3106,44 +3378,48 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         ]
 
         // Convert to mood analyses for delta detection
-        const moodAnalyses: MoodAnalysisResult[] = integratedTimeline.map(point => ({
-          score: point.moodScore,
-          descriptors: point.emotions || [],
-          confidence: 0.85,
-          factors: [
-            {
-              type: 'emotional_words',
-              weight: 0.8,
-              description: 'Timeline analysis',
-              evidence: point.emotions || [],
-            },
-          ],
-        }))
+        const moodAnalyses: MoodAnalysisResult[] = integratedTimeline.map(
+          (point) => ({
+            score: point.moodScore,
+            descriptors: point.emotions || [],
+            confidence: 0.85,
+            factors: [
+              {
+                type: 'emotional_words',
+                weight: 0.8,
+                description: 'Timeline analysis',
+                evidence: point.emotions || [],
+              },
+            ],
+          }),
+        )
 
         // Test conversational deltas on timeline
         const deltas = deltaDetector.detectConversationalDeltas(moodAnalyses)
         expect(deltas.length).toBeGreaterThanOrEqual(3) // Should detect multiple significant deltas
 
         // Test sudden transitions
-        const suddenTransitions = deltaDetector.detectSuddenTransitions(integratedTimeline)
+        const suddenTransitions =
+          deltaDetector.detectSuddenTransitions(integratedTimeline)
         expect(suddenTransitions.length).toBeGreaterThanOrEqual(2) // Crisis and recovery
 
         // Test turning points
         const turningPoints = deltaDetector.identifyTurningPoints({
           points: integratedTimeline,
           direction: 'improving',
-          significance: 0.8,  
+          significance: 0.8,
           turningPoints: [],
         })
         expect(turningPoints.length).toBeGreaterThanOrEqual(1) // Major turning point
 
         // Test velocity analysis
-        const overallVelocity = deltaDetector.calculateMoodVelocity(integratedTimeline)
+        const overallVelocity =
+          deltaDetector.calculateMoodVelocity(integratedTimeline)
         expect(overallVelocity).toBeGreaterThan(0.2) // Positive trend over 4-hour span
 
         // Test that timeline analysis enhances delta detection
-        const timelineEnhancedDeltas = deltas.filter(delta => 
-          delta.factors.some(factor => factor.includes('conversation'))
+        const timelineEnhancedDeltas = deltas.filter((delta) =>
+          delta.factors.some((factor) => factor.includes('conversation')),
         )
         expect(timelineEnhancedDeltas.length).toBeGreaterThan(0) // Should have enhanced context
       })
@@ -3152,7 +3428,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Generate large timeline for performance testing
         const largeTimeline: TrajectoryPoint[] = []
         const baseTime = new Date('2024-01-01T00:00:00Z').getTime()
-        
+
         for (let i = 0; i < 100; i++) {
           largeTimeline.push({
             timestamp: new Date(baseTime + i * 3600000), // Hourly points
@@ -3167,7 +3443,8 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Test performance of various operations
         const velocity = deltaDetector.calculateMoodVelocity(largeTimeline)
         const plateau = deltaDetector.detectEmotionalPlateau(largeTimeline)
-        const suddenTransitions = deltaDetector.detectSuddenTransitions(largeTimeline)
+        const suddenTransitions =
+          deltaDetector.detectSuddenTransitions(largeTimeline)
         const turningPoints = deltaDetector.identifyTurningPoints({
           points: largeTimeline,
           direction: 'stable',
@@ -3186,9 +3463,11 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
 
         // Performance should be reasonable for 100 data points
         expect(processingTime).toBeLessThan(100) // Should process in < 100ms
-        
+
         // Timeline analysis should scale reasonably
-        expect(suddenTransitions.length).toBeLessThan(largeTimeline.length * 0.1) // <10% sudden transitions
+        expect(suddenTransitions.length).toBeLessThan(
+          largeTimeline.length * 0.1,
+        ) // <10% sudden transitions
       })
 
       it('should demonstrate comprehensive timeline mood evolution tracking', () => {
@@ -3202,7 +3481,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['content', 'routine'],
             context: 'baseline',
           },
-          
+
           // Phase 2: Gradual decline (work stress building)
           {
             timestamp: new Date('2024-01-01T12:00:00Z'),
@@ -3218,7 +3497,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['stressed', 'tired'],
             context: 'work_pressure',
           },
-          
+
           // Phase 3: Crisis point (sudden transition)
           {
             timestamp: new Date('2024-01-01T17:30:00Z'),
@@ -3227,7 +3506,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['overwhelmed', 'breaking'],
             context: 'crisis',
           },
-          
+
           // Phase 4: Support intervention (mood repair)
           {
             timestamp: new Date('2024-01-01T18:00:00Z'),
@@ -3243,7 +3522,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             emotions: ['hopeful', 'grateful'],
             context: 'recovery',
           },
-          
+
           // Phase 5: Growth and stabilization
           {
             timestamp: new Date('2024-01-01T21:00:00Z'),
@@ -3264,14 +3543,20 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         // Test all timeline analysis features
         const results = {
           // Trend analysis
-          overallVelocity: deltaDetector.calculateMoodVelocity(comprehensiveTimeline),
-          
+          overallVelocity: deltaDetector.calculateMoodVelocity(
+            comprehensiveTimeline,
+          ),
+
           // Stability analysis
-          stability: deltaDetector.detectEmotionalPlateau(comprehensiveTimeline),
-          
+          stability: deltaDetector.detectEmotionalPlateau(
+            comprehensiveTimeline,
+          ),
+
           // Transition detection
-          suddenTransitions: deltaDetector.detectSuddenTransitions(comprehensiveTimeline),
-          
+          suddenTransitions: deltaDetector.detectSuddenTransitions(
+            comprehensiveTimeline,
+          ),
+
           // Turning point identification
           turningPoints: deltaDetector.identifyTurningPoints({
             points: comprehensiveTimeline,
@@ -3279,7 +3564,7 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
             significance: 0.8,
             turningPoints: [],
           }),
-          
+
           // Phase analysis
           phases: {
             decline: comprehensiveTimeline.slice(1, 3),
@@ -3294,22 +3579,32 @@ describe('DeltaDetector - Advanced Delta Detection System', () => {
         expect(results.stability.isPlateau).toBe(false) // Should detect volatility
         expect(results.suddenTransitions.length).toBeGreaterThanOrEqual(2) // Crisis and recovery
         expect(results.turningPoints.length).toBeGreaterThanOrEqual(1) // Major turning point
-        
+
         // Validate phase analysis
-        const declineVelocity = deltaDetector.calculateMoodVelocity(results.phases.decline)
-        const recoveryVelocity = deltaDetector.calculateMoodVelocity(results.phases.recovery)
-        
+        const declineVelocity = deltaDetector.calculateMoodVelocity(
+          results.phases.decline,
+        )
+        const recoveryVelocity = deltaDetector.calculateMoodVelocity(
+          results.phases.recovery,
+        )
+
         expect(declineVelocity).toBeLessThan(0) // Declining phase
         expect(recoveryVelocity).toBeGreaterThan(2.0) // Strong recovery
-        
+
         // Validate resilience metrics
-        const lowestPoint = Math.min(...comprehensiveTimeline.map(p => p.moodScore))
-        const highestRecovery = Math.max(...comprehensiveTimeline.slice(4).map(p => p.moodScore))
+        const lowestPoint = Math.min(
+          ...comprehensiveTimeline.map((p) => p.moodScore),
+        )
+        const highestRecovery = Math.max(
+          ...comprehensiveTimeline.slice(4).map((p) => p.moodScore),
+        )
         const resilienceScore = highestRecovery - lowestPoint
-        
+
         expect(resilienceScore).toBeGreaterThan(4.0) // Strong resilience demonstrated
-        expect(highestRecovery).toBeGreaterThan(comprehensiveTimeline[0].moodScore) // Growth beyond baseline
-        
+        expect(highestRecovery).toBeGreaterThan(
+          comprehensiveTimeline[0].moodScore,
+        ) // Growth beyond baseline
+
         console.log('Comprehensive Timeline Analysis Results:', {
           overallTrend: results.overallVelocity > 0 ? 'improving' : 'declining',
           resilienceScore: resilienceScore.toFixed(2),

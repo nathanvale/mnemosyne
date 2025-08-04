@@ -1,4 +1,10 @@
-import { ParticipantRole, EmotionalState, EmotionalTheme, CommunicationPattern, InteractionQuality } from '@studio/schema'
+import {
+  ParticipantRole,
+  EmotionalState,
+  EmotionalTheme,
+  CommunicationPattern,
+  InteractionQuality,
+} from '@studio/schema'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import type {
@@ -35,10 +41,13 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
   describe('Task 5.1: Memory Significance Enhancement with Mood Analysis', () => {
     describe('Mood Score Integration', () => {
       it('should enhance significance scoring for high mood (8.5+) memories', async () => {
-        const memory = createMemoryWithMoodScore(8.7, 0.85, ['joy', 'celebration'])
-        
+        const memory = createMemoryWithMoodScore(8.7, 0.85, [
+          'joy',
+          'celebration',
+        ])
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(7.5)
         expect(significance.category).toBe('critical')
         expect(significance.components.emotionalSalience).toBeGreaterThan(8.0)
@@ -46,10 +55,13 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
       })
 
       it('should enhance significance scoring for low mood (3.5-) memories', async () => {
-        const memory = createMemoryWithMoodScore(2.8, 0.80, ['distress', 'vulnerability'])
-        
+        const memory = createMemoryWithMoodScore(2.8, 0.8, [
+          'distress',
+          'vulnerability',
+        ])
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(7.0)
         expect(['critical', 'high']).toContain(significance.category)
         expect(significance.components.emotionalSalience).toBeGreaterThan(7.5)
@@ -57,48 +69,74 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
       })
 
       it('should appropriately score neutral mood (4.5-6.5) memories', async () => {
-        const memory = createMemoryWithMoodScore(5.2, 0.70, ['neutral', 'calm'])
-        
+        const memory = createMemoryWithMoodScore(5.2, 0.7, ['neutral', 'calm'])
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeLessThan(7.0)
         expect(['medium', 'high']).toContain(significance.category)
         expect(significance.components.emotionalSalience).toBeLessThan(7.0)
       })
 
       it('should weight mood confidence in significance confidence calculation', async () => {
-        const highConfidenceMemory = createMemoryWithMoodScore(8.0, 0.95, ['achievement'])
-        const lowConfidenceMemory = createMemoryWithMoodScore(8.0, 0.45, ['achievement'])
-        
+        const highConfidenceMemory = createMemoryWithMoodScore(8.0, 0.95, [
+          'achievement',
+        ])
+        const lowConfidenceMemory = createMemoryWithMoodScore(8.0, 0.45, [
+          'achievement',
+        ])
+
         const highSig = await analyzer.assessSignificance(highConfidenceMemory)
         const lowSig = await analyzer.assessSignificance(lowConfidenceMemory)
-        
+
         expect(highSig.confidence).toBeGreaterThan(lowSig.confidence)
-        expect(highSig.validationPriority).toBeLessThan(lowSig.validationPriority) // Lower confidence = higher validation priority
+        expect(highSig.validationPriority).toBeLessThan(
+          lowSig.validationPriority,
+        ) // Lower confidence = higher validation priority
       })
     })
 
     describe('Mood Factor Analysis Integration', () => {
       it('should enhance significance for memories with multiple mood factors', async () => {
         const memory = createMemoryWithMultipleMoodFactors([
-          { type: 'sentiment_analysis', weight: 0.35, evidence: ['positive expressions'] },
-          { type: 'psychological_indicators', weight: 0.25, evidence: ['resilience markers'] },
-          { type: 'relationship_context', weight: 0.20, evidence: ['trust building'] },
-          { type: 'conversational_flow', weight: 0.15, evidence: ['emotional depth'] },
-          { type: 'historical_baseline', weight: 0.05, evidence: ['significant deviation'] },
+          {
+            type: 'sentiment_analysis',
+            weight: 0.35,
+            evidence: ['positive expressions'],
+          },
+          {
+            type: 'psychological_indicators',
+            weight: 0.25,
+            evidence: ['resilience markers'],
+          },
+          {
+            type: 'relationship_context',
+            weight: 0.2,
+            evidence: ['trust building'],
+          },
+          {
+            type: 'conversational_flow',
+            weight: 0.15,
+            evidence: ['emotional depth'],
+          },
+          {
+            type: 'historical_baseline',
+            weight: 0.05,
+            evidence: ['significant deviation'],
+          },
         ])
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(6.5)
         expect(significance.components.emotionalSalience).toBeGreaterThan(6.0)
       })
 
       it('should detect therapeutic breakthrough significance from mood factors', async () => {
         const memory = createMemoryWithTherapeuticBreakthrough()
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(8.0)
         expect(significance.category).toBe('critical')
         expect(significance.components.emotionalSalience).toBeGreaterThan(8.5)
@@ -107,9 +145,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
 
       it('should detect crisis intervention significance from mood factors', async () => {
         const memory = createMemoryWithCrisisIndicators()
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(8.5)
         expect(significance.category).toBe('critical')
         expect(significance.validationPriority).toBeGreaterThan(9.0)
@@ -126,9 +164,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           timeElapsed: 1800000, // 30 minutes
           confidence: 0.88,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(7.0)
         expect(significance.components.emotionalSalience).toBeGreaterThan(7.5)
         expect(significance.components.temporalRelevance).toBeGreaterThan(6.0)
@@ -142,9 +180,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           timeElapsed: 900000, // 15 minutes - rapid change
           confidence: 0.92,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(8.0)
         expect(significance.category).toBe('critical')
         expect(significance.validationPriority).toBeGreaterThan(8.5)
@@ -158,9 +196,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           timeElapsed: 7200000, // 2 hours - gradual change
           confidence: 0.75,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(5.5)
         expect(['medium', 'high']).toContain(significance.category)
         expect(significance.components.emotionalSalience).toBeGreaterThan(5.0)
@@ -176,9 +214,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           supportLevel: 'high',
           vulnerabilityPresent: true,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(7.5)
         expect(significance.components.relationshipImpact).toBeGreaterThan(8.0)
         expect(significance.components.emotionalSalience).toBeGreaterThan(7.0)
@@ -192,9 +230,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           trustLevel: 'medium',
           conflictEscalation: true,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(6.5)
         expect(significance.components.relationshipImpact).toBeGreaterThan(7.0)
         expect(significance.validationPriority).toBeGreaterThan(7.0)
@@ -207,9 +245,9 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           supportLevel: 'high',
           celebrationContext: true,
         })
-        
+
         const significance = await analyzer.assessSignificance(memory)
-        
+
         expect(significance.overall).toBeGreaterThan(7.0)
         expect(significance.components.relationshipImpact).toBeGreaterThan(6.5)
         expect(significance.components.emotionalSalience).toBeGreaterThan(8.0)
@@ -219,47 +257,51 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
     describe('Batch Processing with Mood Integration', () => {
       it('should process multiple memories with mood-aware significance scoring', async () => {
         const memories = [
-          createMemoryWithMoodScore(8.5, 0.90, ['achievement']),
+          createMemoryWithMoodScore(8.5, 0.9, ['achievement']),
           createMemoryWithMoodScore(2.8, 0.85, ['crisis']),
-          createMemoryWithMoodScore(5.2, 0.70, ['neutral']),
-          createMemoryWithMoodScore(7.1, 0.80, ['celebration']),
+          createMemoryWithMoodScore(5.2, 0.7, ['neutral']),
+          createMemoryWithMoodScore(7.1, 0.8, ['celebration']),
         ]
-        
+
         const results = await analyzer.processBatch(memories)
-        
+
         expect(results.size).toBe(4)
-        
+
         // High mood achievement should be high significance
         const achievement = results.get(memories[0].id)!
         expect(achievement.overall).toBeGreaterThan(7.0)
         expect(['critical', 'high']).toContain(achievement.category)
-        
+
         // Crisis should be critical significance
         const crisis = results.get(memories[1].id)!
         expect(crisis.overall).toBeGreaterThan(7.5)
         expect(crisis.category).toBe('critical')
-        
+
         // Neutral should be moderate significance
         const neutral = results.get(memories[2].id)!
         expect(neutral.overall).toBeLessThan(6.5)
         expect(['medium', 'low']).toContain(neutral.category)
-        
+
         // Celebration should be high significance
         const celebration = results.get(memories[3].id)!
         expect(celebration.overall).toBeGreaterThan(6.5)
       })
 
       it('should maintain performance under 500ms per memory for batch processing', async () => {
-        const memories = Array.from({ length: 10 }, (_, i) => 
-          createMemoryWithMoodScore(5 + Math.random() * 3, 0.7 + Math.random() * 0.2, ['test'])
+        const memories = Array.from({ length: 10 }, (_, i) =>
+          createMemoryWithMoodScore(
+            5 + Math.random() * 3,
+            0.7 + Math.random() * 0.2,
+            ['test'],
+          ),
         )
-        
+
         const startTime = Date.now()
         const results = await analyzer.processBatch(memories)
         const endTime = Date.now()
-        
+
         const averageTime = (endTime - startTime) / memories.length
-        
+
         expect(results.size).toBe(10)
         expect(averageTime).toBeLessThan(500) // Sub-500ms per memory requirement
       })
@@ -353,7 +395,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           overall: 0.88,
           components: {
             emotionalRichness: 0.85,
-            relationshipClarity: 0.90,
+            relationshipClarity: 0.9,
             contentCoherence: 0.88,
             contextualSignificance: 0.87,
           },
@@ -422,7 +464,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
   function createMemoryWithMoodScore(
     score: number,
     confidence: number,
-    descriptors: string[]
+    descriptors: string[],
   ): ExtractedMemory {
     const memory = createBaseMemory()
     memory.emotionalAnalysis.moodScoring = {
@@ -442,17 +484,19 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
     return memory
   }
 
-  function createMemoryWithMultipleMoodFactors(factors: Array<{
-    type: string;
-    weight: number;
-    evidence: string[];
-  }>): ExtractedMemory {
+  function createMemoryWithMultipleMoodFactors(
+    factors: Array<{
+      type: string
+      weight: number
+      evidence: string[]
+    }>,
+  ): ExtractedMemory {
     const memory = createBaseMemory()
     memory.emotionalAnalysis.moodScoring = {
       score: 6.8,
       confidence: 0.88,
       descriptors: ['complex', 'multi-dimensional'],
-      factors: factors.map(f => ({
+      factors: factors.map((f) => ({
         type: f.type as any,
         weight: f.weight,
         description: `${f.type} analysis`,
@@ -474,7 +518,11 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           type: 'psychological_indicators',
           weight: 0.4,
           description: 'Therapeutic breakthrough indicators',
-          evidence: ['insight moment', 'pattern recognition', 'emotional processing'],
+          evidence: [
+            'insight moment',
+            'pattern recognition',
+            'emotional processing',
+          ],
         },
         {
           type: 'relationship_context',
@@ -544,16 +592,17 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
   }
 
   function createMemoryWithMoodDelta(delta: {
-    magnitude: number;
-    direction: 'positive' | 'negative';
-    significance: 'high' | 'medium' | 'low';
-    timeElapsed: number;
-    confidence: number;
+    magnitude: number
+    direction: 'positive' | 'negative'
+    significance: 'high' | 'medium' | 'low'
+    timeElapsed: number
+    confidence: number
   }): ExtractedMemory {
     const memory = createBaseMemory()
-    const previousScore = delta.direction === 'positive' ? 
-      memory.emotionalAnalysis.moodScoring.score - delta.magnitude :
-      memory.emotionalAnalysis.moodScoring.score + delta.magnitude
+    const previousScore =
+      delta.direction === 'positive'
+        ? memory.emotionalAnalysis.moodScoring.score - delta.magnitude
+        : memory.emotionalAnalysis.moodScoring.score + delta.magnitude
 
     const baseTime = new Date('2024-01-15T14:30:00Z')
     const previousTime = new Date(baseTime.getTime() - delta.timeElapsed)
@@ -564,19 +613,26 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
           timestamp: previousTime,
           moodScore: previousScore,
           messageId: 'msg-prev',
-          emotions: delta.direction === 'positive' ? ['concerned'] : ['hopeful'],
+          emotions:
+            delta.direction === 'positive' ? ['concerned'] : ['hopeful'],
           context: 'previous state',
         },
         {
           timestamp: baseTime,
           moodScore: memory.emotionalAnalysis.moodScoring.score,
           messageId: 'msg-current',
-          emotions: delta.direction === 'positive' ? ['improving'] : ['declining'],
+          emotions:
+            delta.direction === 'positive' ? ['improving'] : ['declining'],
           context: 'current state after transition',
         },
       ],
       direction: delta.direction === 'positive' ? 'improving' : 'declining',
-      significance: delta.significance === 'high' ? 0.9 : delta.significance === 'medium' ? 0.6 : 0.3,
+      significance:
+        delta.significance === 'high'
+          ? 0.9
+          : delta.significance === 'medium'
+            ? 0.6
+            : 0.3,
       turningPoints: [
         {
           timestamp: baseTime,
@@ -587,55 +643,71 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
         },
       ],
     }
-    
+
     // Update the mood scoring to reflect the current (final) mood state from trajectory
     const currentTrajectoryPoint = memory.emotionalAnalysis.trajectory.points[1] // The current/final state
-    memory.emotionalAnalysis.moodScoring.score = currentTrajectoryPoint.moodScore
+    memory.emotionalAnalysis.moodScoring.score =
+      currentTrajectoryPoint.moodScore
     memory.emotionalAnalysis.moodScoring.confidence = delta.confidence
-    memory.emotionalAnalysis.moodScoring.descriptors = delta.direction === 'positive' ? ['improving', 'recovery'] : ['declining', 'deteriorating']
-    
+    memory.emotionalAnalysis.moodScoring.descriptors =
+      delta.direction === 'positive'
+        ? ['improving', 'recovery']
+        : ['declining', 'deteriorating']
+
     memory.id = `delta-${delta.direction}-${Math.random().toString(36).substr(2, 9)}`
     return memory
   }
 
   function createMemoryWithRelationshipMoodContext(context: {
-    moodScore: number;
-    relationshipType: RelationshipDynamics['type'];
-    trustLevel?: 'high' | 'medium' | 'low';
-    supportLevel?: 'high' | 'medium' | 'low' | 'negative';
-    conflictLevel?: 'high' | 'medium' | 'low' | 'none';
-    vulnerabilityPresent?: boolean;
-    conflictEscalation?: boolean;
-    celebrationContext?: boolean;
+    moodScore: number
+    relationshipType: RelationshipDynamics['type']
+    trustLevel?: 'high' | 'medium' | 'low'
+    supportLevel?: 'high' | 'medium' | 'low' | 'negative'
+    conflictLevel?: 'high' | 'medium' | 'low' | 'none'
+    vulnerabilityPresent?: boolean
+    conflictEscalation?: boolean
+    celebrationContext?: boolean
   }): ExtractedMemory {
     const memory = createBaseMemory()
     memory.emotionalAnalysis.moodScoring.score = context.moodScore
-    
+
     const descriptors = []
     if (context.vulnerabilityPresent) descriptors.push('vulnerable')
     if (context.conflictEscalation) descriptors.push('conflict')
     if (context.celebrationContext) descriptors.push('celebration')
-    
+
     memory.emotionalAnalysis.moodScoring.descriptors = descriptors
-    
+
     memory.extendedRelationshipDynamics = {
       type: context.relationshipType,
       supportLevel: context.supportLevel || 'medium',
-      intimacyLevel: context.relationshipType === 'therapeutic' ? 'high' : 'medium',
+      intimacyLevel:
+        context.relationshipType === 'therapeutic' ? 'high' : 'medium',
       intimacy: context.relationshipType === 'therapeutic' ? 'high' : 'medium',
       conflictLevel: context.conflictLevel || 'none',
       trustLevel: context.trustLevel || 'medium',
       conflictPresent: context.conflictLevel !== 'none',
       conflictIntensity: context.conflictLevel === 'high' ? 'high' : 'low',
-      communicationStyle: context.relationshipType === 'therapeutic' ? 'reflective' : 'supportive',
+      communicationStyle:
+        context.relationshipType === 'therapeutic'
+          ? 'reflective'
+          : 'supportive',
       communicationStyleDetails: {
         vulnerabilityLevel: context.vulnerabilityPresent ? 'high' : 'medium',
         emotionalSafety: context.conflictLevel === 'high' ? 'low' : 'high',
-        supportPatterns: context.supportLevel === 'high' ? ['validation', 'active_listening'] : [],
-        conflictPatterns: context.conflictEscalation ? ['escalation', 'defensiveness'] : [],
+        supportPatterns:
+          context.supportLevel === 'high'
+            ? ['validation', 'active_listening']
+            : [],
+        conflictPatterns: context.conflictEscalation
+          ? ['escalation', 'defensiveness']
+          : [],
         professionalBoundaries: context.relationshipType === 'therapeutic',
         guidancePatterns: [],
-        therapeuticElements: context.relationshipType === 'therapeutic' ? ['insight_facilitation'] : [],
+        therapeuticElements:
+          context.relationshipType === 'therapeutic'
+            ? ['insight_facilitation']
+            : [],
       },
       participantDynamics: {
         supportBalance: 'balanced',
@@ -648,7 +720,7 @@ describe('Mood-Integrated Significance Analysis - Memory Enhancement', () => {
         validationPresent: context.supportLevel === 'high',
       },
     }
-    
+
     memory.id = `relationship-${context.relationshipType}-${Math.random().toString(36).substr(2, 9)}`
     return memory
   }

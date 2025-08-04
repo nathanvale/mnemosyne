@@ -67,7 +67,7 @@ The hook is configured in `.claude/settings.local.json`:
 export CLAUDE_HOOKS_TYPESCRIPT_ENABLED=true          # Enable/disable TypeScript checks
 export CLAUDE_HOOKS_SHOW_DEPENDENCY_ERRORS=false     # Show errors in imported files
 
-# ESLint Settings  
+# ESLint Settings
 export CLAUDE_HOOKS_ESLINT_ENABLED=true              # Enable/disable ESLint
 export CLAUDE_HOOKS_ESLINT_AUTOFIX=true              # Auto-fix ESLint issues
 
@@ -91,7 +91,7 @@ Edit `.claude/hooks/react-app/hook-config.json`:
   "rules": {
     "console": {
       "enabled": true,
-      "severity": "error",  // Change from "info" to "error" to block
+      "severity": "error", // Change from "info" to "error" to block
       "message": "Remove all console statements!",
       "allowIn": {
         "paths": ["src/debug/", "scripts/"],
@@ -101,7 +101,7 @@ Edit `.claude/hooks/react-app/hook-config.json`:
     },
     "asAny": {
       "enabled": true,
-      "severity": "error",  // Change from "warning" to "error"
+      "severity": "error", // Change from "warning" to "error"
       "message": "Never use 'as any' - use proper types!"
     }
   }
@@ -206,16 +206,19 @@ export CLAUDE_HOOKS_AUTOFIX_SILENT=true
 ## 🎯 Rule Severity Levels
 
 ### `severity: "error"` (Blocking ❌)
+
 - **Behavior**: Fails the hook, blocks progress
 - **Use for**: Critical issues that must be fixed
 - **Example**: `debugger` statements, critical linting errors
 
 ### `severity: "warning"` (Non-blocking ⚠️)
+
 - **Behavior**: Shows warning but allows progress
 - **Use for**: Code smells that should be addressed
 - **Example**: `as any` usage (default)
 
 ### `severity: "info"` (Informational ℹ️)
+
 - **Behavior**: Shows message, doesn't affect outcome
 - **Use for**: Helpful reminders and suggestions
 - **Example**: Console statements, TODO comments
@@ -244,6 +247,7 @@ export CLAUDE_HOOKS_SHOW_DEPENDENCY_ERRORS=false
 ### Auto-Fix Not Working?
 
 1. **Check if enabled**:
+
    ```bash
    grep "autofix" .claude/hooks/react-app/hook-config.json
    ```
@@ -257,6 +261,7 @@ export CLAUDE_HOOKS_SHOW_DEPENDENCY_ERRORS=false
 ### Custom ESLint Rules Not Applied?
 
 The hook uses your project's ESLint configuration. Check:
+
 - `.eslintrc.json` or `.eslintrc.js`
 - `package.json` eslintConfig section
 - ESLint extends configuration
@@ -289,6 +294,7 @@ The hook uses your project's ESLint configuration. Check:
 ### Multi-Config TypeScript Support
 
 Automatically handles complex TypeScript setups:
+
 - `tsconfig.json` - Base configuration
 - `tsconfig.app.json` - Application code
 - `tsconfig.test.json` - Test files
@@ -311,6 +317,7 @@ Automatically handles complex TypeScript setups:
 ## 📝 Example Output
 
 ### Success ✅
+
 ```
 ⚛️  React App Quality Check v1.0.0 - Starting...
 ────────────────────────────────────────────
@@ -332,6 +339,7 @@ Automatically handles complex TypeScript setups:
 ```
 
 ### With Issues ❌
+
 ```
 ⚛️  React App Quality Check v1.0.0 - Starting...
 ────────────────────────────────────────────

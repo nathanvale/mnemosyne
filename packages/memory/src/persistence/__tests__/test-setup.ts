@@ -4,7 +4,7 @@ import { WorkerDatabaseFactory } from './worker-database-factory'
 
 /**
  * Global test setup for worker-isolated database testing
- * 
+ *
  * This setup file is automatically loaded by Vitest and ensures:
  * - Each worker gets its own isolated SQLite database
  * - Clean state between tests within the same worker

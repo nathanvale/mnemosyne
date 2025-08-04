@@ -50,85 +50,136 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
         rootMeanSquareError: 1.8,
         agreementPercentage: 70,
         concordanceLevel: 'moderate',
-        statisticalSignificance: { pValue: 0.05, isSignificant: true, confidenceInterval: [0.6, 0.9] },
+        statisticalSignificance: {
+          pValue: 0.05,
+          isSignificant: true,
+          confidenceInterval: [0.6, 0.9],
+        },
         sampleSize: 50,
       }
 
       const manager = new AlgorithmCalibrationManager({}, baselineMetrics)
 
-      expect(manager.performanceTracking.baselineMetrics).toEqual(baselineMetrics)
-      expect(manager.performanceTracking.currentMetrics).toEqual(baselineMetrics)
+      expect(manager.performanceTracking.baselineMetrics).toEqual(
+        baselineMetrics,
+      )
+      expect(manager.performanceTracking.currentMetrics).toEqual(
+        baselineMetrics,
+      )
       expect(manager.performanceTracking.improvementTrend).toEqual([])
     })
   })
 
   describe('Calibration Adjustment Generation', () => {
     it('should generate weight adjustments for systematic over-estimation bias', async () => {
-      const validationResult = createValidationResultWithBias('algorithmic_over_estimation', 1.5)
+      const validationResult = createValidationResultWithBias(
+        'algorithmic_over_estimation',
+        1.5,
+      )
 
-      const adjustments = await calibrationManager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await calibrationManager.generateCalibrationAdjustments(
+          validationResult,
+        )
 
       expect(adjustments).toHaveLength(1)
       const weightAdjustment = adjustments[0]
       expect(weightAdjustment.adjustmentType).toBe('weight_adjustment')
       expect(weightAdjustment.targetComponent).toBe('sentiment_analysis')
-      expect(weightAdjustment.parameterAdjustments[0].parameterName).toBe('sentiment_weight')
-      expect(weightAdjustment.parameterAdjustments[0].recommendedValue).toBeLessThan(
-        weightAdjustment.parameterAdjustments[0].currentValue
+      expect(weightAdjustment.parameterAdjustments[0].parameterName).toBe(
+        'sentiment_weight',
       )
-      expect(weightAdjustment.predictedImprovements.biasReduction).toBeGreaterThan(0)
+      expect(
+        weightAdjustment.parameterAdjustments[0].recommendedValue,
+      ).toBeLessThan(weightAdjustment.parameterAdjustments[0].currentValue)
+      expect(
+        weightAdjustment.predictedImprovements.biasReduction,
+      ).toBeGreaterThan(0)
     })
 
     it('should generate weight adjustments for systematic under-estimation bias', async () => {
-      const validationResult = createValidationResultWithBias('algorithmic_under_estimation', 1.3)
+      const validationResult = createValidationResultWithBias(
+        'algorithmic_under_estimation',
+        1.3,
+      )
 
-      const adjustments = await calibrationManager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await calibrationManager.generateCalibrationAdjustments(
+          validationResult,
+        )
 
       expect(adjustments).toHaveLength(1)
       const weightAdjustment = adjustments[0]
       expect(weightAdjustment.adjustmentType).toBe('weight_adjustment')
-      expect(weightAdjustment.parameterAdjustments[0].recommendedValue).toBeGreaterThan(
-        weightAdjustment.parameterAdjustments[0].currentValue
-      )
+      expect(
+        weightAdjustment.parameterAdjustments[0].recommendedValue,
+      ).toBeGreaterThan(weightAdjustment.parameterAdjustments[0].currentValue)
     })
 
     it('should generate threshold adjustments for overconfidence issues', async () => {
       const validationResult = createValidationResultWithOverconfidence()
 
-      const adjustments = await calibrationManager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await calibrationManager.generateCalibrationAdjustments(
+          validationResult,
+        )
 
-      const thresholdAdjustment = adjustments.find(adj => adj.adjustmentType === 'threshold_adjustment')
+      const thresholdAdjustment = adjustments.find(
+        (adj) => adj.adjustmentType === 'threshold_adjustment',
+      )
       expect(thresholdAdjustment).toBeDefined()
       expect(thresholdAdjustment!.targetComponent).toBe('confidence_calculator')
-      expect(thresholdAdjustment!.parameterAdjustments[0].parameterName).toBe('confidence_threshold_high')
-      expect(thresholdAdjustment!.parameterAdjustments[0].recommendedValue).toBeGreaterThan(0.8)
+      expect(thresholdAdjustment!.parameterAdjustments[0].parameterName).toBe(
+        'confidence_threshold_high',
+      )
+      expect(
+        thresholdAdjustment!.parameterAdjustments[0].recommendedValue,
+      ).toBeGreaterThan(0.8)
     })
 
     it('should generate bias corrections for specific bias patterns', async () => {
       const validationResult = createValidationResultWithSpecificBias()
 
-      const adjustments = await calibrationManager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await calibrationManager.generateCalibrationAdjustments(
+          validationResult,
+        )
 
-      const biasCorrection = adjustments.find(adj => adj.adjustmentType === 'bias_correction')
+      const biasCorrection = adjustments.find(
+        (adj) => adj.adjustmentType === 'bias_correction',
+      )
       expect(biasCorrection).toBeDefined()
-      expect(biasCorrection!.parameterAdjustments[0].parameterName).toContain('_correction_factor')
-      expect(biasCorrection!.predictedImprovements.biasReduction).toBeGreaterThan(0.25)
+      expect(biasCorrection!.parameterAdjustments[0].parameterName).toContain(
+        '_correction_factor',
+      )
+      expect(
+        biasCorrection!.predictedImprovements.biasReduction,
+      ).toBeGreaterThan(0.25)
     })
 
     it('should limit adjustments to maximum per session', async () => {
-      const manager = new AlgorithmCalibrationManager({ maxCalibrationsPerSession: 2 })
+      const manager = new AlgorithmCalibrationManager({
+        maxCalibrationsPerSession: 2,
+      })
       const validationResult = createValidationResultWithMultipleBiases()
 
-      const adjustments = await manager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await manager.generateCalibrationAdjustments(validationResult)
 
       expect(adjustments.length).toBeLessThanOrEqual(2)
     })
 
     it('should return empty array for insufficient validation sample size', async () => {
-      const validationResult = createValidationResultWithBias('algorithmic_over_estimation', 1.5)
+      const validationResult = createValidationResultWithBias(
+        'algorithmic_over_estimation',
+        1.5,
+      )
       validationResult.overallMetrics.sampleSize = 3 // Below default minimum of 5
 
-      const adjustments = await calibrationManager.generateCalibrationAdjustments(validationResult)
+      const adjustments =
+        await calibrationManager.generateCalibrationAdjustments(
+          validationResult,
+        )
 
       expect(adjustments).toHaveLength(0)
     })
@@ -139,9 +190,15 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock successful parameter application
-      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockResolvedValue(true)
+      vi.spyOn(
+        calibrationManager as unknown as {
+          applyParameterAdjustments: () => Promise<boolean>
+        },
+        'applyParameterAdjustments',
+      ).mockResolvedValue(true)
 
-      const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
+      const result =
+        await calibrationManager.applyCalibrationAdjustments(adjustments)
 
       expect(result.applied).toHaveLength(1)
       expect(result.rejected).toHaveLength(0)
@@ -153,9 +210,15 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock failed parameter application
-      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockResolvedValue(false)
+      vi.spyOn(
+        calibrationManager as unknown as {
+          applyParameterAdjustments: () => Promise<boolean>
+        },
+        'applyParameterAdjustments',
+      ).mockResolvedValue(false)
 
-      const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
+      const result =
+        await calibrationManager.applyCalibrationAdjustments(adjustments)
 
       expect(result.applied).toHaveLength(0)
       expect(result.rejected).toHaveLength(1)
@@ -167,9 +230,15 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock error during parameter application
-      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockRejectedValue(new Error('Application failed'))
+      vi.spyOn(
+        calibrationManager as unknown as {
+          applyParameterAdjustments: () => Promise<boolean>
+        },
+        'applyParameterAdjustments',
+      ).mockRejectedValue(new Error('Application failed'))
 
-      const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
+      const result =
+        await calibrationManager.applyCalibrationAdjustments(adjustments)
 
       expect(result.applied).toHaveLength(0)
       expect(result.rejected).toHaveLength(1)
@@ -185,17 +254,26 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
       const afterValidationResult = createImprovedValidationResult()
 
-      const validatedAdjustment = await calibrationManager.validateCalibrationEffectiveness(
-        adjustment,
-        afterValidationResult
-      )
+      const validatedAdjustment =
+        await calibrationManager.validateCalibrationEffectiveness(
+          adjustment,
+          afterValidationResult,
+        )
 
       expect(validatedAdjustment.status).toBe('validated')
       expect(validatedAdjustment.validationResults).toBeDefined()
-      expect(validatedAdjustment.validationResults!.actualCorrelationImprovement).toBeGreaterThan(0)
-      expect(validatedAdjustment.validationResults!.actualAccuracyImprovement).toBeGreaterThan(0)
-      expect(calibrationManager.performanceTracking.improvementTrend.length).toBe(1)
-      expect(calibrationManager.calibrationHistory).toContain(validatedAdjustment)
+      expect(
+        validatedAdjustment.validationResults!.actualCorrelationImprovement,
+      ).toBeGreaterThan(0)
+      expect(
+        validatedAdjustment.validationResults!.actualAccuracyImprovement,
+      ).toBeGreaterThan(0)
+      expect(
+        calibrationManager.performanceTracking.improvementTrend.length,
+      ).toBe(1)
+      expect(calibrationManager.calibrationHistory).toContain(
+        validatedAdjustment,
+      )
     })
 
     it('should reject calibration with poor performance', async () => {
@@ -206,16 +284,26 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const afterValidationResult = createWorsenedValidationResult()
 
       // Mock revert function
-      vi.spyOn(calibrationManager as unknown as { revertCalibrationAdjustment: () => Promise<void> }, 'revertCalibrationAdjustment').mockResolvedValue(undefined)
+      vi.spyOn(
+        calibrationManager as unknown as {
+          revertCalibrationAdjustment: () => Promise<void>
+        },
+        'revertCalibrationAdjustment',
+      ).mockResolvedValue(undefined)
 
-      const validatedAdjustment = await calibrationManager.validateCalibrationEffectiveness(
-        adjustment,
-        afterValidationResult
-      )
+      const validatedAdjustment =
+        await calibrationManager.validateCalibrationEffectiveness(
+          adjustment,
+          afterValidationResult,
+        )
 
       expect(validatedAdjustment.status).toBe('rejected')
-      expect(validatedAdjustment.validationResults!.actualCorrelationImprovement).toBeLessThan(0)
-      expect(calibrationManager.performanceTracking.improvementTrend.length).toBe(0)
+      expect(
+        validatedAdjustment.validationResults!.actualCorrelationImprovement,
+      ).toBeLessThan(0)
+      expect(
+        calibrationManager.performanceTracking.improvementTrend.length,
+      ).toBe(0)
     })
 
     it('should move calibration to history after validation', async () => {
@@ -224,7 +312,10 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
       const afterValidationResult = createImprovedValidationResult()
 
-      await calibrationManager.validateCalibrationEffectiveness(adjustment, afterValidationResult)
+      await calibrationManager.validateCalibrationEffectiveness(
+        adjustment,
+        afterValidationResult,
+      )
 
       expect(calibrationManager.activeCalibrations).not.toContain(adjustment)
       expect(calibrationManager.calibrationHistory).toContain(adjustment)
@@ -246,7 +337,10 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const rejectedCalibration = createMockCalibrationAdjustment()
       rejectedCalibration.status = 'rejected'
 
-      calibrationManager.calibrationHistory.push(successfulCalibration, rejectedCalibration)
+      calibrationManager.calibrationHistory.push(
+        successfulCalibration,
+        rejectedCalibration,
+      )
 
       // Update current metrics to simulate improvement
       calibrationManager.performanceTracking.currentMetrics.pearsonCorrelation = 0.7
@@ -279,21 +373,46 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Bias Pattern Analysis and Correction', () => {
     it('should generate appropriate target components for different bias types', () => {
-      const manager = calibrationManager as unknown as { getBiasTargetComponent: (biasType: string) => string }
-      
-      expect(manager.getBiasTargetComponent('emotional_minimization')).toBe('sentiment_analysis')
-      expect(manager.getBiasTargetComponent('sarcasm_detection_failure')).toBe('sentiment_analysis')
-      expect(manager.getBiasTargetComponent('repetitive_pattern_blindness')).toBe('psychological_indicators')
-      expect(manager.getBiasTargetComponent('mixed_emotion_oversimplification')).toBe('sentiment_analysis')
-      expect(manager.getBiasTargetComponent('defensive_language_blindness')).toBe('psychological_indicators')
-      expect(manager.getBiasTargetComponent('unknown_bias')).toBe('sentiment_analysis') // Default fallback
+      const manager = calibrationManager as unknown as {
+        getBiasTargetComponent: (biasType: string) => string
+      }
+
+      expect(manager.getBiasTargetComponent('emotional_minimization')).toBe(
+        'sentiment_analysis',
+      )
+      expect(manager.getBiasTargetComponent('sarcasm_detection_failure')).toBe(
+        'sentiment_analysis',
+      )
+      expect(
+        manager.getBiasTargetComponent('repetitive_pattern_blindness'),
+      ).toBe('psychological_indicators')
+      expect(
+        manager.getBiasTargetComponent('mixed_emotion_oversimplification'),
+      ).toBe('sentiment_analysis')
+      expect(
+        manager.getBiasTargetComponent('defensive_language_blindness'),
+      ).toBe('psychological_indicators')
+      expect(manager.getBiasTargetComponent('unknown_bias')).toBe(
+        'sentiment_analysis',
+      ) // Default fallback
     })
 
     it('should calculate bias correction factors based on severity and sample size', () => {
-      const manager = calibrationManager as unknown as { getBiasCorrectionFactor: (bias: { severity: string; affectedSamples: number }) => number }
-      
-      const highSeverityBias = { severity: 'high' as const, affectedSamples: 10 }
-      const mediumSeverityBias = { severity: 'medium' as const, affectedSamples: 5 }
+      const manager = calibrationManager as unknown as {
+        getBiasCorrectionFactor: (bias: {
+          severity: string
+          affectedSamples: number
+        }) => number
+      }
+
+      const highSeverityBias = {
+        severity: 'high' as const,
+        affectedSamples: 10,
+      }
+      const mediumSeverityBias = {
+        severity: 'medium' as const,
+        affectedSamples: 5,
+      }
       const lowSeverityBias = { severity: 'low' as const, affectedSamples: 2 }
 
       const highFactor = manager.getBiasCorrectionFactor(highSeverityBias)
@@ -309,12 +428,18 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Parameter Adjustment Simulation', () => {
     it('should simulate parameter adjustment with high success rate', async () => {
-      const manager = calibrationManager as unknown as { applyParameterAdjustments: (adjustment: CalibrationAdjustment) => Promise<boolean> }
+      const manager = calibrationManager as unknown as {
+        applyParameterAdjustments: (
+          adjustment: CalibrationAdjustment,
+        ) => Promise<boolean>
+      }
       const adjustment = createMockCalibrationAdjustment()
 
       // Test multiple times to verify success rate
       const results = await Promise.all(
-        Array.from({ length: 20 }, () => manager.applyParameterAdjustments(adjustment))
+        Array.from({ length: 20 }, () =>
+          manager.applyParameterAdjustments(adjustment),
+        ),
       )
 
       const successCount = results.filter(Boolean).length
@@ -326,8 +451,13 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Bias Reduction Calculation', () => {
     it('should calculate bias reduction between validation metrics', () => {
-      const manager = calibrationManager as unknown as { calculateBiasReduction: (before: ValidationMetrics, after: ValidationMetrics) => number }
-      
+      const manager = calibrationManager as unknown as {
+        calculateBiasReduction: (
+          before: ValidationMetrics,
+          after: ValidationMetrics,
+        ) => number
+      }
+
       const beforeMetrics: ValidationMetrics = {
         pearsonCorrelation: 0.6,
         meanAbsoluteError: 2.0,
@@ -335,7 +465,11 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
         rootMeanSquareError: 2.5,
         agreementPercentage: 60,
         concordanceLevel: 'moderate',
-        statisticalSignificance: { pValue: 0.1, isSignificant: false, confidenceInterval: [0.4, 0.8] },
+        statisticalSignificance: {
+          pValue: 0.1,
+          isSignificant: false,
+          confidenceInterval: [0.4, 0.8],
+        },
         sampleSize: 50,
       }
 
@@ -346,11 +480,18 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
         rootMeanSquareError: 2.0,
         agreementPercentage: 75,
         concordanceLevel: 'high',
-        statisticalSignificance: { pValue: 0.02, isSignificant: true, confidenceInterval: [0.6, 0.9] },
+        statisticalSignificance: {
+          pValue: 0.02,
+          isSignificant: true,
+          confidenceInterval: [0.6, 0.9],
+        },
         sampleSize: 50,
       }
 
-      const biasReduction = manager.calculateBiasReduction(beforeMetrics, afterMetrics)
+      const biasReduction = manager.calculateBiasReduction(
+        beforeMetrics,
+        afterMetrics,
+      )
 
       expect(biasReduction).toBeGreaterThan(0)
       expect(biasReduction).toBeLessThanOrEqual(1)
@@ -361,8 +502,11 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 // Helper functions for creating test data
 
 function createValidationResultWithBias(
-  biasType: 'algorithmic_over_estimation' | 'algorithmic_under_estimation' | 'no_systematic_bias',
-  magnitude: number
+  biasType:
+    | 'algorithmic_over_estimation'
+    | 'algorithmic_under_estimation'
+    | 'no_systematic_bias',
+  magnitude: number,
 ): ValidationResult {
   return {
     overallMetrics: {
@@ -372,7 +516,11 @@ function createValidationResultWithBias(
       rootMeanSquareError: 2.0,
       agreementPercentage: 65,
       concordanceLevel: 'moderate',
-      statisticalSignificance: { pValue: 0.05, isSignificant: true, confidenceInterval: [0.5, 0.8] },
+      statisticalSignificance: {
+        pValue: 0.05,
+        isSignificant: true,
+        confidenceInterval: [0.5, 0.8],
+      },
       sampleSize: 25,
     },
     discrepancyAnalysis: {
@@ -395,7 +543,11 @@ function createValidationResultWithBias(
       biasDetected: true,
       biasTypes: [],
       detectionConfidence: 0.8,
-      statisticalEvidence: { testStatistic: 2.5, pValue: 0.02, effectSize: 0.3 },
+      statisticalEvidence: {
+        testStatistic: 2.5,
+        pValue: 0.02,
+        effectSize: 0.3,
+      },
     },
     recommendations: [
       {
@@ -416,7 +568,7 @@ function createValidationResultWithBias(
 
 function createValidationResultWithOverconfidence(): ValidationResult {
   const baseResult = createValidationResultWithBias('no_systematic_bias', 0.5)
-  
+
   // Create individual analyses with high confidence but high error
   baseResult.individualAnalyses = Array.from({ length: 10 }, (_, i) => ({
     conversationId: `conv-${i}`,
@@ -435,8 +587,11 @@ function createValidationResultWithOverconfidence(): ValidationResult {
 }
 
 function createValidationResultWithSpecificBias(): ValidationResult {
-  const baseResult = createValidationResultWithBias('algorithmic_over_estimation', 1.2)
-  
+  const baseResult = createValidationResultWithBias(
+    'algorithmic_over_estimation',
+    1.2,
+  )
+
   baseResult.biasAnalysis.biasTypes = [
     {
       type: 'emotional_minimization',
@@ -451,8 +606,11 @@ function createValidationResultWithSpecificBias(): ValidationResult {
 }
 
 function createValidationResultWithMultipleBiases(): ValidationResult {
-  const baseResult = createValidationResultWithBias('algorithmic_over_estimation', 1.8)
-  
+  const baseResult = createValidationResultWithBias(
+    'algorithmic_over_estimation',
+    1.8,
+  )
+
   baseResult.biasAnalysis.biasTypes = [
     {
       type: 'emotional_minimization',
@@ -528,7 +686,11 @@ function createImprovedValidationResult(): ValidationResult {
       rootMeanSquareError: 1.8,
       agreementPercentage: 75,
       concordanceLevel: 'high',
-      statisticalSignificance: { pValue: 0.01, isSignificant: true, confidenceInterval: [0.6, 0.9] },
+      statisticalSignificance: {
+        pValue: 0.01,
+        isSignificant: true,
+        confidenceInterval: [0.6, 0.9],
+      },
       sampleSize: 30,
     },
     discrepancyAnalysis: {
@@ -572,7 +734,11 @@ function createWorsenedValidationResult(): ValidationResult {
       rootMeanSquareError: 2.3,
       agreementPercentage: 55,
       concordanceLevel: 'low',
-      statisticalSignificance: { pValue: 0.15, isSignificant: false, confidenceInterval: [0.3, 0.8] },
+      statisticalSignificance: {
+        pValue: 0.15,
+        isSignificant: false,
+        confidenceInterval: [0.3, 0.8],
+      },
       sampleSize: 25,
     },
     discrepancyAnalysis: {
@@ -603,7 +769,11 @@ function createWorsenedValidationResult(): ValidationResult {
         },
       ],
       detectionConfidence: 0.95,
-      statisticalEvidence: { testStatistic: 3.2, pValue: 0.001, effectSize: 0.5 },
+      statisticalEvidence: {
+        testStatistic: 3.2,
+        pValue: 0.001,
+        effectSize: 0.5,
+      },
     },
     recommendations: [
       {

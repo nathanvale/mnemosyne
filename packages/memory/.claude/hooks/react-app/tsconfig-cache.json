@@ -5,10 +5,7 @@
   "mappings": {
     "src/**/*": {
       "configPath": "/Users/nathanvale/code/mnemosyne/packages/memory/tsconfig.json",
-      "excludes": [
-        "dist",
-        "node_modules"
-      ]
+      "excludes": ["dist", "node_modules"]
     }
   }
 }

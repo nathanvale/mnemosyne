@@ -160,13 +160,14 @@ export class MoodScoringAnalyzer {
     // 3. Establish emotional baseline (if applicable)
     let emotionalBaseline
     try {
-      emotionalBaseline =
-        await this.baselineManager.establishBaseline(
-          conversation.participants[0]?.id || 'unknown',
-          [enrichedConversation]
-        )
+      emotionalBaseline = await this.baselineManager.establishBaseline(
+        conversation.participants[0]?.id || 'unknown',
+        [enrichedConversation],
+      )
     } catch (error) {
-      logger.debug('Baseline establishment failed', { error: error instanceof Error ? error.message : String(error) })
+      logger.debug('Baseline establishment failed', {
+        error: error instanceof Error ? error.message : String(error),
+      })
     }
 
     // 4. Identify contextual factors
@@ -1525,16 +1526,16 @@ export class MoodScoringAnalyzer {
   private applyContextualAdjustments(
     baseScore: number,
     contextualFactors: {
-      primaryTriggers?: string[];
-      contextualSignificance?: string;
+      primaryTriggers?: string[]
+      contextualSignificance?: string
       temporalFactors?: {
-        emotionalVulnerability?: string;
-      };
+        emotionalVulnerability?: string
+      }
     },
     relationshipDynamics: {
-      conflictPresent?: boolean;
-      conflictIntensity?: string;
-      type?: string;
+      conflictPresent?: boolean
+      conflictIntensity?: string
+      type?: string
     },
   ): number {
     let adjustedScore = baseScore
@@ -1595,9 +1596,9 @@ export class MoodScoringAnalyzer {
   private applyContextualConfidenceAdjustments(
     baseConfidence: number,
     contextualFactors: {
-      contextualSignificance?: string;
-      primaryTriggers?: string[];
-      overallContextConfidence?: number;
+      contextualSignificance?: string
+      primaryTriggers?: string[]
+      overallContextConfidence?: number
     },
   ): number {
     let adjustedConfidence = baseConfidence
@@ -1608,12 +1609,18 @@ export class MoodScoringAnalyzer {
     }
 
     // Multiple primary triggers indicate clear emotional state
-    if (contextualFactors.primaryTriggers && contextualFactors.primaryTriggers.length >= 2) {
+    if (
+      contextualFactors.primaryTriggers &&
+      contextualFactors.primaryTriggers.length >= 2
+    ) {
       adjustedConfidence *= 1.05
     }
 
     // High overall context confidence should boost final confidence
-    if (contextualFactors.overallContextConfidence && contextualFactors.overallContextConfidence >= 0.8) {
+    if (
+      contextualFactors.overallContextConfidence &&
+      contextualFactors.overallContextConfidence >= 0.8
+    ) {
       adjustedConfidence *= 1.1
     }
 

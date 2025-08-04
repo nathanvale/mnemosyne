@@ -1,4 +1,10 @@
-import { EmotionalState, EmotionalTheme, ParticipantRole, CommunicationPattern, InteractionQuality } from '@studio/schema'
+import {
+  EmotionalState,
+  EmotionalTheme,
+  ParticipantRole,
+  CommunicationPattern,
+  InteractionQuality,
+} from '@studio/schema'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import type {
@@ -333,8 +339,9 @@ describe('Mood Score Storage - Task 6.1', () => {
     it('should store mood deltas with significance tracking', async () => {
       const conversation = createTestConversation()
       const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
-      const deltas =
-        await deltaDetector.detectConversationalDeltas([moodAnalysis])
+      const deltas = await deltaDetector.detectConversationalDeltas([
+        moodAnalysis,
+      ])
 
       const storedDeltas = await storageService.storeMoodDeltas(
         testMemory.id,
@@ -608,10 +615,7 @@ describe('Mood Score Storage - Task 6.1', () => {
 
       // Test that the method accepts transaction context without throwing
       expect(async () => {
-        await storageService.storeMoodDeltas(
-          testMemory.id,
-          testDeltas,
-        )
+        await storageService.storeMoodDeltas(testMemory.id, testDeltas)
       }).not.toThrow()
     })
 
@@ -659,8 +663,9 @@ describe('Mood Score Storage - Task 6.1', () => {
     it('should maintain relationship between memory and all mood analysis data', async () => {
       const conversation = createTestConversation()
       const moodAnalysis = await moodAnalyzer.analyzeConversation(conversation)
-      const deltas =
-        await deltaDetector.detectConversationalDeltas([moodAnalysis])
+      const deltas = await deltaDetector.detectConversationalDeltas([
+        moodAnalysis,
+      ])
 
       // Store all related data
       const storedScore = await storageService.storeMoodScore(

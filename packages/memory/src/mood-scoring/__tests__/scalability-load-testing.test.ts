@@ -299,7 +299,8 @@ describe('Scalability and Load Testing - Task 7.5', () => {
       }
 
       // Performance should be consistent across cycles (within 50% variance)
-      const avgTime = cycleTimes.reduce((sum, time) => sum + time, 0) / cycleTimes.length
+      const avgTime =
+        cycleTimes.reduce((sum, time) => sum + time, 0) / cycleTimes.length
       const maxVariance = Math.max(...cycleTimes) - Math.min(...cycleTimes)
       const variancePercentage = (maxVariance / avgTime) * 100
 
@@ -401,7 +402,8 @@ describe('Scalability and Load Testing - Task 7.5', () => {
         memoryMeasurements.reduce((sum, growth) => sum + growth, 0) /
         memoryMeasurements.length
       const lastThreeAvg =
-        memoryMeasurements.slice(-3).reduce((sum, growth) => sum + growth, 0) / 3
+        memoryMeasurements.slice(-3).reduce((sum, growth) => sum + growth, 0) /
+        3
 
       // Check that we don't have extreme memory growth in the last iterations
       // If memory is being freed (negative growth), that's good
@@ -438,7 +440,11 @@ describe('Scalability and Load Testing - Task 7.5', () => {
         const { result, timeMs } = await measurePerformance(async () => {
           // Simulate staggered requests (more realistic than all at once)
           const batches = []
-          for (let i = 0; i < testConversations.length; i += pattern.concurrency) {
+          for (
+            let i = 0;
+            i < testConversations.length;
+            i += pattern.concurrency
+          ) {
             batches.push(testConversations.slice(i, i + pattern.concurrency))
           }
 
@@ -523,7 +529,9 @@ describe('Scalability and Load Testing - Task 7.5', () => {
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS / 2)
 
       // Count successful vs failed analyses
-      const successfulAnalyses = result.filter((r) => !(r as any).metadata?.error).length
+      const successfulAnalyses = result.filter(
+        (r) => !(r as any).metadata?.error,
+      ).length
       const successRate = (successfulAnalyses / result.length) * 100
 
       expect(successRate).toBeGreaterThan(70) // At least 70% should succeed

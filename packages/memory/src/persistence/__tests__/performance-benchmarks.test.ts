@@ -154,7 +154,7 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       // expect(concurrentTime).toBeLessThan(sequentialTime)
       // expect(speedupRatio).toBeGreaterThan(1.5) // At least 50% faster
       // expect(percentageImprovement).toBeGreaterThan(30) // At least 30% improvement
-      
+
       // Just verify both approaches complete successfully
       expect(concurrentTime).toBeGreaterThan(0)
       expect(sequentialTime).toBeGreaterThan(0)

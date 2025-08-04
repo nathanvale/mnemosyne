@@ -21,7 +21,7 @@ The hook is now installed and configured in your `.claude/settings.local.json`:
 
 - **✅ Success Sound**: Plays `Glass.aiff` when tools like `Write`, `Edit`, `MultiEdit`, `Bash` complete successfully
 - **⚠️ Warning Sounds**: Disabled by default
-- **❌ Error Sounds**: Disabled by default  
+- **❌ Error Sounds**: Disabled by default
 - **⏰ Cooldown**: 2 seconds between sounds to prevent spam
 - **🌙 Quiet Hours**: Disabled by default
 
@@ -32,7 +32,7 @@ The hook is now installed and configured in your `.claude/settings.local.json`:
 ```bash
 # Enable/disable sounds
 export CLAUDE_HOOKS_SOUND_SUCCESS=true          # Play success sounds (default: true)
-export CLAUDE_HOOKS_SOUND_WARNING=false         # Play warning sounds (default: false)  
+export CLAUDE_HOOKS_SOUND_WARNING=false         # Play warning sounds (default: false)
 export CLAUDE_HOOKS_SOUND_ERROR=false           # Play error sounds (default: false)
 
 # Timing controls
@@ -50,6 +50,7 @@ export CLAUDE_HOOKS_DEBUG=true                  # Enable debug logging
 Edit `.claude/hooks/task-completion/hook-config.json`:
 
 #### Custom Sound Files
+
 ```json
 {
   "sounds": {
@@ -67,6 +68,7 @@ Edit `.claude/hooks/task-completion/hook-config.json`:
 ```
 
 #### Quiet Hours
+
 ```json
 {
   "filters": {
@@ -80,6 +82,7 @@ Edit `.claude/hooks/task-completion/hook-config.json`:
 ```
 
 #### Custom Triggers
+
 ```json
 {
   "triggers": {
@@ -105,21 +108,25 @@ Edit `.claude/hooks/task-completion/hook-config.json`:
 ## 🎯 Usage Examples
 
 ### Disable All Sounds Temporarily
+
 ```bash
 export CLAUDE_HOOKS_SOUND_SUCCESS=false
 ```
 
 ### Enable Warning Sounds for Development
+
 ```bash
 export CLAUDE_HOOKS_SOUND_WARNING=true
 ```
 
 ### Custom Sound with Delay
+
 ```bash
 export CLAUDE_HOOKS_SOUND_DELAY=500  # Half-second delay
 ```
 
 ### Debug Mode (See What's Happening)
+
 ```bash
 export CLAUDE_HOOKS_DEBUG=true
 ```
@@ -129,7 +136,7 @@ export CLAUDE_HOOKS_DEBUG=true
 ### No Sound Playing?
 
 1. **Check if enabled**: Look for `[OK] Played sound: ...` in output
-2. **Verify sound file exists**: 
+2. **Verify sound file exists**:
    ```bash
    ls -la /System/Library/Sounds/Glass.aiff
    ```
@@ -161,6 +168,7 @@ export CLAUDE_HOOKS_MIN_EXEC_TIME=3000
 ## 🎪 Fun Configurations
 
 ### Victory Fanfare
+
 ```json
 {
   "sounds": {
@@ -172,6 +180,7 @@ export CLAUDE_HOOKS_MIN_EXEC_TIME=3000
 ```
 
 ### Quiet Work Mode
+
 ```json
 {
   "filters": {
@@ -185,6 +194,7 @@ export CLAUDE_HOOKS_MIN_EXEC_TIME=3000
 ```
 
 ### Development Mode (All Sounds)
+
 ```bash
 export CLAUDE_HOOKS_SOUND_SUCCESS=true
 export CLAUDE_HOOKS_SOUND_WARNING=true

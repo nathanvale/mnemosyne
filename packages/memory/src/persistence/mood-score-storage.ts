@@ -159,7 +159,9 @@ export class MoodScoreStorageService {
         // Re-throw with more context
         if (error instanceof Error) {
           if (error.message.includes('Transaction')) {
-            throw new Error(`Transaction error in storeMoodScore: ${error.message}`)
+            throw new Error(
+              `Transaction error in storeMoodScore: ${error.message}`,
+            )
           }
         }
         throw error

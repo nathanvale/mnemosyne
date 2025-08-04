@@ -156,7 +156,9 @@ export class TestDataFactory {
           direction: options.direction || 'positive',
           type: options.type || 'mood_repair',
           confidence: options.confidence || 0.85,
-          factors: JSON.stringify(options.factors || ['support', 'breakthrough']),
+          factors: JSON.stringify(
+            options.factors || ['support', 'breakthrough'],
+          ),
           significance: options.significance || 0.8,
           currentScore: options.currentScore || 7.5,
         },
@@ -245,117 +247,120 @@ export class TestDataFactory {
     moodScoreId: string
     deltaIds: Array<string>
   }> {
-    return await this.prisma.$transaction(async (tx) => {
-      // Create Memory first
-      const timestamp = Date.now()
-      const random = Math.random().toString(36).substr(2, 12)
-      const processId = process.pid || 0
-      const memoryId =
-        options.memoryOptions?.id ||
-        `test-memory-${timestamp}-${processId}-${random}`
+    return await this.prisma.$transaction(
+      async (tx) => {
+        // Create Memory first
+        const timestamp = Date.now()
+        const random = Math.random().toString(36).substr(2, 12)
+        const processId = process.pid || 0
+        const memoryId =
+          options.memoryOptions?.id ||
+          `test-memory-${timestamp}-${processId}-${random}`
 
-      await tx.memory.create({
-        data: {
-          id: memoryId,
-          sourceMessageIds: JSON.stringify(
-            options.memoryOptions?.sourceMessageIds || [1, 2, 3],
-          ),
-          participants: JSON.stringify(
-            options.memoryOptions?.participants || [
-              { id: 'user-1', name: 'Test User' },
-            ],
-          ),
-          summary:
-            options.memoryOptions?.summary ||
-            'Test memory for mood scoring tests',
-          confidence: options.memoryOptions?.confidence || 8,
-          contentHash:
-            options.memoryOptions?.contentHash ||
-            `test-hash-${timestamp}-${processId}-${random}`,
-        },
-      })
-
-      // Create MoodScore within same transaction
-      const moodAnalysis = {
-        score: options.moodScoreOptions?.score || 7.5,
-        confidence: options.moodScoreOptions?.confidence || 0.85,
-        descriptors: options.moodScoreOptions?.descriptors || [
-          'positive',
-          'stable',
-        ],
-        factors: options.moodScoreOptions?.factors || [
-          {
-            type: 'sentiment_analysis' as const,
-            weight: 0.35,
-            description: 'Test sentiment analysis',
-            evidence: ['positive language'],
-            _score: 7.0,
+        await tx.memory.create({
+          data: {
+            id: memoryId,
+            sourceMessageIds: JSON.stringify(
+              options.memoryOptions?.sourceMessageIds || [1, 2, 3],
+            ),
+            participants: JSON.stringify(
+              options.memoryOptions?.participants || [
+                { id: 'user-1', name: 'Test User' },
+              ],
+            ),
+            summary:
+              options.memoryOptions?.summary ||
+              'Test memory for mood scoring tests',
+            confidence: options.memoryOptions?.confidence || 8,
+            contentHash:
+              options.memoryOptions?.contentHash ||
+              `test-hash-${timestamp}-${processId}-${random}`,
           },
-        ],
-      }
-
-      const moodScore = await tx.moodScore.create({
-        data: {
-          memoryId,
-          score: moodAnalysis.score,
-          confidence: moodAnalysis.confidence,
-          descriptors: JSON.stringify(moodAnalysis.descriptors),
-          algorithmVersion:
-            options.moodScoreOptions?.algorithmVersion || 'v1.0.0-test',
-          processingTimeMs: options.moodScoreOptions?.processingTimeMs || 150,
-        },
-      })
-
-      // Create factors within the same transaction
-      if (moodAnalysis.factors.length > 0) {
-        await tx.moodFactor.createMany({
-          data: moodAnalysis.factors.map((factor) => ({
-            moodScoreId: moodScore.id,
-            type: factor.type,
-            weight: factor.weight,
-            description: factor.description,
-            evidence: JSON.stringify(factor.evidence),
-            internalScore: factor._score,
-          })),
         })
-      }
 
-      // Create MoodDeltas within same transaction
-      const deltas = options.deltasOptions?.deltas || [
-        {
-          magnitude: 2.5,
-          direction: 'positive' as const,
-          type: 'mood_repair' as const,
-          confidence: 0.85,
-          factors: ['support', 'breakthrough'],
-          significance: 0.8,
-          currentScore: 7.5,
-        },
-      ]
+        // Create MoodScore within same transaction
+        const moodAnalysis = {
+          score: options.moodScoreOptions?.score || 7.5,
+          confidence: options.moodScoreOptions?.confidence || 0.85,
+          descriptors: options.moodScoreOptions?.descriptors || [
+            'positive',
+            'stable',
+          ],
+          factors: options.moodScoreOptions?.factors || [
+            {
+              type: 'sentiment_analysis' as const,
+              weight: 0.35,
+              description: 'Test sentiment analysis',
+              evidence: ['positive language'],
+              _score: 7.0,
+            },
+          ],
+        }
 
-      const deltaIds: Array<string> = []
-
-      for (const delta of deltas) {
-        const result = await tx.moodDelta.create({
+        const moodScore = await tx.moodScore.create({
           data: {
             memoryId,
-            magnitude: delta.magnitude,
-            direction: delta.direction,
-            type: delta.type,
-            confidence: delta.confidence,
-            factors: JSON.stringify(delta.factors),
-            significance: delta.significance || 0.7,
-            currentScore: delta.currentScore || 6.0,
+            score: moodAnalysis.score,
+            confidence: moodAnalysis.confidence,
+            descriptors: JSON.stringify(moodAnalysis.descriptors),
+            algorithmVersion:
+              options.moodScoreOptions?.algorithmVersion || 'v1.0.0-test',
+            processingTimeMs: options.moodScoreOptions?.processingTimeMs || 150,
           },
         })
-        deltaIds.push(result.id)
-      }
 
-      return { memoryId, moodScoreId: moodScore.id, deltaIds }
-    }, {
-      maxWait: 5000, // 5 second max wait time
-      timeout: 15000, // 15 second timeout for complex operation
-    })
+        // Create factors within the same transaction
+        if (moodAnalysis.factors.length > 0) {
+          await tx.moodFactor.createMany({
+            data: moodAnalysis.factors.map((factor) => ({
+              moodScoreId: moodScore.id,
+              type: factor.type,
+              weight: factor.weight,
+              description: factor.description,
+              evidence: JSON.stringify(factor.evidence),
+              internalScore: factor._score,
+            })),
+          })
+        }
+
+        // Create MoodDeltas within same transaction
+        const deltas = options.deltasOptions?.deltas || [
+          {
+            magnitude: 2.5,
+            direction: 'positive' as const,
+            type: 'mood_repair' as const,
+            confidence: 0.85,
+            factors: ['support', 'breakthrough'],
+            significance: 0.8,
+            currentScore: 7.5,
+          },
+        ]
+
+        const deltaIds: Array<string> = []
+
+        for (const delta of deltas) {
+          const result = await tx.moodDelta.create({
+            data: {
+              memoryId,
+              magnitude: delta.magnitude,
+              direction: delta.direction,
+              type: delta.type,
+              confidence: delta.confidence,
+              factors: JSON.stringify(delta.factors),
+              significance: delta.significance || 0.7,
+              currentScore: delta.currentScore || 6.0,
+            },
+          })
+          deltaIds.push(result.id)
+        }
+
+        return { memoryId, moodScoreId: moodScore.id, deltaIds }
+      },
+      {
+        maxWait: 5000, // 5 second max wait time
+        timeout: 15000, // 15 second timeout for complex operation
+      },
+    )
   }
 
   /**

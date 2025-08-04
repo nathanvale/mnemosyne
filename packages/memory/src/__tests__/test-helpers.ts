@@ -19,7 +19,7 @@ export function createTestConversationData(
   overrides: Partial<ConversationData> = {},
 ): ConversationData {
   const defaultTimestamp = new Date('2024-01-15T14:30:00Z')
-  
+
   return {
     id: 'test-conversation-1',
     messages: [
@@ -30,8 +30,8 @@ export function createTestConversationData(
         timestamp: defaultTimestamp,
       },
       {
-        id: 'msg-2', 
-        content: 'That\'s wonderful to hear! I\'m glad you\'re feeling better.',
+        id: 'msg-2',
+        content: "That's wonderful to hear! I'm glad you're feeling better.",
         authorId: 'supporter-1',
         timestamp: new Date(defaultTimestamp.getTime() + 60000),
       },
@@ -46,7 +46,7 @@ export function createTestConversationData(
       },
       {
         id: 'supporter-1',
-        name: 'Test Supporter', 
+        name: 'Test Supporter',
         role: 'supporter',
         messageCount: 1,
         emotionalExpressions: ['wonderful', 'glad'],
@@ -101,7 +101,7 @@ export function createTestExtractedMemory(
   overrides: Partial<ExtractedMemory> = {},
 ): ExtractedMemory {
   const conversationData = createTestConversationData()
-  
+
   return {
     id: 'test-memory-1',
     content: 'Test memory content about mood improvement',

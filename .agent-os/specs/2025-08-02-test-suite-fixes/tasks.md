@@ -14,7 +14,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 1.4 Fix 7 failing tests with "Foreign key constraint violated" errors
   - [ ] 1.5 Verify all MoodScore creation tests pass with proper Memory parent records
 
-- [ ] 2. Resolve Mock Strategy Conflicts  
+- [ ] 2. Resolve Mock Strategy Conflicts
   - [ ] 2.1 Write tests for mock isolation patterns
   - [ ] 2.2 Rename MockDeltaHistoryStorageService to avoid shadowing real import in delta-history-tracking.test.ts
   - [ ] 2.3 Implement proper TypeScript namespacing for test mocks
@@ -38,7 +38,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [ ] 5. Re-enable Performance Test Suites
   - [ ] 5.1 Write tests for performance test infrastructure
   - [ ] 5.2 Fix setup failures in query-performance-simple.test.ts (9 skipped tests)
-  - [ ] 5.3 Fix setup failures in query-performance.test.ts (20 skipped tests)  
+  - [ ] 5.3 Fix setup failures in query-performance.test.ts (20 skipped tests)
   - [ ] 5.4 Fix setup failures in performance-analysis.test.ts (13 skipped tests)
   - [ ] 5.5 Fix setup failures in schema-optimization.test.ts (17 skipped tests)
   - [ ] 5.6 Verify all 59 performance tests are enabled and can execute

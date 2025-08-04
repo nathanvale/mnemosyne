@@ -16,6 +16,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `storeMoodScore(memoryId: string, moodAnalysis: MoodAnalysisResult, processingMetrics: object, tx?: PrismaTransaction): Promise<StoredMoodScore>`
 
 **Parameters:**
+
 - `memoryId`: string - ID of the Memory record
 - `moodAnalysis`: MoodAnalysisResult - Analysis results to store
 - `processingMetrics`: object - Processing duration and algorithm version
@@ -30,6 +31,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `storeMoodDelta(memoryId: string, delta: MoodDelta, tx?: PrismaTransaction): Promise<StoredMoodDelta>`
 
 **Parameters:**
+
 - `memoryId`: string - ID of the Memory record
 - `delta`: MoodDelta - Delta analysis results
 - `tx`: PrismaTransaction (optional) - Transaction context for isolation
@@ -42,6 +44,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `storeValidationResult(memoryId: string, result: ValidationResult, tx?: PrismaTransaction): Promise<StoredValidationResult>`
 
 **Parameters:**
+
 - `memoryId`: string - ID of the Memory record
 - `result`: ValidationResult - Validation analysis results
 - `tx`: PrismaTransaction (optional) - Transaction context for isolation
@@ -54,6 +57,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `storeDeltaHistory(memoryId: string, history: DeltaHistoryEntry, tx?: PrismaTransaction): Promise<StoredDeltaHistoryEntry>`
 
 **Parameters:**
+
 - `memoryId`: string - ID of the Memory record
 - `history`: DeltaHistoryEntry - Delta history data
 - `tx`: PrismaTransaction (optional) - Transaction context for isolation
@@ -66,6 +70,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `createMemory(options?: object, tx?: PrismaTransaction): Promise<string>`
 
 **Parameters:**
+
 - `options`: object (optional) - Memory creation options
 - `tx`: PrismaTransaction (optional) - Transaction context for creation
 
@@ -78,6 +83,7 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 **Enhanced Signature:** `createMoodScore(options?: object, tx?: PrismaTransaction): Promise<string>`
 
 **Parameters:**
+
 - `options`: object (optional) - MoodScore creation options
 - `tx`: PrismaTransaction (optional) - Transaction context
 
@@ -89,7 +95,9 @@ This is the API specification for the spec detailed in @.agent-os/specs/2025-08-
 ### PrismaTransaction Interface
 
 ```typescript
-type PrismaTransaction = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
+type PrismaTransaction = Parameters<
+  Parameters<PrismaClient['$transaction']>[0]
+>[0]
 ```
 
 **Purpose:** Type-safe transaction context parameter

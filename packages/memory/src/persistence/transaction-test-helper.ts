@@ -32,7 +32,9 @@ export class TransactionTestHelper {
         data: {
           id: testMemoryId,
           sourceMessageIds: JSON.stringify([1]),
-          participants: JSON.stringify([{ id: 'concurrent-user', name: 'Concurrent Test User' }]),
+          participants: JSON.stringify([
+            { id: 'concurrent-user', name: 'Concurrent Test User' },
+          ]),
           summary: 'Concurrent test memory',
           confidence: 8,
           contentHash: `concurrent-hash-${Date.now()}-${Math.random()}`,
@@ -41,7 +43,7 @@ export class TransactionTestHelper {
 
       // Create multiple concurrent operations
       const operations = Array.from({ length: concurrentOperations }, (_, i) =>
-        this.performConcurrentOperation(testMemoryId, i)
+        this.performConcurrentOperation(testMemoryId, i),
       )
 
       const results = await Promise.allSettled(operations)
@@ -84,7 +86,7 @@ export class TransactionTestHelper {
       }
     } catch (error) {
       errors.push(`Concurrent test setup failed: ${error}`)
-      
+
       // Attempt cleanup even if test failed
       try {
         await this.cleanupConcurrentTest(testMemoryId)
@@ -113,7 +115,9 @@ export class TransactionTestHelper {
         data: {
           id: testMemoryId,
           sourceMessageIds: JSON.stringify([1]),
-          participants: JSON.stringify([{ id: 'rollback-user', name: 'Rollback Test User' }]),
+          participants: JSON.stringify([
+            { id: 'rollback-user', name: 'Rollback Test User' },
+          ]),
           summary: 'Rollback test memory',
           confidence: 8,
           contentHash: `rollback-hash-${Date.now()}-${Math.random()}`,
@@ -177,7 +181,8 @@ export class TransactionTestHelper {
       })
 
       // If rollback worked correctly, these should be empty
-      dataCorruption = remainingMoodScores.length > 0 || remainingMoodFactors.length > 0
+      dataCorruption =
+        remainingMoodScores.length > 0 || remainingMoodFactors.length > 0
 
       // Clean up
       await this.cleanupRollbackTest(testMemoryId)
@@ -209,7 +214,10 @@ export class TransactionTestHelper {
     }
   }
 
-  private async performConcurrentOperation(memoryId: string, operationIndex: number): Promise<void> {
+  private async performConcurrentOperation(
+    memoryId: string,
+    operationIndex: number,
+  ): Promise<void> {
     // First verify memory exists to avoid foreign key constraint violations
     const memoryExists = await this.prisma.memory.findUnique({
       where: { id: memoryId },
@@ -217,7 +225,9 @@ export class TransactionTestHelper {
     })
 
     if (!memoryExists) {
-      throw new Error(`Memory with id ${memoryId} does not exist for concurrent operation ${operationIndex}`)
+      throw new Error(
+        `Memory with id ${memoryId} does not exist for concurrent operation ${operationIndex}`,
+      )
     }
 
     // Simulate different types of concurrent operations
@@ -247,7 +257,9 @@ export class TransactionTestHelper {
             deltaSequence: operationIndex,
             magnitude: 1.0 + (operationIndex % 3),
             direction: ['positive', 'negative', 'neutral'][operationIndex % 3],
-            type: ['mood_repair', 'celebration', 'decline', 'plateau'][operationIndex % 4],
+            type: ['mood_repair', 'celebration', 'decline', 'plateau'][
+              operationIndex % 4
+            ],
             confidence: 0.8,
             factors: JSON.stringify([`concurrent-factor-${operationIndex}`]),
             significance: 3.0 + (operationIndex % 5),
@@ -266,7 +278,11 @@ export class TransactionTestHelper {
             agreement: 0.8 + (operationIndex % 2) * 0.1,
             discrepancy: 0.5,
             validatorId: `concurrent-validator-${operationIndex}`,
-            validationMethod: ['expert_review', 'crowd_sourced', 'comparative_analysis'][operationIndex % 3],
+            validationMethod: [
+              'expert_review',
+              'crowd_sourced',
+              'comparative_analysis',
+            ][operationIndex % 3],
             biasIndicators: JSON.stringify([]),
             accuracyMetrics: JSON.stringify([]),
             validatedAt: new Date(),

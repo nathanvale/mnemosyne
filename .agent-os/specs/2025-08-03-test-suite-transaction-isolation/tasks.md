@@ -10,14 +10,14 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [ ] 1. Enhance Storage Services with Transaction Context Support
   - [ ] 1.1 Write tests for MoodScoreStorageService transaction context parameter
   - [ ] 1.2 Add optional transaction parameter to storeMoodScore method
-  - [ ] 1.3 Add optional transaction parameter to storeMoodDelta method  
+  - [ ] 1.3 Add optional transaction parameter to storeMoodDelta method
   - [ ] 1.4 Update internal Prisma calls to use provided transaction context
   - [ ] 1.5 Implement graceful fallback when no transaction context provided
   - [ ] 1.6 Add transaction context support to ValidationResultStorageService
   - [ ] 1.7 Add transaction context support to DeltaHistoryStorageService
   - [ ] 1.8 Verify all storage service tests pass with enhanced API
 
-- [ ] 2. Enhance TestDataFactory Robustness and Transaction Integration  
+- [ ] 2. Enhance TestDataFactory Robustness and Transaction Integration
   - [ ] 2.1 Write tests for enhanced TestDataFactory Memory creation
   - [ ] 2.2 Add optional transaction parameter to createMemory method
   - [ ] 2.3 Add comprehensive error handling to prevent null returns

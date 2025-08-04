@@ -1,5 +1,13 @@
 import { PrismaClient } from '@studio/db'
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+} from 'vitest'
 
 import { TestDataFactory } from './test-data-factory'
 import { WorkerDatabaseFactory } from './worker-database-factory'

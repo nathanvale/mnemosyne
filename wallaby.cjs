@@ -60,12 +60,12 @@ module.exports = () => ({
     // Set worker ID for database isolation
     process.env.WALLABY_WORKER_ID = wallaby.workerId || '0'
     process.env.WALLABY_WORKER = 'true'
-    
+
     // Clear any global state that might persist
     if (global.gc) {
       global.gc()
     }
-    
+
     // Reset console to prevent log pollution
     console.clear?.()
   },

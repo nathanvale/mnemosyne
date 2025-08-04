@@ -193,7 +193,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const trends = await performanceMonitor.getPerformanceTrends('7d', ['processing_time'])
+      const trends = await performanceMonitor.getPerformanceTrends('7d', [
+        'processing_time',
+      ])
 
       expect(trends.processing_time).toBeDefined()
       expect(trends.processing_time.metricName).toBe('processing_time')
@@ -226,7 +228,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const trends = await performanceMonitor.getPerformanceTrends('7d', ['throughput'])
+      const trends = await performanceMonitor.getPerformanceTrends('7d', [
+        'throughput',
+      ])
 
       expect(trends.throughput).toBeDefined()
       expect(trends.throughput.trendDirection).toBe('improving') // Throughput is increasing
@@ -246,7 +250,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const trends = await performanceMonitor.getPerformanceTrends('7d', ['memory_usage'])
+      const trends = await performanceMonitor.getPerformanceTrends('7d', [
+        'memory_usage',
+      ])
 
       expect(trends.memory_usage).toBeDefined()
       expect(trends.memory_usage.trendDirection).toMatch(/^(stable|improving)$/) // Could be stable or slightly improving
@@ -273,7 +279,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const trends = await performanceMonitor.getPerformanceTrends('7d', ['error_rate'])
+      const trends = await performanceMonitor.getPerformanceTrends('7d', [
+        'error_rate',
+      ])
 
       expect(trends.error_rate).toBeDefined()
       expect(trends.error_rate.trendDirection).toBe('improving') // Error rate decreasing
@@ -295,7 +303,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const qualityTrends = await performanceMonitor.getQualityTrends('7d', ['correlation'])
+      const qualityTrends = await performanceMonitor.getQualityTrends('7d', [
+        'correlation',
+      ])
 
       expect(qualityTrends.correlation).toBeDefined()
       expect(qualityTrends.correlation.trendDirection).toBe('improving')
@@ -315,7 +325,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
         )
       }
 
-      const qualityTrends = await performanceMonitor.getQualityTrends('7d', ['accuracy'])
+      const qualityTrends = await performanceMonitor.getQualityTrends('7d', [
+        'accuracy',
+      ])
 
       expect(qualityTrends.accuracy).toBeDefined()
       expect(qualityTrends.accuracy.trendDirection).toBe('declining')
@@ -324,7 +336,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
     })
 
     it('should handle empty trend data gracefully', async () => {
-      const trends = await performanceMonitor.getPerformanceTrends('7d', ['processing_time'])
+      const trends = await performanceMonitor.getPerformanceTrends('7d', [
+        'processing_time',
+      ])
 
       expect(trends.processing_time).toBeDefined()
       expect(trends.processing_time.dataPoints).toHaveLength(0)
@@ -360,7 +374,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         'Dashboard test correlation',
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('24h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('24h')
 
       expect(dashboard).toBeDefined()
       expect(dashboard.timestamp).toBeInstanceOf(Date)
@@ -393,7 +408,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         { accuracyScore: 0.95, errorCount: 0 }, // High accuracy, no errors
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
 
       expect(dashboard.systemHealth).toBe('healthy')
       expect(dashboard.overallPerformanceScore).toBeGreaterThan(80)
@@ -411,7 +427,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         { accuracyScore: 0.82, errorCount: 1 }, // Lower accuracy, some errors
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
 
       expect(dashboard.systemHealth).toMatch(/^(degraded|healthy|critical)$/) // Could be any depending on exact scoring
       expect(dashboard.keyMetrics.errorRate).toBe(10) // 1 error out of 10 operations
@@ -427,7 +444,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         { accuracyScore: 0.65, errorCount: 3 }, // Low accuracy, many errors
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
 
       expect(dashboard.systemHealth).toMatch(/^(critical|degraded)$/)
       expect(dashboard.keyMetrics.errorRate).toBe(30) // 3 errors out of 10 operations
@@ -448,8 +466,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
       const activeAlerts = await performanceMonitor.getActiveAlerts()
 
       expect(activeAlerts.length).toBeGreaterThan(0)
-      const processingTimeAlert = activeAlerts.find(
-        alert => alert.message.includes('High Processing Time'),
+      const processingTimeAlert = activeAlerts.find((alert) =>
+        alert.message.includes('High Processing Time'),
       )
       expect(processingTimeAlert).toBeDefined()
       expect(processingTimeAlert?.severity).toBe('medium')
@@ -468,8 +486,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
 
       const activeAlerts = await performanceMonitor.getActiveAlerts()
 
-      const errorRateAlert = activeAlerts.find(
-        alert => alert.message.includes('High Error Rate'),
+      const errorRateAlert = activeAlerts.find((alert) =>
+        alert.message.includes('High Error Rate'),
       )
       expect(errorRateAlert).toBeDefined()
       expect(errorRateAlert?.severity).toBe('high')
@@ -487,8 +505,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
 
       const activeAlerts = await performanceMonitor.getActiveAlerts()
 
-      const accuracyAlert = activeAlerts.find(
-        alert => alert.message.includes('Low Accuracy'),
+      const accuracyAlert = activeAlerts.find((alert) =>
+        alert.message.includes('Low Accuracy'),
       )
       expect(accuracyAlert).toBeDefined()
       expect(accuracyAlert?.severity).toBe('high')
@@ -504,8 +522,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
 
       const activeAlerts = await performanceMonitor.getActiveAlerts()
 
-      const memoryAlert = activeAlerts.find(
-        alert => alert.message.includes('High Memory Usage'),
+      const memoryAlert = activeAlerts.find((alert) =>
+        alert.message.includes('High Memory Usage'),
       )
       expect(memoryAlert).toBeDefined()
       expect(memoryAlert?.severity).toBe('medium')
@@ -521,8 +539,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
 
       const activeAlerts = await performanceMonitor.getActiveAlerts()
 
-      const throughputAlert = activeAlerts.find(
-        alert => alert.message.includes('Low Throughput'),
+      const throughputAlert = activeAlerts.find((alert) =>
+        alert.message.includes('Low Throughput'),
       )
       expect(throughputAlert).toBeDefined()
       expect(throughputAlert?.severity).toBe('low')
@@ -545,8 +563,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
       )
 
       const activeAlerts = await performanceMonitor.getActiveAlerts()
-      const processingTimeAlerts = activeAlerts.filter(
-        alert => alert.message.includes('High Processing Time'),
+      const processingTimeAlerts = activeAlerts.filter((alert) =>
+        alert.message.includes('High Processing Time'),
       )
 
       expect(processingTimeAlerts).toHaveLength(1) // Should only have one alert
@@ -570,7 +588,7 @@ describe('Performance Monitoring System - Task 7.6', () => {
       await performanceMonitor.resolveAlert(alertId)
 
       activeAlerts = await performanceMonitor.getActiveAlerts()
-      const resolvedAlert = activeAlerts.find(alert => alert.id === alertId)
+      const resolvedAlert = activeAlerts.find((alert) => alert.id === alertId)
       expect(resolvedAlert).toBeUndefined() // Should not be in active alerts anymore
     })
   })
@@ -656,7 +674,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         { accuracyScore: 0.75, errorCount: 2 }, // Low accuracy, errors
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
 
       expect(dashboard.recommendations.length).toBeGreaterThan(0)
 
@@ -676,7 +695,8 @@ describe('Performance Monitoring System - Task 7.6', () => {
         { accuracyScore: 0.95, errorCount: 0 }, // High accuracy, no errors
       )
 
-      const dashboard = await performanceMonitor.generatePerformanceDashboard('1h')
+      const dashboard =
+        await performanceMonitor.generatePerformanceDashboard('1h')
 
       // Should have fewer or no recommendations for good performance
       expect(dashboard.recommendations.length).toBeLessThanOrEqual(2)
@@ -709,7 +729,9 @@ describe('Performance Monitoring System - Task 7.6', () => {
 
       // Should trigger processing time alert
       const alerts = await performanceMonitor.getActiveAlerts()
-      expect(alerts.some(alert => alert.message.includes('High Processing Time'))).toBe(true)
+      expect(
+        alerts.some((alert) => alert.message.includes('High Processing Time')),
+      ).toBe(true)
     })
 
     it('should handle very small processing times', async () => {

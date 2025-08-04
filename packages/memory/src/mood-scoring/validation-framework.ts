@@ -53,10 +53,10 @@ export class ValidationFramework {
   }
 
   // TDD: Start with method that throws "Not implemented yet - TDD"
-  
+
   async validateMoodScore(
     conversations: (ConversationData & { moodAnalysis: MoodAnalysisResult })[],
-    humanValidations: HumanValidationRecord[]
+    humanValidations: HumanValidationRecord[],
   ): Promise<ValidationResult> {
     logger.debug('Starting mood score validation', {
       conversationCount: conversations.length,
@@ -64,34 +64,45 @@ export class ValidationFramework {
     })
 
     // Match conversations with validations
-    const matchedPairs = this.matchConversationsWithValidations(conversations, humanValidations)
-    
+    const matchedPairs = this.matchConversationsWithValidations(
+      conversations,
+      humanValidations,
+    )
+
     // Calculate overall metrics
     const overallMetrics = this.calculateOverallMetrics(matchedPairs)
-    
+
     // Analyze discrepancies
     const discrepancyAnalysis = this.analyzeDiscrepancies(matchedPairs)
-    
+
     // Analyze individual conversations
     const individualAnalyses = this.analyzeIndividualConversations(matchedPairs)
-    
+
     // Analyze validator consistency
-    const validatorConsistency = this.analyzeValidatorConsistency(humanValidations)
-    
+    const validatorConsistency =
+      this.analyzeValidatorConsistency(humanValidations)
+
     // Perform bias analysis
     const biasAnalysis = this.performBiasAnalysis(matchedPairs)
-    
+
     // Generate recommendations
-    const recommendations = this.generateRecommendations(discrepancyAnalysis, biasAnalysis)
-    
+    const recommendations = this.generateRecommendations(
+      discrepancyAnalysis,
+      biasAnalysis,
+    )
+
     // Create session metadata
     const sessionMetadata = {
       validationDate: new Date(),
       totalConversations: conversations.length,
-      totalValidators: new Set(humanValidations.map(v => v.validatorId)).size,
-      averageValidatorExperience: humanValidations.length > 0 
-        ? humanValidations.reduce((sum, v) => sum + (v.validatorCredentials?.yearsExperience || 0), 0) / humanValidations.length
-        : 0,
+      totalValidators: new Set(humanValidations.map((v) => v.validatorId)).size,
+      averageValidatorExperience:
+        humanValidations.length > 0
+          ? humanValidations.reduce(
+              (sum, v) => sum + (v.validatorCredentials?.yearsExperience || 0),
+              0,
+            ) / humanValidations.length
+          : 0,
     }
 
     const result: ValidationResult = {
@@ -115,15 +126,19 @@ export class ValidationFramework {
 
   validateValidatorCredentials(validation: HumanValidationRecord): void {
     const { yearsExperience, specializations } = validation.validatorCredentials
-    
+
     if (yearsExperience < this.config.minimumValidatorExperience!) {
       throw new Error('Validator does not meet minimum experience requirements')
     }
-    
-    if (this.config.requiredSpecializations && this.config.requiredSpecializations.length > 0) {
-      const hasRequiredSpecializations = this.config.requiredSpecializations.some(required =>
-        specializations.includes(required)
-      )
+
+    if (
+      this.config.requiredSpecializations &&
+      this.config.requiredSpecializations.length > 0
+    ) {
+      const hasRequiredSpecializations =
+        this.config.requiredSpecializations.some((required) =>
+          specializations.includes(required),
+        )
       if (!hasRequiredSpecializations) {
         throw new Error('Validator does not meet specialization requirements')
       }
@@ -134,7 +149,7 @@ export class ValidationFramework {
 
   private matchConversationsWithValidations(
     conversations: (ConversationData & { moodAnalysis: MoodAnalysisResult })[],
-    humanValidations: HumanValidationRecord[]
+    humanValidations: HumanValidationRecord[],
   ) {
     const matchedPairs: Array<{
       conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
@@ -142,7 +157,9 @@ export class ValidationFramework {
     }> = []
 
     for (const conversation of conversations) {
-      const validation = humanValidations.find(v => v.conversationId === conversation.id)
+      const validation = humanValidations.find(
+        (v) => v.conversationId === conversation.id,
+      )
       if (validation) {
         matchedPairs.push({ conversation, validation })
       }
@@ -151,50 +168,77 @@ export class ValidationFramework {
     return matchedPairs
   }
 
-  private calculateOverallMetrics(matchedPairs: Array<{
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
-    validation: HumanValidationRecord
-  }>): ValidationMetrics {
+  private calculateOverallMetrics(
+    matchedPairs: Array<{
+      conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
+      validation: HumanValidationRecord
+    }>,
+  ): ValidationMetrics {
     if (matchedPairs.length === 0) {
       throw new Error('No matched conversation-validation pairs found')
     }
 
-    const algorithmicScores = matchedPairs.map(pair => pair.conversation.moodAnalysis.score)
-    const humanScores = matchedPairs.map(pair => pair.validation.humanMoodScore)
+    const algorithmicScores = matchedPairs.map(
+      (pair) => pair.conversation.moodAnalysis.score,
+    )
+    const humanScores = matchedPairs.map(
+      (pair) => pair.validation.humanMoodScore,
+    )
 
     // Calculate Pearson correlation
-    const pearsonCorrelation = this.calculatePearsonCorrelation(algorithmicScores, humanScores)
-    
+    const pearsonCorrelation = this.calculatePearsonCorrelation(
+      algorithmicScores,
+      humanScores,
+    )
+
     // Debug output for Wallaby.js
     console.log('=== WALLABY.JS DEBUG: Correlation Calculation ===')
     console.log('Algorithmic scores:', algorithmicScores)
     console.log('Human scores:', humanScores)
     console.log('Pearson correlation:', pearsonCorrelation)
-    console.log('Pairs:', matchedPairs.map(p => ({
-      id: p.conversation.id,
-      algo: p.conversation.moodAnalysis.score,
-      human: p.validation.humanMoodScore,
-      diff: (p.conversation.moodAnalysis.score - p.validation.humanMoodScore).toFixed(2)
-    })))
-    
+    console.log(
+      'Pairs:',
+      matchedPairs.map((p) => ({
+        id: p.conversation.id,
+        algo: p.conversation.moodAnalysis.score,
+        human: p.validation.humanMoodScore,
+        diff: (
+          p.conversation.moodAnalysis.score - p.validation.humanMoodScore
+        ).toFixed(2),
+      })),
+    )
+
     // Calculate Spearman correlation (simplified as Pearson for now)
     const spearmanCorrelation = pearsonCorrelation
 
     // Calculate mean absolute error
-    const absoluteErrors = matchedPairs.map(pair =>
-      Math.abs(pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore)
+    const absoluteErrors = matchedPairs.map((pair) =>
+      Math.abs(
+        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore,
+      ),
     )
-    const meanAbsoluteError = absoluteErrors.reduce((sum, error) => sum + error, 0) / absoluteErrors.length
+    const meanAbsoluteError =
+      absoluteErrors.reduce((sum, error) => sum + error, 0) /
+      absoluteErrors.length
 
     // Calculate RMSE
-    const squaredErrors = matchedPairs.map(pair =>
-      Math.pow(pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore, 2)
+    const squaredErrors = matchedPairs.map((pair) =>
+      Math.pow(
+        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore,
+        2,
+      ),
     )
-    const rootMeanSquareError = Math.sqrt(squaredErrors.reduce((sum, error) => sum + error, 0) / squaredErrors.length)
+    const rootMeanSquareError = Math.sqrt(
+      squaredErrors.reduce((sum, error) => sum + error, 0) /
+        squaredErrors.length,
+    )
 
     // Calculate agreement percentage (within 1.0 point)
-    const agreementsWithinRange = absoluteErrors.filter(error => error <= 1.0).length
-    const agreementPercentage = (agreementsWithinRange / absoluteErrors.length) * 100
+    const agreementsWithinRange = absoluteErrors.filter(
+      (error) => error <= 1.0,
+    ).length
+    const agreementPercentage =
+      (agreementsWithinRange / absoluteErrors.length) * 100
 
     // Determine concordance level
     let concordanceLevel: 'high' | 'moderate' | 'low'
@@ -210,7 +254,10 @@ export class ValidationFramework {
     const statisticalSignificance = {
       pValue: pearsonCorrelation > 0.5 ? 0.01 : 0.15, // Simplified calculation
       isSignificant: pearsonCorrelation > 0.5,
-      confidenceInterval: [Math.max(0, pearsonCorrelation - 0.1), Math.min(1, pearsonCorrelation + 0.1)] as [number, number],
+      confidenceInterval: [
+        Math.max(0, pearsonCorrelation - 0.1),
+        Math.min(1, pearsonCorrelation + 0.1),
+      ] as [number, number],
     }
 
     return {
@@ -231,7 +278,7 @@ export class ValidationFramework {
     }
 
     const n = x.length
-    
+
     // If only one data point, correlation is undefined (return 0)
     if (n === 1) {
       return 0
@@ -257,18 +304,22 @@ export class ValidationFramework {
     return denominator === 0 ? 0 : numerator / denominator
   }
 
-  private analyzeDiscrepancies(matchedPairs: Array<{
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
-    validation: HumanValidationRecord
-  }>): DiscrepancyAnalysis {
-    const differences = matchedPairs.map(pair =>
-      pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore
+  private analyzeDiscrepancies(
+    matchedPairs: Array<{
+      conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
+      validation: HumanValidationRecord
+    }>,
+  ): DiscrepancyAnalysis {
+    const differences = matchedPairs.map(
+      (pair) =>
+        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore,
     )
 
     // Determine systematic bias
-    const meanDifference = differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+    const meanDifference =
+      differences.reduce((sum, diff) => sum + diff, 0) / differences.length
     let systematicBias: DiscrepancyAnalysis['systematicBias']
-    
+
     if (Math.abs(meanDifference) < 0.5) {
       systematicBias = 'no_systematic_bias'
     } else if (meanDifference > 0) {
@@ -281,19 +332,34 @@ export class ValidationFramework {
     const biasPattern = {
       magnitude: Math.abs(meanDifference),
       consistency: this.calculateConsistency(differences),
-      direction: meanDifference > 0 ? 'positive' as const : meanDifference < 0 ? 'negative' as const : 'mixed' as const,
+      direction:
+        meanDifference > 0
+          ? ('positive' as const)
+          : meanDifference < 0
+            ? ('negative' as const)
+            : ('mixed' as const),
     }
 
     // Common discrepancy types
     const commonDiscrepancyTypes: string[] = []
     if (systematicBias === 'algorithmic_over_estimation') {
-      commonDiscrepancyTypes.push('emotional_suppression_missed', 'neutral_surface_bias')
+      commonDiscrepancyTypes.push(
+        'emotional_suppression_missed',
+        'neutral_surface_bias',
+      )
     } else if (systematicBias === 'algorithmic_under_estimation') {
-      commonDiscrepancyTypes.push('therapeutic_depth_missed', 'emotional_breakthrough_undervalued')
+      commonDiscrepancyTypes.push(
+        'therapeutic_depth_missed',
+        'emotional_breakthrough_undervalued',
+      )
     }
 
     // Problematic contexts (simplified)
-    const problematicContexts = ['sarcasm_detection', 'emotional_complexity', 'cultural_nuance']
+    const problematicContexts = [
+      'sarcasm_detection',
+      'emotional_complexity',
+      'cultural_nuance',
+    ]
 
     // Improvement recommendations
     const improvementRecommendations = [
@@ -305,9 +371,10 @@ export class ValidationFramework {
     // Discrepancy distribution
     const absoluteDifferences = differences.map(Math.abs)
     const discrepancyDistribution = {
-      small: absoluteDifferences.filter(diff => diff <= 0.5).length,
-      medium: absoluteDifferences.filter(diff => diff > 0.5 && diff <= 1.5).length,
-      large: absoluteDifferences.filter(diff => diff > 1.5).length,
+      small: absoluteDifferences.filter((diff) => diff <= 0.5).length,
+      medium: absoluteDifferences.filter((diff) => diff > 0.5 && diff <= 1.5)
+        .length,
+      large: absoluteDifferences.filter((diff) => diff > 1.5).length,
     }
 
     return {
@@ -322,24 +389,29 @@ export class ValidationFramework {
 
   private calculateConsistency(differences: number[]): number {
     if (differences.length === 0) return 0
-    
-    const mean = differences.reduce((sum, diff) => sum + diff, 0) / differences.length
-    const variance = differences.reduce((sum, diff) => sum + Math.pow(diff - mean, 2), 0) / differences.length
+
+    const mean =
+      differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+    const variance =
+      differences.reduce((sum, diff) => sum + Math.pow(diff - mean, 2), 0) /
+      differences.length
     const standardDeviation = Math.sqrt(variance)
-    
+
     // Convert to consistency score (0-1), where lower standard deviation = higher consistency
-    return Math.max(0, Math.min(1, 1 - (standardDeviation / 3)))
+    return Math.max(0, Math.min(1, 1 - standardDeviation / 3))
   }
 
-  private analyzeIndividualConversations(matchedPairs: Array<{
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
-    validation: HumanValidationRecord
-  }>): IndividualValidationAnalysis[] {
-    return matchedPairs.map(pair => {
+  private analyzeIndividualConversations(
+    matchedPairs: Array<{
+      conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
+      validation: HumanValidationRecord
+    }>,
+  ): IndividualValidationAnalysis[] {
+    return matchedPairs.map((pair) => {
       const algorithmicScore = pair.conversation.moodAnalysis.score
       const humanScore = pair.validation.humanMoodScore
       const absoluteError = Math.abs(algorithmicScore - humanScore)
-      
+
       let discrepancyType: IndividualValidationAnalysis['discrepancyType']
       if (absoluteError <= 0.5) {
         discrepancyType = 'close_agreement'
@@ -361,7 +433,7 @@ export class ValidationFramework {
       if (discrepancyFactors.includes('mixed_emotion_complexity')) {
         recommendedImprovement.push('enhanced_mixed_emotion_analysis')
       }
-      
+
       return {
         conversationId: pair.conversation.id,
         algorithmicScore,
@@ -377,10 +449,12 @@ export class ValidationFramework {
     })
   }
 
-  private analyzeValidatorConsistency(humanValidations: HumanValidationRecord[]): ValidatorConsistency {
+  private analyzeValidatorConsistency(
+    humanValidations: HumanValidationRecord[],
+  ): ValidatorConsistency {
     // Group validations by conversation
     const validationsByConversation = new Map<string, HumanValidationRecord[]>()
-    
+
     for (const validation of humanValidations) {
       if (!validationsByConversation.has(validation.conversationId)) {
         validationsByConversation.set(validation.conversationId, [])
@@ -393,12 +467,18 @@ export class ValidationFramework {
     let conversationsWithMultipleValidators = 0
     const outlierValidations: ValidatorConsistency['outlierValidations'] = []
 
-    for (const [conversationId, validations] of validationsByConversation.entries()) {
+    for (const [
+      conversationId,
+      validations,
+    ] of validationsByConversation.entries()) {
       if (validations.length > 1) {
         conversationsWithMultipleValidators++
-        const scores = validations.map(v => v.humanMoodScore)
-        const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length
-        const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length
+        const scores = validations.map((v) => v.humanMoodScore)
+        const mean =
+          scores.reduce((sum, score) => sum + score, 0) / scores.length
+        const variance =
+          scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) /
+          scores.length
         totalVariance += variance
 
         // Check for outliers (scores that deviate by more than 2 points from mean)
@@ -416,8 +496,14 @@ export class ValidationFramework {
       }
     }
 
-    const averageVariance = conversationsWithMultipleValidators > 0 ? totalVariance / conversationsWithMultipleValidators : 0
-    const interRaterReliability = Math.max(0, Math.min(1, 1 - (averageVariance / 4))) // Convert variance to reliability score
+    const averageVariance =
+      conversationsWithMultipleValidators > 0
+        ? totalVariance / conversationsWithMultipleValidators
+        : 0
+    const interRaterReliability = Math.max(
+      0,
+      Math.min(1, 1 - averageVariance / 4),
+    ) // Convert variance to reliability score
 
     // Determine consensus level
     let consensusLevel: 'high' | 'moderate' | 'low'
@@ -430,20 +516,27 @@ export class ValidationFramework {
     }
 
     // Calculate validator-specific metrics
-    const validatorMetrics: Record<string, {
-      averageCorrelationWithAlgorithm: number;
-      averageCorrelationWithPeers: number;
-      consistencyScore: number;
-      validationCount: number;
-    }> = {}
-    const uniqueValidators = [...new Set(humanValidations.map(v => v.validatorId))]
-    
+    const validatorMetrics: Record<
+      string,
+      {
+        averageCorrelationWithAlgorithm: number
+        averageCorrelationWithPeers: number
+        consistencyScore: number
+        validationCount: number
+      }
+    > = {}
+    const uniqueValidators = [
+      ...new Set(humanValidations.map((v) => v.validatorId)),
+    ]
+
     for (const validatorId of uniqueValidators) {
-      const validatorValidations = humanValidations.filter(v => v.validatorId === validatorId)
+      const validatorValidations = humanValidations.filter(
+        (v) => v.validatorId === validatorId,
+      )
       validatorMetrics[validatorId] = {
         averageCorrelationWithAlgorithm: 0.75, // Simplified calculation
-        averageCorrelationWithPeers: 0.80,     // Simplified calculation
-        consistencyScore: 0.85,                // Simplified calculation
+        averageCorrelationWithPeers: 0.8, // Simplified calculation
+        consistencyScore: 0.85, // Simplified calculation
         validationCount: validatorValidations.length,
       }
     }
@@ -457,19 +550,24 @@ export class ValidationFramework {
     }
   }
 
-  private performBiasAnalysis(matchedPairs: Array<{
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
-    validation: HumanValidationRecord
-  }>): BiasAnalysis {
-    const differences = matchedPairs.map(pair =>
-      pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore
+  private performBiasAnalysis(
+    matchedPairs: Array<{
+      conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
+      validation: HumanValidationRecord
+    }>,
+  ): BiasAnalysis {
+    const differences = matchedPairs.map(
+      (pair) =>
+        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore,
     )
 
-    const meanDifference = differences.reduce((sum, diff) => sum + diff, 0) / differences.length
-    const biasDetected = Math.abs(meanDifference) > this.config.biasDetectionSensitivity
+    const meanDifference =
+      differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+    const biasDetected =
+      Math.abs(meanDifference) > this.config.biasDetectionSensitivity
 
     const biasTypes: BiasAnalysis['biasTypes'] = []
-    
+
     if (biasDetected) {
       // Analyze specific bias patterns by examining conversation content and human factors
       const identifiedPatterns = this.identifySpecificBiasPatterns(matchedPairs)
@@ -477,11 +575,13 @@ export class ValidationFramework {
     }
 
     const detectionConfidence = Math.min(0.95, Math.abs(meanDifference) * 2)
-    
+
     const statisticalEvidence = {
       testStatistic: meanDifference * Math.sqrt(differences.length),
       pValue: biasDetected ? (differences.length >= 5 ? 0.005 : 0.02) : 0.15,
-      effectSize: Math.abs(meanDifference) / Math.sqrt(this.calculateVariance(differences)),
+      effectSize:
+        Math.abs(meanDifference) /
+        Math.sqrt(this.calculateVariance(differences)),
     }
 
     return {
@@ -492,56 +592,115 @@ export class ValidationFramework {
     }
   }
 
-  private identifySpecificBiasPatterns(matchedPairs: Array<{
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
-    validation: HumanValidationRecord
-  }>): BiasAnalysis['biasTypes'] {
+  private identifySpecificBiasPatterns(
+    matchedPairs: Array<{
+      conversation: ConversationData & { moodAnalysis: MoodAnalysisResult }
+      validation: HumanValidationRecord
+    }>,
+  ): BiasAnalysis['biasTypes'] {
     const biasTypes: BiasAnalysis['biasTypes'] = []
-    const patternCounts = new Map<string, { samples: number; avgMagnitude: number }>()
+    const patternCounts = new Map<
+      string,
+      { samples: number; avgMagnitude: number }
+    >()
 
     for (const pair of matchedPairs) {
-      const difference = pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore
+      const difference =
+        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore
       const magnitude = Math.abs(difference)
       const messageContent = pair.conversation.messages[0]?.content || ''
       const humanFactors = pair.validation.emotionalFactors || []
 
       // Pattern 1: Emotional Minimization (phrases like "just a bit", "nothing major")
-      if (this.detectMinimizationLanguage(messageContent) && 
-          humanFactors.some(f => f.includes('minimization') || f.includes('suppression'))) {
-        this.updatePatternCount(patternCounts, 'emotional_minimization', magnitude)
+      if (
+        this.detectMinimizationLanguage(messageContent) &&
+        humanFactors.some(
+          (f) => f.includes('minimization') || f.includes('suppression'),
+        )
+      ) {
+        this.updatePatternCount(
+          patternCounts,
+          'emotional_minimization',
+          magnitude,
+        )
       }
 
       // Pattern 2: Sarcasm Detection Failure (sarcastic tone missed)
-      if (this.detectSarcasm(messageContent) && 
-          humanFactors.some(f => f.includes('sarcasm') || f.includes('masking'))) {
-        this.updatePatternCount(patternCounts, 'sarcasm_detection_failure', magnitude)
+      if (
+        this.detectSarcasm(messageContent) &&
+        humanFactors.some((f) => f.includes('sarcasm') || f.includes('masking'))
+      ) {
+        this.updatePatternCount(
+          patternCounts,
+          'sarcasm_detection_failure',
+          magnitude,
+        )
       }
 
       // Pattern 3: Repetitive Pattern Blindness (repetitive reassurance language)
-      if (this.detectRepetitivePatterns(messageContent) && 
-          humanFactors.some(f => f.includes('repetitive') || f.includes('denial'))) {
-        this.updatePatternCount(patternCounts, 'repetitive_pattern_blindness', magnitude)
+      if (
+        this.detectRepetitivePatterns(messageContent) &&
+        humanFactors.some(
+          (f) => f.includes('repetitive') || f.includes('denial'),
+        )
+      ) {
+        this.updatePatternCount(
+          patternCounts,
+          'repetitive_pattern_blindness',
+          magnitude,
+        )
       }
 
       // Pattern 4: Mixed Emotion Oversimplification (conflicting emotions)
-      if (pair.conversation.moodAnalysis.descriptors.includes('mixed') && 
-          humanFactors.some(f => f.includes('conflict') || f.includes('complex'))) {
-        this.updatePatternCount(patternCounts, 'mixed_emotion_oversimplification', magnitude)
+      if (
+        pair.conversation.moodAnalysis.descriptors.includes('mixed') &&
+        humanFactors.some(
+          (f) => f.includes('conflict') || f.includes('complex'),
+        )
+      ) {
+        this.updatePatternCount(
+          patternCounts,
+          'mixed_emotion_oversimplification',
+          magnitude,
+        )
       }
 
       // Pattern 5: Defensive Language Blindness (defensive/resistance patterns)
-      if (this.detectDefensiveLanguage(messageContent) && 
-          humanFactors.some(f => f.includes('defensive') || f.includes('resistance'))) {
-        this.updatePatternCount(patternCounts, 'defensive_language_blindness', magnitude)
+      if (
+        this.detectDefensiveLanguage(messageContent) &&
+        humanFactors.some(
+          (f) => f.includes('defensive') || f.includes('resistance'),
+        )
+      ) {
+        this.updatePatternCount(
+          patternCounts,
+          'defensive_language_blindness',
+          magnitude,
+        )
       }
     }
 
     // Convert pattern counts to bias types
     for (const [patternType, stats] of patternCounts.entries()) {
-      const severity = stats.avgMagnitude > 2.5 ? 'high' : stats.avgMagnitude > 1.5 ? 'medium' : 'low'
-      
+      const severity =
+        stats.avgMagnitude > 2.5
+          ? 'high'
+          : stats.avgMagnitude > 1.5
+            ? 'medium'
+            : 'low'
+
       biasTypes.push({
-        type: patternType as "demographic" | "contextual" | "linguistic" | "temporal" | "emotional_complexity" | "emotional_minimization" | "sarcasm_detection_failure" | "repetitive_pattern_blindness" | "mixed_emotion_oversimplification" | "defensive_language_blindness",
+        type: patternType as
+          | 'demographic'
+          | 'contextual'
+          | 'linguistic'
+          | 'temporal'
+          | 'emotional_complexity'
+          | 'emotional_minimization'
+          | 'sarcasm_detection_failure'
+          | 'repetitive_pattern_blindness'
+          | 'mixed_emotion_oversimplification'
+          | 'defensive_language_blindness',
         severity,
         description: this.getBiasDescription(patternType),
         affectedSamples: stats.samples,
@@ -551,18 +710,24 @@ export class ValidationFramework {
 
     // If no specific patterns detected, fall back to generic emotional complexity bias
     if (biasTypes.length === 0 && matchedPairs.length > 0) {
-      const differences = matchedPairs.map(pair =>
-        pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore
+      const differences = matchedPairs.map(
+        (pair) =>
+          pair.conversation.moodAnalysis.score - pair.validation.humanMoodScore,
       )
-      const avgMagnitude = differences.reduce((sum, diff) => sum + Math.abs(diff), 0) / differences.length
-      const severity = avgMagnitude > 2.5 ? 'high' : avgMagnitude > 1.5 ? 'medium' : 'low'
-      
+      const avgMagnitude =
+        differences.reduce((sum, diff) => sum + Math.abs(diff), 0) /
+        differences.length
+      const severity =
+        avgMagnitude > 2.5 ? 'high' : avgMagnitude > 1.5 ? 'medium' : 'low'
+
       biasTypes.push({
         type: 'emotional_complexity',
         severity,
-        description: 'Algorithm shows systematic bias in handling emotional complexity',
+        description:
+          'Algorithm shows systematic bias in handling emotional complexity',
         affectedSamples: matchedPairs.length,
-        correctionRecommendation: 'Enhance mixed-emotion processing capabilities',
+        correctionRecommendation:
+          'Enhance mixed-emotion processing capabilities',
       })
     }
 
@@ -570,97 +735,150 @@ export class ValidationFramework {
   }
 
   private updatePatternCount(
-    patternCounts: Map<string, { samples: number; avgMagnitude: number }>, 
-    pattern: string, 
-    magnitude: number
+    patternCounts: Map<string, { samples: number; avgMagnitude: number }>,
+    pattern: string,
+    magnitude: number,
   ): void {
-    const existing = patternCounts.get(pattern) || { samples: 0, avgMagnitude: 0 }
+    const existing = patternCounts.get(pattern) || {
+      samples: 0,
+      avgMagnitude: 0,
+    }
     const newSamples = existing.samples + 1
-    const newAvgMagnitude = (existing.avgMagnitude * existing.samples + magnitude) / newSamples
-    
-    patternCounts.set(pattern, { samples: newSamples, avgMagnitude: newAvgMagnitude })
+    const newAvgMagnitude =
+      (existing.avgMagnitude * existing.samples + magnitude) / newSamples
+
+    patternCounts.set(pattern, {
+      samples: newSamples,
+      avgMagnitude: newAvgMagnitude,
+    })
   }
 
   private detectMinimizationLanguage(content: string): boolean {
     const minimizationPhrases = [
-      'just a bit', 'nothing major', 'not a big deal', 'only a little',
-      'just slightly', 'barely', 'hardly', 'not really', 'kinda', 'sort of'
+      'just a bit',
+      'nothing major',
+      'not a big deal',
+      'only a little',
+      'just slightly',
+      'barely',
+      'hardly',
+      'not really',
+      'kinda',
+      'sort of',
     ]
-    return minimizationPhrases.some(phrase => content.toLowerCase().includes(phrase))
+    return minimizationPhrases.some((phrase) =>
+      content.toLowerCase().includes(phrase),
+    )
   }
 
   private detectSarcasm(content: string): boolean {
     const sarcasticPhrases = [
-      'oh great', 'wonderful', 'amazing', 'perfect', 'fantastic',
-      'just what I needed', 'exactly what I wanted', 'how lovely'
+      'oh great',
+      'wonderful',
+      'amazing',
+      'perfect',
+      'fantastic',
+      'just what I needed',
+      'exactly what I wanted',
+      'how lovely',
     ]
-    const hasPositiveWords = sarcasticPhrases.some(phrase => content.toLowerCase().includes(phrase))
-    const hasNegativeContext = content.includes('another') || content.includes('really') || content.includes('so')
+    const hasPositiveWords = sarcasticPhrases.some((phrase) =>
+      content.toLowerCase().includes(phrase),
+    )
+    const hasNegativeContext =
+      content.includes('another') ||
+      content.includes('really') ||
+      content.includes('so')
     return hasPositiveWords && hasNegativeContext
   }
 
   private detectRepetitivePatterns(content: string): boolean {
     // Clean the content and split into words, removing punctuation
     const cleanContent = content.toLowerCase().replace(/[^\w\s]/g, ' ')
-    const words = cleanContent.split(/\s+/).filter(word => word.length > 0)
+    const words = cleanContent.split(/\s+/).filter((word) => word.length > 0)
     const wordCounts = new Map<string, number>()
-    
+
     for (const word of words) {
-      if (word.length > 2) { // Skip short words like "i'm", "is", etc.
+      if (word.length > 2) {
+        // Skip short words like "i'm", "is", etc.
         wordCounts.set(word, (wordCounts.get(word) || 0) + 1)
       }
     }
-    
+
     // Check for words repeated 3+ times (like "fine fine fine")
-    return Array.from(wordCounts.values()).some(count => count >= 3)
+    return Array.from(wordCounts.values()).some((count) => count >= 3)
   }
 
   private detectDefensiveLanguage(content: string): boolean {
     const defensivePhrases = [
-      'i don\'t need', 'i can handle', 'i\'m fine', 'leave me alone',
-      'don\'t worry about', 'i got this', 'mind your own', 'back off'
+      "i don't need",
+      'i can handle',
+      "i'm fine",
+      'leave me alone',
+      "don't worry about",
+      'i got this',
+      'mind your own',
+      'back off',
     ]
-    return defensivePhrases.some(phrase => content.toLowerCase().includes(phrase))
+    return defensivePhrases.some((phrase) =>
+      content.toLowerCase().includes(phrase),
+    )
   }
 
   private getBiasDescription(patternType: string): string {
     const descriptions: Record<string, string> = {
-      'emotional_minimization': 'Algorithm fails to detect underlying distress when users minimize their emotions',
-      'sarcasm_detection_failure': 'Algorithm misinterprets sarcastic expressions as neutral or positive sentiment',
-      'repetitive_pattern_blindness': 'Algorithm misses emotional distress indicators in repetitive reassurance-seeking language',
-      'mixed_emotion_oversimplification': 'Algorithm oversimplifies complex mixed emotional states into single emotions',
-      'defensive_language_blindness': 'Algorithm fails to recognize defensive language as indicator of emotional overwhelm',
+      emotional_minimization:
+        'Algorithm fails to detect underlying distress when users minimize their emotions',
+      sarcasm_detection_failure:
+        'Algorithm misinterprets sarcastic expressions as neutral or positive sentiment',
+      repetitive_pattern_blindness:
+        'Algorithm misses emotional distress indicators in repetitive reassurance-seeking language',
+      mixed_emotion_oversimplification:
+        'Algorithm oversimplifies complex mixed emotional states into single emotions',
+      defensive_language_blindness:
+        'Algorithm fails to recognize defensive language as indicator of emotional overwhelm',
     }
     return descriptions[patternType] || 'Unknown bias pattern detected'
   }
 
   private getCorrectionRecommendation(patternType: string): string {
     const recommendations: Record<string, string> = {
-      'emotional_minimization': 'Implement minimization language detection algorithms and weight minimizing phrases as emotional suppression indicators',
-      'sarcasm_detection_failure': 'Develop contextual sarcasm detection using sentiment-context mismatch analysis and cultural linguistic patterns',
-      'repetitive_pattern_blindness': 'Add repetitive language pattern recognition to identify emotional overwhelm through linguistic repetition analysis',
-      'mixed_emotion_oversimplification': 'Enhance mixed-emotion processing with conflict detection algorithms and multi-dimensional emotion scoring',
-      'defensive_language_blindness': 'Implement defensive language detection patterns and weight independence assertions as emotional isolation indicators',
+      emotional_minimization:
+        'Implement minimization language detection algorithms and weight minimizing phrases as emotional suppression indicators',
+      sarcasm_detection_failure:
+        'Develop contextual sarcasm detection using sentiment-context mismatch analysis and cultural linguistic patterns',
+      repetitive_pattern_blindness:
+        'Add repetitive language pattern recognition to identify emotional overwhelm through linguistic repetition analysis',
+      mixed_emotion_oversimplification:
+        'Enhance mixed-emotion processing with conflict detection algorithms and multi-dimensional emotion scoring',
+      defensive_language_blindness:
+        'Implement defensive language detection patterns and weight independence assertions as emotional isolation indicators',
     }
-    return recommendations[patternType] || 'Enhance emotional complexity processing capabilities'
+    return (
+      recommendations[patternType] ||
+      'Enhance emotional complexity processing capabilities'
+    )
   }
 
   private calculateVariance(values: number[]): number {
     if (values.length === 0) return 0
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length
-    return values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+    return (
+      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+      values.length
+    )
   }
 
   private generateRecommendations(
     discrepancyAnalysis: DiscrepancyAnalysis,
-    biasAnalysis: BiasAnalysis
+    biasAnalysis: BiasAnalysis,
   ) {
     const recommendations: ValidationResult['recommendations'] = []
 
     // For single bias detection cases with specific patterns, provide focused recommendations
     if (biasAnalysis.biasDetected && biasAnalysis.biasTypes.length === 1) {
       const biasType = biasAnalysis.biasTypes[0]
-      
+
       // If it's a specific pattern (not generic emotional_complexity), use focused recommendations
       if (biasType.type !== 'emotional_complexity') {
         // Algorithm enhancement recommendation
@@ -674,7 +892,7 @@ export class ValidationFramework {
         // Training data enhancement recommendation
         recommendations.push({
           priority: 'medium',
-          category: 'training_data_enhancement', 
+          category: 'training_data_enhancement',
           description: `${this.getTrainingDataEnhancementDescription(biasType.type)} for improved ${biasType.type} detection`,
           expectedImpact: `Improve detection accuracy by 15-25% for ${biasType.type} cases`,
         })
@@ -686,7 +904,7 @@ export class ValidationFramework {
           description: `${this.getValidationProcessDescription(biasType.type)} in validation workflows`,
           expectedImpact: `Enhance early detection of ${biasType.type} patterns in validation`,
         })
-        
+
         return recommendations
       }
     }
@@ -720,11 +938,15 @@ export class ValidationFramework {
       }
     }
 
-    if (discrepancyAnalysis.discrepancyDistribution.large > discrepancyAnalysis.discrepancyDistribution.small) {
+    if (
+      discrepancyAnalysis.discrepancyDistribution.large >
+      discrepancyAnalysis.discrepancyDistribution.small
+    ) {
       recommendations.push({
         priority: 'medium',
         category: 'accuracy_improvement',
-        description: 'Focus on reducing large discrepancies through contextual analysis',
+        description:
+          'Focus on reducing large discrepancies through contextual analysis',
         expectedImpact: 'Reduce mean absolute error by 0.3-0.5 points',
       })
     }
@@ -734,33 +956,51 @@ export class ValidationFramework {
 
   private getAlgorithmEnhancementDescription(biasType: string): string {
     const descriptions: Record<string, string> = {
-      'emotional_minimization': 'Implement advanced minimization language detection algorithms',
-      'sarcasm_detection_failure': 'Develop contextual sarcasm detection with sentiment-context mismatch analysis',
-      'repetitive_pattern_blindness': 'Add repetitive language pattern recognition systems',
-      'mixed_emotion_oversimplification': 'Enhance mixed-emotion processing with conflict detection algorithms',
-      'defensive_language_blindness': 'Implement defensive language detection patterns and emotional isolation indicators',
+      emotional_minimization:
+        'Implement advanced minimization language detection algorithms',
+      sarcasm_detection_failure:
+        'Develop contextual sarcasm detection with sentiment-context mismatch analysis',
+      repetitive_pattern_blindness:
+        'Add repetitive language pattern recognition systems',
+      mixed_emotion_oversimplification:
+        'Enhance mixed-emotion processing with conflict detection algorithms',
+      defensive_language_blindness:
+        'Implement defensive language detection patterns and emotional isolation indicators',
     }
     return descriptions[biasType] || 'Enhance emotional complexity processing'
   }
 
   private getTrainingDataEnhancementDescription(biasType: string): string {
     const descriptions: Record<string, string> = {
-      'emotional_minimization': 'Expand training dataset with minimization language examples and emotional suppression patterns',
-      'sarcasm_detection_failure': 'Include sarcasm detection examples with cultural and contextual variations',
-      'repetitive_pattern_blindness': 'Add repetitive reassurance-seeking patterns and emotional overwhelm examples',
-      'mixed_emotion_oversimplification': 'Include complex mixed-emotion scenarios with conflict overlays',
-      'defensive_language_blindness': 'Add defense mechanism examples with resistance patterns and emotional masking',
+      emotional_minimization:
+        'Expand training dataset with minimization language examples and emotional suppression patterns',
+      sarcasm_detection_failure:
+        'Include sarcasm detection examples with cultural and contextual variations',
+      repetitive_pattern_blindness:
+        'Add repetitive reassurance-seeking patterns and emotional overwhelm examples',
+      mixed_emotion_oversimplification:
+        'Include complex mixed-emotion scenarios with conflict overlays',
+      defensive_language_blindness:
+        'Add defense mechanism examples with resistance patterns and emotional masking',
     }
-    return descriptions[biasType] || 'Enhance training data with emotional complexity examples'
+    return (
+      descriptions[biasType] ||
+      'Enhance training data with emotional complexity examples'
+    )
   }
 
   private getValidationProcessDescription(biasType: string): string {
     const descriptions: Record<string, string> = {
-      'emotional_minimization': 'Enhance minimization pattern detection and emotional suppression assessment',
-      'sarcasm_detection_failure': 'Improve sarcasm identification and sentiment-context mismatch validation',
-      'repetitive_pattern_blindness': 'Strengthen repetitive language analysis and emotional overwhelm indicators',
-      'mixed_emotion_oversimplification': 'Develop complex emotion conflict validation and multi-dimensional assessment',
-      'defensive_language_blindness': 'Enhance defensive pattern detection and isolation tendency assessment',
+      emotional_minimization:
+        'Enhance minimization pattern detection and emotional suppression assessment',
+      sarcasm_detection_failure:
+        'Improve sarcasm identification and sentiment-context mismatch validation',
+      repetitive_pattern_blindness:
+        'Strengthen repetitive language analysis and emotional overwhelm indicators',
+      mixed_emotion_oversimplification:
+        'Develop complex emotion conflict validation and multi-dimensional assessment',
+      defensive_language_blindness:
+        'Enhance defensive pattern detection and isolation tendency assessment',
     }
     return descriptions[biasType] || 'Improve emotional pattern validation'
   }

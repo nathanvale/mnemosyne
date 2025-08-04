@@ -48,7 +48,8 @@ export class TestDataFactory {
     // Use high-precision timestamp and worker ID for uniqueness
     const timestamp = Date.now()
     const microtime = performance.now()
-    const workerId = process.env.WALLABY_WORKER_ID || process.env.VITEST_WORKER_ID || '0'
+    const workerId =
+      process.env.WALLABY_WORKER_ID || process.env.VITEST_WORKER_ID || '0'
     const randomSuffix = Math.random().toString(36).substring(2) // Fallback for uniqueness
 
     const memoryData: TestMemoryData = {
@@ -120,92 +121,96 @@ export class TestDataFactory {
       try {
         // Ensure Memory exists first - create if not provided
         let memoryId = options.memoryId
-      if (!memoryId) {
-        // Create memory within the transaction
-        const timestamp = Date.now()
-        const microtime = performance.now()
-        const randomSuffix = Math.random().toString(36).substring(2)
-        const memoryData = {
-          id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-          sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
-          participants: JSON.stringify([{ id: 'user1', name: 'Test User 1' }]),
-          summary: 'Test memory summary',
-          confidence: 8,
-          contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-        }
+        if (!memoryId) {
+          // Create memory within the transaction
+          const timestamp = Date.now()
+          const microtime = performance.now()
+          const randomSuffix = Math.random().toString(36).substring(2)
+          const memoryData = {
+            id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+            sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
+            participants: JSON.stringify([
+              { id: 'user1', name: 'Test User 1' },
+            ]),
+            summary: 'Test memory summary',
+            confidence: 8,
+            contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+          }
 
-        const memory = await tx.memory.create({
-          data: memoryData,
-        })
-        memoryId = memory.id
-      } else {
-        // Check if Memory exists, create it if it doesn't
-        const existingMemory = await tx.memory.findUnique({
-          where: { id: memoryId },
-        })
-        if (!existingMemory) {
-          // Create Memory with the specified ID
-          try {
-            await tx.memory.create({
-              data: {
-                id: memoryId,
-                contentHash: `hash-${memoryId}-${performance.now()}`,
-                summary: `Test memory ${memoryId}`,
-                confidence: 8,
-                sourceMessageIds: JSON.stringify(['test-msg']),
-                participants: JSON.stringify([
-                  { id: 'test-user', name: 'Test User' },
-                ]),
-                extractedAt: new Date(),
-              },
-            })
-          } catch (error) {
-            throw new Error(
-              `Failed to create Memory with id ${memoryId}: ${error instanceof Error ? error.message : String(error)}`,
-            )
+          const memory = await tx.memory.create({
+            data: memoryData,
+          })
+          memoryId = memory.id
+        } else {
+          // Check if Memory exists, create it if it doesn't
+          const existingMemory = await tx.memory.findUnique({
+            where: { id: memoryId },
+          })
+          if (!existingMemory) {
+            // Create Memory with the specified ID
+            try {
+              await tx.memory.create({
+                data: {
+                  id: memoryId,
+                  contentHash: `hash-${memoryId}-${performance.now()}`,
+                  summary: `Test memory ${memoryId}`,
+                  confidence: 8,
+                  sourceMessageIds: JSON.stringify(['test-msg']),
+                  participants: JSON.stringify([
+                    { id: 'test-user', name: 'Test User' },
+                  ]),
+                  extractedAt: new Date(),
+                },
+              })
+            } catch (error) {
+              throw new Error(
+                `Failed to create Memory with id ${memoryId}: ${error instanceof Error ? error.message : String(error)}`,
+              )
+            }
           }
         }
-      }
 
-      // Create the MoodScore with proper MoodAnalysisResult using storage service
-      const moodAnalysis: MoodAnalysisResult = {
-        score: options.score || 7.5,
-        confidence: options.confidence || 0.85,
-        descriptors: options.descriptors || ['positive', 'stable'],
-        factors: options.factors || [
+        // Create the MoodScore with proper MoodAnalysisResult using storage service
+        const moodAnalysis: MoodAnalysisResult = {
+          score: options.score || 7.5,
+          confidence: options.confidence || 0.85,
+          descriptors: options.descriptors || ['positive', 'stable'],
+          factors: options.factors || [
+            {
+              type: 'sentiment_analysis' as const,
+              weight: 0.4,
+              description: 'Positive sentiment detected',
+              evidence: ['positive language', 'supportive tone'],
+              _score: 8.0,
+            },
+            {
+              type: 'psychological_indicators' as const,
+              weight: 0.3,
+              description: 'Healthy coping patterns',
+              evidence: ['problem-solving', 'seeking support'],
+              _score: 7.0,
+            },
+          ],
+        }
+
+        // Use the storage service with transaction context
+        const storedMoodScore = await this.moodScoreStorage.storeMoodScore(
+          memoryId,
+          moodAnalysis,
           {
-            type: 'sentiment_analysis' as const,
-            weight: 0.4,
-            description: 'Positive sentiment detected',
-            evidence: ['positive language', 'supportive tone'],
-            _score: 8.0,
+            duration: options.processingTimeMs || 150,
+            algorithmVersion: options.algorithmVersion || 'v1.0.0-test',
           },
-          {
-            type: 'psychological_indicators' as const,
-            weight: 0.3,
-            description: 'Healthy coping patterns',
-            evidence: ['problem-solving', 'seeking support'],
-            _score: 7.0,
-          },
-        ],
-      }
+          tx,
+        )
 
-      // Use the storage service with transaction context
-      const storedMoodScore = await this.moodScoreStorage.storeMoodScore(
-        memoryId,
-        moodAnalysis,
-        {
-          duration: options.processingTimeMs || 150,
-          algorithmVersion: options.algorithmVersion || 'v1.0.0-test',
-        },
-        tx,
-      )
-
-      return { memoryId, moodScoreId: storedMoodScore.id }
+        return { memoryId, moodScoreId: storedMoodScore.id }
       } catch (error) {
         // Re-throw with more context
         if (error instanceof Error) {
-          throw new Error(`TestDataFactory.createMoodScore failed: ${error.message}`)
+          throw new Error(
+            `TestDataFactory.createMoodScore failed: ${error.message}`,
+          )
         }
         throw error
       }
@@ -421,138 +426,141 @@ export class TestDataFactory {
     deltaIds: Array<string>
   }> {
     // Use a single transaction for all operations to avoid isolation issues
-    return await this.prisma.$transaction(async (tx) => {
-      // Create memory first
-      const timestamp = Date.now()
-      const microtime = performance.now()
-      const randomSuffix = Math.random().toString(36).substring(2)
+    return await this.prisma.$transaction(
+      async (tx) => {
+        // Create memory first
+        const timestamp = Date.now()
+        const microtime = performance.now()
+        const randomSuffix = Math.random().toString(36).substring(2)
 
-      const memoryData = {
-        id:
-          options.memoryOptions?.id ||
-          `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-        sourceMessageIds: JSON.stringify(
-          options.memoryOptions?.sourceMessageIds || ['msg1', 'msg2'],
-        ),
-        participants: JSON.stringify(
-          options.memoryOptions?.participants || [
-            { id: 'user1', name: 'Test User 1' },
+        const memoryData = {
+          id:
+            options.memoryOptions?.id ||
+            `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+          sourceMessageIds: JSON.stringify(
+            options.memoryOptions?.sourceMessageIds || ['msg1', 'msg2'],
+          ),
+          participants: JSON.stringify(
+            options.memoryOptions?.participants || [
+              { id: 'user1', name: 'Test User 1' },
+            ],
+          ),
+          summary: options.memoryOptions?.summary || 'Test memory summary',
+          confidence: options.memoryOptions?.confidence || 8,
+          contentHash:
+            options.memoryOptions?.contentHash ||
+            `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+          extractedAt: new Date(),
+        }
+
+        const memory = await tx.memory.create({
+          data: memoryData,
+        })
+
+        // Create mood score
+        const moodAnalysis = {
+          score: options.moodScoreOptions?.score || 7.5,
+          confidence: options.moodScoreOptions?.confidence || 0.85,
+          descriptors: options.moodScoreOptions?.descriptors || [
+            'positive',
+            'stable',
           ],
-        ),
-        summary: options.memoryOptions?.summary || 'Test memory summary',
-        confidence: options.memoryOptions?.confidence || 8,
-        contentHash:
-          options.memoryOptions?.contentHash ||
-          `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-        extractedAt: new Date(),
-      }
-
-      const memory = await tx.memory.create({
-        data: memoryData,
-      })
-
-      // Create mood score
-      const moodAnalysis = {
-        score: options.moodScoreOptions?.score || 7.5,
-        confidence: options.moodScoreOptions?.confidence || 0.85,
-        descriptors: options.moodScoreOptions?.descriptors || [
-          'positive',
-          'stable',
-        ],
-        factors: options.moodScoreOptions?.factors || [
-          {
-            type: 'sentiment_analysis' as const,
-            weight: 0.4,
-            description: 'Positive sentiment detected',
-            evidence: ['positive language', 'supportive tone'],
-            _score: 8.0,
-          },
-          {
-            type: 'psychological_indicators' as const,
-            weight: 0.3,
-            description: 'Healthy coping patterns',
-            evidence: ['problem-solving', 'seeking support'],
-            _score: 7.0,
-          },
-        ],
-      }
-
-      const moodScore = await tx.moodScore.create({
-        data: {
-          memoryId: memory.id,
-          score: moodAnalysis.score,
-          confidence: moodAnalysis.confidence,
-          descriptors: JSON.stringify(moodAnalysis.descriptors),
-          algorithmVersion:
-            options.moodScoreOptions?.algorithmVersion || 'v1.0.0-test',
-          processingTimeMs: options.moodScoreOptions?.processingTimeMs || 150,
-        },
-      })
-
-      // Create factors
-      await Promise.all(
-        moodAnalysis.factors.map((factor) =>
-          tx.moodFactor.create({
-            data: {
-              moodScoreId: moodScore.id,
-              type: factor.type,
-              weight: factor.weight,
-              description: factor.description,
-              evidence: JSON.stringify(factor.evidence),
-              internalScore: factor._score,
+          factors: options.moodScoreOptions?.factors || [
+            {
+              type: 'sentiment_analysis' as const,
+              weight: 0.4,
+              description: 'Positive sentiment detected',
+              evidence: ['positive language', 'supportive tone'],
+              _score: 8.0,
             },
-          }),
-        ),
-      )
+            {
+              type: 'psychological_indicators' as const,
+              weight: 0.3,
+              description: 'Healthy coping patterns',
+              evidence: ['problem-solving', 'seeking support'],
+              _score: 7.0,
+            },
+          ],
+        }
 
-      // Create deltas
-      const deltas = options.deltasOptions?.deltas || [
-        {
-          magnitude: 2.5,
-          direction: 'positive' as const,
-          type: 'mood_repair' as const,
-          confidence: 0.85,
-          factors: ['support', 'breakthrough'],
-        },
-      ]
-
-      const deltaIds: Array<string> = []
-      for (let i = 0; i < deltas.length; i++) {
-        const delta = deltas[i]
-
-        // Calculate position-based significance like DeltaHistoryStorageService
-        const position = this.calculateTemporalPosition(i, deltas.length)
-        const baseSignificance = delta.magnitude * delta.confidence
-        const positionMultiplier = this.getPositionMultiplier(position)
-        const significance =
-          delta.significance || baseSignificance * positionMultiplier
-
-        console.log(
-          `Delta ${i}: position=${position}, base=${baseSignificance}, multiplier=${positionMultiplier}, final=${significance}`,
-        )
-
-        const result = await tx.moodDelta.create({
+        const moodScore = await tx.moodScore.create({
           data: {
             memoryId: memory.id,
-            conversationId: `test-conversation-${memory.id}`,
-            deltaSequence: i,
-            magnitude: delta.magnitude,
-            direction: delta.direction,
-            type: delta.type,
-            confidence: delta.confidence,
-            factors: JSON.stringify(delta.factors),
-            significance,
-            currentScore: delta.currentScore || moodAnalysis.score,
+            score: moodAnalysis.score,
+            confidence: moodAnalysis.confidence,
+            descriptors: JSON.stringify(moodAnalysis.descriptors),
+            algorithmVersion:
+              options.moodScoreOptions?.algorithmVersion || 'v1.0.0-test',
+            processingTimeMs: options.moodScoreOptions?.processingTimeMs || 150,
           },
         })
-        deltaIds.push(result.id)
-      }
 
-      return { memoryId: memory.id, moodScoreId: moodScore.id, deltaIds }
-    }, {
-      maxWait: 10000, // 10 second max wait time
-      timeout: 30000, // 30 second timeout for complex operations
-    })
+        // Create factors
+        await Promise.all(
+          moodAnalysis.factors.map((factor) =>
+            tx.moodFactor.create({
+              data: {
+                moodScoreId: moodScore.id,
+                type: factor.type,
+                weight: factor.weight,
+                description: factor.description,
+                evidence: JSON.stringify(factor.evidence),
+                internalScore: factor._score,
+              },
+            }),
+          ),
+        )
+
+        // Create deltas
+        const deltas = options.deltasOptions?.deltas || [
+          {
+            magnitude: 2.5,
+            direction: 'positive' as const,
+            type: 'mood_repair' as const,
+            confidence: 0.85,
+            factors: ['support', 'breakthrough'],
+          },
+        ]
+
+        const deltaIds: Array<string> = []
+        for (let i = 0; i < deltas.length; i++) {
+          const delta = deltas[i]
+
+          // Calculate position-based significance like DeltaHistoryStorageService
+          const position = this.calculateTemporalPosition(i, deltas.length)
+          const baseSignificance = delta.magnitude * delta.confidence
+          const positionMultiplier = this.getPositionMultiplier(position)
+          const significance =
+            delta.significance || baseSignificance * positionMultiplier
+
+          console.log(
+            `Delta ${i}: position=${position}, base=${baseSignificance}, multiplier=${positionMultiplier}, final=${significance}`,
+          )
+
+          const result = await tx.moodDelta.create({
+            data: {
+              memoryId: memory.id,
+              conversationId: `test-conversation-${memory.id}`,
+              deltaSequence: i,
+              magnitude: delta.magnitude,
+              direction: delta.direction,
+              type: delta.type,
+              confidence: delta.confidence,
+              factors: JSON.stringify(delta.factors),
+              significance,
+              currentScore: delta.currentScore || moodAnalysis.score,
+            },
+          })
+          deltaIds.push(result.id)
+        }
+
+        return { memoryId: memory.id, moodScoreId: moodScore.id, deltaIds }
+      },
+      {
+        maxWait: 10000, // 10 second max wait time
+        timeout: 30000, // 30 second timeout for complex operations
+      },
+    )
   }
 
   /**

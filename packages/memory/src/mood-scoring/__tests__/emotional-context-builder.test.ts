@@ -236,7 +236,9 @@ describe('EmotionalContextBuilder - Contextual Factor Identification System', ()
         expect(contextualFactors.nonVerbalFactors!.responseLatency).toBe(
           'immediate',
         )
-        expect(contextualFactors.nonVerbalFactors!.emotionalUrgency).toBe('high')
+        expect(contextualFactors.nonVerbalFactors!.emotionalUrgency).toBe(
+          'high',
+        )
         expect(contextualFactors.nonVerbalFactors!.communicationStyle).toBe(
           'stream_of_consciousness',
         )
@@ -251,16 +253,18 @@ describe('EmotionalContextBuilder - Contextual Factor Identification System', ()
         )
 
         expect(contextualFactors.avoidanceFactors!).toBeDefined()
-        expect(contextualFactors.avoidanceFactors!.topicAvoidance).toBe('active')
+        expect(contextualFactors.avoidanceFactors!.topicAvoidance).toBe(
+          'active',
+        )
         expect(contextualFactors.avoidanceFactors!.emotionalWithdrawal).toBe(
           'moderate',
         )
         expect(
           contextualFactors.avoidanceFactors!.deflectionStrategies,
         ).toContain('subject_change')
-        expect(contextualFactors.avoidanceFactors!.underlyingConcerns).toContain(
-          'fear_of_vulnerability',
-        )
+        expect(
+          contextualFactors.avoidanceFactors!.underlyingConcerns,
+        ).toContain('fear_of_vulnerability')
         expect(contextualFactors.primaryTriggers).toContain(
           'avoidance_behavior',
         )
@@ -301,9 +305,9 @@ describe('EmotionalContextBuilder - Contextual Factor Identification System', ()
         expect(contextualFactors.contextualSummary!.dominantContext).toBe(
           'emotional_support',
         )
-        expect(contextualFactors.contextualSummary!.secondaryContexts).toContain(
-          'vulnerability_sharing',
-        )
+        expect(
+          contextualFactors.contextualSummary!.secondaryContexts,
+        ).toContain('vulnerability_sharing')
         expect(contextualFactors.contextualSummary!.emotionalClimate).toBe(
           'supportive',
         )

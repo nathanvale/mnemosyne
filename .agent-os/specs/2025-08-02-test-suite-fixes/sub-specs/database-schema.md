@@ -8,6 +8,7 @@ This is the database schema implementation for the spec detailed in @.agent-os/s
 ## Schema Analysis
 
 ### Current Schema State
+
 The database schema in `packages/db/prisma/schema.prisma` is well-designed with proper relationships:
 
 ```prisma
@@ -27,14 +28,16 @@ model MoodScore {
 ```
 
 ### Foreign Key Relationships
+
 - **Memory → MoodScore**: One-to-many with cascade delete
-- **MoodScore → MoodFactor**: One-to-many with cascade delete  
+- **MoodScore → MoodFactor**: One-to-many with cascade delete
 - **Memory → MoodDelta**: One-to-many with cascade delete
 - **Memory → DeltaPattern**: One-to-many with cascade delete
 
 ## Required Changes
 
 ### Test Data Creation Order
+
 **Problem**: Tests create child records before parent records exist
 
 **Solution**: Implement proper creation sequence in test utilities:
@@ -49,13 +52,13 @@ async function createTestMemory(prisma: PrismaClient): Promise<Memory> {
       summary: 'Test memory summary',
       confidence: 8,
       contentHash: 'test-hash-' + Date.now(),
-    }
+    },
   })
 }
 
 async function createTestMoodScore(
-  prisma: PrismaClient, 
-  memoryId: string
+  prisma: PrismaClient,
+  memoryId: string,
 ): Promise<MoodScore> {
   return await prisma.moodScore.create({
     data: {
@@ -65,12 +68,13 @@ async function createTestMoodScore(
       descriptors: JSON.stringify(['positive', 'hopeful']),
       algorithmVersion: '1.0.0',
       processingTimeMs: 150,
-    }
+    },
   })
 }
 ```
 
 ### Transaction-Based Test Setup
+
 **Problem**: Partial record creation leads to orphaned data
 
 **Solution**: Use transactions for atomic test data creation:
@@ -81,13 +85,14 @@ async function createCompleteTestData(prisma: PrismaClient) {
     const memory = await createTestMemory(tx)
     const moodScore = await createTestMoodScore(tx, memory.id)
     const moodFactors = await createTestMoodFactors(tx, moodScore.id)
-    
+
     return { memory, moodScore, moodFactors }
   })
 }
 ```
 
 ### Cleanup Order
+
 **Problem**: Deleting parent records before children causes constraint violations
 
 **Solution**: Respect cascade deletion order or use transactions:
@@ -96,7 +101,7 @@ async function createCompleteTestData(prisma: PrismaClient) {
 async function cleanupTestData(prisma: PrismaClient) {
   // Cascade deletes will handle child records automatically
   await prisma.memory.deleteMany({
-    where: { contentHash: { startsWith: 'test-hash-' } }
+    where: { contentHash: { startsWith: 'test-hash-' } },
   })
 }
 ```
@@ -114,6 +119,6 @@ async function cleanupTestData(prisma: PrismaClient) {
 ## Validation Rules
 
 - Every MoodScore must reference an existing Memory
-- Every MoodFactor must reference an existing MoodScore  
+- Every MoodFactor must reference an existing MoodScore
 - Every MoodDelta must reference an existing Memory
 - Test utilities must validate these constraints before record creation
