@@ -17,7 +17,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
     prisma = await WorkerDatabaseFactory.createWorkerPrismaClient()
     await WorkerDatabaseFactory.cleanWorkerData(prisma)
 
-    moodAnalyzer = new MoodScoringAnalyzer()
+    _moodAnalyzer = new MoodScoringAnalyzer()
     deltaDetector = new DeltaDetector()
   }, 30000)
 
