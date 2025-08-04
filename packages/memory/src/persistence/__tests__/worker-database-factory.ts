@@ -47,6 +47,8 @@ export class WorkerDatabaseFactory {
   private static instances = new Map<string, PrismaClient>()
   private static workerId: string | null = null
   private static cleanupRegistered = false
+  // Schema version to force recreation when schema changes
+  private static readonly SCHEMA_VERSION = '2024-08-04-clustering'
 
   /**
    * Gets the current worker ID from environment variables
@@ -98,6 +100,14 @@ export class WorkerDatabaseFactory {
   private static async createWallabyPrismaClient(): Promise<PrismaClient> {
     const workerId = this.getWorkerId()
     const wallabyKey = `wallaby-${workerId}`
+
+    // Check for schema version in environment to force recreation
+    const envSchemaVersion = process.env.WALLABY_SCHEMA_VERSION
+    if (envSchemaVersion !== this.SCHEMA_VERSION) {
+      // Schema has changed, clear all cached instances
+      this.clearCachedInstances()
+      process.env.WALLABY_SCHEMA_VERSION = this.SCHEMA_VERSION
+    }
 
     // Return existing instance if already created for this worker
     if (this.instances.has(wallabyKey)) {
@@ -293,6 +303,11 @@ export class WorkerDatabaseFactory {
         )
       `
 
+      // For Wallaby.js in-memory databases, drop and recreate to ensure schema is current
+      if (process.env.WALLABY_WORKER === 'true') {
+        await prisma.$executeRaw`DROP TABLE IF EXISTS "Memory"`
+      }
+
       await prisma.$executeRaw`
         CREATE TABLE IF NOT EXISTS "Memory" (
           "id" TEXT NOT NULL PRIMARY KEY,
@@ -310,6 +325,23 @@ export class WorkerDatabaseFactory {
           "clusterParticipationCount" INTEGER NOT NULL DEFAULT 0
         )
       `
+
+      // Ensure clustering columns exist (for existing tables)
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "clusteringMetadata" TEXT`
+      } catch {
+        /* Column already exists */
+      }
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "lastClusteredAt" DATETIME`
+      } catch {
+        /* Column already exists */
+      }
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "clusterParticipationCount" INTEGER NOT NULL DEFAULT 0`
+      } catch {
+        /* Column already exists */
+      }
 
       await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "Memory_contentHash_key" ON "Memory"("contentHash")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_contentHash_idx" ON "Memory"("contentHash")`
