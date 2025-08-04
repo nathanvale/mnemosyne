@@ -1,5 +1,5 @@
 {
-  "extends": "./packages/shared/tsconfig.app.json",
+  "extends": "./packages/typescript-config/base.json",
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
@@ -9,11 +9,15 @@
       "@studio/test-config": ["./packages/test-config/src"],
       "@studio/ui": ["./packages/ui/src"],
       "@studio/mocks": ["./packages/mocks/src"],
-      "@studio/shared": ["./packages/shared/src"]
+      "@studio/shared": ["./packages/shared/src"],
+      "@studio/typescript-config": ["./packages/typescript-config/src"],
+      "@studio/prettier-config": ["./packages/prettier-config"]
     }
   },
   "references": [
     { "path": "./packages/shared" },
+    { "path": "./packages/typescript-config" },
+    { "path": "./packages/prettier-config" },
     { "path": "./packages/db" },
     { "path": "./packages/mocks" },
     { "path": "./packages/test-config" },

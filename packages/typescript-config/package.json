@@ -1,0 +1,19 @@
+{
+  "name": "@studio/typescript-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./nextjs.json": "./nextjs.json",
+    "./library.json": "./library.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "echo 'TypeScript config - no build needed'",
+    "clean": "echo 'TypeScript config - no clean needed'"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

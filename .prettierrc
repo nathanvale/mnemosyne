@@ -1,16 +1,1 @@
-{
-  "arrowParens": "always",
-  "overrides": [
-    {
-      "files": [".eslintrc", ".eslintrc.js", ".eslintrc.json"],
-      "options": {
-        "trailingComma": "none"
-      }
-    }
-  ],
-  "printWidth": 80,
-  "semi": false,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "all"
-}
+"@studio/prettier-config"

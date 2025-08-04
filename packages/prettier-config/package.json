@@ -1,0 +1,17 @@
+{
+  "name": "@studio/prettier-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "echo 'Prettier config - no build needed'",
+    "clean": "echo 'Prettier config - no clean needed'"
+  },
+  "peerDependencies": {
+    "prettier": "^3.0.0"
+  }
+}

@@ -21,7 +21,7 @@ export const nextConfig = [
   ...baseConfig,
 
   // Next.js specific configurations
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...compat.extends('next/core-web-vitals'),
 
   // Storybook configuration (if using Storybook)
   ...storybook.configs['flat/recommended'],

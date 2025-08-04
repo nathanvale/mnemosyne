@@ -48,7 +48,11 @@ export const baseConfig = [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
           ignoreRestSiblings: true,
+          args: 'after-used',
+          vars: 'all',
+          destructuredArrayIgnorePattern: '^_',
         },
       ],
       'no-unused-vars': 'off',
