@@ -102,6 +102,21 @@ export class WorkerDatabaseFactory {
   }
 
   /**
+   * Forces clearing of all cached instances (useful for schema updates)
+   */
+  static clearCachedInstances(): void {
+    for (const [, instance] of this.instances.entries()) {
+      try {
+        instance.$disconnect()
+      } catch {
+        // Ignore disconnect errors
+      }
+    }
+    this.instances.clear()
+    this.workerId = null
+  }
+
+  /**
    * Registers cleanup handlers to prevent database file accumulation
    */
   private static registerCleanupHandlers(): void {
@@ -254,7 +269,10 @@ export class WorkerDatabaseFactory {
           "deduplicationMetadata" TEXT,
           "extractedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" DATETIME NOT NULL
+          "updatedAt" DATETIME NOT NULL,
+          "clusteringMetadata" TEXT,
+          "lastClusteredAt" DATETIME,
+          "clusterParticipationCount" INTEGER NOT NULL DEFAULT 0
         )
       `
 
@@ -264,9 +282,13 @@ export class WorkerDatabaseFactory {
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_confidence_idx" ON "Memory"("confidence")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_extractedAt_confidence_idx" ON "Memory"("extractedAt", "confidence")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_createdAt_idx" ON "Memory"("createdAt")`
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_lastClusteredAt_clusterParticipationCount_idx" ON "Memory"("lastClusteredAt", "clusterParticipationCount")`
 
       // Continue with other essential tables for testing
       await this.createMoodScoringTables(prisma)
+
+      // Create clustering tables for tone-tagged memory clustering
+      await this.createClusteringTables(prisma)
     } catch (error) {
       console.error(
         `CRITICAL: Worker database migration failed for worker ${this.getWorkerId()}:`,
@@ -534,6 +556,101 @@ export class WorkerDatabaseFactory {
   }
 
   /**
+   * Creates the clustering tables needed for tone-tagged memory clustering tests
+   */
+  private static async createClusteringTables(
+    prisma: PrismaClient,
+  ): Promise<void> {
+    // MemoryCluster table
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "MemoryCluster" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL UNIQUE,
+        "clusterTheme" TEXT NOT NULL,
+        "emotionalTone" TEXT NOT NULL,
+        "coherenceScore" REAL NOT NULL,
+        "psychologicalSignificance" REAL NOT NULL,
+        "participantPatterns" TEXT NOT NULL,
+        "clusterMetadata" TEXT NOT NULL,
+        "memoryCount" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        "lastAnalyzedAt" DATETIME
+      )
+    `
+
+    await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "MemoryCluster_clusterId_key" ON "MemoryCluster"("clusterId")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "MemoryCluster_coherenceScore_createdAt_idx" ON "MemoryCluster"("coherenceScore", "createdAt")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "MemoryCluster_psychologicalSignificance_memoryCount_idx" ON "MemoryCluster"("psychologicalSignificance", "memoryCount")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "MemoryCluster_clusterTheme_emotionalTone_idx" ON "MemoryCluster"("clusterTheme", "emotionalTone")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "MemoryCluster_updatedAt_lastAnalyzedAt_idx" ON "MemoryCluster"("updatedAt", "lastAnalyzedAt")`
+
+    // ClusterMembership table
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "ClusterMembership" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL,
+        "memoryId" TEXT NOT NULL,
+        "membershipStrength" REAL NOT NULL,
+        "contributionScore" REAL NOT NULL,
+        "addedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ClusterMembership_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "ClusterMembership_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )
+    `
+
+    await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "ClusterMembership_clusterId_memoryId_key" ON "ClusterMembership"("clusterId", "memoryId")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterMembership_clusterId_membershipStrength_idx" ON "ClusterMembership"("clusterId", "membershipStrength")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterMembership_memoryId_contributionScore_idx" ON "ClusterMembership"("memoryId", "contributionScore")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterMembership_membershipStrength_addedAt_idx" ON "ClusterMembership"("membershipStrength", "addedAt")`
+
+    // PatternAnalysis table
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "PatternAnalysis" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "patternId" TEXT NOT NULL UNIQUE,
+        "clusterId" TEXT NOT NULL,
+        "patternType" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "frequency" INTEGER NOT NULL,
+        "strength" REAL NOT NULL,
+        "confidenceLevel" REAL NOT NULL,
+        "psychologicalIndicators" TEXT NOT NULL,
+        "emotionalCharacteristics" TEXT NOT NULL,
+        "analyzedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "PatternAnalysis_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE
+      )
+    `
+
+    await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "PatternAnalysis_patternId_key" ON "PatternAnalysis"("patternId")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "PatternAnalysis_patternType_confidenceLevel_idx" ON "PatternAnalysis"("patternType", "confidenceLevel")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "PatternAnalysis_clusterId_strength_idx" ON "PatternAnalysis"("clusterId", "strength")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "PatternAnalysis_confidenceLevel_frequency_idx" ON "PatternAnalysis"("confidenceLevel", "frequency")`
+
+    // ClusterQualityMetrics table
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "ClusterQualityMetrics" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL UNIQUE,
+        "overallCoherence" REAL NOT NULL,
+        "emotionalConsistency" REAL NOT NULL,
+        "thematicUnity" REAL NOT NULL,
+        "psychologicalMeaningfulness" REAL NOT NULL,
+        "incoherentMemoryCount" INTEGER NOT NULL DEFAULT 0,
+        "strengthAreas" TEXT NOT NULL,
+        "improvementAreas" TEXT NOT NULL,
+        "confidenceLevel" REAL NOT NULL,
+        "assessedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ClusterQualityMetrics_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE
+      )
+    `
+
+    await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "ClusterQualityMetrics_clusterId_key" ON "ClusterQualityMetrics"("clusterId")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterQualityMetrics_overallCoherence_assessedAt_idx" ON "ClusterQualityMetrics"("overallCoherence", "assessedAt")`
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "ClusterQualityMetrics_psychologicalMeaningfulness_confidenceLevel_idx" ON "ClusterQualityMetrics"("psychologicalMeaningfulness", "confidenceLevel")`
+  }
+
+  /**
    * Cleans up all worker databases and disconnects clients
    * Should be called in global test teardown
    */
@@ -664,6 +781,9 @@ export class WorkerDatabaseFactory {
       // Level 4: Most dependent tables
       await this.safeDeleteFromTable(prisma, 'DeltaPatternAssociation')
       await this.safeDeleteFromTable(prisma, 'MoodFactor')
+      await this.safeDeleteFromTable(prisma, 'ClusterMembership')
+      await this.safeDeleteFromTable(prisma, 'PatternAnalysis')
+      await this.safeDeleteFromTable(prisma, 'ClusterQualityMetrics')
 
       // Level 3: Tables with foreign keys to Level 2
       await this.safeDeleteFromTable(prisma, 'DeltaPattern')
@@ -682,6 +802,7 @@ export class WorkerDatabaseFactory {
       // Level 1: Independent tables and Memory (parent table)
       await this.safeDeleteFromTable(prisma, 'Memory')
       await this.safeDeleteFromTable(prisma, 'CalibrationHistory')
+      await this.safeDeleteFromTable(prisma, 'MemoryCluster')
 
       // Level 0: Base tables
       await this.safeDeleteFromTable(prisma, 'Asset')
