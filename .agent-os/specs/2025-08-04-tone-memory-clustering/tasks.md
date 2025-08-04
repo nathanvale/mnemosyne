@@ -15,14 +15,14 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.5 Create database operation utilities for cluster persistence and retrieval
   - [x] 1.6 Verify all database schema tests pass with proper data integrity validation
 
-- [ ] 2. Core Clustering Feature Extraction System
-  - [ ] 2.1 Write tests for multi-dimensional feature extraction from emotional memories
-  - [ ] 2.2 Implement EmotionalToneExtractor for sentiment analysis and emotional intensity calculation
-  - [ ] 2.3 Implement CommunicationStyleExtractor for linguistic patterns and emotional openness analysis
-  - [ ] 2.4 Implement RelationshipContextExtractor for participant dynamics and interaction patterns
-  - [ ] 2.5 Implement PsychologicalIndicatorExtractor for coping mechanisms and resilience patterns
-  - [ ] 2.6 Create FeatureSimilarityCalculator with weighted multi-dimensional similarity scoring
-  - [ ] 2.7 Verify all feature extraction tests pass with accurate similarity calculations
+- [x] 2. Core Clustering Feature Extraction System
+  - [x] 2.1 Write tests for multi-dimensional feature extraction from emotional memories
+  - [x] 2.2 Implement EmotionalToneExtractor for sentiment analysis and emotional intensity calculation
+  - [x] 2.3 Implement CommunicationStyleExtractor for linguistic patterns and emotional openness analysis
+  - [x] 2.4 Implement RelationshipContextExtractor for participant dynamics and interaction patterns
+  - [x] 2.5 Implement PsychologicalIndicatorExtractor for coping mechanisms and resilience patterns
+  - [x] 2.6 Create FeatureSimilarityCalculator with weighted multi-dimensional similarity scoring
+  - [x] 2.7 Verify all feature extraction tests pass with accurate similarity calculations
 
 - [ ] 3. Hierarchical Clustering Algorithm Implementation
   - [ ] 3.1 Write tests for hierarchical clustering with psychological coherence constraints
