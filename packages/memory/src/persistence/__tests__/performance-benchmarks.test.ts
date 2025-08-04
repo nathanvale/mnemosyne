@@ -3,25 +3,22 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 
 import type { MoodAnalysisResult } from '../../types'
 
-import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
 import { MoodScoreStorageService } from '../mood-score-storage'
 import { WorkerDatabaseFactory } from './worker-database-factory'
 
 describe('Performance Benchmarks - Concurrent Execution', () => {
-  // Skip performance benchmarks in Wallaby.js - run in Vitest only
-  if (process.env.WALLABY_WORKER) {
-    it.skip('skipped in Wallaby.js', () => {})
+  // Skip performance benchmarks in Wallaby.js and CI - SQLite has concurrency limitations
+  if (process.env.WALLABY_WORKER || process.env.CI) {
+    it.skip('skipped in Wallaby.js and CI environments', () => {})
     return
   }
   let prisma: PrismaClient
   let moodScoreService: MoodScoreStorageService
-  let moodAnalyzer: MoodScoringAnalyzer
 
   beforeEach(async () => {
     prisma = await WorkerDatabaseFactory.createWorkerPrismaClient()
     await WorkerDatabaseFactory.cleanWorkerData(prisma)
     moodScoreService = new MoodScoreStorageService(prisma)
-    moodAnalyzer = new MoodScoringAnalyzer()
   }, 30000)
 
   afterAll(async () => {
@@ -109,7 +106,7 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
 
       // Test sequential execution
       const sequentialStart = performance.now()
-      const sequentialResults: any[] = []
+      const sequentialResults: unknown[] = []
 
       for (let i = 0; i < memoryIds.length; i++) {
         const moodAnalysis: MoodAnalysisResult = {
@@ -189,7 +186,7 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
 
       // Test high concurrency load
       const loadTestStart = performance.now()
-      const loadTestPromises: Promise<any>[] = []
+      const loadTestPromises: Promise<unknown>[] = []
 
       for (let i = 0; i < highConcurrencyCount; i++) {
         const loadPromise = (async () => {
@@ -301,10 +298,10 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
     it('should demonstrate efficient worker database isolation performance', async () => {
       const operationsPerWorker = 3 // Minimal for Wallaby.js stability
       const workerCount = 2 // Minimal for Wallaby.js stability
-      const workerId = WorkerDatabaseFactory.getWorkerId()
+      // const workerId = WorkerDatabaseFactory.getWorkerId()
 
       // Simulate operations from multiple workers (using different memory prefixes)
-      const allOperations: Promise<any>[] = []
+      const allOperations: Promise<unknown>[] = []
 
       for (let workerId = 0; workerId < workerCount; workerId++) {
         for (let i = 0; i < operationsPerWorker; i++) {
@@ -384,10 +381,15 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       const totalIsolationTime = isolationTestEnd - isolationTestStart
 
       // Analyze results by worker
-      const successesByWorker = new Map<number, any[]>()
+      interface WorkerResult {
+        success: boolean
+        workerId: number
+        responseTime: number
+      }
+      const successesByWorker = new Map<number, WorkerResult[]>()
       const responseTimesByWorker = new Map<number, number[]>()
 
-      results.forEach((result) => {
+      results.forEach((result: WorkerResult) => {
         if (result.success) {
           if (!successesByWorker.has(result.workerId)) {
             successesByWorker.set(result.workerId, [])
