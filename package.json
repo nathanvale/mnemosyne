@@ -14,7 +14,7 @@
     "docs:dev": "pnpm --filter @studio/docs dev",
     "build": "turbo build",
     "start": "pnpm --filter @studio/app start",
-    "lint": "turbo lint lint:root",
+    "lint": "turbo lint",
     "lint:root": "eslint . --max-warnings 0",
     "lint:staged": "tsx packages/scripts/src/eslint-check-staged.ts",
     "format": "prettier --write .",

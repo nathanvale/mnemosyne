@@ -13,6 +13,12 @@ export default [
       'packages/db/generated/**/*',
       'packages/db/prisma/wallaby*',
       'pnpm-lock.yaml',
+      '.claude/**/*',
+      'packages/memory/.claude/**/*',
+      'apps/docs/.docusaurus/**/*',
+      'public/mockServiceWorker.js',
+      'apps/studio/public/mockServiceWorker.js',
+      'wallaby.cjs',
     ],
   },
 ]

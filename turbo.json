@@ -15,7 +15,10 @@
     "LOG_LEVEL",
     "LOGGER_MODE",
     "LOGGER_PRETTY",
-    "LOGGER_CALLSITE"
+    "LOGGER_CALLSITE",
+    "WALLABY_QUIET",
+    "JEST_WORKER_ID",
+    "WALLABY_SCHEMA_VERSION"
   ],
   "tasks": {
     "build": {
@@ -56,11 +59,6 @@
         "package.json",
         "tsconfig.json"
       ],
-      "outputs": [],
-      "cache": true
-    },
-    "//#lint:root": {
-      "inputs": ["*.js", "*.ts", "*.mjs", "eslint.config.*", "package.json"],
       "outputs": [],
       "cache": true
     },
