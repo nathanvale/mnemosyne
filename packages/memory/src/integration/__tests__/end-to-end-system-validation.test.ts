@@ -65,7 +65,12 @@ describe('End-to-End System Validation - Task 7.8', () => {
     it('should process therapeutic breakthrough conversation with high accuracy', async () => {
       const conversation = realisticConversations.find((c) =>
         c.id.includes('therapeutic-breakthrough'),
-      )!
+      )
+      if (!conversation) {
+        throw new Error(
+          'Therapeutic breakthrough conversation not found in test data',
+        )
+      }
       const startTime = Date.now()
 
       // Process through complete system
@@ -100,7 +105,12 @@ describe('End-to-End System Validation - Task 7.8', () => {
     it('should handle crisis intervention conversation with appropriate urgency detection', async () => {
       const conversation = realisticConversations.find((c) =>
         c.id.includes('crisis-intervention'),
-      )!
+      )
+      if (!conversation) {
+        throw new Error(
+          'Crisis intervention conversation not found in test data',
+        )
+      }
       const startTime = Date.now()
 
       const systemResult = await processConversationThroughSystem(conversation)
@@ -129,7 +139,12 @@ describe('End-to-End System Validation - Task 7.8', () => {
     it('should accurately process relationship conflict resolution conversation', async () => {
       const conversation = realisticConversations.find((c) =>
         c.id.includes('relationship-conflict'),
-      )!
+      )
+      if (!conversation) {
+        throw new Error(
+          'Relationship conflict conversation not found in test data',
+        )
+      }
       const startTime = Date.now()
 
       const systemResult = await processConversationThroughSystem(conversation)
@@ -168,7 +183,10 @@ describe('End-to-End System Validation - Task 7.8', () => {
     it('should handle casual support conversation with appropriate prioritization', async () => {
       const conversation = realisticConversations.find((c) =>
         c.id.includes('casual-support'),
-      )!
+      )
+      if (!conversation) {
+        throw new Error('Casual support conversation not found in test data')
+      }
       const startTime = Date.now()
 
       const systemResult = await processConversationThroughSystem(conversation)
