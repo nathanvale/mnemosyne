@@ -4,10 +4,6 @@ import type {
   ValidationResult,
   CalibrationAdjustment,
   ValidationMetrics,
-  BiasAnalysis,
-  DiscrepancyAnalysis,
-  IndividualValidationAnalysis,
-  ValidatorConsistency,
 } from '../../types'
 
 import { AlgorithmCalibrationManager } from '../calibration-system'
@@ -143,7 +139,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock successful parameter application
-      vi.spyOn(calibrationManager as any, 'applyParameterAdjustments').mockResolvedValue(true)
+      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockResolvedValue(true)
 
       const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
 
@@ -157,7 +153,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock failed parameter application
-      vi.spyOn(calibrationManager as any, 'applyParameterAdjustments').mockResolvedValue(false)
+      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockResolvedValue(false)
 
       const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
 
@@ -171,7 +167,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const adjustments = [createMockCalibrationAdjustment()]
 
       // Mock error during parameter application
-      vi.spyOn(calibrationManager as any, 'applyParameterAdjustments').mockRejectedValue(new Error('Application failed'))
+      vi.spyOn(calibrationManager as unknown as { applyParameterAdjustments: () => Promise<boolean> }, 'applyParameterAdjustments').mockRejectedValue(new Error('Application failed'))
 
       const result = await calibrationManager.applyCalibrationAdjustments(adjustments)
 
@@ -210,7 +206,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       const afterValidationResult = createWorsenedValidationResult()
 
       // Mock revert function
-      vi.spyOn(calibrationManager as any, 'revertCalibrationAdjustment').mockResolvedValue(undefined)
+      vi.spyOn(calibrationManager as unknown as { revertCalibrationAdjustment: () => Promise<void> }, 'revertCalibrationAdjustment').mockResolvedValue(undefined)
 
       const validatedAdjustment = await calibrationManager.validateCalibrationEffectiveness(
         adjustment,
@@ -283,7 +279,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Bias Pattern Analysis and Correction', () => {
     it('should generate appropriate target components for different bias types', () => {
-      const manager = calibrationManager as any
+      const manager = calibrationManager as unknown as { getBiasTargetComponent: (biasType: string) => string }
       
       expect(manager.getBiasTargetComponent('emotional_minimization')).toBe('sentiment_analysis')
       expect(manager.getBiasTargetComponent('sarcasm_detection_failure')).toBe('sentiment_analysis')
@@ -294,7 +290,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
     })
 
     it('should calculate bias correction factors based on severity and sample size', () => {
-      const manager = calibrationManager as any
+      const manager = calibrationManager as unknown as { getBiasCorrectionFactor: (bias: { severity: string; affectedSamples: number }) => number }
       
       const highSeverityBias = { severity: 'high' as const, affectedSamples: 10 }
       const mediumSeverityBias = { severity: 'medium' as const, affectedSamples: 5 }
@@ -313,7 +309,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Parameter Adjustment Simulation', () => {
     it('should simulate parameter adjustment with high success rate', async () => {
-      const manager = calibrationManager as any
+      const manager = calibrationManager as unknown as { applyParameterAdjustments: (adjustment: CalibrationAdjustment) => Promise<boolean> }
       const adjustment = createMockCalibrationAdjustment()
 
       // Test multiple times to verify success rate
@@ -330,7 +326,7 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Bias Reduction Calculation', () => {
     it('should calculate bias reduction between validation metrics', () => {
-      const manager = calibrationManager as any
+      const manager = calibrationManager as unknown as { calculateBiasReduction: (before: ValidationMetrics, after: ValidationMetrics) => number }
       
       const beforeMetrics: ValidationMetrics = {
         pearsonCorrelation: 0.6,

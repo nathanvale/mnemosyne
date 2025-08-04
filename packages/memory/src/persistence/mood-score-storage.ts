@@ -2,6 +2,11 @@ import { PrismaClient } from '@studio/db'
 
 import type { MoodAnalysisResult, MoodDelta } from '../types'
 
+type PrismaTransaction = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
 export interface StoredMoodScore {
   id: string
   memoryId: string
@@ -77,65 +82,99 @@ export class MoodScoreStorageService {
       duration: number
       algorithmVersion: string
     },
+    transaction?: PrismaTransaction,
   ): Promise<StoredMoodScore> {
-    // Store the mood score
-    const storedScore = await this.prisma.moodScore.create({
-      data: {
-        memoryId,
-        score: moodAnalysis.score,
-        confidence: moodAnalysis.confidence,
-        descriptors: JSON.stringify(moodAnalysis.descriptors),
-        algorithmVersion: processingMetrics.algorithmVersion,
-        processingTimeMs: processingMetrics.duration,
-      },
-      include: {
-        factors: true,
-      },
-    })
+    // Use provided transaction or create a new one
+    const execute = async (tx: PrismaTransaction) => {
+      try {
+        // Verify memory exists before creating mood score
+        const memoryExists = await tx.memory.findUnique({
+          where: { id: memoryId },
+          select: { id: true },
+        })
 
-    // Store the factors
-    const factorData = moodAnalysis.factors.map((factor) => ({
-      moodScoreId: storedScore.id,
-      type: factor.type,
-      weight: factor.weight,
-      description: factor.description,
-      evidence: JSON.stringify(factor.evidence),
-      internalScore: factor._score,
-    }))
+        if (!memoryExists) {
+          throw new Error(`Memory with id ${memoryId} does not exist`)
+        }
 
-    await this.prisma.moodFactor.createMany({
-      data: factorData,
-    })
+        // Store the mood score
+        const storedScore = await tx.moodScore.create({
+          data: {
+            memoryId,
+            score: moodAnalysis.score,
+            confidence: moodAnalysis.confidence,
+            descriptors: JSON.stringify(moodAnalysis.descriptors),
+            algorithmVersion: processingMetrics.algorithmVersion,
+            processingTimeMs: processingMetrics.duration,
+          },
+        })
 
-    // Fetch the created factors to return complete data
-    const createdFactors = await this.prisma.moodFactor.findMany({
-      where: { moodScoreId: storedScore.id },
-      orderBy: { createdAt: 'asc' },
-    })
+        // Store the factors
+        const factorData = moodAnalysis.factors.map((factor) => ({
+          moodScoreId: storedScore.id,
+          type: factor.type,
+          weight: factor.weight,
+          description: factor.description,
+          evidence: JSON.stringify(factor.evidence),
+          internalScore: factor._score,
+        }))
 
-    return {
-      id: storedScore.id,
-      memoryId: storedScore.memoryId,
-      score: storedScore.score,
-      confidence: storedScore.confidence,
-      descriptors: JSON.parse(storedScore.descriptors),
-      factors: createdFactors.map((factor) => ({
-        id: factor.id,
-        moodScoreId: factor.moodScoreId,
-        type: factor.type,
-        weight: factor.weight,
-        description: factor.description,
-        evidence: JSON.parse(factor.evidence),
-        internalScore: factor.internalScore || undefined,
-        createdAt: factor.createdAt,
-      })),
-      metadata: {
-        calculatedAt: storedScore.calculatedAt,
-        algorithmVersion: storedScore.algorithmVersion,
-        processingTimeMs: storedScore.processingTimeMs,
-      },
-      createdAt: storedScore.createdAt,
-      updatedAt: storedScore.updatedAt,
+        if (factorData.length > 0) {
+          await tx.moodFactor.createMany({
+            data: factorData,
+          })
+        }
+
+        // Fetch the created factors to return complete data
+        const createdFactors = await tx.moodFactor.findMany({
+          where: { moodScoreId: storedScore.id },
+          orderBy: { createdAt: 'asc' },
+        })
+
+        return {
+          id: storedScore.id,
+          memoryId: storedScore.memoryId,
+          score: storedScore.score,
+          confidence: storedScore.confidence,
+          descriptors: JSON.parse(storedScore.descriptors),
+          factors: createdFactors.map((factor) => ({
+            id: factor.id,
+            moodScoreId: factor.moodScoreId,
+            type: factor.type,
+            weight: factor.weight,
+            description: factor.description,
+            evidence: JSON.parse(factor.evidence),
+            internalScore: factor.internalScore || undefined,
+            createdAt: factor.createdAt,
+          })),
+          metadata: {
+            calculatedAt: storedScore.calculatedAt,
+            algorithmVersion: storedScore.algorithmVersion,
+            processingTimeMs: storedScore.processingTimeMs,
+          },
+          createdAt: storedScore.createdAt,
+          updatedAt: storedScore.updatedAt,
+        }
+      } catch (error) {
+        // Re-throw with more context
+        if (error instanceof Error) {
+          if (error.message.includes('Transaction')) {
+            throw new Error(`Transaction error in storeMoodScore: ${error.message}`)
+          }
+        }
+        throw error
+      }
+    }
+
+    // Use provided transaction or create a new one
+    if (transaction) {
+      return await execute(transaction)
+    } else {
+      // Create new transaction with timeout
+      return await this.prisma.$transaction(execute, {
+        maxWait: 5000, // 5 second max wait time
+        timeout: 10000, // 10 second timeout
+      })
     }
   }
 
@@ -176,41 +215,65 @@ export class MoodScoreStorageService {
   async storeMoodDeltas(
     memoryId: string,
     deltas: MoodDelta[],
+    transaction?: PrismaTransaction,
   ): Promise<StoredMoodDelta[]> {
-    const deltaData = deltas.map((delta) => ({
-      memoryId,
-      magnitude: delta.magnitude,
-      direction: delta.direction,
-      type: delta.type,
-      confidence: delta.confidence,
-      factors: JSON.stringify(delta.factors),
-      significance: 0.8, // Default significance - this should come from delta analysis
-      currentScore: 6.5, // Default score - this should come from actual mood analysis
-    }))
+    const execute = async (tx: PrismaTransaction) => {
+      // Verify memory exists before creating deltas
+      const memoryExists = await tx.memory.findUnique({
+        where: { id: memoryId },
+        select: { id: true },
+      })
 
-    await this.prisma.moodDelta.createMany({
-      data: deltaData,
-    })
+      if (!memoryExists) {
+        throw new Error(`Memory with id ${memoryId} does not exist`)
+      }
 
-    const createdDeltas = await this.prisma.moodDelta.findMany({
-      where: { memoryId },
-      orderBy: { createdAt: 'asc' },
-    })
+      const deltaData = deltas.map((delta) => ({
+        memoryId,
+        magnitude: delta.magnitude,
+        direction: delta.direction,
+        type: delta.type,
+        confidence: delta.confidence,
+        factors: JSON.stringify(delta.factors),
+        significance: 0.8, // Default significance - this should come from delta analysis
+        currentScore: 6.5, // Default score - this should come from actual mood analysis
+      }))
 
-    return createdDeltas.map((delta) => ({
-      id: delta.id,
-      memoryId: delta.memoryId,
-      magnitude: delta.magnitude,
-      direction: delta.direction as 'positive' | 'negative' | 'neutral',
-      type: delta.type as 'mood_repair' | 'celebration' | 'decline' | 'plateau',
-      confidence: delta.confidence,
-      factors: JSON.parse(delta.factors),
-      significance: delta.significance,
-      previousScore: delta.previousScore || undefined,
-      currentScore: delta.currentScore,
-      detectedAt: delta.detectedAt,
-      createdAt: delta.createdAt,
-    }))
+      await tx.moodDelta.createMany({
+        data: deltaData,
+      })
+
+      const createdDeltas = await tx.moodDelta.findMany({
+        where: { memoryId },
+        orderBy: { createdAt: 'asc' },
+      })
+
+      return createdDeltas.map((delta) => ({
+        id: delta.id,
+        memoryId: delta.memoryId,
+        magnitude: delta.magnitude,
+        direction: delta.direction as 'positive' | 'negative' | 'neutral',
+        type: delta.type as
+          | 'mood_repair'
+          | 'celebration'
+          | 'decline'
+          | 'plateau',
+        confidence: delta.confidence,
+        factors: JSON.parse(delta.factors),
+        significance: delta.significance,
+        previousScore: delta.previousScore || undefined,
+        currentScore: delta.currentScore,
+        detectedAt: delta.detectedAt,
+        createdAt: delta.createdAt,
+      }))
+    }
+
+    // Use provided transaction or create a new one
+    if (transaction) {
+      return await execute(transaction)
+    } else {
+      return await this.prisma.$transaction(execute)
+    }
   }
 
   async storeAnalysisMetadata(
@@ -467,6 +530,184 @@ export class MoodScoreStorageService {
       currentScore: delta.currentScore,
       detectedAt: delta.detectedAt,
       createdAt: delta.createdAt,
+    }))
+  }
+
+  // Additional query methods for performance testing
+
+  async getMoodScoresByMemoryId(memoryId: string): Promise<StoredMoodScore[]> {
+    const results = await this.prisma.moodScore.findMany({
+      where: { memoryId },
+      include: {
+        factors: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return results.map((result) => ({
+      id: result.id,
+      memoryId: result.memoryId,
+      score: result.score,
+      confidence: result.confidence,
+      descriptors: JSON.parse(result.descriptors),
+      factors: result.factors.map((factor) => ({
+        id: factor.id,
+        moodScoreId: factor.moodScoreId,
+        type: factor.type,
+        weight: factor.weight,
+        description: factor.description,
+        evidence: JSON.parse(factor.evidence),
+        internalScore: factor.internalScore || undefined,
+        createdAt: factor.createdAt,
+      })),
+      metadata: {
+        calculatedAt: result.calculatedAt,
+        algorithmVersion: result.algorithmVersion,
+        processingTimeMs: result.processingTimeMs,
+      },
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    }))
+  }
+
+  async getMoodScoresByConfidenceRange(
+    minConfidence: number,
+    maxConfidence: number,
+    limit?: number,
+  ): Promise<StoredMoodScore[]> {
+    const results = await this.prisma.moodScore.findMany({
+      where: {
+        confidence: {
+          gte: minConfidence,
+          lte: maxConfidence,
+        },
+      },
+      include: {
+        factors: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { confidence: 'desc' },
+      take: limit,
+    })
+
+    return results.map((result) => ({
+      id: result.id,
+      memoryId: result.memoryId,
+      score: result.score,
+      confidence: result.confidence,
+      descriptors: JSON.parse(result.descriptors),
+      factors: result.factors.map((factor) => ({
+        id: factor.id,
+        moodScoreId: factor.moodScoreId,
+        type: factor.type,
+        weight: factor.weight,
+        description: factor.description,
+        evidence: JSON.parse(factor.evidence),
+        internalScore: factor.internalScore || undefined,
+        createdAt: factor.createdAt,
+      })),
+      metadata: {
+        calculatedAt: result.calculatedAt,
+        algorithmVersion: result.algorithmVersion,
+        processingTimeMs: result.processingTimeMs,
+      },
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    }))
+  }
+
+  async getMoodScoresByScoreRange(
+    minScore: number,
+    maxScore: number,
+    limit?: number,
+  ): Promise<StoredMoodScore[]> {
+    const results = await this.prisma.moodScore.findMany({
+      where: {
+        score: {
+          gte: minScore,
+          lte: maxScore,
+        },
+      },
+      include: {
+        factors: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { score: 'desc' },
+      take: limit,
+    })
+
+    return results.map((result) => ({
+      id: result.id,
+      memoryId: result.memoryId,
+      score: result.score,
+      confidence: result.confidence,
+      descriptors: JSON.parse(result.descriptors),
+      factors: result.factors.map((factor) => ({
+        id: factor.id,
+        moodScoreId: factor.moodScoreId,
+        type: factor.type,
+        weight: factor.weight,
+        description: factor.description,
+        evidence: JSON.parse(factor.evidence),
+        internalScore: factor.internalScore || undefined,
+        createdAt: factor.createdAt,
+      })),
+      metadata: {
+        calculatedAt: result.calculatedAt,
+        algorithmVersion: result.algorithmVersion,
+        processingTimeMs: result.processingTimeMs,
+      },
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    }))
+  }
+
+  async getRecentMoodScores(
+    since: Date,
+    limit?: number,
+  ): Promise<StoredMoodScore[]> {
+    const results = await this.prisma.moodScore.findMany({
+      where: {
+        calculatedAt: {
+          gte: since,
+        },
+      },
+      include: {
+        factors: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { calculatedAt: 'desc' },
+      take: limit,
+    })
+
+    return results.map((result) => ({
+      id: result.id,
+      memoryId: result.memoryId,
+      score: result.score,
+      confidence: result.confidence,
+      descriptors: JSON.parse(result.descriptors),
+      factors: result.factors.map((factor) => ({
+        id: factor.id,
+        moodScoreId: factor.moodScoreId,
+        type: factor.type,
+        weight: factor.weight,
+        description: factor.description,
+        evidence: JSON.parse(factor.evidence),
+        internalScore: factor.internalScore || undefined,
+        createdAt: factor.createdAt,
+      })),
+      metadata: {
+        calculatedAt: result.calculatedAt,
+        algorithmVersion: result.algorithmVersion,
+        processingTimeMs: result.processingTimeMs,
+      },
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     }))
   }
 }

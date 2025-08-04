@@ -18,6 +18,14 @@ interface PriorityFactors {
 }
 
 /**
+ * Delta-specific priority factors
+ */
+interface DeltaFactors {
+  impact: number  // Combined magnitude and significance (0-10)
+  recency: number // How recent the delta occurred (0-10)
+}
+
+/**
  * MemoryPrioritizer handles prioritization logic for memory validation and processing
  */
 export class MemoryPrioritizer {
@@ -118,18 +126,21 @@ export class MemoryPrioritizer {
   }
 
   /**
-   * Calculate priority score for a memory
+   * Calculate priority score for a memory with delta-aware weighting
    */
   async calculatePriorityScore(memory: ExtractedMemory): Promise<number> {
     const factors = await this.assessPriorityFactors(memory)
+    const deltaFactors = this.assessDeltaFactors(memory)
 
-    // Weighted combination of factors
+    // Enhanced weighted combination with delta awareness
     const weights = {
-      significance: 0.35,
-      confidence: 0.2,
+      significance: 0.30, // Reduced to make room for delta factors
+      confidence: 0.15,
       recency: 0.15,
-      urgency: 0.2,
-      uniqueness: 0.1,
+      urgency: 0.20,
+      uniqueness: 0.05,
+      deltaImpact: 0.10, // New: Delta magnitude and significance
+      deltaRecency: 0.05, // New: How recent the delta occurred
     }
 
     let priorityScore = 0
@@ -138,10 +149,13 @@ export class MemoryPrioritizer {
     priorityScore += factors.recency * weights.recency
     priorityScore += factors.urgency * weights.urgency
     priorityScore += factors.uniqueness * weights.uniqueness
+    priorityScore += deltaFactors.impact * weights.deltaImpact
+    priorityScore += deltaFactors.recency * weights.deltaRecency
 
-    logger.debug('Priority score calculated', {
+    logger.debug('Delta-aware priority score calculated', {
       memoryId: memory.id,
       factors,
+      deltaFactors,
       priorityScore,
     })
 
@@ -175,6 +189,85 @@ export class MemoryPrioritizer {
   }
 
   // Private helper methods
+
+  private assessDeltaFactors(memory: ExtractedMemory): DeltaFactors {
+    // Try both delta (singular) and deltas (array) for compatibility
+    const delta = memory.emotionalAnalysis.moodScoring.delta
+    const deltas = (memory.emotionalAnalysis.moodScoring as any).deltas
+    
+    // Determine which structure to use
+    let mostSignificantDelta: any
+    let deltaCount = 0
+    
+    if (delta) {
+      mostSignificantDelta = delta
+      deltaCount = 1
+    } else if (deltas && Array.isArray(deltas) && deltas.length > 0) {
+      // Find the most significant delta from the array
+      mostSignificantDelta = deltas.reduce((max: any, current: any) => 
+        (current.significance || current.magnitude || 0) > (max.significance || max.magnitude || 0) ? current : max
+      )
+      deltaCount = deltas.length
+    } else {
+      return { impact: 0, recency: 0 }
+    }
+
+    // Calculate delta impact (0-10)
+    let impact = 0
+    
+    // Base impact from magnitude and significance
+    const magnitude = mostSignificantDelta.magnitude || 0
+    const significance = mostSignificantDelta.significance || 0
+    impact += (magnitude / 10) * 5 // Magnitude contributes 0-5 points
+    impact += significance * 5 // Significance contributes 0-5 points
+    
+    // Boost for crisis situations (negative deltas to very low scores)
+    if (mostSignificantDelta.direction === 'negative' && 
+        (mostSignificantDelta.currentScore || 0) < 3) {
+      impact += 2
+    }
+    
+    // Boost for mood repair patterns (recovery from low scores)
+    if (mostSignificantDelta.direction === 'positive' && 
+        (mostSignificantDelta.previousScore || 0) < 4 && 
+        (mostSignificantDelta.currentScore || 0) > 6) {
+      impact += 1.5
+    }
+
+    // Boost for relationship context in high-intimacy situations
+    const relationshipDynamics = memory.extendedRelationshipDynamics
+    if (relationshipDynamics?.intimacyLevel === 'high' || 
+        relationshipDynamics?.trustLevel === 'high') {
+      impact += 1
+    }
+
+    impact = Math.min(10, impact)
+
+    // Calculate delta recency (0-10)
+    const deltaTime = new Date(mostSignificantDelta.detectedAt || Date.now())
+    const now = new Date()
+    const hoursSince = (now.getTime() - deltaTime.getTime()) / (1000 * 60 * 60)
+    
+    let recency = 0
+    if (hoursSince <= 1) recency = 10      // Last hour
+    else if (hoursSince <= 6) recency = 9  // Last 6 hours  
+    else if (hoursSince <= 24) recency = 8 // Last day
+    else if (hoursSince <= 72) recency = 6 // Last 3 days
+    else if (hoursSince <= 168) recency = 4 // Last week
+    else recency = 2 // Older
+
+    logger.debug('Delta factors assessed', {
+      memoryId: memory.id,
+      deltaCount,
+      mostSignificantMagnitude: magnitude,
+      mostSignificantSignificance: significance,
+      hoursSince,
+      impact,
+      recency,
+    })
+
+    return { impact, recency }
+  }
 
   private async assessPriorityFactors(
     memory: ExtractedMemory,

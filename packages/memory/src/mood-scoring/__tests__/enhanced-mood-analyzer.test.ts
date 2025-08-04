@@ -13,23 +13,24 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
 
   describe('weighted mood score calculation', () => {
     it('should calculate mood score with correct component weights (35% sentiment, 25% psychological, 20% relationship, 15% conversational, 5% historical)', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-1',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am feeling really grateful and excited about this amazing opportunity! I have learned to cope better with challenges.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
           {
             id: 'msg-2',
             content:
               'Thank you so much for your support and understanding. It means everything to me.',
             authorId: 'user-2',
-            timestamp: new Date(),
+            timestamp: new Date(baseTime.getTime() + 60000),
           },
         ],
         participants: [
@@ -48,6 +49,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
           conversationType: 'direct',
           platform: 'chat',
         },
+        startTime: baseTime,
+        endTime: new Date(baseTime.getTime() + 60000),
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -84,16 +87,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should prioritize sentiment analysis in positive conversations', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-2',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am absolutely ecstatic and overjoyed! This is the best day of my life!',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -103,6 +107,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -116,16 +122,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should incorporate psychological indicators effectively', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-3',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am learning to cope better and building resilience. I have overcome challenges before and I can do it again.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -135,6 +142,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -149,21 +158,22 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should account for relationship context in scoring', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-4',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content: 'I really appreciate your support and understanding.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
           {
             id: 'msg-2',
             content: 'I am here for you always. You can count on me.',
             authorId: 'user-2',
-            timestamp: new Date(),
+            timestamp: new Date(baseTime.getTime() + 60000),
           },
         ],
         participants: [
@@ -181,6 +191,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
         context: {
           conversationType: 'direct',
         },
+        startTime: baseTime,
+        endTime: new Date(baseTime.getTime() + 60000),
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -194,27 +206,28 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should analyze conversational flow patterns', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-5',
-        timestamp: new Date(),
+        timestamp: new Date(baseTime.getTime() - 60000),
         messages: [
           {
             id: 'msg-1',
             content: 'I am struggling with this situation.',
             authorId: 'user-1',
-            timestamp: new Date(Date.now() - 60000), // 1 minute ago
+            timestamp: new Date(baseTime.getTime() - 60000), // 1 minute ago
           },
           {
             id: 'msg-2',
             content: 'What can I do to help you?',
             authorId: 'user-2',
-            timestamp: new Date(Date.now() - 30000), // 30 seconds ago
+            timestamp: new Date(baseTime.getTime() - 30000), // 30 seconds ago
           },
           {
             id: 'msg-3',
             content: 'Thank you for asking. Just talking helps.',
             authorId: 'user-1',
-            timestamp: new Date(), // Now
+            timestamp: baseTime, // Now
           },
         ],
         participants: [
@@ -229,6 +242,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'supporter',
           },
         ],
+        startTime: new Date(baseTime.getTime() - 60000),
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -242,15 +257,16 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should include historical baseline when available', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-6',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content: 'I am feeling much better than I was last week.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -260,6 +276,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -276,16 +294,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
 
   describe('confidence calibration', () => {
     it('should achieve 90%+ accuracy target for uncertainty detection with clear sentiment', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-clear',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am absolutely devastated and heartbroken by this terrible news. I cannot cope with this situation.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -295,6 +314,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -312,15 +333,16 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should detect uncertainty in ambiguous content', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-ambiguous',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content: 'Things happened today. I went places and saw people.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -330,6 +352,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -348,16 +372,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should calibrate confidence based on evidence strength', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-evidence',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am grateful, excited, joyful, and absolutely thrilled about this amazing, wonderful, fantastic opportunity!',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -367,6 +392,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -379,16 +406,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
 
   describe('multi-factor consistency', () => {
     it('should maintain consistency across sentiment and psychological factors', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-consistent',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am happy and grateful. I am building resilience and learning to cope better with challenges.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -398,6 +426,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -416,16 +446,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should handle conflicting factors appropriately', async () => {
+      const baseTime = new Date()
       const conversation: ConversationData = {
         id: 'test-conv-conflict',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am grateful for the support, but I am overwhelmed and struggling with stress.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -435,6 +466,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(conversation)
@@ -499,16 +532,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
 
   describe('80%+ human correlation target', () => {
     it('should score highly positive content above 7.5', async () => {
+      const baseTime = new Date()
       const positiveConversation: ConversationData = {
         id: 'test-positive',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am absolutely thrilled and overjoyed! This is amazing news and I feel so grateful and excited!',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -518,6 +552,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(positiveConversation)
@@ -525,16 +561,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should score negative content below 4.0', async () => {
+      const baseTime = new Date()
       const negativeConversation: ConversationData = {
         id: 'test-negative',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'I am devastated, heartbroken, and completely overwhelmed. I cannot handle this stress and feel hopeless.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -544,6 +581,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(negativeConversation)
@@ -551,16 +590,17 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
     })
 
     it('should score neutral content around 5.0', async () => {
+      const baseTime = new Date()
       const neutralConversation: ConversationData = {
         id: 'test-neutral',
-        timestamp: new Date(),
+        timestamp: baseTime,
         messages: [
           {
             id: 'msg-1',
             content:
               'The meeting is scheduled for tomorrow at 3 PM. Please bring the required documents.',
             authorId: 'user-1',
-            timestamp: new Date(),
+            timestamp: baseTime,
           },
         ],
         participants: [
@@ -570,6 +610,8 @@ describe('Enhanced MoodScoringAnalyzer - Multi-Dimensional Analysis', () => {
             role: 'author',
           },
         ],
+        startTime: baseTime,
+        endTime: baseTime,
       }
 
       const result = await analyzer.analyzeConversation(neutralConversation)

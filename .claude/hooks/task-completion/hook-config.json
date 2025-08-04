@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "name": "Task Completion Sound Hook",
+  "description": "Plays notification sounds when tasks complete",
+  "triggers": {
+    "successTools": ["Write", "Edit", "MultiEdit", "Bash"],
+    "completionPatterns": [
+      "✅",
+      "completed",
+      "finished",
+      "done",
+      "success",
+      "passed"
+    ]
+  },
+  "sounds": {
+    "success": {
+      "enabled": true,
+      "file": "/System/Library/Sounds/Glass.aiff",
+      "fallback": "/System/Library/Sounds/Ping.aiff"
+    },
+    "warning": {
+      "enabled": true,
+      "file": "/System/Library/Sounds/Tink.aiff"
+    },
+    "error": {
+      "enabled": true,
+      "file": "/System/Library/Sounds/Sosumi.aiff"
+    }
+  },
+  "settings": {
+    "playOnSuccess": true,
+    "playOnWarning": true,
+    "playOnError": true,
+    "volume": "medium",
+    "delay": 0,
+    "cooldown": 2000
+  },
+  "filters": {
+    "minExecutionTime": 1000,
+    "excludeTools": ["Read", "LS", "Glob", "Grep"],
+    "quietHours": {
+      "enabled": false,
+      "start": "22:00",
+      "end": "08:00"
+    }
+  }
+}

@@ -110,8 +110,31 @@ export class EmotionalSignificanceAnalyzer {
         type: 'friend',
         supportLevel: 'medium',
         intimacyLevel: 'medium',
+        intimacy: 'medium', // Backwards compatibility
         conflictLevel: 'low',
         trustLevel: 'medium',
+        conflictPresent: false,
+        conflictIntensity: 'low',
+        communicationStyle: 'supportive',
+        communicationStyleDetails: {
+          vulnerabilityLevel: 'medium',
+          emotionalSafety: 'medium',
+          supportPatterns: [],
+          conflictPatterns: [],
+          professionalBoundaries: false,
+          guidancePatterns: [],
+          therapeuticElements: [],
+        },
+        participantDynamics: {
+          supportBalance: 'balanced',
+          mutualVulnerability: false,
+        },
+        emotionalSafety: {
+          overall: 'medium',
+          acceptanceLevel: 'medium',
+          judgmentRisk: 'low',
+          validationPresent: false,
+        },
       },
       memory.participants.map((p) => ({
         id: p.id,
@@ -137,9 +160,10 @@ export class EmotionalSignificanceAnalyzer {
     const category = this.categorizeSignificance(overall)
 
     // Calculate validation priority
-    const validationPriority = this.calculateValidationPriority(
+    const validationPriority = this.calculateValidationPriorityWithMemory(
       overall,
       memory.processing.confidence,
+      memory,
     )
 
     // Calculate confidence in significance assessment
@@ -235,6 +259,47 @@ export class EmotionalSignificanceAnalyzer {
   private assessContextualImportance(memory: ExtractedMemory): number {
     let score = 5.0 // Base score
 
+    const content = memory.content.toLowerCase()
+    const moodDescriptors = memory.emotionalAnalysis.moodScoring.descriptors.map(d => d.toLowerCase())
+    
+    // Check for crisis indicators - highest priority
+    const crisisKeywords = [
+      'crisis', 'emergency', 'urgent', 'distress', 'suicidal', 'self-harm',
+      'despair', 'hopelessness', 'overwhelming', 'can\'t cope', 'breaking point'
+    ]
+    
+    const hasCrisisContext = crisisKeywords.some(keyword =>
+      content.includes(keyword) || moodDescriptors.some(desc => desc.includes(keyword))
+    )
+    
+    if (hasCrisisContext) {
+      score = 9.5 // Crisis situations have very high contextual importance
+    }
+    
+    // Check for vulnerability in therapeutic/high-trust contexts - very high contextual importance
+    const hasVulnerability = moodDescriptors.some(desc => desc.includes('vulnerable'))
+    const isTherapeuticContext = memory.extendedRelationshipDynamics?.type === 'therapeutic'
+    const isHighTrustContext = memory.extendedRelationshipDynamics?.trustLevel === 'high'
+    
+    if (hasVulnerability && (isTherapeuticContext || isHighTrustContext) && !hasCrisisContext) {
+      score = Math.max(score, 8.5) // Vulnerability in safe contexts is highly contextually important
+    } else if (hasVulnerability && !hasCrisisContext) {
+      score = Math.max(score, 7.0) // General vulnerability is important
+    }
+    
+    // Check for conflict escalation in close relationships - high contextual importance
+    const hasConflict = moodDescriptors.some(desc => desc.includes('conflict'))
+    const isCloseRelationship = memory.extendedRelationshipDynamics?.type === 'close_friend' || 
+                               memory.extendedRelationshipDynamics?.type === 'romantic' ||
+                               memory.extendedRelationshipDynamics?.type === 'family'
+    const hasHighConflict = memory.extendedRelationshipDynamics?.conflictLevel === 'high'
+    
+    if (hasConflict && isCloseRelationship && hasHighConflict && !hasCrisisContext) {
+      score = Math.max(score, 8.0) // Conflict escalation in close relationships is contextually very important
+    } else if (hasConflict && hasHighConflict && !hasCrisisContext) {
+      score = Math.max(score, 7.5) // High conflict is generally important
+    }
+
     // Check for life events or milestones
     const lifeEventKeywords = [
       'birthday',
@@ -253,48 +318,48 @@ export class EmotionalSignificanceAnalyzer {
       'move',
       'travel',
     ]
-
-    const content = memory.content.toLowerCase()
     const hasLifeEvent = lifeEventKeywords.some(
       (keyword) =>
         content.includes(keyword) ||
         memory.tags.some((tag) => tag.toLowerCase().includes(keyword)),
     )
 
-    if (hasLifeEvent) {
+    if (hasLifeEvent && !hasCrisisContext) { // Don't override crisis scoring
       score += 2.0
     }
 
-    // Check for first/last time indicators
-    const firstLastIndicators = ['first time', 'last time', 'never', 'always']
-    const hasFirstLast = firstLastIndicators.some((indicator) =>
-      content.includes(indicator),
-    )
+    // Check for first/last time indicators (only if not crisis)
+    if (!hasCrisisContext) {
+      const firstLastIndicators = ['first time', 'last time', 'never', 'always']
+      const hasFirstLast = firstLastIndicators.some((indicator) =>
+        content.includes(indicator),
+      )
 
-    if (hasFirstLast) {
-      score += 1.5
-    }
+      if (hasFirstLast) {
+        score += 1.5
+      }
 
-    // Check for decision or commitment language
-    const decisionKeywords = [
-      'decided',
-      'chose',
-      'committed',
-      'promised',
-      'vowed',
-    ]
-    const hasDecision = decisionKeywords.some((keyword) =>
-      content.includes(keyword),
-    )
+      // Check for decision or commitment language
+      const decisionKeywords = [
+        'decided',
+        'chose',
+        'committed',
+        'promised',
+        'vowed',
+      ]
+      const hasDecision = decisionKeywords.some((keyword) =>
+        content.includes(keyword),
+      )
 
-    if (hasDecision) {
-      score += 1.0
-    }
+      if (hasDecision) {
+        score += 1.0
+      }
 
-    // Check conversation length as complexity indicator
-    const sourceData = memory.processing.sourceData
-    if (sourceData.messages.length > 10) {
-      score += 0.5 // Extended conversations often indicate importance
+      // Check conversation length as complexity indicator
+      const sourceData = memory.processing.sourceData
+      if (sourceData.messages.length > 10) {
+        score += 0.5 // Extended conversations often indicate importance
+      }
     }
 
     return Math.min(10, score)
@@ -319,6 +384,14 @@ export class EmotionalSignificanceAnalyzer {
       score = 6.0 // This year
     } else {
       score = 5.0 // Older
+    }
+
+    // Boost temporal relevance for significant mood transitions (recent emotional events are more relevant)
+    const trajectory = memory.emotionalAnalysis.trajectory
+    if (trajectory.significance > 0.8 && trajectory.turningPoints.length > 0) {
+      score += 1.5 // Major mood transitions are temporally significant
+    } else if (trajectory.significance > 0.6) {
+      score += 1.0 // Moderate mood transitions
     }
 
     // Check for anniversary dates (month/day match)
@@ -384,12 +457,62 @@ export class EmotionalSignificanceAnalyzer {
 
     let priority = significancePriority
 
-    if (overallScore >= 7 && confidence < 0.7) {
-      priority += 1.5 // Boost priority for uncertain high-significance memories
-    } else if (overallScore >= 7 && confidence >= 0.8) {
-      priority -= 0.5 // Reduce priority for confident high-significance memories
+    // Enhanced priority logic based on confidence levels
+    if (overallScore >= 7) {
+      if (confidence < 0.6) {
+        priority += 2.5 // Very uncertain high-significance memories need highest priority
+      } else if (confidence < 0.75) {
+        priority += 1.5 // Moderately uncertain high-significance memories
+      } else if (confidence >= 0.75) {
+        priority -= 1.0 // Higher confidence means lower validation priority
+      }
+    } else if (overallScore >= 5 && confidence < 0.5) {
+      priority += 1.0 // Even medium significance with very low confidence needs attention
+    }
+    
+    // Special boost for crisis and extreme mood situations
+    if (overallScore >= 8.5) {
+      priority += 1.5 // Crisis situations need maximum validation priority
+    } else if (overallScore >= 8.0) {
+      priority += 1.0 // High significance situations need extra priority
     }
 
+    return Math.max(1, Math.min(10, priority))
+  }
+  
+  private calculateValidationPriorityWithMemory(
+    overallScore: number,
+    confidence: number,
+    memory: ExtractedMemory,
+  ): number {
+    let priority = this.calculateValidationPriority(overallScore, confidence)
+    
+    // Additional priority boost for rapid mood deterioration (using trajectory data)
+    const trajectory = memory.emotionalAnalysis.trajectory
+    if (trajectory.direction === 'declining' && trajectory.significance > 0.8) {
+      const turningPoints = trajectory.turningPoints.filter(tp => tp.type === 'setback')
+      if (turningPoints.length > 0) {
+        const rapidDeterioraton = turningPoints.some(tp => tp.magnitude > 3.5)
+        if (rapidDeterioraton) {
+          priority += 0.5 // Extra boost for rapid deterioration requiring urgent validation
+        }
+      }
+    }
+    
+    // Additional priority boost for conflict escalation in close relationships
+    const moodDescriptors = memory.emotionalAnalysis.moodScoring.descriptors.map(d => d.toLowerCase())
+    const hasConflict = moodDescriptors.some(desc => desc.includes('conflict'))
+    const isCloseRelationship = memory.extendedRelationshipDynamics?.type === 'close_friend' || 
+                               memory.extendedRelationshipDynamics?.type === 'romantic' ||
+                               memory.extendedRelationshipDynamics?.type === 'family'
+    const hasHighConflict = memory.extendedRelationshipDynamics?.conflictLevel === 'high'
+    
+    if (hasConflict && isCloseRelationship && hasHighConflict) {
+      priority += 0.8 // Conflict escalation in close relationships needs higher validation priority
+    } else if (hasConflict && hasHighConflict) {
+      priority += 0.5 // General high conflict needs attention
+    }
+    
     return Math.max(1, Math.min(10, priority))
   }
 
@@ -397,15 +520,33 @@ export class EmotionalSignificanceAnalyzer {
     emotionalAnalysis: EmotionalAnalysis,
     processingConfidence: number,
   ): number {
+    const moodScore = emotionalAnalysis.moodScoring.score
+    const moodConfidence = emotionalAnalysis.moodScoring.confidence
+    
     // Base confidence on processing confidence
-    let confidence = processingConfidence * 0.6
+    let confidence = processingConfidence * 0.5
 
-    // Factor in mood scoring confidence
-    confidence += emotionalAnalysis.moodScoring.confidence * 0.3
+    // Enhanced mood confidence weighting for extreme mood states
+    let moodWeight = 0.35
+    
+    // Boost confidence weighting for extreme mood states
+    if (moodScore >= 8.5 || moodScore <= 3.5) {
+      moodWeight = 0.45 // Higher weight for extreme moods
+    }
+    
+    confidence += moodConfidence * moodWeight
 
     // Factor in trajectory significance if available
     if (emotionalAnalysis.trajectory.significance > 0.7) {
       confidence += 0.1
+    }
+    
+    // Bonus confidence for high-quality mood factors
+    const highQualityFactors = emotionalAnalysis.moodScoring.factors.filter(
+      factor => factor.weight > 0.3 && factor.evidence.length >= 2
+    )
+    if (highQualityFactors.length > 0) {
+      confidence += 0.05
     }
 
     return Math.min(1, confidence)

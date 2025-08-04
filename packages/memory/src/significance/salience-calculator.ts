@@ -22,36 +22,61 @@ export class SalienceCalculator {
       factorCount: emotionalAnalysis.moodScoring.factors.length,
     })
 
-    // Base salience on mood score magnitude (distance from neutral 5)
-    const neutralDistance = Math.abs(emotionalAnalysis.moodScoring.score - 5)
-    let salienceScore = neutralDistance
+    // Enhanced mood-aware salience calculation
+    const moodScore = emotionalAnalysis.moodScoring.score
+    const confidence = emotionalAnalysis.moodScoring.confidence
+    
+    // Calculate base mood significance (0-10 scale)
+    let baseMoodSignificance = this.calculateMoodSignificance(moodScore, confidence)
+    
+    // Factor in trajectory volatility first (can significantly boost significance)
+    const trajectoryVolatility = this.assessTrajectoryVolatility(
+      emotionalAnalysis.trajectory,
+    )
+    
+    // If trajectory shows high significance, boost the base mood significance
+    if (emotionalAnalysis.trajectory.significance > 0.8) {
+      baseMoodSignificance = Math.max(baseMoodSignificance, 7.0) // Minimum high significance for major mood transitions
+    } else if (emotionalAnalysis.trajectory.significance > 0.6) {
+      baseMoodSignificance = Math.max(baseMoodSignificance, 5.5) // Moderate boost for medium transitions
+    }
+    
+    baseMoodSignificance += trajectoryVolatility
+    
+    // Add emotional urgency for extreme states
+    const emotionalUrgency = this.calculateEmotionalUrgency(
+      moodScore,
+      emotionalAnalysis.moodScoring.descriptors,
+      confidence,
+    )
+    baseMoodSignificance += emotionalUrgency
 
-    // Factor in mood scoring confidence
-    salienceScore *= emotionalAnalysis.moodScoring.confidence
+    // Add high-impact emotion bonus
+    const highImpactBonus = this.calculateHighImpactEmotionBonus(
+      emotionalAnalysis.moodScoring.descriptors,
+    )
+    baseMoodSignificance += highImpactBonus
 
-    // Add intensity from emotional factors
+    // Factor in emotional factors with enhanced weighting
     const factorIntensity = this.calculateFactorIntensity(
       emotionalAnalysis.moodScoring.factors,
     )
-    salienceScore += factorIntensity * 2
+    baseMoodSignificance += factorIntensity * 1.5
 
     // Add pattern significance
     const patternSignificance = this.calculatePatternSignificance(
       emotionalAnalysis.patterns,
     )
-    salienceScore += patternSignificance
-
-    // Factor in trajectory volatility
-    const trajectoryVolatility = this.assessTrajectoryVolatility(
-      emotionalAnalysis.trajectory,
-    )
-    salienceScore += trajectoryVolatility
+    baseMoodSignificance += patternSignificance
 
     // Normalize to 0-10 scale
-    const finalScore = Math.min(10, Math.max(0, salienceScore))
+    const finalScore = Math.min(10, Math.max(0, baseMoodSignificance))
 
     logger.info('Salience calculation complete', {
-      neutralDistance,
+      moodScore,
+      baseMoodSignificance: this.calculateMoodSignificance(moodScore, confidence),
+      emotionalUrgency,
+      highImpactBonus,
       factorIntensity,
       patternSignificance,
       trajectoryVolatility,
@@ -62,9 +87,59 @@ export class SalienceCalculator {
   }
 
   /**
+   * Calculate mood significance based on emotional intensity and extremity
+   */
+  private calculateMoodSignificance(moodScore: number, confidence: number): number {
+    // Map mood scores to significance using a non-linear curve
+    // Both very high (8.5+) and very low (3.5-) moods are highly significant
+    let significance = 0
+    
+    if (moodScore >= 8.5) {
+      // Very high mood (potential breakthrough, mania, extreme joy)
+      significance = 7.0 + (moodScore - 8.5) * 2.0 // 7.0-10.0 range
+    } else if (moodScore >= 7.0) {
+      // High mood (celebration, achievement)
+      significance = 5.61 + (moodScore - 7.0) * 1.4 // 5.61-7.61 range
+    } else if (moodScore >= 6.0) {
+      // Moderately positive mood - enhanced for complex emotional states
+      significance = 4.0 + (moodScore - 6.0) * 2.0 // 4.0-6.0 range
+    } else if (moodScore >= 4.0) {
+      // Neutral-low mood - reduced significance for truly neutral range
+      if (moodScore >= 4.8 && moodScore <= 5.5) {
+        // Very neutral range - minimal significance
+        significance = 1.5 + (moodScore - 4.8) * 0.5 // 1.5-1.85 range
+      } else {
+        significance = 2.0 + (moodScore - 4.0) * 0.75 // 2.0-3.5 range
+      }
+    } else if (moodScore >= 2.5) {
+      // Low mood (distress, sadness)
+      significance = 5.0 + (4.0 - moodScore) * 1.33 // 5.0-7.0 range (inverted)
+    } else {
+      // Very low mood (crisis, severe depression)
+      significance = 7.0 + (2.5 - moodScore) * 2.0 // 7.0-10.0 range (inverted)
+    }
+    
+    // Apply confidence weighting (but with minimum threshold)
+    significance *= Math.max(0.6, confidence)
+    
+    return Math.min(10, Math.max(0, significance))
+  }
+
+  /**
    * Calculate intensity factor for high-impact emotions
    */
   calculateHighImpactEmotionBonus(emotions: string[]): number {
+    // Check for truly neutral/calm emotions that should have low impact
+    const neutralEmotions = ['neutral', 'calm', 'steady', 'stable']
+    const hasNeutralEmotions = emotions.some((emotion) =>
+      neutralEmotions.some((neutral) => emotion.toLowerCase().includes(neutral)),
+    )
+    
+    // If this is a truly neutral emotional state, don't give high-impact bonus
+    if (hasNeutralEmotions && emotions.length <= 2) {
+      return 0
+    }
+
     const highImpactEmotions = [
       'grief',
       'devastated',
@@ -76,13 +151,30 @@ export class SalienceCalculator {
       'panic',
       'euphoric',
       'despair',
+      'joy',
+      'celebration',
+      'achievement',
+      'crisis',
+      'distress',
+      'vulnerability',
+      'vulnerable',
+      'conflict',
+      'breakthrough',
+      'therapeutic',
+      'complex',
+      'multi-dimensional',
+      'resilience',
+      'insight',
+      'depth',
     ]
 
     const highImpactCount = emotions.filter((emotion) =>
-      highImpactEmotions.some((high) => emotion.toLowerCase().includes(high)),
+      highImpactEmotions.some((high) => 
+        emotion.toLowerCase().includes(high) || high.toLowerCase().includes(emotion.toLowerCase())
+      ),
     ).length
 
-    return Math.min(2, highImpactCount * 0.5)
+    return Math.min(2.5, highImpactCount * 0.6)
   }
 
   /**
@@ -95,24 +187,50 @@ export class SalienceCalculator {
   ): number {
     let urgency = 0
 
-    // Crisis indicators
-    const crisisDescriptors = ['desperate', 'hopeless', 'suicidal', 'crisis']
+    // Crisis indicators get highest urgency boost
+    const crisisDescriptors = ['desperate', 'hopeless', 'suicidal', 'crisis', 'distress']
     const hasCrisisIndicators = descriptors.some((d) =>
       crisisDescriptors.some((crisis) => d.toLowerCase().includes(crisis)),
     )
 
     if (hasCrisisIndicators) {
-      urgency += 3
+      urgency += 2.5
+    }
+    
+    // Conflict in neutral-low mood states gets additional urgency
+    const hasConflict = descriptors.some((d) => d.toLowerCase().includes('conflict'))
+    if (hasConflict && moodScore < 5.0) {
+      urgency += 1.5 // Conflict during low mood is emotionally urgent
+    } else if (hasConflict) {
+      urgency += 0.8 // General conflict is significant
+    }
+    
+    // Vulnerability in low mood states gets special attention
+    const hasVulnerability = descriptors.some((d) => d.toLowerCase().includes('vulnerable'))
+    if (hasVulnerability && moodScore < 4.0) {
+      urgency += 2.0 // Vulnerability in distressed states is highly significant
+    } else if (hasVulnerability) {
+      urgency += 1.0 // Vulnerability is always significant
     }
 
-    // Very low mood with high confidence
-    if (moodScore < 3 && confidence > 0.8) {
-      urgency += 2
-    }
+    // Positive extreme states also need attention (breakthrough, celebration)
+    const positiveExtremeDescriptors = ['joy', 'celebration', 'achievement', 'breakthrough', 'ecstatic']
+    const hasPositiveExtremes = descriptors.some((d) =>
+      positiveExtremeDescriptors.some((positive) => d.toLowerCase().includes(positive)),
+    )
 
-    // Very high mood (potential mania)
-    if (moodScore > 8.5 && confidence > 0.7) {
+    if (hasPositiveExtremes && moodScore > 7.5) {
       urgency += 1.5
+    }
+
+    // Very low mood with high confidence gets additional boost
+    if (moodScore < 3.5 && confidence > 0.8) {
+      urgency += 1.5
+    }
+
+    // Very high mood (potential mania or breakthrough)
+    if (moodScore > 8.5 && confidence > 0.7) {
+      urgency += 1.0
     }
 
     // Extreme emotional states
@@ -122,7 +240,7 @@ export class SalienceCalculator {
     )
 
     if (hasExtremeDescriptors) {
-      urgency += 1
+      urgency += 0.8
     }
 
     return urgency
@@ -227,7 +345,33 @@ export class SalienceCalculator {
     }
 
     // Average intensity across factors
-    return totalIntensity / factors.length
+    let averageIntensity = totalIntensity / factors.length
+    
+    // Check if this is a truly neutral/minimal emotional state
+    const hasNeutralEvidence = factors.some(f => 
+      f.evidence.some(e => 
+        ['neutral', 'calm', 'stable', 'steady'].some(neutral => 
+          e.toLowerCase().includes(neutral)
+        )
+      )
+    )
+    
+    if (hasNeutralEvidence) {
+      // For truly neutral memories, significantly reduce intensity
+      return Math.min(averageIntensity, 0.3)
+    }
+    
+    // Bonus for multiple high-quality factors (compound emotional significance)
+    if (factors.length >= 4) {
+      const highQualityFactors = factors.filter(f => f.weight > 0.2 && f.evidence.length >= 1)
+      if (highQualityFactors.length >= 3) {
+        // Multiple quality factors indicate complex emotional processing
+        const complexityBonus = Math.min((highQualityFactors.length - 2) * 0.3, 1.2)
+        averageIntensity += complexityBonus
+      }
+    }
+    
+    return averageIntensity
   }
 
   private getFactorTypeBonus(type: MoodFactor['type']): number {
@@ -263,31 +407,40 @@ export class SalienceCalculator {
   private assessTrajectoryVolatility(
     trajectory: EmotionalAnalysis['trajectory'],
   ): number {
-    if (trajectory.points.length < 3) return 0
+    if (trajectory.points.length < 2) return 0
 
     let volatility = 0
 
-    // Calculate mood variance
+    // Calculate mood variance (enhanced for 2+ points)
     const scores = trajectory.points.map((p) => p.moodScore)
     const variance = this.calculateVariance(scores)
-    volatility += Math.min(variance / 5, 1) // Normalize variance contribution
-
-    // Factor in turning points
-    const turningPointDensity =
-      trajectory.turningPoints.length / trajectory.points.length
-    volatility += turningPointDensity * 1.5
-
-    // Factor in trajectory direction
-    if (trajectory.direction === 'volatile') {
-      volatility += 1
-    } else if (trajectory.direction === 'declining') {
-      volatility += 0.5
+    volatility += Math.min(variance / 3, 2) // More generous variance contribution
+    
+    // Calculate magnitude of mood change for 2-point trajectories
+    if (trajectory.points.length === 2) {
+      const moodChange = Math.abs(scores[1] - scores[0])
+      volatility += Math.min(moodChange / 3, 2) // Significant mood changes get up to 2 points
     }
 
-    // Factor in overall trajectory significance
-    volatility += trajectory.significance * 0.5
+    // Factor in turning points with enhanced weighting
+    const turningPointBonus = trajectory.turningPoints.reduce((sum, tp) => {
+      return sum + Math.min(tp.magnitude / 2, 1.5) // Each turning point contributes based on magnitude
+    }, 0)
+    volatility += turningPointBonus
 
-    return Math.min(3, volatility)
+    // Factor in trajectory direction with enhanced significance
+    if (trajectory.direction === 'volatile') {
+      volatility += 1.5
+    } else if (trajectory.direction === 'declining') {
+      volatility += 1.0 // Declining is more significant than stable
+    } else if (trajectory.direction === 'improving') {
+      volatility += 0.8 // Improving is also significant
+    }
+
+    // Factor in overall trajectory significance with higher weight
+    volatility += trajectory.significance * 1.5
+
+    return Math.min(5, volatility) // Increased maximum volatility score
   }
 
   private calculateVariance(numbers: number[]): number {

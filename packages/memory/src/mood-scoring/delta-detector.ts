@@ -458,6 +458,16 @@ export class DeltaDetector {
   private getDominantFactor(
     factors: MoodAnalysisResult['factors'],
   ): MoodAnalysisResult['factors'][0] {
+    if (factors.length === 0) {
+      // Return a default factor for empty arrays
+      return {
+        type: 'sentiment_analysis' as const,
+        weight: 0.5,
+        description: 'Default factor for empty analysis',
+        evidence: [],
+        _score: 5.0,
+      }
+    }
     return factors.reduce((a, b) => (a.weight > b.weight ? a : b))
   }
 

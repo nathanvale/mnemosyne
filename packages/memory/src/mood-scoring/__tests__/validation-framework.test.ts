@@ -3,19 +3,33 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type {
   ConversationData,
   MoodAnalysisResult,
+  MoodFactor,
   HumanValidationRecord,
-  ValidationMetrics,
-  BiasAnalysis,
+  // ValidationMetrics,
+  // BiasAnalysis,
 } from '../../types'
+import { createTestConversationData, createTestMoodAnalysisResult } from '../../__tests__/test-helpers'
 
-import { MoodScoringAnalyzer } from '../analyzer'
+// import { MoodScoringAnalyzer } from '../analyzer'
 import { ValidationFramework } from '../validation-framework'
 
 // Helper function to convert old test format to proper MoodAnalysisResult format
-function createMoodAnalysisResult(data: any): MoodAnalysisResult {
+function createMoodAnalysisResult(data: {
+  score: number;
+  confidence: number;
+  primaryEmotions?: string[];
+  sentiment?: string;
+  factors?: MoodFactor[];
+  descriptors?: string[];
+}): MoodAnalysisResult {
   // If already in correct format, return as is
   if (data.descriptors && data.factors) {
-    return data
+    return {
+      score: data.score,
+      confidence: data.confidence,
+      descriptors: data.descriptors,
+      factors: data.factors,
+    }
   }
   
   // Convert old format to new format
@@ -33,22 +47,33 @@ function createMoodAnalysisResult(data: any): MoodAnalysisResult {
     descriptors: descriptors.length > 0 ? descriptors : ['neutral'],
     factors: data.factors || [
       {
-        type: 'sentiment_analysis',
-        impact: 0.35,
-        confidence: data.confidence || 0.8,
-        details: {
-          primaryEmotions: data.primaryEmotions || [],
-          emotionalIntensity: data.emotionalIntensity || 0.5,
-          sentiment: data.sentiment || 'neutral',
-        },
+        type: 'sentiment_analysis' as const,
+        weight: 0.35,
+        description: 'Sentiment analysis factor',
+        evidence: data.primaryEmotions || [],
       },
     ],
   }
 }
 
+// Helper to add default validator credentials if missing
+function addDefaultCredentials(validation: HumanValidationRecord): HumanValidationRecord {
+  if (validation.validatorCredentials) {
+    return validation
+  }
+  return {
+    ...validation,
+    validatorCredentials: {
+      title: 'Clinical Psychologist',
+      yearsExperience: 10,
+      specializations: ['mood_assessment'],
+    },
+  }
+}
+
 describe('ValidationFramework - Human Validation Framework', () => {
   let validationFramework: ValidationFramework
-  let moodAnalyzer: MoodScoringAnalyzer
+  // let moodAnalyzer: MoodScoringAnalyzer
 
   beforeEach(() => {
     validationFramework = new ValidationFramework({
@@ -56,7 +81,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
       significanceLevel: 0.05,
       biasDetectionSensitivity: 0.15,
     })
-    moodAnalyzer = new MoodScoringAnalyzer()
+    // moodAnalyzer = new MoodScoringAnalyzer()
   })
 
   describe('Human Validation Correlation (Task 4.1)', () => {
@@ -66,85 +91,89 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-validation-1',
-            timestamp: new Date('2024-01-01T10:00:00Z'),
-            participants: [
-              {
-                id: 'user1',
-                name: 'Sarah',
-                role: 'vulnerable_sharer',
-                messageCount: 3,
-                emotionalExpressions: ['sad', 'hopeful'],
-              },
-              {
-                id: 'user2',
-                name: 'Alex',
-                role: 'supporter',
-                messageCount: 2,
-                emotionalExpressions: ['supportive', 'caring'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg1',
-                content:
-                  "I've been feeling really down lately but talking to you helps",
-                authorId: 'user1',
-                timestamp: new Date('2024-01-01T10:00:00Z'),
-              },
-              {
-                id: 'msg2',
-                content:
-                  "I'm here for you always. You're stronger than you know",
-                authorId: 'user2',
-                timestamp: new Date('2024-01-01T10:02:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-1',
+              timestamp: new Date('2024-01-01T10:00:00Z'),
+              participants: [
+                {
+                  id: 'user1',
+                  name: 'Sarah',
+                  role: 'vulnerable_sharer',
+                  messageCount: 3,
+                  emotionalExpressions: ['sad', 'hopeful'],
+                },
+                {
+                  id: 'user2',
+                  name: 'Alex',
+                  role: 'supporter',
+                  messageCount: 2,
+                  emotionalExpressions: ['supportive', 'caring'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg1',
+                  content:
+                    "I've been feeling really down lately but talking to you helps",
+                  authorId: 'user1',
+                  timestamp: new Date('2024-01-01T10:00:00Z'),
+                },
+                {
+                  id: 'msg2',
+                  content:
+                    "I'm here for you always. You're stronger than you know",
+                  authorId: 'user2',
+                  timestamp: new Date('2024-01-01T10:02:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.2,
               confidence: 0.85,
               descriptors: ['sadness', 'hope', 'mixed'],
               factors: [
                 {
-                  type: 'sentiment_analysis',
-                  impact: 0.35,
-                  confidence: 0.85,
-                  details: { primaryEmotions: ['sadness', 'hope'], emotionalIntensity: 0.7, sentiment: 'mixed' },
+                  type: 'sentiment_analysis' as const,
+                  weight: 0.35,
+                  description: 'Sentiment analysis factor',
+                  evidence: ['sadness', 'hope'],
                 },
               ],
             },
           },
           {
-            id: 'conv-validation-2',
-            timestamp: new Date('2024-01-01T14:00:00Z'),
-            participants: [
-              {
-                id: 'user3',
-                name: 'Jordan',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['excited', 'joyful'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg3',
-                content:
-                  "I got the promotion! I can't believe it finally happened!",
-                authorId: 'user3',
-                timestamp: new Date('2024-01-01T14:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-2',
+              timestamp: new Date('2024-01-01T14:00:00Z'),
+              participants: [
+                {
+                  id: 'user3',
+                  name: 'Jordan',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['excited', 'joyful'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg3',
+                  content:
+                    "I got the promotion! I can't believe it finally happened!",
+                  authorId: 'user3',
+                  timestamp: new Date('2024-01-01T14:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 8.7,
               confidence: 0.92,
               descriptors: ['joy', 'excitement', 'positive'],
               factors: [
                 {
-                  type: 'sentiment_analysis',
-                  impact: 0.35,
-                  confidence: 0.92,
-                  details: { primaryEmotions: ['joy', 'excitement'], emotionalIntensity: 0.9, sentiment: 'positive' },
+                  type: 'sentiment_analysis' as const,
+                  weight: 0.35,
+                  description: 'Sentiment analysis factor',
+                  evidence: ['joy', 'excitement'],
                 },
               ],
             },
@@ -175,6 +204,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-validation-2',
             validatorId: 'expert-1',
+            validatorCredentials: {
+              title: 'Licensed Clinical Psychologist',
+              yearsExperience: 12,
+              specializations: ['mood_disorders', 'therapeutic_communication'],
+            },
             humanMoodScore: 8.5,
             confidence: 0.95,
             rationale:
@@ -191,7 +225,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // High correlation expected (both pairs closely aligned)
@@ -212,117 +246,121 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-validation-3',
-            timestamp: new Date('2024-01-02T09:00:00Z'),
-            participants: [
-              {
-                id: 'user4',
-                name: 'Casey',
-                role: 'author',
-                messageCount: 4,
-                emotionalExpressions: ['anxious', 'worried'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg4',
-                content:
-                  "I'm worried about the presentation tomorrow. What if I mess up?",
-                authorId: 'user4',
-                timestamp: new Date('2024-01-02T09:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-3',
+              timestamp: new Date('2024-01-02T09:00:00Z'),
+              participants: [
+                {
+                  id: 'user4',
+                  name: 'Casey',
+                  role: 'author',
+                  messageCount: 4,
+                  emotionalExpressions: ['anxious', 'worried'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg4',
+                  content:
+                    "I'm worried about the presentation tomorrow. What if I mess up?",
+                  authorId: 'user4',
+                  timestamp: new Date('2024-01-02T09:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 3.8,
               confidence: 0.78,
               primaryEmotions: ['anxiety', 'worry'],
-              emotionalIntensity: 0.6,
               sentiment: 'negative',
             }),
           },
           {
-            id: 'conv-validation-4',
-            timestamp: new Date('2024-01-02T11:00:00Z'),
-            participants: [
-              {
-                id: 'user5',
-                name: 'Riley',
-                role: 'author',
-                messageCount: 3,
-                emotionalExpressions: ['neutral', 'focused'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg5',
-                content:
-                  'Working on the quarterly report. Should be done by end of day.',
-                authorId: 'user5',
-                timestamp: new Date('2024-01-02T11:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-4',
+              timestamp: new Date('2024-01-02T11:00:00Z'),
+              participants: [
+                {
+                  id: 'user5',
+                  name: 'Riley',
+                  role: 'author',
+                  messageCount: 3,
+                  emotionalExpressions: ['neutral', 'focused'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg5',
+                  content:
+                    'Working on the quarterly report. Should be done by end of day.',
+                  authorId: 'user5',
+                  timestamp: new Date('2024-01-02T11:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 5.2,
               confidence: 0.65,
               primaryEmotions: ['neutral', 'focused'],
-              emotionalIntensity: 0.3,
               sentiment: 'neutral',
             }),
           },
           {
-            id: 'conv-validation-5',
-            timestamp: new Date('2024-01-02T13:00:00Z'),
-            participants: [
-              {
-                id: 'user6',
-                name: 'Sam',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['content'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg6',
-                content:
-                  'Had a good day today, feeling pretty good about things.',
-                authorId: 'user6',
-                timestamp: new Date('2024-01-02T13:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-5',
+              timestamp: new Date('2024-01-02T13:00:00Z'),
+              participants: [
+                {
+                  id: 'user6',
+                  name: 'Sam',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['content'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg6',
+                  content:
+                    'Had a good day today, feeling pretty good about things.',
+                  authorId: 'user6',
+                  timestamp: new Date('2024-01-02T13:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 7.1,
               confidence: 0.8,
               primaryEmotions: ['contentment'],
-              emotionalIntensity: 0.6,
               sentiment: 'positive',
             }),
           },
           {
-            id: 'conv-validation-6',
-            timestamp: new Date('2024-01-02T15:00:00Z'),
-            participants: [
-              {
-                id: 'user7',
-                name: 'Alex',
-                role: 'author',
-                messageCount: 3,
-                emotionalExpressions: ['frustrated'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg7',
-                content: 'This is really frustrating, nothing is going right.',
-                authorId: 'user7',
-                timestamp: new Date('2024-01-02T15:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-6',
+              timestamp: new Date('2024-01-02T15:00:00Z'),
+              participants: [
+                {
+                  id: 'user7',
+                  name: 'Alex',
+                  role: 'author',
+                  messageCount: 3,
+                  emotionalExpressions: ['frustrated'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg7',
+                  content: 'This is really frustrating, nothing is going right.',
+                  authorId: 'user7',
+                  timestamp: new Date('2024-01-02T15:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 2.9,
               confidence: 0.85,
               primaryEmotions: ['frustration'],
-              emotionalIntensity: 0.8,
               sentiment: 'negative',
             }),
           },
@@ -352,6 +390,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-validation-4',
             validatorId: 'expert-2',
+            validatorCredentials: {
+              title: 'Certified Counselor',
+              yearsExperience: 8,
+              specializations: ['anxiety_disorders', 'workplace_stress'],
+            },
             humanMoodScore: 6.2, // Human rates higher than algorithm, opposite trend
             confidence: 0.7,
             rationale:
@@ -398,7 +441,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Moderate correlation expected (systematic differences present)
@@ -430,118 +473,122 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-validation-5',
-            timestamp: new Date('2024-01-03T15:00:00Z'),
-            participants: [
-              {
-                id: 'user6',
-                name: 'Morgan',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['sarcastic', 'dismissive'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg6',
-                content:
-                  'Oh great, another meeting about meetings. This is exactly what I needed today.',
-                authorId: 'user6',
-                timestamp: new Date('2024-01-03T15:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-5',
+              timestamp: new Date('2024-01-03T15:00:00Z'),
+              participants: [
+                {
+                  id: 'user6',
+                  name: 'Morgan',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['sarcastic', 'dismissive'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg6',
+                  content:
+                    'Oh great, another meeting about meetings. This is exactly what I needed today.',
+                  authorId: 'user6',
+                  timestamp: new Date('2024-01-03T15:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.0, // Algorithm misses sarcasm, rates as neutral
               confidence: 0.55,
               primaryEmotions: ['neutral', 'mild_irritation'],
-              emotionalIntensity: 0.4,
               sentiment: 'neutral',
             }),
           },
           {
-            id: 'conv-validation-6',
-            timestamp: new Date('2024-01-03T17:00:00Z'),
-            participants: [
-              {
-                id: 'user7',
-                name: 'Taylor',
-                role: 'vulnerable_sharer',
-                messageCount: 3,
-                emotionalExpressions: ['grateful', 'relieved'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg7',
-                content:
-                  'Thank you for listening. I feel so much better after talking this through.',
-                authorId: 'user7',
-                timestamp: new Date('2024-01-03T17:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-6',
+              timestamp: new Date('2024-01-03T17:00:00Z'),
+              participants: [
+                {
+                  id: 'user7',
+                  name: 'Taylor',
+                  role: 'vulnerable_sharer',
+                  messageCount: 3,
+                  emotionalExpressions: ['grateful', 'relieved'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg7',
+                  content:
+                    'Thank you for listening. I feel so much better after talking this through.',
+                  authorId: 'user7',
+                  timestamp: new Date('2024-01-03T17:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 7.2, // Algorithm rates moderately positive
               confidence: 0.8,
               primaryEmotions: ['gratitude', 'relief'],
-              emotionalIntensity: 0.7,
               sentiment: 'positive',
             }),
           },
           {
-            id: 'conv-validation-7',
-            timestamp: new Date('2024-01-03T19:00:00Z'),
-            participants: [
-              {
-                id: 'user8',
-                name: 'Pat',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['confused'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg8',
-                content:
-                  "I'm feeling pretty confused about everything right now.",
-                authorId: 'user8',
-                timestamp: new Date('2024-01-03T19:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-7',
+              timestamp: new Date('2024-01-03T19:00:00Z'),
+              participants: [
+                {
+                  id: 'user8',
+                  name: 'Pat',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['confused'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg8',
+                  content:
+                    "I'm feeling pretty confused about everything right now.",
+                  authorId: 'user8',
+                  timestamp: new Date('2024-01-03T19:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 4.5,
               confidence: 0.7,
               primaryEmotions: ['confusion'],
-              emotionalIntensity: 0.5,
               sentiment: 'negative',
             }),
           },
           {
-            id: 'conv-validation-8',
-            timestamp: new Date('2024-01-03T21:00:00Z'),
-            participants: [
-              {
-                id: 'user9',
-                name: 'Quinn',
-                role: 'author',
-                messageCount: 3,
-                emotionalExpressions: ['angry'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg9',
-                content:
-                  "This is absolutely ridiculous! I can't believe this happened.",
-                authorId: 'user9',
-                timestamp: new Date('2024-01-03T21:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-validation-8',
+              timestamp: new Date('2024-01-03T21:00:00Z'),
+              participants: [
+                {
+                  id: 'user9',
+                  name: 'Quinn',
+                  role: 'author',
+                  messageCount: 3,
+                  emotionalExpressions: ['angry'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg9',
+                  content:
+                    "This is absolutely ridiculous! I can't believe this happened.",
+                  authorId: 'user9',
+                  timestamp: new Date('2024-01-03T21:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 2.1,
               confidence: 0.88,
               primaryEmotions: ['anger'],
-              emotionalIntensity: 0.9,
               sentiment: 'negative',
             }),
           },
@@ -574,6 +621,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-validation-6',
             validatorId: 'expert-3',
+            validatorCredentials: {
+              title: 'Clinical Social Worker',
+              yearsExperience: 15,
+              specializations: ['workplace_psychology', 'communication_patterns'],
+            },
             humanMoodScore: 9.2, // Human recognizes deeper therapeutic breakthrough
             confidence: 0.92,
             rationale:
@@ -628,7 +680,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Low correlation expected (significant divergences)
@@ -651,46 +703,48 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-over-1',
-            timestamp: new Date('2024-01-04T10:00:00Z'),
-            participants: [
-              { id: 'user8', name: 'Alex', role: 'author', messageCount: 2 },
-            ],
-            messages: [
-              {
-                id: 'msg8',
-                content: 'I guess things are okay. Could be worse.',
-                authorId: 'user8',
-                timestamp: new Date('2024-01-04T10:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-over-1',
+              timestamp: new Date('2024-01-04T10:00:00Z'),
+              participants: [
+                { id: 'user8', name: 'Alex', role: 'author', messageCount: 2 },
+              ],
+              messages: [
+                {
+                  id: 'msg8',
+                  content: 'I guess things are okay. Could be worse.',
+                  authorId: 'user8',
+                  timestamp: new Date('2024-01-04T10:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.5,
               confidence: 0.7,
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.5,
               sentiment: 'neutral',
             }),
           },
           {
-            id: 'conv-over-2',
-            timestamp: new Date('2024-01-04T12:00:00Z'),
-            participants: [
-              { id: 'user9', name: 'Jamie', role: 'author', messageCount: 2 },
-            ],
-            messages: [
-              {
-                id: 'msg9',
-                content: "Yeah, I'm fine. Nothing to worry about.",
-                authorId: 'user9',
-                timestamp: new Date('2024-01-04T12:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-over-2',
+              timestamp: new Date('2024-01-04T12:00:00Z'),
+              participants: [
+                { id: 'user9', name: 'Jamie', role: 'author', messageCount: 2 },
+              ],
+              messages: [
+                {
+                  id: 'msg9',
+                  content: "Yeah, I'm fine. Nothing to worry about.",
+                  authorId: 'user9',
+                  timestamp: new Date('2024-01-04T12:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 5.8,
               confidence: 0.65,
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.4,
               sentiment: 'neutral',
             }),
           },
@@ -720,6 +774,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-over-2',
             validatorId: 'expert-4',
+            validatorCredentials: {
+              title: 'Clinical Psychologist',
+              yearsExperience: 10,
+              specializations: ['mood_assessment'],
+            },
             humanMoodScore: 3.5, // Human detects emotional suppression
             confidence: 0.8,
             rationale:
@@ -736,7 +795,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic over-estimation pattern
@@ -762,48 +821,50 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-under-1',
-            timestamp: new Date('2024-01-05T14:00:00Z'),
-            participants: [
-              { id: 'user10', name: 'Robin', role: 'author', messageCount: 3 },
-            ],
-            messages: [
-              {
-                id: 'msg10',
-                content:
-                  'Thanks for the support. It really means a lot to me right now.',
-                authorId: 'user10',
-                timestamp: new Date('2024-01-05T14:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-under-1',
+              timestamp: new Date('2024-01-05T14:00:00Z'),
+              participants: [
+                { id: 'user10', name: 'Robin', role: 'author', messageCount: 3 },
+              ],
+              messages: [
+                {
+                  id: 'msg10',
+                  content:
+                    'Thanks for the support. It really means a lot to me right now.',
+                  authorId: 'user10',
+                  timestamp: new Date('2024-01-05T14:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.8,
               confidence: 0.75,
               primaryEmotions: ['gratitude'],
-              emotionalIntensity: 0.6,
               sentiment: 'positive',
             }),
           },
           {
-            id: 'conv-under-2',
-            timestamp: new Date('2024-01-05T16:00:00Z'),
-            participants: [
-              { id: 'user11', name: 'Sam', role: 'author', messageCount: 2 },
-            ],
-            messages: [
-              {
-                id: 'msg11',
-                content:
-                  "I appreciate you being there for me. You've helped me see things differently.",
-                authorId: 'user11',
-                timestamp: new Date('2024-01-05T16:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-under-2',
+              timestamp: new Date('2024-01-05T16:00:00Z'),
+              participants: [
+                { id: 'user11', name: 'Sam', role: 'author', messageCount: 2 },
+              ],
+              messages: [
+                {
+                  id: 'msg11',
+                  content:
+                    "I appreciate you being there for me. You've helped me see things differently.",
+                  authorId: 'user11',
+                  timestamp: new Date('2024-01-05T16:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 7.0,
               confidence: 0.78,
               primaryEmotions: ['appreciation'],
-              emotionalIntensity: 0.65,
               sentiment: 'positive',
             }),
           },
@@ -836,6 +897,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-under-2',
             validatorId: 'expert-5',
+            validatorCredentials: {
+              title: 'Clinical Psychologist',
+              yearsExperience: 15,
+              specializations: ['therapeutic_processes', 'emotional_transformation'],
+            },
             humanMoodScore: 8.5, // Human detects cognitive-emotional shift
             confidence: 0.88,
             rationale: 'Shows cognitive reframing and emotional transformation',
@@ -851,7 +917,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic under-estimation pattern
@@ -877,31 +943,32 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-detailed-1',
-            timestamp: new Date('2024-01-06T09:00:00Z'),
-            participants: [
-              {
-                id: 'user12',
-                name: 'Casey',
-                role: 'vulnerable_sharer',
-                messageCount: 4,
-                emotionalExpressions: ['conflicted', 'hopeful', 'scared'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg12',
-                content:
-                  "I'm scared but also hopeful about this new opportunity. It feels overwhelming.",
-                authorId: 'user12',
-                timestamp: new Date('2024-01-06T09:00:00Z'),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-detailed-1',
+              timestamp: new Date('2024-01-06T09:00:00Z'),
+              participants: [
+                {
+                  id: 'user12',
+                  name: 'Casey',
+                  role: 'vulnerable_sharer',
+                  messageCount: 4,
+                  emotionalExpressions: ['conflicted', 'hopeful', 'scared'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg12',
+                  content:
+                    "I'm scared but also hopeful about this new opportunity. It feels overwhelming.",
+                  authorId: 'user12',
+                  timestamp: new Date('2024-01-06T09:00:00Z'),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 5.5,
               confidence: 0.68,
               primaryEmotions: ['fear', 'hope', 'overwhelm'],
-              emotionalIntensity: 0.75,
               sentiment: 'mixed',
             }),
           },
@@ -937,7 +1004,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should provide detailed individual analysis
@@ -967,31 +1034,32 @@ describe('ValidationFramework - Human Validation Framework', () => {
         const testConversation: ConversationData & {
           moodAnalysis: MoodAnalysisResult
         } = {
-          id: 'conv-consistency-1',
-          timestamp: new Date('2024-01-07T11:00:00Z'),
-          participants: [
-            {
-              id: 'user13',
-              name: 'Jordan',
-              role: 'author',
-              messageCount: 3,
-              emotionalExpressions: ['anxious', 'determined'],
-            },
-          ],
-          messages: [
-            {
-              id: 'msg13',
-              content:
-                "I'm nervous about the interview but I've prepared well and I believe in myself.",
-              authorId: 'user13',
-              timestamp: new Date('2024-01-07T11:00:00Z'),
-            },
-          ],
+          ...createTestConversationData({
+            id: 'conv-consistency-1',
+            timestamp: new Date('2024-01-07T11:00:00Z'),
+            participants: [
+              {
+                id: 'user13',
+                name: 'Jordan',
+                role: 'author',
+                messageCount: 3,
+                emotionalExpressions: ['anxious', 'determined'],
+              },
+            ],
+            messages: [
+              {
+                id: 'msg13',
+                content:
+                  "I'm nervous about the interview but I've prepared well and I believe in myself.",
+                authorId: 'user13',
+                timestamp: new Date('2024-01-07T11:00:00Z'),
+              },
+            ],
+          }),
           moodAnalysis: createMoodAnalysisResult({
             score: 6.2,
             confidence: 0.82,
             primaryEmotions: ['anxiety', 'confidence'],
-            emotionalIntensity: 0.7,
             sentiment: 'mixed',
           }),
         }
@@ -1087,31 +1155,32 @@ describe('ValidationFramework - Human Validation Framework', () => {
         const testConversation: ConversationData & {
           moodAnalysis: MoodAnalysisResult
         } = {
-          id: 'conv-outlier-1',
-          timestamp: new Date('2024-01-08T13:00:00Z'),
-          participants: [
-            {
-              id: 'user14',
-              name: 'Riley',
-              role: 'author',
-              messageCount: 2,
-              emotionalExpressions: ['frustrated', 'tired'],
-            },
-          ],
-          messages: [
-            {
-              id: 'msg14',
-              content:
-                "This project is taking forever and I'm getting frustrated with the delays.",
-              authorId: 'user14',
-              timestamp: new Date('2024-01-08T13:00:00Z'),
-            },
-          ],
+          ...createTestConversationData({
+            id: 'conv-outlier-1',
+            timestamp: new Date('2024-01-08T13:00:00Z'),
+            participants: [
+              {
+                id: 'user14',
+                name: 'Riley',
+                role: 'author',
+                messageCount: 2,
+                emotionalExpressions: ['frustrated', 'tired'],
+              },
+            ],
+            messages: [
+              {
+                id: 'msg14',
+                content:
+                  "This project is taking forever and I'm getting frustrated with the delays.",
+                authorId: 'user14',
+                timestamp: new Date('2024-01-08T13:00:00Z'),
+              },
+            ],
+          }),
           moodAnalysis: createMoodAnalysisResult({
             score: 4.1,
             confidence: 0.79,
             primaryEmotions: ['frustration', 'fatigue'],
-            emotionalIntensity: 0.65,
             sentiment: 'negative',
           }),
         }
@@ -1248,17 +1317,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-bias-over-1',
-            timestamp: new Date('2024-01-03T10:00:00Z'),
-            participants: [{ id: 'user1', name: 'User', role: 'author' }],
-            messages: [
-              {
-                id: 'msg1',
-                content: 'Feeling a bit stressed about the presentation',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-over-1',
+              timestamp: new Date('2024-01-03T10:00:00Z'),
+              participants: [{ id: 'user1', name: 'User', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: 'Feeling a bit stressed about the presentation',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.8,
               descriptors: ['mildly_stressed'],
@@ -1267,17 +1338,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-bias-over-2',
-            timestamp: new Date('2024-01-03T11:00:00Z'),
-            participants: [{ id: 'user2', name: 'User2', role: 'author' }],
-            messages: [
-              {
-                id: 'msg2',
-                content: 'Not sure if I can handle this workload',
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-over-2',
+              timestamp: new Date('2024-01-03T11:00:00Z'),
+              participants: [{ id: 'user2', name: 'User2', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: 'Not sure if I can handle this workload',
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 5.2,
               descriptors: ['uncertain'],
@@ -1286,17 +1359,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-bias-over-3',
-            timestamp: new Date('2024-01-03T12:00:00Z'),
-            participants: [{ id: 'user3', name: 'User3', role: 'author' }],
-            messages: [
-              {
-                id: 'msg3',
-                content: 'Things are getting overwhelming lately',
-                authorId: 'user3',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-over-3',
+              timestamp: new Date('2024-01-03T12:00:00Z'),
+              participants: [{ id: 'user3', name: 'User3', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg3',
+                  content: 'Things are getting overwhelming lately',
+                  authorId: 'user3',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.5,
               descriptors: ['overwhelmed'],
@@ -1371,7 +1446,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic over-estimation bias
@@ -1403,17 +1478,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-bias-under-1',
-            timestamp: new Date('2024-01-03T14:00:00Z'),
-            participants: [{ id: 'user1', name: 'User', role: 'author' }],
-            messages: [
-              {
-                id: 'msg1',
-                content: 'Making progress on my personal goals',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-under-1',
+              timestamp: new Date('2024-01-03T14:00:00Z'),
+              participants: [{ id: 'user1', name: 'User', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: 'Making progress on my personal goals',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 6.2,
               descriptors: ['content'],
@@ -1422,17 +1499,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-bias-under-2',
-            timestamp: new Date('2024-01-03T15:00:00Z'),
-            participants: [{ id: 'user2', name: 'User2', role: 'author' }],
-            messages: [
-              {
-                id: 'msg2',
-                content: 'Feeling grateful for the support I have',
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-under-2',
+              timestamp: new Date('2024-01-03T15:00:00Z'),
+              participants: [{ id: 'user2', name: 'User2', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: 'Feeling grateful for the support I have',
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 7.1,
               descriptors: ['grateful'],
@@ -1441,17 +1520,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-bias-under-3',
-            timestamp: new Date('2024-01-03T16:00:00Z'),
-            participants: [{ id: 'user3', name: 'User3', role: 'author' }],
-            messages: [
-              {
-                id: 'msg3',
-                content: 'Really excited about this new opportunity',
-                authorId: 'user3',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-bias-under-3',
+              timestamp: new Date('2024-01-03T16:00:00Z'),
+              participants: [{ id: 'user3', name: 'User3', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg3',
+                  content: 'Really excited about this new opportunity',
+                  authorId: 'user3',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 7.8,
               descriptors: ['excited'],
@@ -1526,7 +1607,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic under-estimation bias
@@ -1553,17 +1634,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-no-bias-1',
-            timestamp: new Date('2024-01-03T18:00:00Z'),
-            participants: [{ id: 'user1', name: 'User', role: 'author' }],
-            messages: [
-              {
-                id: 'msg1',
-                content: 'Having a regular day at work',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-no-bias-1',
+              timestamp: new Date('2024-01-03T18:00:00Z'),
+              participants: [{ id: 'user1', name: 'User', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: 'Having a regular day at work',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 5.5,
               descriptors: ['neutral'],
@@ -1572,17 +1655,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-no-bias-2',
-            timestamp: new Date('2024-01-03T19:00:00Z'),
-            participants: [{ id: 'user2', name: 'User2', role: 'author' }],
-            messages: [
-              {
-                id: 'msg2',
-                content: 'Feeling pretty good about the weekend plans',
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-no-bias-2',
+              timestamp: new Date('2024-01-03T19:00:00Z'),
+              participants: [{ id: 'user2', name: 'User2', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: 'Feeling pretty good about the weekend plans',
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 7.2,
               descriptors: ['optimistic'],
@@ -1591,17 +1676,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-no-bias-3',
-            timestamp: new Date('2024-01-03T20:00:00Z'),
-            participants: [{ id: 'user3', name: 'User3', role: 'author' }],
-            messages: [
-              {
-                id: 'msg3',
-                content: 'A bit tired but manageable',
-                authorId: 'user3',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-no-bias-3',
+              timestamp: new Date('2024-01-03T20:00:00Z'),
+              participants: [{ id: 'user3', name: 'User3', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg3',
+                  content: 'A bit tired but manageable',
+                  authorId: 'user3',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.8,
               descriptors: ['tired'],
@@ -1661,7 +1748,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect no systematic bias
@@ -1685,17 +1772,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-correction-1',
-            timestamp: new Date('2024-01-04T10:00:00Z'),
-            participants: [{ id: 'user1', name: 'User', role: 'author' }],
-            messages: [
-              {
-                id: 'msg1',
-                content: 'I am struggling with complex emotions right now',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-correction-1',
+              timestamp: new Date('2024-01-04T10:00:00Z'),
+              participants: [{ id: 'user1', name: 'User', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: 'I am struggling with complex emotions right now',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 5.5,
               descriptors: ['mixed'],
@@ -1704,17 +1793,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-correction-2',
-            timestamp: new Date('2024-01-04T11:00:00Z'),
-            participants: [{ id: 'user2', name: 'User2', role: 'author' }],
-            messages: [
-              {
-                id: 'msg2',
-                content: 'Having mixed feelings about this situation',
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-correction-2',
+              timestamp: new Date('2024-01-04T11:00:00Z'),
+              participants: [{ id: 'user2', name: 'User2', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: 'Having mixed feelings about this situation',
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 6.0,
               descriptors: ['mixed'],
@@ -1723,17 +1814,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-correction-3',
-            timestamp: new Date('2024-01-04T12:00:00Z'),
-            participants: [{ id: 'user3', name: 'User3', role: 'author' }],
-            messages: [
-              {
-                id: 'msg3',
-                content: 'Feeling conflicted and uncertain',
-                authorId: 'user3',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-correction-3',
+              timestamp: new Date('2024-01-04T12:00:00Z'),
+              participants: [{ id: 'user3', name: 'User3', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg3',
+                  content: 'Feeling conflicted and uncertain',
+                  authorId: 'user3',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 5.8,
               descriptors: ['mixed', 'uncertain'],
@@ -1767,6 +1860,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-correction-2',
             validatorId: 'expert-correction',
+            validatorCredentials: {
+              title: 'Clinical Psychologist',
+              yearsExperience: 10,
+              specializations: ['mood_assessment'],
+            },
             humanMoodScore: 3.5, // Another over-estimation
             confidence: 0.92,
             rationale:
@@ -1781,6 +1879,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
           {
             conversationId: 'conv-correction-3',
             validatorId: 'expert-correction',
+            validatorCredentials: {
+              title: 'Clinical Psychologist',
+              yearsExperience: 10,
+              specializations: ['mood_assessment'],
+            },
             humanMoodScore: 3.8, // Consistent over-estimation pattern
             confidence: 0.90,
             rationale:
@@ -1796,7 +1899,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should provide correction recommendations
@@ -1835,17 +1938,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-stats-1',
-            timestamp: new Date('2024-01-04T12:00:00Z'),
-            participants: [{ id: 'user1', name: 'User', role: 'author' }],
-            messages: [
-              {
-                id: 'msg1',
-                content: 'Consistent pattern of feeling undervalued',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-stats-1',
+              timestamp: new Date('2024-01-04T12:00:00Z'),
+              participants: [{ id: 'user1', name: 'User', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: 'Consistent pattern of feeling undervalued',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.5,
               descriptors: ['undervalued'],
@@ -1854,17 +1959,19 @@ describe('ValidationFramework - Human Validation Framework', () => {
             },
           },
           {
-            id: 'conv-stats-2',
-            timestamp: new Date('2024-01-04T13:00:00Z'),
-            participants: [{ id: 'user2', name: 'User2', role: 'author' }],
-            messages: [
-              {
-                id: 'msg2',
-                content: 'Always seems like I am not enough',
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-stats-2',
+              timestamp: new Date('2024-01-04T13:00:00Z'),
+              participants: [{ id: 'user2', name: 'User2', role: 'author' }],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: 'Always seems like I am not enough',
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: {
               score: 4.8,
               descriptors: ['inadequate'],
@@ -1918,7 +2025,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should provide comprehensive statistical evidence
@@ -1946,87 +2053,90 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-patterns-1',
-            timestamp: new Date('2024-01-05T10:00:00Z'),
-            participants: [
-              {
-                id: 'user1',
-                name: 'Sarah',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['anxious'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg1',
-                content:
-                  "I'm just a bit worried about the meeting, nothing major",
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-patterns-1',
+              timestamp: new Date('2024-01-05T10:00:00Z'),
+              participants: [
+                {
+                  id: 'user1',
+                  name: 'Sarah',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['anxious'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg1',
+                  content:
+                    "I'm just a bit worried about the meeting, nothing major",
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 5.2,
               confidence: 0.7,
               primaryEmotions: ['worry'],
-              emotionalIntensity: 0.4,
               sentiment: 'mixed',
             }),
           },
           {
-            id: 'conv-patterns-2',
-            timestamp: new Date('2024-01-05T11:00:00Z'),
-            participants: [
-              {
-                id: 'user2',
-                name: 'Alex',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['dismissive'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg2',
-                content: "It's fine, I'm fine, everything is totally fine",
-                authorId: 'user2',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-patterns-2',
+              timestamp: new Date('2024-01-05T11:00:00Z'),
+              participants: [
+                {
+                  id: 'user2',
+                  name: 'Alex',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['dismissive'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg2',
+                  content: "It's fine, I'm fine, everything is totally fine",
+                  authorId: 'user2',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.0,
               confidence: 0.6,
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.3,
               sentiment: 'neutral',
             }),
           },
           {
-            id: 'conv-patterns-3',
-            timestamp: new Date('2024-01-05T12:00:00Z'),
-            participants: [
-              {
-                id: 'user3',
-                name: 'Jordan',
-                role: 'author',
-                messageCount: 3,
-                emotionalExpressions: ['sarcastic'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg3',
-                content: 'Oh great, another wonderful day at this amazing job',
-                authorId: 'user3',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-patterns-3',
+              timestamp: new Date('2024-01-05T12:00:00Z'),
+              participants: [
+                {
+                  id: 'user3',
+                  name: 'Jordan',
+                  role: 'author',
+                  messageCount: 3,
+                  emotionalExpressions: ['sarcastic'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg3',
+                  content: 'Oh great, another wonderful day at this amazing job',
+                  authorId: 'user3',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 5.8,
               confidence: 0.5,
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.2,
               sentiment: 'neutral',
             }),
           },
@@ -2097,7 +2207,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should identify specific bias patterns
@@ -2128,31 +2238,32 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-correction-1',
-            timestamp: new Date('2024-01-05T14:00:00Z'),
-            participants: [
-              {
-                id: 'user1',
-                name: 'Casey',
-                role: 'author',
-                messageCount: 3,
-                emotionalExpressions: ['conflicted'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg1',
-                content:
-                  'I should be grateful but I feel sad about the situation',
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-correction-1',
+              timestamp: new Date('2024-01-05T14:00:00Z'),
+              participants: [
+                {
+                  id: 'user1',
+                  name: 'Casey',
+                  role: 'author',
+                  messageCount: 3,
+                  emotionalExpressions: ['conflicted'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg1',
+                  content:
+                    'I should be grateful but I feel sad about the situation',
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.2,
               confidence: 0.65,
               primaryEmotions: ['gratitude'],
-              emotionalIntensity: 0.5,
               sentiment: 'mixed',
             }),
           },
@@ -2183,7 +2294,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should provide detailed correction strategies
@@ -2210,30 +2321,31 @@ describe('ValidationFramework - Human Validation Framework', () => {
         const testConversations: (ConversationData & {
           moodAnalysis: MoodAnalysisResult
         })[] = Array.from({ length: 5 }, (_, i) => ({
-          id: `conv-confidence-${i + 1}`,
-          timestamp: new Date('2024-01-05T16:00:00Z'),
-          participants: [
-            {
-              id: `user${i + 1}`,
-              name: `User${i + 1}`,
-              role: 'author',
-              messageCount: 2,
-              emotionalExpressions: ['understated'],
-            },
-          ],
-          messages: [
-            {
-              id: `msg${i + 1}`,
-              content: 'Things could be better I suppose',
-              authorId: `user${i + 1}`,
-              timestamp: new Date(),
-            },
-          ],
+          ...createTestConversationData({
+            id: `conv-confidence-${i + 1}`,
+            timestamp: new Date('2024-01-05T16:00:00Z'),
+            participants: [
+              {
+                id: `user${i + 1}`,
+                name: `User${i + 1}`,
+                role: 'author',
+                messageCount: 2,
+                emotionalExpressions: ['understated'],
+              },
+            ],
+            messages: [
+              {
+                id: `msg${i + 1}`,
+                content: 'Things could be better I suppose',
+                authorId: `user${i + 1}`,
+                timestamp: new Date(),
+              },
+            ],
+          }),
           moodAnalysis: createMoodAnalysisResult({
             score: 5.5 + i * 0.1,
             confidence: 0.7,
             primaryEmotions: ['neutral'],
-            emotionalIntensity: 0.4,
             sentiment: 'neutral',
           }),
         }))
@@ -2262,7 +2374,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should show high confidence due to consistent pattern
@@ -2285,30 +2397,31 @@ describe('ValidationFramework - Human Validation Framework', () => {
           moodAnalysis: MoodAnalysisResult
         })[] = [
           {
-            id: 'conv-actionable-1',
-            timestamp: new Date('2024-01-05T18:00:00Z'),
-            participants: [
-              {
-                id: 'user1',
-                name: 'Pat',
-                role: 'author',
-                messageCount: 2,
-                emotionalExpressions: ['defensive'],
-              },
-            ],
-            messages: [
-              {
-                id: 'msg1',
-                content: "I don't need help, I can handle this myself",
-                authorId: 'user1',
-                timestamp: new Date(),
-              },
-            ],
+            ...createTestConversationData({
+              id: 'conv-actionable-1',
+              timestamp: new Date('2024-01-05T18:00:00Z'),
+              participants: [
+                {
+                  id: 'user1',
+                  name: 'Pat',
+                  role: 'author',
+                  messageCount: 2,
+                  emotionalExpressions: ['defensive'],
+                },
+              ],
+              messages: [
+                {
+                  id: 'msg1',
+                  content: "I don't need help, I can handle this myself",
+                  authorId: 'user1',
+                  timestamp: new Date(),
+                },
+              ],
+            }),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.8,
               confidence: 0.75,
               primaryEmotions: ['independence'],
-              emotionalIntensity: 0.6,
               sentiment: 'neutral',
             }),
           },
@@ -2339,7 +2452,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should provide actionable recommendations
@@ -2388,14 +2501,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-1',
               },
             ],
-            participants: [{ id: 'user-1', name: 'User One', role: 'author' as const }],
+            participants: [{ id: 'user-1', name: 'User One', role: 'vulnerable_sharer' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 8.5, // Algorithm consistently over-estimates
               descriptors: ['positive', 'confident'],
               confidence: 0.9,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Strong positive sentiment detected',
                   evidence: ['positive_language']
@@ -2415,13 +2530,15 @@ describe('ValidationFramework - Human Validation Framework', () => {
               },
             ],
             participants: [{ id: 'user-2', name: 'User Two', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 9.2, // Algorithm over-estimates again
               descriptors: ['positive', 'accomplished'],
               confidence: 0.85,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Achievement-focused positive sentiment',
                   evidence: ['achievement_language']
@@ -2440,14 +2557,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-3',
               },
             ],
-            participants: [{ id: 'user-3', name: 'User Three' }],
+            participants: [{ id: 'user-3', name: 'User Three', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 8.8, // Consistent over-estimation pattern
               descriptors: ['positive'],
               confidence: 0.88,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
                   evidence: ['satisfaction_language']
@@ -2510,7 +2629,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic bias that requires calibration
@@ -2548,14 +2667,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-1',
               },
             ],
-            participants: [{ id: 'user-trend-1', name: 'Trend User One' }],
+            participants: [{ id: 'user-trend-1', name: 'Trend User One', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 8.2, // Before calibration - over-estimation
               descriptors: ['positive'],
               confidence: 0.85,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
                   evidence: ['positive_expression']
@@ -2574,14 +2695,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-1b',
               },
             ],
-            participants: [{ id: 'user-trend-1b', name: 'Trend User 1B' }],
+            participants: [{ id: 'user-trend-1b', name: 'Trend User 1B', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 7.8, // Before calibration - over-estimation pattern
               descriptors: ['positive'],
               confidence: 0.8,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
                   evidence: ['positive_expression']
@@ -2639,14 +2762,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-2',
               },
             ],
-            participants: [{ id: 'user-trend-2', name: 'Trend User Two' }],
+            participants: [{ id: 'user-trend-2', name: 'Trend User Two', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 7.0, // After calibration - better accuracy
               descriptors: ['positive'],
               confidence: 0.87,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
                   evidence: ['positive_expression']
@@ -2665,14 +2790,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-trend-2b',
               },
             ],
-            participants: [{ id: 'user-trend-2b', name: 'Trend User 2B' }],
+            participants: [{ id: 'user-trend-2b', name: 'Trend User 2B', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 6.4, // After calibration - much closer to human assessment
               descriptors: ['positive'],
               confidence: 0.82,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected positive sentiment',
                   evidence: ['positive_expression']
@@ -2757,14 +2884,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-param-1',
               },
             ],
-            participants: [{ id: 'user-param-1', name: 'Param User One' }],
+            participants: [{ id: 'user-param-1', name: 'Param User One', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 7.5, // Algorithm oversimplifies mixed emotions as primarily positive
               descriptors: ['mixed'],
               confidence: 0.7,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
                   evidence: ['achievement_language', 'anxiety_indicators']
@@ -2795,7 +2924,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should identify mixed emotion oversimplification bias
@@ -2822,6 +2951,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
         // High quality, high quantity validation data
         const highQualityConversations = Array.from({ length: 10 }, (_, i) => ({
           id: `conv-quality-${i + 1}`,
+          timestamp: new Date(),
           messages: [
             {
               id: `msg-quality-${i + 1}`,
@@ -2830,14 +2960,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
               authorId: `user-quality-${i + 1}`,
             },
           ],
-          participants: [{ id: `user-quality-${i + 1}`, name: `Quality User ${i + 1}` }],
+          participants: [{ id: `user-quality-${i + 1}`, name: `Quality User ${i + 1}`, role: 'author' as const }],
+          startTime: new Date(),
+          endTime: new Date(),
           moodAnalysis: {
               score: 5.0 + i * 0.5, // Varied scores
               descriptors: ['neutral'],
               confidence: 0.8,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected neutral sentiment',
                   evidence: ['neutral_language']
@@ -2881,13 +3013,14 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-low-1',
               },
             ],
-            participants: [{ id: 'user-low-1', name: 'Low Quality User' }],
+            participants: [{ id: 'user-low-1', name: 'Low Quality User', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.0,
               confidence: 0.5, // Low algorithm confidence
               sentiment: 'neutral',
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.5,
             }),
           },
         ]
@@ -2963,14 +3096,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-weight-1',
               },
             ],
-            participants: [{ id: 'user-weight-1', name: 'Weight User One' }],
+            participants: [{ id: 'user-weight-1', name: 'Weight User One', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 8.2, // High score due to "fantastic" overwhelming "struggling"
               descriptors: ['mixed'],
               confidence: 0.8,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
                   evidence: ['positive_language', 'struggle_indicators']
@@ -2989,14 +3124,16 @@ describe('ValidationFramework - Human Validation Framework', () => {
                 authorId: 'user-weight-2',
               },
             ],
-            participants: [{ id: 'user-weight-2', name: 'Weight User Two' }],
+            participants: [{ id: 'user-weight-2', name: 'Weight User Two', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: {
               score: 7.8, // Again, positive words dominate
               descriptors: ['mixed'],
               confidence: 0.75,
               factors: [
                 {
-                  type: 'sentiment_analysis',
+                  type: 'sentiment_analysis' as const,
                   weight: 0.35,
                   description: 'Detected mixed sentiment',
                   evidence: ['enthusiasm_language', 'worry_indicators']
@@ -3043,7 +3180,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should detect systematic over-estimation bias
@@ -3086,12 +3223,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
               },
             ],
             participants: [{ id: 'user-conf-1', name: 'Confidence User One', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
               score: 6.5, // Algorithm confident despite uncertain language
               confidence: 0.85, // High confidence despite uncertainty markers
               sentiment: 'neutral',
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.5,
             }),
           },
           {
@@ -3106,12 +3244,13 @@ describe('ValidationFramework - Human Validation Framework', () => {
               },
             ],
             participants: [{ id: 'user-conf-2', name: 'Confidence User Two', role: 'author' as const }],
+            startTime: new Date(),
+            endTime: new Date(),
             moodAnalysis: createMoodAnalysisResult({
               score: 7.0, // Another overconfident assessment
               confidence: 0.8, // High confidence with uncertain content
               sentiment: 'neutral',
               primaryEmotions: ['neutral'],
-              emotionalIntensity: 0.5,
             }),
           },
         ]
@@ -3153,7 +3292,7 @@ describe('ValidationFramework - Human Validation Framework', () => {
 
         const validationResult = await validationFramework.validateMoodScore(
           testConversations,
-          humanValidations,
+          humanValidations.map(addDefaultCredentials),
         )
 
         // Should identify confidence calibration issues
@@ -3171,11 +3310,11 @@ describe('ValidationFramework - Human Validation Framework', () => {
         expect(avgAlgorithmConfidence).toBeGreaterThan(avgHumanConfidence + 0.2)
 
         // Should recommend confidence threshold adjustments
-        const confidenceRecs = validationResult.recommendations.filter(r =>
-          r.description.toLowerCase().includes('confidence') ||
-          r.description.toLowerCase().includes('uncertainty') ||
-          r.description.toLowerCase().includes('threshold')
-        )
+        // const confidenceRecs = validationResult.recommendations.filter(r =>
+        //   r.description.toLowerCase().includes('confidence') ||
+        //   r.description.toLowerCase().includes('uncertainty') ||
+        //   r.description.toLowerCase().includes('threshold')
+        // )
         
         // Since this is a generic emotional_complexity bias, we expect comprehensive recommendations
         expect(validationResult.recommendations.length).toBeGreaterThan(0)

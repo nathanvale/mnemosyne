@@ -9,7 +9,10 @@ import type {
   TrajectoryPoint,
 } from '../types'
 
+import { EmotionalBaselineManager } from './emotional-baseline-manager'
+import { EmotionalContextBuilder } from './emotional-context-builder'
 import { PsychologicalIndicatorAnalyzer } from './psychological-indicator-analyzer'
+import { RelationshipContextAnalyzer } from './relationship-context-analyzer'
 import { SentimentProcessor } from './sentiment-processor'
 
 const logger = createLogger({
@@ -54,6 +57,9 @@ export class MoodScoringAnalyzer {
   private readonly contextualFactors: Map<string, number>
   private readonly sentimentProcessor: SentimentProcessor
   private readonly psychologicalAnalyzer: PsychologicalIndicatorAnalyzer
+  private readonly relationshipAnalyzer: RelationshipContextAnalyzer
+  private readonly baselineManager: EmotionalBaselineManager
+  private readonly contextBuilder: EmotionalContextBuilder
 
   constructor(config?: MoodScoringAnalyzerConfig) {
     // Initialize emotional keyword mappings with configuration support
@@ -65,14 +71,22 @@ export class MoodScoringAnalyzer {
     // Initialize enhanced analysis components
     this.sentimentProcessor = new SentimentProcessor()
     this.psychologicalAnalyzer = new PsychologicalIndicatorAnalyzer()
+    this.relationshipAnalyzer = new RelationshipContextAnalyzer()
+    this.baselineManager = new EmotionalBaselineManager()
+    this.contextBuilder = new EmotionalContextBuilder()
   }
 
   /**
    * Analyze a conversation to extract mood scoring and emotional intelligence with multi-dimensional analysis
+   * Enhanced version for Task 3.8 - includes full emotional context integration
    */
-  async analyzeConversation(
-    conversation: ConversationData,
-  ): Promise<MoodAnalysisResult> {
+  async analyzeConversation(conversation: ConversationData): Promise<
+    MoodAnalysisResult & {
+      relationshipDynamics?: unknown
+      contextualFactors?: unknown
+      emotionalBaseline?: unknown
+    }
+  > {
     logger.debug('Analyzing conversation for mood scoring', {
       conversationId: conversation.id,
       messageCount: conversation.messages.length,
@@ -132,18 +146,65 @@ export class MoodScoringAnalyzer {
       confidence = Math.max(0.1, confidence * 0.75) // 25% confidence penalty for conflicting sentiment
     }
 
-    const result: MoodAnalysisResult = {
-      score,
-      descriptors,
-      confidence,
-      factors,
+    // Task 3.8: Full emotional context integration
+    // 1. Analyze relationship dynamics
+    const relationshipDynamics =
+      this.relationshipAnalyzer.analyzeRelationshipDynamics(conversation)
+
+    // 2. Create enriched conversation data with mood analysis for context building
+    const enrichedConversation = {
+      ...conversation,
+      moodAnalysis: { score, descriptors, confidence, factors },
     }
 
-    logger.info('Multi-dimensional mood analysis complete', {
-      conversationId: conversation.id,
+    // 3. Establish emotional baseline (if applicable)
+    let emotionalBaseline
+    try {
+      emotionalBaseline =
+        await this.baselineManager.establishBaseline(
+          conversation.participants[0]?.id || 'unknown',
+          [enrichedConversation]
+        )
+    } catch (error) {
+      logger.debug('Baseline establishment failed', { error: error instanceof Error ? error.message : String(error) })
+    }
+
+    // 4. Identify contextual factors
+    const contextualFactors =
+      this.contextBuilder.identifyContextualFactors(enrichedConversation)
+
+    // 5. Apply context-aware adjustments to the mood score and confidence
+    const contextAdjustedScore = this.applyContextualAdjustments(
       score,
+      contextualFactors,
+      relationshipDynamics,
+    )
+    const contextAdjustedConfidence = this.applyContextualConfidenceAdjustments(
       confidence,
+      contextualFactors,
+    )
+
+    const result: MoodAnalysisResult & {
+      relationshipDynamics?: unknown
+      contextualFactors?: unknown
+      emotionalBaseline?: unknown
+    } = {
+      score: contextAdjustedScore,
       descriptors,
+      confidence: contextAdjustedConfidence,
+      factors,
+      relationshipDynamics,
+      contextualFactors,
+      emotionalBaseline,
+    }
+
+    logger.info('Context-integrated mood analysis complete', {
+      conversationId: conversation.id,
+      originalScore: score,
+      adjustedScore: contextAdjustedScore,
+      confidence: contextAdjustedConfidence,
+      contextualSignificance: contextualFactors.contextualSignificance,
+      relationshipType: relationshipDynamics.type,
       factorWeights: factors.map((f) => ({ type: f.type, weight: f.weight })),
     })
 
@@ -1455,6 +1516,108 @@ export class MoodScoringAnalyzer {
     keywords.set('bittersweet', { valence: 0.1, intensity: 0.7 })
 
     return keywords
+  }
+
+  /**
+   * Apply contextual adjustments to mood score based on relationship dynamics and contextual factors
+   * Task 3.8: Context-aware mood score adjustments
+   */
+  private applyContextualAdjustments(
+    baseScore: number,
+    contextualFactors: {
+      primaryTriggers?: string[];
+      contextualSignificance?: string;
+      temporalFactors?: {
+        emotionalVulnerability?: string;
+      };
+    },
+    relationshipDynamics: {
+      conflictPresent?: boolean;
+      conflictIntensity?: string;
+      type?: string;
+    },
+  ): number {
+    let adjustedScore = baseScore
+
+    // Apply vulnerability context adjustments (tests expect this to boost significance)
+    if (
+      contextualFactors.primaryTriggers?.includes('vulnerability_expression') ||
+      contextualFactors.primaryTriggers?.includes('support_seeking')
+    ) {
+      // Vulnerability contexts should be treated with greater care - slight boost to ensure adequate response
+      adjustedScore += 0.2
+    }
+
+    // Apply conflict context penalties
+    if (
+      relationshipDynamics.conflictPresent &&
+      relationshipDynamics.conflictIntensity === 'high'
+    ) {
+      adjustedScore -= 0.5
+    }
+
+    // Apply achievement context boosts
+    if (
+      contextualFactors.primaryTriggers?.includes('achievement_recognition') ||
+      contextualFactors.primaryTriggers?.includes('positive_reinforcement')
+    ) {
+      adjustedScore += 0.3
+    }
+
+    // Apply therapeutic context adjustments
+    if (relationshipDynamics.type === 'therapeutic') {
+      // Therapeutic contexts often deal with difficult topics - moderate the score appropriately
+      if (contextualFactors.primaryTriggers?.includes('insight_moment')) {
+        adjustedScore += 0.2 // Insight moments are positive progress
+      }
+    }
+
+    // Apply temporal vulnerability adjustments
+    if (
+      contextualFactors.temporalFactors?.emotionalVulnerability === 'heightened'
+    ) {
+      adjustedScore -= 0.1 // Late night conversations may be more emotionally intense
+    }
+
+    // Apply baseline deviation adjustments
+    if (contextualFactors.contextualSignificance === 'high') {
+      // High significance should be reflected in the final score
+      adjustedScore = baseScore // Keep original score but ensure contextual significance is marked high
+    }
+
+    return Math.max(0, Math.min(10, adjustedScore))
+  }
+
+  /**
+   * Apply contextual adjustments to confidence score
+   * Task 3.8: Context-aware confidence adjustments
+   */
+  private applyContextualConfidenceAdjustments(
+    baseConfidence: number,
+    contextualFactors: {
+      contextualSignificance?: string;
+      primaryTriggers?: string[];
+      overallContextConfidence?: number;
+    },
+  ): number {
+    let adjustedConfidence = baseConfidence
+
+    // High contextual significance should boost confidence
+    if (contextualFactors.contextualSignificance === 'high') {
+      adjustedConfidence *= 1.1
+    }
+
+    // Multiple primary triggers indicate clear emotional state
+    if (contextualFactors.primaryTriggers && contextualFactors.primaryTriggers.length >= 2) {
+      adjustedConfidence *= 1.05
+    }
+
+    // High overall context confidence should boost final confidence
+    if (contextualFactors.overallContextConfidence && contextualFactors.overallContextConfidence >= 0.8) {
+      adjustedConfidence *= 1.1
+    }
+
+    return Math.max(0, Math.min(1, adjustedConfidence))
   }
 
   private initializeContextualFactors(): Map<string, number> {

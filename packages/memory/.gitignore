@@ -1,0 +1,16 @@
+# Test database files
+test-worker-*.db
+test-worker-*.db-journal
+test-worker-*.db-shm
+test-worker-*.db-wal
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp

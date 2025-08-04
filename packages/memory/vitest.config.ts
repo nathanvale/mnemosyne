@@ -12,7 +12,21 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    // setupFiles: ['@studio/test-config/vitest.setup'], // Disabled for now
+    setupFiles: ['./src/persistence/__tests__/test-setup.ts'],
+    
+    // Enable concurrent execution with worker-isolated databases
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        // Allow concurrent execution - each worker gets its own database
+        minThreads: 1,
+        maxThreads: 4, // Limit to 4 workers for optimal performance
+      },
+    },
+    
+    // Increase timeout for database operations
+    testTimeout: 30000,
+    
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

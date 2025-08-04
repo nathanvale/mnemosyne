@@ -105,6 +105,7 @@ export class AgentContextAssembler {
       memories,
       participantId,
     )
+    
     const scopedMemories = this.applyScopeFilters(relevantMemories)
 
     const [moodContext, timeline, vocabulary] = await Promise.all([
@@ -112,6 +113,7 @@ export class AgentContextAssembler {
       this.timelineBuilder.buildTimeline(scopedMemories, participantId),
       this.vocabularyExtractor.extractVocabulary(scopedMemories, participantId),
     ])
+    
 
     const timelineSummary = this.createTimelineSummary(timeline)
     const optimization = await this.calculateOptimization(

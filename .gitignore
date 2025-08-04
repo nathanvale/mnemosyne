@@ -73,6 +73,10 @@ packages/scripts/src/data/messages_*.csv
 prisma/dev.db
 packages/db/prisma/dev.db
 
+# Wallaby.js test database files
+packages/db/prisma/wallaby-*
+packages/db/prisma/:memory:
+
 # Logs directory created by tmuxinator mnemosyne session
 .logs/
 

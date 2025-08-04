@@ -78,10 +78,10 @@ export class CoverageAnalyzer {
         emotionsFound.add(emotionalContext.primaryEmotion.toLowerCase())
       }
 
-      if (emotionalContext?.emotionalStates) {
-        for (const state of emotionalContext.emotionalStates) {
-          if (state?.emotion) {
-            emotionsFound.add(state.emotion.toLowerCase())
+      if (emotionalContext?.secondaryEmotions) {
+        for (const emotion of emotionalContext.secondaryEmotions) {
+          if (emotion) {
+            emotionsFound.add(emotion.toLowerCase())
           }
         }
       }

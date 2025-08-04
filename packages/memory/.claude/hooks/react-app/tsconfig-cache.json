@@ -1,0 +1,14 @@
+{
+  "hashes": {
+    "/Users/nathanvale/code/mnemosyne/packages/memory/tsconfig.json": "dfb94ab8cc60838a6c8ce8b3d94f1f9e67935ee5ed0548cfca122b16de875f66"
+  },
+  "mappings": {
+    "src/**/*": {
+      "configPath": "/Users/nathanvale/code/mnemosyne/packages/memory/tsconfig.json",
+      "excludes": [
+        "dist",
+        "node_modules"
+      ]
+    }
+  }
+}

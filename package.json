@@ -27,6 +27,7 @@
     "storybook": "pnpm --filter @studio/app storybook",
     "build-storybook": "pnpm --filter @studio/app build-storybook",
     "prepare": "husky",
+    "postinstall": "playwright install chromium",
     "import:messages": "tsx packages/scripts/src/import-messages.ts --in packages/scripts/src/data/messages.csv",
     "studio:dev": "pnpm --filter \"@studio/*\" dev",
     "studio:build": "pnpm --filter \"@studio/*\" build",

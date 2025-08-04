@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 /**
  * Enhanced memory with processing metadata and emotional intelligence
+ * This interface extends the base Memory type with additional processing data
  */
 export interface ExtractedMemory extends Memory {
   /** Extended relationship dynamics for significance analysis */
@@ -37,11 +38,16 @@ export interface ConversationData {
   participants: ConversationParticipant[]
   /** When the conversation occurred */
   timestamp: Date
+  /** When the conversation started */
+  startTime: Date
+  /** When the conversation ended */
+  endTime: Date
   /** Conversation context metadata */
   context?: {
     platform?: string
     threadId?: string
     conversationType?: 'direct' | 'group' | 'public'
+    relationshipType?: string
   }
 }
 
@@ -291,10 +297,59 @@ export interface RelationshipDynamics {
   supportLevel: 'high' | 'medium' | 'low' | 'negative'
   /** Intimacy level in the relationship */
   intimacyLevel: 'high' | 'medium' | 'low'
+  /** Intimacy level (alias for backwards compatibility) */
+  intimacy: 'high' | 'medium' | 'low'
   /** Conflict level in the relationship */
   conflictLevel: 'high' | 'medium' | 'low' | 'none'
   /** Trust level in the relationship */
   trustLevel: 'high' | 'medium' | 'low'
+  /** Whether conflict is present in the interaction */
+  conflictPresent: boolean
+  /** Intensity of conflict if present */
+  conflictIntensity: 'high' | 'medium' | 'low'
+  /** Communication style summary */
+  communicationStyle: 'reflective' | 'supportive' | 'directive' | 'conflicting' | 'professional'
+  /** Detailed communication style analysis */
+  communicationStyleDetails: {
+    /** Level of vulnerability displayed in communication */
+    vulnerabilityLevel: 'high' | 'medium' | 'low'
+    /** Overall emotional safety in the interaction */
+    emotionalSafety: 'high' | 'medium' | 'low'
+    /** Support patterns identified */
+    supportPatterns: string[]
+    /** Conflict patterns identified */
+    conflictPatterns: string[]
+    /** Whether professional boundaries are maintained */
+    professionalBoundaries: boolean
+    /** Guidance patterns in communication */
+    guidancePatterns: string[]
+    /** Therapeutic elements present */
+    therapeuticElements: string[]
+  }
+  /** Participant dynamics analysis */
+  participantDynamics: {
+    /** ID of participant acting as emotional leader */
+    emotionalLeader?: string
+    /** ID of primary supporter */
+    primarySupporter?: string
+    /** ID of participant exhibiting vulnerability */
+    vulnerabilityExhibitor?: string
+    /** Balance of support in the relationship */
+    supportBalance: 'unidirectional' | 'bidirectional' | 'balanced'
+    /** Whether mutual vulnerability is present */
+    mutualVulnerability: boolean
+  }
+  /** Emotional safety assessment */
+  emotionalSafety: {
+    /** Overall emotional safety level */
+    overall: 'high' | 'medium' | 'low'
+    /** Level of acceptance displayed */
+    acceptanceLevel: 'high' | 'medium' | 'low'
+    /** Risk of judgment */
+    judgmentRisk: 'high' | 'medium' | 'low'
+    /** Whether validation is present */
+    validationPresent: boolean
+  }
 }
 
 /**
@@ -484,6 +539,8 @@ export const ConversationDataSchema = z.object({
     }),
   ),
   timestamp: z.date(),
+  startTime: z.date(),
+  endTime: z.date(),
   context: z
     .object({
       platform: z.string().optional(),
@@ -651,6 +708,405 @@ export interface GrowthIndicator {
   direction: 'positive' | 'negative' | 'stable'
   /** Supporting evidence */
   evidence: string[]
+}
+
+/**
+ * Human validation record for algorithmic mood score validation
+ */
+export interface HumanValidationRecord {
+  /** ID of the conversation being validated */
+  conversationId: string
+  /** ID of the expert validator */
+  validatorId: string
+  /** Validator credentials and experience */
+  validatorCredentials: {
+    title: string
+    yearsExperience: number
+    specializations: string[]
+    certifications?: string[]
+    institutionAffiliation?: string
+  }
+  /** Human expert's mood score assessment (1-10) */
+  humanMoodScore: number
+  /** Validator's confidence in their assessment (0-1) */
+  confidence: number
+  /** Detailed rationale for the mood score */
+  rationale: string
+  /** Emotional factors identified by the human expert */
+  emotionalFactors: string[]
+  /** When the validation was performed */
+  timestamp: Date
+  /** Validation session identifier for grouping */
+  validationSession: string
+  /** Additional contextual notes */
+  additionalNotes?: string
+}
+
+/**
+ * Overall validation metrics comparing algorithmic and human assessments
+ */
+export interface ValidationMetrics {
+  /** Pearson correlation coefficient between algorithmic and human scores */
+  pearsonCorrelation: number
+  /** Spearman rank correlation coefficient */
+  spearmanCorrelation: number
+  /** Mean absolute error between scores */
+  meanAbsoluteError: number
+  /** Root mean square error */
+  rootMeanSquareError: number
+  /** Percentage of assessments within acceptable agreement range */
+  agreementPercentage: number
+  /** Level of concordance between assessments */
+  concordanceLevel: 'high' | 'moderate' | 'low'
+  /** Statistical significance of correlation */
+  statisticalSignificance: {
+    pValue: number
+    isSignificant: boolean
+    confidenceInterval: [number, number]
+  }
+  /** Number of validation pairs analyzed */
+  sampleSize: number
+}
+
+/**
+ * Analysis of discrepancies between algorithmic and human assessments
+ */
+export interface DiscrepancyAnalysis {
+  /** Overall systematic bias direction */
+  systematicBias: 'algorithmic_over_estimation' | 'algorithmic_under_estimation' | 'no_systematic_bias'
+  /** Magnitude and consistency of bias pattern */
+  biasPattern: {
+    magnitude: number
+    consistency: number
+    direction: 'positive' | 'negative' | 'mixed'
+  }
+  /** Common types of discrepancies identified */
+  commonDiscrepancyTypes: string[]
+  /** Conversation contexts where discrepancies are most frequent */
+  problematicContexts: string[]
+  /** Recommended areas for algorithmic improvement */
+  improvementRecommendations: string[]
+  /** Distribution of discrepancy magnitudes */
+  discrepancyDistribution: {
+    small: number  // 0-0.5 points
+    medium: number // 0.5-1.5 points  
+    large: number  // 1.5+ points
+  }
+}
+
+/**
+ * Individual conversation validation analysis
+ */
+export interface IndividualValidationAnalysis {
+  /** Conversation identifier */
+  conversationId: string
+  /** Algorithmic mood score */
+  algorithmicScore: number
+  /** Human expert mood score */
+  humanScore: number
+  /** Absolute error between scores */
+  absoluteError: number
+  /** Type of discrepancy */
+  discrepancyType: 'algorithmic_over_estimation' | 'algorithmic_under_estimation' | 'close_agreement'
+  /** Factors contributing to discrepancy */
+  discrepancyFactors: string[]
+  /** Human expert's rationale */
+  humanRationale: string
+  /** Algorithmic confidence level */
+  algorithmicConfidence: number
+  /** Human validator confidence */
+  humanConfidence: number
+  /** Recommended improvement for this case */
+  recommendedImprovement: string[]
+}
+
+/**
+ * Validator consistency and reliability analysis
+ */
+export interface ValidatorConsistency {
+  /** Inter-rater reliability score */
+  interRaterReliability: number
+  /** Average variance in human assessments */
+  averageVariance: number
+  /** Level of consensus among validators */
+  consensusLevel: 'high' | 'moderate' | 'low'
+  /** Outlier validations that deviate significantly */
+  outlierValidations: Array<{
+    validatorId: string
+    conversationId: string
+    deviationMagnitude: number
+    flagReason: string
+  }>
+  /** Validator-specific performance metrics */
+  validatorMetrics: Record<string, {
+    averageCorrelationWithAlgorithm: number
+    averageCorrelationWithPeers: number
+    consistencyScore: number
+    validationCount: number
+  }>
+}
+
+/**
+ * Comprehensive validation result combining all analyses
+ */
+export interface ValidationResult {
+  /** Overall validation metrics */
+  overallMetrics: ValidationMetrics
+  /** Discrepancy analysis */
+  discrepancyAnalysis: DiscrepancyAnalysis
+  /** Individual conversation analyses */
+  individualAnalyses: IndividualValidationAnalysis[]
+  /** Validator consistency analysis */
+  validatorConsistency: ValidatorConsistency
+  /** Systematic bias analysis */
+  biasAnalysis: BiasAnalysis
+  /** Recommendations for algorithm improvement */
+  recommendations: {
+    priority: 'high' | 'medium' | 'low'
+    category: string
+    description: string
+    expectedImpact: string
+  }[]
+  /** Validation session metadata */
+  sessionMetadata: {
+    validationDate: Date
+    totalConversations: number
+    totalValidators: number
+    averageValidatorExperience: number
+  }
+}
+
+/**
+ * Bias analysis for systematic patterns in algorithmic assessments
+ */
+export interface BiasAnalysis {
+  /** Overall bias detection result */
+  biasDetected: boolean
+  /** Types of bias identified */
+  biasTypes: Array<{
+    type: 'demographic' | 'contextual' | 'linguistic' | 'temporal' | 'emotional_complexity' |
+          'emotional_minimization' | 'sarcasm_detection_failure' | 'repetitive_pattern_blindness' |
+          'mixed_emotion_oversimplification' | 'defensive_language_blindness'
+    severity: 'low' | 'medium' | 'high'
+    description: string
+    affectedSamples: number
+    correctionRecommendation: string
+  }>
+  /** Confidence in bias detection */
+  detectionConfidence: number
+  /** Statistical evidence for bias */
+  statisticalEvidence: {
+    testStatistic: number
+    pValue: number
+    effectSize: number
+  }
+}
+
+/**
+ * Calibration adjustment recommendation for algorithm parameters
+ */
+export interface CalibrationAdjustment {
+  /** Unique identifier for this calibration */
+  calibrationId: string
+  /** Timestamp when calibration was created */
+  timestamp: Date
+  /** Source validation result that triggered this calibration */
+  sourceValidationId: string
+  /** Type of calibration adjustment */
+  adjustmentType: 'weight_adjustment' | 'threshold_adjustment' | 'bias_correction' | 'confidence_recalibration'
+  /** Target component to adjust */
+  targetComponent: 'sentiment_analysis' | 'psychological_indicators' | 'relationship_context' | 
+                   'conversational_flow' | 'historical_baseline' | 'confidence_calculator'
+  /** Specific parameter adjustments */
+  parameterAdjustments: {
+    parameterName: string
+    currentValue: number
+    recommendedValue: number
+    adjustmentReason: string
+    expectedImpact: string
+  }[]
+  /** Predicted improvement metrics */
+  predictedImprovements: {
+    correlationImprovement: number
+    biasReduction: number
+    accuracyImprovement: number
+  }
+  /** Implementation status */
+  status: 'pending' | 'applied' | 'tested' | 'validated' | 'rejected'
+  /** Validation results after implementation */
+  validationResults?: {
+    actualCorrelationImprovement: number
+    actualBiasReduction: number
+    actualAccuracyImprovement: number
+    validationDate: Date
+  }
+}
+
+/**
+ * Algorithm calibration system for continuous improvement
+ */
+export interface AlgorithmCalibrationSystem {
+  /** System configuration */
+  config: {
+    /** Maximum calibrations to apply per session */
+    maxCalibrationsPerSession: number
+    /** Minimum validation sample size for calibration */
+    minValidationSampleSize: number
+    /** Confidence threshold for applying calibrations */
+    calibrationConfidenceThreshold: number
+    /** Enable automatic calibration application */
+    autoApplyCalibrations: boolean
+  }
+  /** Active calibration adjustments */
+  activeCalibrations: CalibrationAdjustment[]
+  /** Calibration history */
+  calibrationHistory: CalibrationAdjustment[]
+  /** Performance tracking */
+  performanceTracking: {
+    baselineMetrics: ValidationMetrics
+    currentMetrics: ValidationMetrics
+    improvementTrend: Array<{
+      date: Date
+      correlationScore: number
+      biasLevel: number
+      accuracyScore: number
+    }>
+  }
+}
+
+/**
+ * Emotional complexity assessment for edge case handling
+ */
+export interface EmotionalComplexityAssessment {
+  /** Overall complexity score (0-1) */
+  complexityScore: number
+  /** Types of complexity detected */
+  complexityTypes: Array<{
+    type: 'mixed_emotions' | 'contradictory_signals' | 'temporal_inconsistency' | 'contextual_ambiguity' | 'cultural_nuance'
+    severity: 'low' | 'medium' | 'high'
+    confidence: number
+    description: string
+    evidence: string[]
+  }>
+  /** Confidence in complexity assessment */
+  assessmentConfidence: number
+  /** Recommended handling approach */
+  recommendedApproach: 'standard_analysis' | 'multi_interpretation' | 'uncertainty_flagging' | 'human_review'
+}
+
+/**
+ * Uncertainty quantification for mood analysis
+ */
+export interface UncertaintyQuantification {
+  /** Overall uncertainty level (0-1) */
+  uncertaintyLevel: number
+  /** Sources of uncertainty */
+  uncertaintySources: Array<{
+    source: 'insufficient_context' | 'conflicting_signals' | 'cultural_ambiguity' | 'temporal_inconsistency' | 'extreme_emotional_state'
+    impact: number
+    description: string
+    mitigationSuggestions: string[]
+  }>
+  /** Confidence intervals for mood score */
+  confidenceIntervals: {
+    low: number
+    high: number
+    confidence: number
+  }
+  /** Reliability assessment */
+  reliabilityScore: number
+}
+
+/**
+ * Multiple interpretation options for ambiguous cases
+ */
+export interface MultipleInterpretationOptions {
+  /** Primary interpretation */
+  primaryInterpretation: {
+    moodScore: number
+    confidence: number
+    rationale: string
+    supportingEvidence: string[]
+  }
+  /** Alternative interpretations */
+  alternativeInterpretations: Array<{
+    moodScore: number
+    confidence: number
+    rationale: string
+    supportingEvidence: string[]
+    probabilityWeight: number
+  }>
+  /** Interpretation consensus */
+  interpretationConsensus: {
+    agreement: number
+    divergence: number
+    recommendedAction: 'use_primary' | 'weighted_average' | 'flag_for_review'
+  }
+}
+
+/**
+ * Edge case detection results
+ */
+export interface EdgeCaseDetection {
+  /** Whether an edge case was detected */
+  isEdgeCase: boolean
+  /** Type of edge case */
+  edgeCaseType?: 'extreme_emotion' | 'mixed_complex' | 'cultural_specific' | 'sarcasm_heavy' | 'ambiguous_context' | 'contradictory_signals'
+  /** Severity of the edge case */
+  severity?: 'low' | 'medium' | 'high' | 'critical'
+  /** Detection confidence */
+  detectionConfidence?: number
+  /** Handling strategy */
+  handlingStrategy?: 'enhanced_analysis' | 'multi_interpretation' | 'uncertainty_flagging' | 'human_escalation'
+  /** Additional context needed */
+  additionalContextNeeded?: string[]
+}
+
+/**
+ * Cultural context analysis for communication patterns
+ */
+export interface CulturalContextAnalysis {
+  /** Detected cultural context */
+  culturalContext: 'western_direct' | 'eastern_indirect' | 'high_context' | 'low_context' | 'mixed' | 'unknown'
+  /** Cultural confidence */
+  culturalConfidence: number
+  /** Cultural considerations */
+  culturalConsiderations: Array<{
+    aspect: string
+    impact: 'high' | 'medium' | 'low'
+    description: string
+    adjustmentRecommendation: string
+  }>
+  /** Communication style indicators */
+  communicationStyleIndicators: {
+    directness: number
+    emotionalExpressiveness: number
+    implicitness: number
+    formalityLevel: number
+  }
+}
+
+/**
+ * Ambiguity detection in conversations
+ */
+export interface AmbiguityDetection {
+  /** Overall ambiguity level */
+  ambiguityLevel: number
+  /** Ambiguity sources */
+  ambiguitySources: Array<{
+    source: 'linguistic' | 'contextual' | 'emotional' | 'temporal' | 'relational'
+    severity: number
+    description: string
+    clarificationNeeded: string[]
+  }>
+  /** Resolution strategies */
+  resolutionStrategies: string[]
+  /** Impact on mood analysis */
+  analysisImpact: {
+    confidenceReduction: number
+    scoreUncertainty: number
+    recommendedAction: string
+  }
 }
 
 // Type exports for convenience
