@@ -860,13 +860,21 @@ export class PrismaClusteringOperations implements ClusteringOperations {
     }
 
     patternTypes.forEach((item: unknown) => {
-      patternDistribution[item.patternType as PatternType] =
-        item._count.patternType
+      const typedItem = item as {
+        patternType: PatternType
+        _count: { patternType: number }
+      }
+      patternDistribution[typedItem.patternType] = typedItem._count.patternType
     })
 
     const emotionalToneDistribution: Record<string, number> = {}
     emotionalTones.forEach((item: unknown) => {
-      emotionalToneDistribution[item.emotionalTone] = item._count.emotionalTone
+      const typedItem = item as {
+        emotionalTone: string
+        _count: { emotionalTone: number }
+      }
+      emotionalToneDistribution[typedItem.emotionalTone] =
+        typedItem._count.emotionalTone
     })
 
     return {

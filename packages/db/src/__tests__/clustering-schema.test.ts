@@ -1,4 +1,4 @@
-import { PrismaClient } from '@studio/db'
+import { PrismaClient, MemoryCluster, Memory } from '@studio/db'
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
 
 const prisma = new PrismaClient()
