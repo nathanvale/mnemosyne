@@ -69,7 +69,30 @@ export class TransactionTestHelper {
         },
       })
 
-      const hasDataCorruption = this.checkForDataCorruption(finalState)
+      const hasDataCorruption = finalState
+        ? this.checkForDataCorruption({
+            moodScores: finalState.moodScores?.map((score) => ({
+              descriptors: score.descriptors,
+              confidence: score.confidence || undefined,
+              score: score.score || undefined,
+              factors: score.factors?.map((f) => ({ evidence: f.evidence })),
+            })),
+            moodDeltas: finalState.moodDeltas?.map((delta) => ({
+              confidence: delta.confidence,
+              significance: delta.significance,
+              factors: delta.factors || undefined,
+              temporalContext: delta.temporalContext || undefined,
+            })),
+            validationResults: finalState.validationResults?.map(
+              (validation) => ({
+                agreement: validation.agreement,
+                discrepancy: validation.discrepancy,
+                biasIndicators: validation.biasIndicators || undefined,
+                accuracyMetrics: validation.accuracyMetrics || undefined,
+              }),
+            ),
+          })
+        : true
       if (hasDataCorruption) {
         errors.push('Data corruption detected after concurrent operations')
       }
@@ -296,15 +319,20 @@ export class TransactionTestHelper {
     moodScores?: Array<{
       descriptors: string
       confidence?: number
+      score?: number
+      factors?: Array<{ evidence: string }>
     }>
-    moodFactors?: Array<{ evidence: string }>
     moodDeltas?: Array<{
       confidence: number
       significance: number
+      factors?: string
+      temporalContext?: string
     }>
     validationResults?: Array<{
       agreement: number
       discrepancy: number
+      biasIndicators?: string
+      accuracyMetrics?: string
     }>
   }): boolean {
     if (!memoryData) return true
@@ -320,21 +348,35 @@ export class TransactionTestHelper {
       }
 
       for (const delta of memoryData.moodDeltas || []) {
-        JSON.parse(delta.factors)
+        if (delta.factors) {
+          JSON.parse(delta.factors)
+        }
         if (delta.temporalContext) {
           JSON.parse(delta.temporalContext)
         }
       }
 
       for (const validation of memoryData.validationResults || []) {
-        JSON.parse(validation.biasIndicators)
-        JSON.parse(validation.accuracyMetrics)
+        if (validation.biasIndicators) {
+          JSON.parse(validation.biasIndicators)
+        }
+        if (validation.accuracyMetrics) {
+          JSON.parse(validation.accuracyMetrics)
+        }
       }
 
       // Check for reasonable data ranges
       for (const moodScore of memoryData.moodScores || []) {
-        if (moodScore.score < 0 || moodScore.score > 10) return true
-        if (moodScore.confidence < 0 || moodScore.confidence > 1) return true
+        if (
+          moodScore.score !== undefined &&
+          (moodScore.score < 0 || moodScore.score > 10)
+        )
+          return true
+        if (
+          moodScore.confidence !== undefined &&
+          (moodScore.confidence < 0 || moodScore.confidence > 1)
+        )
+          return true
       }
 
       for (const delta of memoryData.moodDeltas || []) {

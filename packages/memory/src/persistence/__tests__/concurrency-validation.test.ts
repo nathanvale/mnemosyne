@@ -30,11 +30,23 @@ describe('Concurrency Validation Tests - Phase 2', () => {
   describe('Worker Isolation Under Stress', () => {
     it('should handle concurrent memory creation across multiple workers without conflicts', async () => {
       const concurrentOperations = 10 // Reduced for Wallaby.js performance
-      const workerPromises: Promise<void>[] = []
+      const workerPromises: Promise<{
+        success: boolean
+        memoryId?: string
+        workerId: string
+        iteration: number
+        error?: string
+      }>[] = []
 
       // Simulate multiple operations creating memories simultaneously
       for (let i = 0; i < concurrentOperations; i++) {
-        const promise = (async () => {
+        const promise = (async (): Promise<{
+          success: boolean
+          memoryId?: string
+          workerId: string
+          iteration: number
+          error?: string
+        }> => {
           const workerId = WorkerDatabaseFactory.getWorkerId()
           const uniqueId = `stress-memory-${workerId}-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -204,13 +216,30 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       const concurrentAnalyses = 8 // Reduced for Wallaby.js performance
       const analysisPromises: Promise<{
         success: boolean
-        conversation?: ConversationData
-        delta?: { detected: boolean }
-        error?: unknown
+        iteration: number
+        deltaCount: number
+        deltas: Array<{
+          magnitude: number
+          direction: string
+          type: string
+          confidence: number
+        }>
+        error?: string
       }>[] = []
 
       for (let i = 0; i < concurrentAnalyses; i++) {
-        const analysisPromise = (async () => {
+        const analysisPromise = (async (): Promise<{
+          success: boolean
+          iteration: number
+          deltaCount: number
+          deltas: Array<{
+            magnitude: number
+            direction: string
+            type: string
+            confidence: number
+          }>
+          error?: string
+        }> => {
           try {
             // Create mock mood analysis results for delta detection
             const mockMoodAnalyses: MoodAnalysisResult[] = [
@@ -258,6 +287,8 @@ describe('Concurrency Validation Tests - Phase 2', () => {
             return {
               success: false,
               iteration: i,
+              deltaCount: 0,
+              deltas: [],
               error: error instanceof Error ? error.message : 'Unknown error',
             }
           }

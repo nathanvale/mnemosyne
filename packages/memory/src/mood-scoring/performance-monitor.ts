@@ -493,7 +493,7 @@ export class PerformanceMonitoringService {
       if (this.evaluateAlertCondition(metricValue, condition)) {
         await this.createAlert(condition, metricValue, {
           operationType: metric.operationType,
-          timestamp: metric.timestamp,
+          timestamp: metric.timestamp.toISOString(),
           metricId: metric.id,
         })
       }
@@ -512,7 +512,7 @@ export class PerformanceMonitoringService {
       if (this.evaluateAlertCondition(qualityMetric.value, condition)) {
         await this.createAlert(condition, qualityMetric.value, {
           context: qualityMetric.context,
-          timestamp: qualityMetric.timestamp,
+          timestamp: qualityMetric.timestamp.toISOString(),
           metricId: qualityMetric.id,
         })
       }

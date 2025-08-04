@@ -20,7 +20,10 @@ export default [
     },
   },
   {
-    files: ['src/persistence/__tests__/worker-database-factory.ts', 'src/persistence/test-data-factory.ts'],
+    files: [
+      'src/persistence/__tests__/worker-database-factory.ts',
+      'src/persistence/test-data-factory.ts',
+    ],
     rules: {
       // Database factory files need full console access for debugging
       'no-console': 'off',
