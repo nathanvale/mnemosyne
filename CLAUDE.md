@@ -162,6 +162,8 @@ mnemosyne/
 - **Package location**: `packages/db/`
 - **Output location**: `packages/db/generated/`
 - **Import path**: `@studio/db`
+- **Schema configuration**: Uses `env("DATABASE_URL")` for flexibility
+- **Development setup**: Requires `.env` file with `DATABASE_URL="file:./prisma/dev.db"`
 - Always run `pnpm --filter @studio/db build` after schema changes
 - Database reset available via `pnpm db:reset`
 
@@ -252,6 +254,8 @@ import { server } from '@studio/mocks/server'
 - **Component tests**: UI package with Storybook + Playwright
 - **Integration tests**: Cross-package functionality
 - **Mocking**: Centralized in @studio/mocks package
+- **Package test config**: Packages may need their own `vitest.config.ts` for specific requirements
+- **Test isolation**: Each test gets its own database instance using worker IDs
 
 ## Performance Optimizations
 
@@ -274,6 +278,63 @@ import { server } from '@studio/mocks/server'
 ### Overview
 
 The mnemosyne project uses a sophisticated test database architecture to ensure test isolation and proper schema management across different testing environments. This guide documents the key components and common debugging scenarios.
+
+### Package-Specific Test Database Setup
+
+When packages have their own database tests (like `@studio/db`), they need special setup:
+
+#### 1. Test Database Setup Class
+
+Packages should create their own `TestDatabaseSetup` class that:
+
+- Creates isolated databases using worker IDs (Vitest/Wallaby)
+- Uses `prisma db push` for schema creation (faster than migrations)
+- Applies database triggers manually since `db push` doesn't run migrations
+- Handles proper cleanup of test databases
+
+Example structure:
+
+```typescript
+// packages/db/src/__tests__/test-database-setup.ts
+export class TestDatabaseSetup {
+  static async createTestDatabase(): Promise<PrismaClient> {
+    // 1. Get worker ID for isolation
+    // 2. Create unique database path
+    // 3. Run prisma db push with DATABASE_URL
+    // 4. Create Prisma client
+    // 5. Apply database triggers
+    // 6. Return configured client
+  }
+}
+```
+
+#### 2. Environment Variable Handling
+
+- Test setup must properly set and restore `DATABASE_URL`
+- Use `execSync` with explicit environment variables
+- Restore original DATABASE_URL after schema creation
+
+#### 3. Database Triggers in Tests
+
+When migrations include database triggers:
+
+- Create a method to apply triggers after `db push`
+- Use `prisma.$executeRaw` to create triggers
+- Include all trigger logic from migrations
+
+#### 4. Common Issues and Solutions
+
+**"Table does not exist" errors**:
+
+- Ensure `db push` completes before creating Prisma client
+- Check that schema path is correct relative to package
+- Verify DATABASE_URL is properly set during `db push`
+
+**TypeScript import errors**:
+
+- Avoid importing test utilities from other packages
+- Create self-contained test setup within each package
+- Respect TypeScript `rootDir` boundaries
 
 ### Key Components
 
@@ -372,6 +433,44 @@ When tests fail with database errors:
 4. Check if tests are using validation wrappers
 5. Look for unique constraint violations
 6. Consider Wallaby-specific environment differences
+
+### Common Debugging Patterns
+
+#### Database Migration Issues
+
+**Problem**: Database triggers or complex migrations not applied in tests
+**Solution**:
+
+- For package tests, manually apply triggers after `db push`
+- For cross-package tests, ensure migrations are run properly
+- Check that trigger SQL is compatible with SQLite syntax
+
+#### Build and TypeScript Errors
+
+**Problem**: "File is not under 'rootDir'" or "not listed within the file list"
+**Solution**:
+
+- Don't import test utilities across package boundaries
+- Create self-contained test utilities within each package
+- Use proper package imports (`@studio/db`) instead of relative paths
+
+#### Test Isolation Failures
+
+**Problem**: Tests pass individually but fail when run together
+**Solution**:
+
+- Ensure unique content hashes: `\`test-\${Date.now()}-\${Math.random()}\``
+- Clean up test data properly between tests
+- Use worker-specific database instances
+
+#### Generated Files in Git
+
+**Problem**: TypeScript generates .d.ts, .js files that shouldn't be committed
+**Solution**:
+
+- Add `*.d.ts`, `*.d.ts.map` to .gitignore in test directories
+- Never commit generated files from test directories
+- Run `git clean -fd` to remove untracked generated files
 
 # important-instruction-reminders
 
