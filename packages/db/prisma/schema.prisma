@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model Message {
@@ -51,6 +51,11 @@ model Memory {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   
+  // Clustering metadata
+  clusteringMetadata String?           // JSON object with clustering information
+  lastClusteredAt   DateTime?
+  clusterParticipationCount Int       @default(0)
+  
   // Relationships
   messages         Message[]          @relation("MemoryMessages")
   emotionalContext EmotionalContext?
@@ -63,13 +68,14 @@ model Memory {
   turningPoints    TurningPoint[]
   validationResults ValidationResult[]
   analysisMetadata AnalysisMetadata?
+  clusterMemberships ClusterMembership[]
   
   // Optimized indexes for memory-based mood analysis
-  @@index([contentHash])
   @@index([extractedAt])                 // For temporal memory analysis
   @@index([confidence])                  // For confidence-based filtering
   @@index([extractedAt, confidence])     // For time-confidence correlation
   @@index([createdAt])                   // For creation time analysis
+  @@index([lastClusteredAt, clusterParticipationCount]) // For clustering queries
 }
 
 model EmotionalContext {
@@ -354,4 +360,94 @@ model CalibrationHistory {
   @@index([createdAt])
   @@index([status])
   @@index([targetComponent])
+}
+
+// Phase 4: Tone-Tagged Memory Clustering Schema
+
+model MemoryCluster {
+  id                        String   @id @default(cuid())
+  clusterId                 String   @unique
+  clusterTheme              String
+  emotionalTone            String
+  coherenceScore           Float    // 0-1 scale, minimum 0.6
+  psychologicalSignificance Float    // 0-1 scale, must be > 0.0
+  participantPatterns       String   // JSON array of participant patterns
+  clusterMetadata          String   // JSON object with clustering metadata
+  memoryCount              Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  lastAnalyzedAt           DateTime?
+  
+  // Relationships
+  memberships              ClusterMembership[]
+  patternAnalyses          PatternAnalysis[]
+  qualityMetrics           ClusterQualityMetrics?
+  
+  // Indexes
+  @@index([coherenceScore, createdAt])
+  @@index([psychologicalSignificance, memoryCount])
+  @@index([clusterTheme, emotionalTone])
+  @@index([updatedAt, lastAnalyzedAt])
+}
+
+model ClusterMembership {
+  id                String    @id @default(cuid())
+  clusterId         String
+  memoryId          String
+  membershipStrength Float    // 0-1 scale, minimum 0.5
+  contributionScore  Float    // 0-1 scale
+  addedAt           DateTime  @default(now())
+  
+  // Relationships
+  cluster           MemoryCluster @relation(fields: [clusterId], references: [clusterId], onDelete: Cascade)
+  memory            Memory        @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  // Constraints
+  @@unique([clusterId, memoryId])
+  @@index([clusterId, membershipStrength])
+  @@index([memoryId, contributionScore])
+  @@index([membershipStrength, addedAt])
+}
+
+model PatternAnalysis {
+  id                      String   @id @default(cuid())
+  patternId               String   @unique
+  clusterId               String
+  patternType             String   // 'emotional_theme' | 'coping_style' | 'relationship_dynamic' | 'psychological_tendency'
+  description             String
+  frequency               Int      // > 0
+  strength                Float    // 0-1 scale, minimum 0.3
+  confidenceLevel         Float    // 0-1 scale, minimum 0.8
+  psychologicalIndicators String   // JSON array of psychological indicators
+  emotionalCharacteristics String  // JSON array of emotional characteristics
+  analyzedAt              DateTime @default(now())
+  
+  // Relationships
+  cluster                 MemoryCluster @relation(fields: [clusterId], references: [clusterId], onDelete: Cascade)
+  
+  // Indexes
+  @@index([patternType, confidenceLevel])
+  @@index([clusterId, strength])
+  @@index([confidenceLevel, frequency])
+}
+
+model ClusterQualityMetrics {
+  id                          String   @id @default(cuid())
+  clusterId                   String   @unique
+  overallCoherence           Float    // 0-1 scale, minimum 0.6
+  emotionalConsistency       Float    // 0-1 scale
+  thematicUnity              Float    // 0-1 scale
+  psychologicalMeaningfulness Float    // 0-1 scale, minimum 0.7
+  incoherentMemoryCount      Int      @default(0)
+  strengthAreas              String   // JSON array of strength areas
+  improvementAreas           String   // JSON array of improvement areas
+  confidenceLevel            Float    // 0-1 scale
+  assessedAt                 DateTime @default(now())
+  
+  // Relationships
+  cluster                    MemoryCluster @relation(fields: [clusterId], references: [clusterId], onDelete: Cascade)
+  
+  // Indexes
+  @@index([overallCoherence, assessedAt])
+  @@index([psychologicalMeaningfulness, confidenceLevel])
 }

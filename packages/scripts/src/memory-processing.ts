@@ -7,7 +7,11 @@ import {
   type PrismaClient,
 } from '@studio/db'
 import { createLogger } from '@studio/logger'
-import { type ValidationResult } from '@studio/schema'
+import {
+  type ValidationResult,
+  type ValidationError,
+  type ValidationWarning,
+} from '@studio/schema'
 
 import {
   MemoryContentHasher,
@@ -284,7 +288,7 @@ export class MemoryDataProcessor {
         result.errors.push({
           index,
           type: 'validation',
-          message: `Validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+          message: `Validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
           data: memoryData,
         })
         return
@@ -363,7 +367,7 @@ export class MemoryDataProcessor {
         result.errors.push({
           index,
           type: 'validation',
-          message: `Validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+          message: `Validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
           data: memoryData,
         })
         return
@@ -466,7 +470,7 @@ export class MemoryDataProcessor {
           result.errors.push({
             index: i,
             type: 'validation',
-            message: `Emotional context validation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+            message: `Emotional context validation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
             data: contextData,
           })
           continue
@@ -571,8 +575,8 @@ export function validateSingleMemory(data: unknown): {
   const validation = validateMemoryForDatabase(data)
   return {
     isValid: validation.isValid,
-    errors: validation.errors.map((e) => e.message),
-    warnings: validation.warnings.map((w) => w.message),
+    errors: validation.errors.map((e: ValidationError) => e.message),
+    warnings: validation.warnings.map((w: ValidationWarning) => w.message),
   }
 }
 
@@ -606,7 +610,7 @@ export function transformLegacyMemory(legacyData: {
   const validation = validateMemoryForDatabase(transformed)
   if (!validation.isValid) {
     throw new Error(
-      `Legacy data transformation failed: ${validation.errors.map((e) => e.message).join(', ')}`,
+      `Legacy data transformation failed: ${validation.errors.map((e: ValidationError) => e.message).join(', ')}`,
     )
   }
 

@@ -12,6 +12,7 @@
     "build": "prisma generate && tsc",
     "dev": "prisma generate --watch",
     "type-check": "prisma generate && tsc --noEmit",
+    "test": "vitest",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force",
     "db:migrate": "prisma migrate dev",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "prisma": "^6.11.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

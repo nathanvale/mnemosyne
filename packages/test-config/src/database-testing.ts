@@ -314,7 +314,7 @@ function getPrismaGeneratedSchemaStatements(): string[] {
       UPDATE "Message" SET "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = NEW."id";
     END`,
 
-    // Memory schema tables (from 20250720080225_add_memory_schema + 20250720111836_add_memory_deduplication)
+    // Memory schema tables (from 20250720080225_add_memory_schema + 20250720111836_add_memory_deduplication + clustering fields)
     `CREATE TABLE "Memory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "sourceMessageIds" TEXT NOT NULL,
@@ -325,7 +325,10 @@ function getPrismaGeneratedSchemaStatements(): string[] {
         "deduplicationMetadata" TEXT,
         "extractedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" DATETIME NOT NULL
+        "updatedAt" DATETIME NOT NULL,
+        "clusteringMetadata" TEXT,
+        "lastClusteredAt" DATETIME,
+        "clusterParticipationCount" INTEGER NOT NULL DEFAULT 0
     )`,
 
     `CREATE TABLE "EmotionalContext" (
@@ -389,6 +392,168 @@ function getPrismaGeneratedSchemaStatements(): string[] {
         CONSTRAINT "_MemoryMessages_B_fkey" FOREIGN KEY ("B") REFERENCES "Message" ("id") ON DELETE CASCADE ON UPDATE CASCADE
     )`,
 
+    // Mood scoring tables
+    `CREATE TABLE "MoodScore" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "overallScore" REAL NOT NULL,
+        "emotionalDepth" REAL NOT NULL,
+        "energyLevel" REAL NOT NULL,
+        "socialConnection" REAL NOT NULL,
+        "confidence" REAL NOT NULL,
+        "emotionalMarkers" TEXT NOT NULL,
+        "conversationDynamics" TEXT NOT NULL,
+        "scoredAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "MoodScore_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "MoodDelta" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "previousMemoryId" TEXT NOT NULL,
+        "deltaValue" REAL NOT NULL,
+        "direction" TEXT NOT NULL,
+        "magnitude" TEXT NOT NULL,
+        "emotionalShifts" TEXT NOT NULL,
+        "contributingFactors" TEXT NOT NULL,
+        "temporalDistance" INTEGER NOT NULL,
+        "confidenceLevel" REAL NOT NULL,
+        "calculatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "MoodDelta_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "DeltaPattern" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "patternType" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "strength" REAL NOT NULL,
+        "confidence" REAL NOT NULL,
+        "temporalContext" TEXT NOT NULL,
+        "relatedDeltas" TEXT NOT NULL,
+        "identifiedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "DeltaPattern_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "TurningPoint" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "type" TEXT NOT NULL,
+        "significance" REAL NOT NULL,
+        "emotionalShift" TEXT NOT NULL,
+        "contextualFactors" TEXT NOT NULL,
+        "temporalMarkers" TEXT NOT NULL,
+        "impactAnalysis" TEXT NOT NULL,
+        "confidence" REAL NOT NULL,
+        "identifiedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "TurningPoint_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "ValidationResult" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "moodScoreId" TEXT,
+        "deltaId" TEXT,
+        "patternId" TEXT,
+        "turningPointId" TEXT,
+        "validationType" TEXT NOT NULL,
+        "isValid" BOOLEAN NOT NULL,
+        "confidence" REAL NOT NULL,
+        "issues" TEXT NOT NULL,
+        "suggestions" TEXT NOT NULL,
+        "contextualEvidence" TEXT NOT NULL,
+        "validatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "ValidationResult_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "AnalysisMetadata" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "memoryId" TEXT NOT NULL,
+        "analysisVersion" TEXT NOT NULL,
+        "processingTime" INTEGER NOT NULL,
+        "dataCompleteness" REAL NOT NULL,
+        "qualityIndicators" TEXT NOT NULL,
+        "processingNotes" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "AnalysisMetadata_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    // Clustering tables
+    `CREATE TABLE "MemoryCluster" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL,
+        "clusterTheme" TEXT NOT NULL,
+        "emotionalTone" TEXT NOT NULL,
+        "coherenceScore" REAL NOT NULL,
+        "psychologicalSignificance" REAL NOT NULL,
+        "participantPatterns" TEXT NOT NULL,
+        "clusterMetadata" TEXT NOT NULL,
+        "memoryCount" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        "lastAnalyzedAt" DATETIME
+    )`,
+
+    `CREATE TABLE "ClusterMembership" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL,
+        "memoryId" TEXT NOT NULL,
+        "membershipStrength" REAL NOT NULL,
+        "contributionScore" REAL NOT NULL,
+        "addedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "lastReviewedAt" DATETIME,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "ClusterMembership_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "ClusterMembership_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "PatternAnalysis" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "patternId" TEXT NOT NULL,
+        "clusterId" TEXT NOT NULL,
+        "patternType" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "frequency" INTEGER NOT NULL,
+        "strength" REAL NOT NULL,
+        "confidenceLevel" REAL NOT NULL,
+        "psychologicalIndicators" TEXT NOT NULL,
+        "emotionalCharacteristics" TEXT NOT NULL,
+        "identifiedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "lastUpdatedAt" DATETIME,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "PatternAnalysis_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
+    `CREATE TABLE "ClusterQualityMetrics" (
+        "id" TEXT NOT NULL PRIMARY KEY,
+        "clusterId" TEXT NOT NULL,
+        "overallCoherence" REAL NOT NULL,
+        "emotionalConsistency" REAL NOT NULL,
+        "thematicUnity" REAL NOT NULL,
+        "psychologicalMeaningfulness" REAL NOT NULL,
+        "incoherentMemoryCount" INTEGER NOT NULL,
+        "strengthAreas" TEXT NOT NULL,
+        "improvementAreas" TEXT NOT NULL,
+        "confidenceLevel" REAL NOT NULL,
+        "evaluatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "ClusterQualityMetrics_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "MemoryCluster" ("clusterId") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+
     // Memory schema indexes (from 20250720080225_add_memory_schema + 20250720111836_add_memory_deduplication)
     `CREATE UNIQUE INDEX "Memory_contentHash_key" ON "Memory"("contentHash")`,
     `CREATE INDEX "Memory_contentHash_idx" ON "Memory"("contentHash")`,
@@ -398,6 +563,28 @@ function getPrismaGeneratedSchemaStatements(): string[] {
     `CREATE INDEX "QualityMetrics_memoryId_idx" ON "QualityMetrics"("memoryId")`,
     `CREATE UNIQUE INDEX "_MemoryMessages_AB_unique" ON "_MemoryMessages"("A", "B")`,
     `CREATE INDEX "_MemoryMessages_B_index" ON "_MemoryMessages"("B")`,
+
+    // Mood scoring indexes
+    `CREATE UNIQUE INDEX "MoodScore_memoryId_key" ON "MoodScore"("memoryId")`,
+    `CREATE INDEX "MoodDelta_memoryId_idx" ON "MoodDelta"("memoryId")`,
+    `CREATE INDEX "DeltaPattern_memoryId_idx" ON "DeltaPattern"("memoryId")`,
+    `CREATE INDEX "TurningPoint_memoryId_idx" ON "TurningPoint"("memoryId")`,
+    `CREATE INDEX "ValidationResult_memoryId_idx" ON "ValidationResult"("memoryId")`,
+    `CREATE UNIQUE INDEX "AnalysisMetadata_memoryId_key" ON "AnalysisMetadata"("memoryId")`,
+
+    // Clustering indexes
+    `CREATE UNIQUE INDEX "MemoryCluster_clusterId_key" ON "MemoryCluster"("clusterId")`,
+    `CREATE INDEX "MemoryCluster_coherenceScore_createdAt_idx" ON "MemoryCluster"("coherenceScore", "createdAt")`,
+    `CREATE INDEX "MemoryCluster_psychologicalSignificance_memoryCount_idx" ON "MemoryCluster"("psychologicalSignificance", "memoryCount")`,
+    `CREATE INDEX "MemoryCluster_clusterTheme_emotionalTone_idx" ON "MemoryCluster"("clusterTheme", "emotionalTone")`,
+    `CREATE INDEX "MemoryCluster_updatedAt_lastAnalyzedAt_idx" ON "MemoryCluster"("updatedAt", "lastAnalyzedAt")`,
+    `CREATE UNIQUE INDEX "ClusterMembership_clusterId_memoryId_key" ON "ClusterMembership"("clusterId", "memoryId")`,
+    `CREATE INDEX "ClusterMembership_memoryId_idx" ON "ClusterMembership"("memoryId")`,
+    `CREATE INDEX "ClusterMembership_membershipStrength_idx" ON "ClusterMembership"("membershipStrength")`,
+    `CREATE UNIQUE INDEX "PatternAnalysis_patternId_key" ON "PatternAnalysis"("patternId")`,
+    `CREATE INDEX "PatternAnalysis_patternType_confidenceLevel_idx" ON "PatternAnalysis"("patternType", "confidenceLevel")`,
+    `CREATE INDEX "PatternAnalysis_clusterId_idx" ON "PatternAnalysis"("clusterId")`,
+    `CREATE UNIQUE INDEX "ClusterQualityMetrics_clusterId_key" ON "ClusterQualityMetrics"("clusterId")`,
   ]
 }
 

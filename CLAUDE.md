@@ -162,6 +162,8 @@ mnemosyne/
 - **Package location**: `packages/db/`
 - **Output location**: `packages/db/generated/`
 - **Import path**: `@studio/db`
+- **Schema configuration**: Uses `env("DATABASE_URL")` for flexibility
+- **Development setup**: Requires `.env` file with `DATABASE_URL="file:./prisma/dev.db"`
 - Always run `pnpm --filter @studio/db build` after schema changes
 - Database reset available via `pnpm db:reset`
 
@@ -252,6 +254,8 @@ import { server } from '@studio/mocks/server'
 - **Component tests**: UI package with Storybook + Playwright
 - **Integration tests**: Cross-package functionality
 - **Mocking**: Centralized in @studio/mocks package
+- **Package test config**: Packages may need their own `vitest.config.ts` for specific requirements
+- **Test isolation**: Each test gets its own database instance using worker IDs
 
 ## Performance Optimizations
 
@@ -268,6 +272,296 @@ import { server } from '@studio/mocks/server'
 - Intelligent task scheduling via Turbo
 - Parallel builds and tests
 - Optimized development server startup
+
+## Test Database Architecture and Debugging Guide
+
+### Overview
+
+The mnemosyne project uses a sophisticated test database architecture to ensure test isolation and proper schema management across different testing environments. This guide documents the key components and common debugging scenarios.
+
+### Package-Specific Test Database Setup
+
+When packages have their own database tests (like `@studio/db`), they need special setup:
+
+#### 1. Test Database Setup Class
+
+Packages should create their own `TestDatabaseSetup` class that:
+
+- Creates isolated databases using worker IDs (Vitest/Wallaby)
+- Uses `prisma db push` for schema creation (faster than migrations)
+- Applies database triggers manually since `db push` doesn't run migrations
+- Handles proper cleanup of test databases
+
+Example structure:
+
+```typescript
+// packages/db/src/__tests__/test-database-setup.ts
+export class TestDatabaseSetup {
+  static async createTestDatabase(): Promise<PrismaClient> {
+    // 1. Get worker ID for isolation
+    // 2. Create unique database path
+    // 3. Run prisma db push with DATABASE_URL
+    // 4. Create Prisma client
+    // 5. Apply database triggers
+    // 6. Return configured client
+  }
+}
+```
+
+#### 2. Environment Variable Handling
+
+- Test setup must properly set and restore `DATABASE_URL`
+- Use `execSync` with explicit environment variables
+- Restore original DATABASE_URL after schema creation
+
+#### 3. Database Triggers in Tests
+
+When migrations include database triggers:
+
+- Create a method to apply triggers after `db push`
+- Use `prisma.$executeRaw` to create triggers
+- Include all trigger logic from migrations
+
+#### 4. Common Issues and Solutions
+
+**"Table does not exist" errors**:
+
+- Ensure `db push` completes before creating Prisma client
+- Check that schema path is correct relative to package
+- Verify DATABASE_URL is properly set during `db push`
+
+**TypeScript import errors**:
+
+- Avoid importing test utilities from other packages
+- Create self-contained test setup within each package
+- Respect TypeScript `rootDir` boundaries
+
+### Key Components
+
+#### 1. Worker Database Factory (`packages/memory/src/persistence/__tests__/worker-database-factory.ts`)
+
+- Creates isolated SQLite databases for each test worker
+- Uses in-memory databases for Wallaby.js (`sqlite://:memory:?cache=shared`)
+- Uses file-based databases for regular test runners
+- Implements schema versioning to force recreation when schema changes
+- Includes clustering fields support for Memory table
+
+#### 2. Test Database Creation (`packages/test-config/src/database-testing.ts`)
+
+- Provides `createTestDatabase()` function used by all tests
+- Creates temporary SQLite databases in system temp directory
+- Applies full schema including all tables, indexes, and clustering fields
+- Handles proper cleanup after tests complete
+
+#### 3. Memory Operations (`packages/db/src/memory-operations.ts`)
+
+- Provides database operations with validation
+- **Critical**: Must initialize clustering fields when creating memories:
+  - `clusteringMetadata: null`
+  - `lastClusteredAt: null`
+  - `clusterParticipationCount: 0`
+
+### Common Issues and Solutions
+
+#### Issue 1: "The column `clusterParticipationCount` does not exist"
+
+**Cause**: Test database schema is out of sync with Prisma schema
+**Solutions**:
+
+1. Update `worker-database-factory.ts` Memory table creation to include clustering fields
+2. Update `database-testing.ts` schema statements to match current migrations
+3. Add schema version tracking to force recreation:
+   ```typescript
+   private static readonly SCHEMA_VERSION = '2024-08-04-clustering'
+   ```
+
+#### Issue 2: Validation constraints not enforced
+
+**Cause**: Tests using raw Prisma client instead of operations wrappers
+**Solution**: Use operation wrappers that include validation:
+
+- Use `clusteringOps.createCluster()` instead of `prisma.memoryCluster.create()`
+- Use `clusteringOps.addMemoryToCluster()` instead of `prisma.clusterMembership.create()`
+
+#### Issue 3: Memory deduplication tests returning 0 counts
+
+**Cause**: Memory creation not setting required clustering field defaults
+**Solution**: Update `createMemory()` in `memory-operations.ts` to include clustering fields
+
+#### Issue 4: Performance tests failing in Wallaby/CI
+
+**Cause**: Performance benchmarks exceed thresholds in resource-constrained environments
+**Solution**: Skip intensive tests in Wallaby and CI environments:
+
+```typescript
+describe('Performance Benchmarks', () => {
+  // Skip performance benchmarks in Wallaby.js and CI - they can cause timeouts
+  if (process.env.WALLABY_WORKER || process.env.CI) {
+    it.skip('skipped in Wallaby.js and CI environments', () => {})
+    return
+  }
+  // ... rest of the tests
+})
+```
+
+#### Issue 5: Incomplete schema refresh in Wallaby
+
+**Cause**: Wallaby.js in-memory databases retain partial schema state between test runs
+**Problem**: Only dropping Memory table leaves other tables with stale schema
+**Solution**: Implement comprehensive schema refresh that drops ALL tables:
+
+```typescript
+private static async dropAllTablesForWallaby(prisma: PrismaClient): Promise<void> {
+  try {
+    // Drop tables in reverse dependency order to avoid foreign key constraint violations
+    // Analysis and quality tables (depend on Memory)
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "AnalysisMetadata"`
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "ValidationStatus"`
+    // ... drop all tables in dependency order
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "Memory"`
+    await prisma.$executeRaw`DROP TABLE IF EXISTS "Message"`
+  } catch (error) {
+    console.warn('Warning: Error dropping tables for Wallaby schema refresh:', error)
+  }
+}
+```
+
+**Key Points**:
+
+- Must drop ALL tables, not just Memory table
+- Drop in reverse dependency order (child tables before parent tables)
+- Handle errors gracefully to allow table recreation to proceed
+
+#### Issue 6: Duplicate column name errors after schema refresh
+
+**Cause**: ALTER TABLE statements try to add columns that already exist in CREATE TABLE
+**Error**: `duplicate column name: clusteringMetadata`
+**Solution**: Remove redundant ALTER TABLE statements when using comprehensive table drops:
+
+```typescript
+// ❌ WRONG: This causes errors after dropAllTablesForWallaby
+await prisma.$executeRaw`CREATE TABLE "Memory" (..., "clusteringMetadata" TEXT, ...)`
+await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "clusteringMetadata" TEXT` // Duplicate!
+
+// ✅ CORRECT: Include all columns in CREATE TABLE, no ALTER needed
+await prisma.$executeRaw`CREATE TABLE "Memory" (..., "clusteringMetadata" TEXT, ...)`
+```
+
+**Root Cause**: Comprehensive schema refresh means tables are created fresh, making column additions redundant.
+
+### Testing Best Practices
+
+1. **Always use test utilities**:
+   - Use `createTestDatabase()` from `@studio/test-config`
+   - Use operation wrappers from `@studio/db` for validation
+
+2. **Schema synchronization**:
+   - When adding new Prisma migrations, update:
+     - `worker-database-factory.ts` table creation statements
+     - `database-testing.ts` schema statements
+   - Include all new fields with proper defaults
+
+3. **Test isolation**:
+   - Each test gets its own database instance
+   - Databases are cleaned up after tests
+   - Use unique content hashes to avoid constraint violations:
+     ```typescript
+     contentHash: `test-hash-${Date.now()}-${Math.random()}`
+     ```
+
+4. **Environment-aware testing**:
+   - Skip intensive tests in Wallaby/CI: `if (process.env.WALLABY_WORKER || process.env.CI)`
+   - Use comprehensive schema refresh for Wallaby in-memory databases
+   - Maintain index consistency across test and production environments
+   - Performance tests should run locally but skip in constrained environments
+
+### Debugging Checklist
+
+When tests fail with database errors:
+
+1. Check if new fields were added to Prisma schema
+2. Verify test database creation includes all fields
+3. Ensure operation wrappers set proper defaults
+4. Check if tests are using validation wrappers
+5. Look for unique constraint violations
+6. Consider Wallaby-specific environment differences
+7. **NEW**: Check for duplicate column name errors after schema changes
+8. **NEW**: Verify comprehensive table dropping in Wallaby environments
+9. **NEW**: Remove redundant ALTER TABLE statements when using complete schema refresh
+
+### Common Debugging Patterns
+
+#### Database Migration Issues
+
+**Problem**: Database triggers or complex migrations not applied in tests
+**Solution**:
+
+- For package tests, manually apply triggers after `db push`
+- For cross-package tests, ensure migrations are run properly
+- Check that trigger SQL is compatible with SQLite syntax
+
+#### Schema Refresh Issues
+
+**Problem**: Incomplete schema refresh in Wallaby causing table inconsistencies
+**Solution**:
+
+- Implement comprehensive table dropping in correct dependency order
+- Drop ALL tables, not just primary tables
+- Handle foreign key constraints by dropping child tables first
+
+**Pattern**:
+
+```typescript
+// Drop in reverse dependency order
+await prisma.$executeRaw`DROP TABLE IF EXISTS "ChildTable"`
+await prisma.$executeRaw`DROP TABLE IF EXISTS "ParentTable"`
+```
+
+#### Duplicate Column Errors
+
+**Problem**: `duplicate column name: columnName` after schema changes
+**Root Cause**: ALTER TABLE statements conflicting with CREATE TABLE statements
+**Solution**:
+
+- When using comprehensive table drops, columns should only be defined in CREATE TABLE
+- Remove redundant ALTER TABLE ADD COLUMN statements
+- Ensure CREATE TABLE includes all current schema columns
+
+#### Index Consistency Issues
+
+**Problem**: Test environments have different indexes than production
+**Solution**:
+
+- Remove redundant indexes identified in production schema
+- Update test database creation to match production index structure
+- Example: Remove redundant `contentHash` index when unique constraint exists
+
+#### Build and TypeScript Errors
+
+**Problem**: "File is not under 'rootDir'" or "not listed within the file list"
+**Solution**:
+
+- Don't import test utilities across package boundaries
+- Create self-contained test utilities within each package
+- Use proper package imports (`@studio/db`) instead of relative paths
+
+#### Test Isolation Failures
+
+**Problem**: Tests pass individually but fail when run together
+**Solution**:
+
+- Ensure unique content hashes: `\`test-\${Date.now()}-\${Math.random()}\``
+- Clean up test data properly between tests
+- Use worker-specific database instances
+
+#### Generated Files in Git
+
+**Problem**: TypeScript generates .d.ts, .js files that shouldn't be committed
+**Solution**:
+
+- Add `*.d.ts`, `*.d.ts.map` to .gitignore in test directories
+- Never commit generated files from test directories
+- Run `git clean -fd` to remove untracked generated files
 
 # important-instruction-reminders
 
