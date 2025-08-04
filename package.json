@@ -37,7 +37,7 @@
     "clean:cache": "turbo clean && rm -rf node_modules/.cache",
     "clean:all": "pnpm clean && pnpm clean:cache && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
-    "check": "turbo format:check lint type-check test -- --run",
+    "check": "turbo format:check lint type-check && turbo test -- --run",
     "check:packages": "pnpm --filter \"@studio/*\" run check",
     "workspace:info": "pnpm list --depth=0",
     "workspace:outdated": "pnpm outdated --recursive"
