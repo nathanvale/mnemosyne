@@ -649,6 +649,7 @@ export class RelationshipContextExtractor {
     const participantRoles = this.extractParticipantRoles(
       participants,
       memory.author,
+      content,
     )
 
     return {
@@ -923,6 +924,7 @@ export class RelationshipContextExtractor {
   private extractParticipantRoles(
     participants: ExtractedMemory['participants'],
     author: ExtractedMemory['author'],
+    content: string,
   ): ParticipantRole[] {
     const roles: ParticipantRole[] = []
 
@@ -938,8 +940,52 @@ export class RelationshipContextExtractor {
 
       // Map schema participant roles to clustering roles
       if (participant.id === author.id) {
-        role = 'vulnerable_sharer' // Author typically shares vulnerably
-        supportLevel = 'recipient'
+        // Analyze content to determine author's role dynamically
+        const lowerContent = content.toLowerCase()
+
+        // Check if author is providing support
+        const supportProviderPhrases = [
+          'i helped',
+          'i supported',
+          'i comforted',
+          'i reassured',
+          'i listened to',
+          'i was there for',
+          'i encouraged',
+        ]
+        const isProvidingSupport = supportProviderPhrases.some((phrase) =>
+          lowerContent.includes(phrase),
+        )
+
+        // Check if author is receiving support
+        const supportRecipientPhrases = [
+          'helped me',
+          'supported me',
+          'comforted me',
+          'reassured me',
+          'i was anxious',
+          'i felt worried',
+          'i was stressed',
+          'i was struggling',
+          'i needed',
+        ]
+        const isReceivingSupport = supportRecipientPhrases.some((phrase) =>
+          lowerContent.includes(phrase),
+        )
+
+        // Determine role based on content analysis
+        if (isProvidingSupport && !isReceivingSupport) {
+          role = 'supporter'
+          supportLevel = 'provider'
+        } else if (isReceivingSupport) {
+          // Default to vulnerable_sharer if receiving support (even if also providing)
+          role = 'vulnerable_sharer'
+          supportLevel = 'recipient'
+        } else {
+          // Neutral observer if no clear support dynamics
+          role = 'observer'
+          supportLevel = 'neutral'
+        }
       } else {
         // Map based on participant role context
         switch (participant.role) {

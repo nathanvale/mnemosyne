@@ -406,6 +406,55 @@ describe('Multi-Dimensional Feature Extraction System', () => {
 
       expect(features.supportDynamics.effectiveness).toBeGreaterThan(0.8)
     })
+
+    it('should dynamically assign author role based on content - author as supporter', () => {
+      const supporterMemory = {
+        ...mockMemory,
+        content:
+          'I helped my sister through her anxiety about the job interview. I listened to her concerns and reassured her that she was well-prepared.',
+      } as ExtractedMemory
+
+      const features = relationshipExtractor.extractFeatures(supporterMemory)
+
+      expect(features.participantRoles).toContainEqual({
+        participantId: 'user-1',
+        role: 'supporter',
+        supportLevel: 'provider',
+      })
+    })
+
+    it('should dynamically assign author role based on content - author as observer', () => {
+      const observerMemory = {
+        ...mockMemory,
+        content:
+          'We discussed the project timeline and agreed on the next steps. The meeting was productive.',
+      } as ExtractedMemory
+
+      const features = relationshipExtractor.extractFeatures(observerMemory)
+
+      expect(features.participantRoles).toContainEqual({
+        participantId: 'user-1',
+        role: 'observer',
+        supportLevel: 'neutral',
+      })
+    })
+
+    it('should prioritize vulnerable_sharer role when both giving and receiving support', () => {
+      const mixedMemory = {
+        ...mockMemory,
+        content:
+          'I was stressed about work, but talking with Mike helped me. I also supported him with his relationship issues.',
+      } as ExtractedMemory
+
+      const features = relationshipExtractor.extractFeatures(mixedMemory)
+
+      // Should default to vulnerable_sharer when receiving support
+      expect(features.participantRoles).toContainEqual({
+        participantId: 'user-1',
+        role: 'vulnerable_sharer',
+        supportLevel: 'recipient',
+      })
+    })
   })
 
   describe('PsychologicalIndicatorExtractor', () => {
