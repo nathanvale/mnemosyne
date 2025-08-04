@@ -13,6 +13,7 @@ import type {
   ConversationParticipant,
   ExtractedMemory,
   MoodAnalysisResult,
+  MoodDelta,
 } from '../../types'
 
 import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
@@ -862,7 +863,7 @@ describe('End-to-End System Validation - Task 7.8', () => {
               : [],
         },
         patterns: deltas.map((delta) => ({
-          type: delta.type || conversationType,
+          type: mapDeltaTypeToPatternType(delta.type),
           confidence: delta.confidence || 0.7,
           description: `${delta.type || conversationType} pattern`,
           significance: delta.magnitude || 0.7,
@@ -956,6 +957,28 @@ describe('End-to-End System Validation - Task 7.8', () => {
     if (conversationId.includes('emotional-celebration'))
       return 'emotional-celebration'
     return 'general'
+  }
+
+  function mapDeltaTypeToPatternType(
+    deltaType: 'mood_repair' | 'celebration' | 'decline' | 'plateau',
+  ):
+    | 'support_seeking'
+    | 'mood_repair'
+    | 'celebration'
+    | 'vulnerability'
+    | 'growth' {
+    switch (deltaType) {
+      case 'mood_repair':
+        return 'mood_repair'
+      case 'celebration':
+        return 'celebration'
+      case 'decline':
+        return 'vulnerability' // Map decline to vulnerability
+      case 'plateau':
+        return 'growth' // Map plateau to growth
+      default:
+        return 'growth'
+    }
   }
 
   function createRealisticConversationDatasets(): ConversationData[] {
