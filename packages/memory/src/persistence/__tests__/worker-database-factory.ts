@@ -12,6 +12,37 @@ import { resolve } from 'path'
  * - Wallaby.js compatibility
  * - 4x faster test execution on multi-core machines
  */
+
+/**
+ * Simplifies error messages for cleaner output in Wallaby.js
+ */
+function simplifyError(error: unknown): string {
+  if (!error) return 'Unknown error'
+
+  const errorStr = error.toString()
+
+  // Common Prisma error patterns - simplify them
+  if (errorStr.includes('column') && errorStr.includes('does not exist')) {
+    const columnMatch = errorStr.match(/column `([^`]+)` does not exist/)
+    return columnMatch ? `Missing column: ${columnMatch[1]}` : 'Missing column'
+  }
+
+  if (errorStr.includes('UNIQUE constraint failed')) {
+    return 'Duplicate entry'
+  }
+
+  if (errorStr.includes('database is locked')) {
+    return 'Database locked'
+  }
+
+  if (errorStr.includes('no such table')) {
+    const tableMatch = errorStr.match(/no such table: (\w+)/)
+    return tableMatch ? `Missing table: ${tableMatch[1]}` : 'Missing table'
+  }
+
+  // For other errors, return first line only
+  return errorStr.split('\n')[0]
+}
 export class WorkerDatabaseFactory {
   private static instances = new Map<string, PrismaClient>()
   private static workerId: string | null = null
@@ -24,8 +55,8 @@ export class WorkerDatabaseFactory {
   static getWorkerId(): string {
     if (this.workerId) return this.workerId
 
-    // Debug logging to understand worker identification
-    if (process.env.TEST_VERBOSE) {
+    // Debug logging to understand worker identification (suppressed in Wallaby quiet mode)
+    if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
       console.log('🔍 Worker ID Detection:')
       console.log('  VITEST_WORKER_ID:', process.env.VITEST_WORKER_ID)
       console.log('  WALLABY_WORKER_ID:', process.env.WALLABY_WORKER_ID)
@@ -54,7 +85,7 @@ export class WorkerDatabaseFactory {
     // Fallback: Use process ID for worker identification
     // This works for both Vitest (which forks processes) and single-threaded execution
     this.workerId = process.pid.toString()
-    if (process.env.TEST_VERBOSE) {
+    if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
       console.log('  Using process.pid as worker ID:', this.workerId)
     }
     return this.workerId
@@ -81,9 +112,11 @@ export class WorkerDatabaseFactory {
           url: `file:wallaby-${workerId}?mode=memory&cache=private`,
         },
       },
-      log: process.env.TEST_VERBOSE
-        ? ['query', 'info', 'warn', 'error']
-        : ['error'],
+      log: process.env.WALLABY_QUIET
+        ? [] // Completely disable logging during Wallaby runs
+        : process.env.TEST_VERBOSE
+          ? ['query', 'info', 'warn', 'error']
+          : ['error'],
     })
 
     try {
@@ -174,9 +207,11 @@ export class WorkerDatabaseFactory {
         },
       },
       // Disable query logging in tests for cleaner output
-      log: process.env.TEST_VERBOSE
-        ? ['query', 'info', 'warn', 'error']
-        : ['error'],
+      log: process.env.WALLABY_QUIET
+        ? [] // Completely disable logging during Wallaby runs
+        : process.env.TEST_VERBOSE
+          ? ['query', 'info', 'warn', 'error']
+          : ['error'],
     })
 
     try {
@@ -290,10 +325,16 @@ export class WorkerDatabaseFactory {
       // Create clustering tables for tone-tagged memory clustering
       await this.createClusteringTables(prisma)
     } catch (error) {
-      console.error(
-        `CRITICAL: Worker database migration failed for worker ${this.getWorkerId()}:`,
-        error,
-      )
+      if (process.env.WALLABY_QUIET) {
+        console.error(
+          `DB migration failed for worker ${this.getWorkerId()}: ${simplifyError(error)}`,
+        )
+      } else {
+        console.error(
+          `CRITICAL: Worker database migration failed for worker ${this.getWorkerId()}:`,
+          error,
+        )
+      }
       throw error // Re-throw to prevent using broken database
     }
   }
@@ -668,7 +709,12 @@ export class WorkerDatabaseFactory {
         // Disconnect the client
         await prisma.$disconnect()
       } catch (error) {
-        console.warn(`Error disconnecting worker ${workerId} database:`, error)
+        if (!process.env.WALLABY_QUIET) {
+          console.warn(
+            `Error disconnecting worker ${workerId} database:`,
+            error,
+          )
+        }
       }
 
       this.instances.delete(workerId)
@@ -682,10 +728,12 @@ export class WorkerDatabaseFactory {
       try {
         await prisma.$disconnect()
       } catch (error) {
-        console.warn(
-          `Error disconnecting Wallaby worker ${workerId} database:`,
-          error,
-        )
+        if (!process.env.WALLABY_QUIET) {
+          console.warn(
+            `Error disconnecting Wallaby worker ${workerId} database:`,
+            error,
+          )
+        }
       }
 
       this.instances.delete(wallabyKey)
@@ -716,16 +764,18 @@ export class WorkerDatabaseFactory {
           }
         } catch (fileError) {
           // Gracefully handle file removal errors (file might be locked or already removed)
-          if (process.env.TEST_VERBOSE) {
+          if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
             console.warn(`Could not remove ${filePath}:`, fileError)
           }
         }
       }
     } catch (error) {
-      console.warn(
-        `Error cleaning up database files for worker ${workerId}:`,
-        error,
-      )
+      if (!process.env.WALLABY_QUIET) {
+        console.warn(
+          `Error cleaning up database files for worker ${workerId}:`,
+          error,
+        )
+      }
     }
   }
 
@@ -760,11 +810,13 @@ export class WorkerDatabaseFactory {
         }
       }
 
-      if (testDbFiles.length > 0) {
+      if (testDbFiles.length > 0 && !process.env.WALLABY_QUIET) {
         console.log(`Cleaned up ${testDbFiles.length} test database files`)
       }
     } catch (error) {
-      console.warn('Error during bulk database cleanup:', error)
+      if (!process.env.WALLABY_QUIET) {
+        console.warn('Error during bulk database cleanup:', error)
+      }
     }
   }
 
@@ -809,7 +861,9 @@ export class WorkerDatabaseFactory {
       await this.safeDeleteFromTable(prisma, 'Link')
       await this.safeDeleteFromTable(prisma, 'Message')
     } catch (error) {
-      console.warn(`Error cleaning worker data:`, error)
+      if (!process.env.WALLABY_QUIET) {
+        console.warn(`Error cleaning worker data:`, error)
+      }
       // Continue execution - tests can handle partial cleanup
     }
   }
@@ -831,7 +885,9 @@ export class WorkerDatabaseFactory {
         prismaError?.code !== 'P2021' &&
         !prismaError?.message?.includes('does not exist')
       ) {
-        console.warn(`Error deleting from table ${tableName}:`, error)
+        if (!process.env.WALLABY_QUIET) {
+          console.warn(`Error deleting from table ${tableName}:`, error)
+        }
       }
     }
   }
@@ -861,7 +917,7 @@ export class WorkerDatabaseFactory {
         // Database exists, verify it's not corrupted by attempting a simple connection
         const testClient = new PrismaClient({
           datasources: { db: { url: `file:${dbPath}` } },
-          log: ['error'],
+          log: process.env.WALLABY_QUIET ? [] : ['error'],
         })
 
         try {
@@ -871,7 +927,7 @@ export class WorkerDatabaseFactory {
           await testClient.$disconnect()
         } catch (error) {
           // Database may be corrupted, remove it
-          if (process.env.TEST_VERBOSE) {
+          if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
             console.warn(
               `Removing corrupted database for worker ${workerId}:`,
               error,
@@ -881,7 +937,7 @@ export class WorkerDatabaseFactory {
         }
       }
     } catch (error) {
-      if (process.env.TEST_VERBOSE) {
+      if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
         console.warn(
           `Database ready check warning for worker ${workerId}:`,
           error,
@@ -909,7 +965,7 @@ export class WorkerDatabaseFactory {
       }
     } catch (error) {
       // Silently fail - these files will be created by SQLite when needed
-      if (process.env.TEST_VERBOSE) {
+      if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
         console.warn(`Could not create auxiliary files:`, error)
       }
     }

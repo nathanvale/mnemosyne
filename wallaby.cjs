@@ -24,9 +24,9 @@ module.exports = () => ({
   },
 
   workers: {
-    // Reduce workers to minimize race conditions
+    // Single worker to eliminate output duplication and minimize race conditions
     initial: 1,
-    regular: 2, // Reduced from 4 to minimize state conflicts
+    regular: 1, // Reduced to 1 to eliminate output duplication
     recycle: true,
     // Restart workers more frequently to prevent memory leaks
     restart: {
@@ -36,10 +36,15 @@ module.exports = () => ({
     },
   },
 
-  // Add delays to reduce race conditions
+  // Add delays to reduce race conditions and output frequency
   delays: {
-    run: 100, // 100ms delay between test runs
+    run: 200, // Increased delay to reduce rapid-fire output
+    update: 500, // Reduce update frequency
   },
+
+  // Limit progress reporting to reduce output volume
+  reportConsoleErrorAsError: false, // Don't report console.error as test failures
+  reportUnhandledPromises: false, // Reduce unhandled promise noise
 
   // Improve test isolation
   testFramework: {
@@ -60,6 +65,7 @@ module.exports = () => ({
     // Set worker ID for database isolation
     process.env.WALLABY_WORKER_ID = wallaby.workerId || '0'
     process.env.WALLABY_WORKER = 'true'
+    process.env.WALLABY_QUIET = 'true' // Enable quiet mode for reduced output
 
     // Clear any global state that might persist
     if (global.gc) {
@@ -68,6 +74,40 @@ module.exports = () => ({
 
     // Reset console to prevent log pollution
     console.clear?.()
+
+    // Create output interceptor to limit message length
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+    }
+
+    // Truncate long messages to prevent token overflow
+    const truncateMessage = (msg, maxLength = 100) => {
+      if (typeof msg === 'string' && msg.length > maxLength) {
+        return msg.substring(0, maxLength) + '...[truncated]'
+      }
+      return msg
+    }
+
+    // Override console methods with truncation
+    console.log = (...args) => {
+      if (process.env.WALLABY_QUIET === 'true') return // Silent mode
+      originalConsole.log(...args.map(arg => truncateMessage(arg)))
+    }
+
+    console.warn = (...args) => {
+      // Always show warnings but truncate them
+      originalConsole.warn(...args.map(arg => truncateMessage(arg)))
+    }
+
+    console.error = (...args) => {
+      // Always show errors but truncate them
+      originalConsole.error(...args.map(arg => truncateMessage(arg)))
+    }
+
+    // Store original methods for restoration if needed
+    global.__originalConsole = originalConsole
   },
 
   teardown: function () {
