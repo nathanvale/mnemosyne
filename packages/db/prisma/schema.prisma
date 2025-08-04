@@ -71,7 +71,6 @@ model Memory {
   clusterMemberships ClusterMembership[]
   
   // Optimized indexes for memory-based mood analysis
-  @@index([contentHash])
   @@index([extractedAt])                 // For temporal memory analysis
   @@index([confidence])                  // For confidence-based filtering
   @@index([extractedAt, confidence])     // For time-confidence correlation
