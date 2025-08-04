@@ -18,7 +18,8 @@
     "LOGGER_CALLSITE",
     "WALLABY_QUIET",
     "JEST_WORKER_ID",
-    "WALLABY_SCHEMA_VERSION"
+    "WALLABY_SCHEMA_VERSION",
+    "ALLOWED_ORIGINS"
   ],
   "tasks": {
     "build": {
