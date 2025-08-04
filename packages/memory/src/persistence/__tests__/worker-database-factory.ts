@@ -247,6 +247,54 @@ export class WorkerDatabaseFactory {
   }
 
   /**
+   * Drops all tables in correct dependency order for Wallaby schema refresh
+   * This ensures complete schema refresh when schema changes occur
+   */
+  private static async dropAllTablesForWallaby(
+    prisma: PrismaClient,
+  ): Promise<void> {
+    try {
+      // Drop tables in reverse dependency order to avoid foreign key constraint violations
+      // Child tables (with foreign keys) must be dropped before parent tables
+
+      // Analysis and quality tables (depend on Memory)
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "AnalysisMetadata"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "ValidationStatus"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "ValidationResult"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "QualityMetrics"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "EmotionalContext"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "RelationshipDynamics"`
+
+      // Clustering tables (depend on MemoryCluster and Memory)
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "ClusterQualityMetrics"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "PatternAnalysis"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "ClusterMembership"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "MemoryCluster"`
+
+      // Mood and delta analysis tables (depend on Memory)
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "TurningPoint"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "DeltaPatternAssociation"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "DeltaPattern"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "MoodDelta"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "MoodFactor"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "MoodScore"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "CalibrationHistory"`
+
+      // Main data tables
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "Memory"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "Asset"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "Link"`
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "Message"`
+    } catch (error) {
+      console.warn(
+        'Warning: Error dropping tables for Wallaby schema refresh:',
+        error,
+      )
+      // Continue with table creation even if drop fails
+    }
+  }
+
+  /**
    * Runs database migrations for a worker-specific database
    * Uses Prisma's db push functionality to sync schema to worker database
    */
@@ -303,9 +351,9 @@ export class WorkerDatabaseFactory {
         )
       `
 
-      // For Wallaby.js in-memory databases, drop and recreate to ensure schema is current
+      // For Wallaby.js in-memory databases, drop all tables to ensure complete schema refresh
       if (process.env.WALLABY_WORKER === 'true') {
-        await prisma.$executeRaw`DROP TABLE IF EXISTS "Memory"`
+        await this.dropAllTablesForWallaby(prisma)
       }
 
       await prisma.$executeRaw`
@@ -326,25 +374,7 @@ export class WorkerDatabaseFactory {
         )
       `
 
-      // Ensure clustering columns exist (for existing tables)
-      try {
-        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "clusteringMetadata" TEXT`
-      } catch {
-        /* Column already exists */
-      }
-      try {
-        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "lastClusteredAt" DATETIME`
-      } catch {
-        /* Column already exists */
-      }
-      try {
-        await prisma.$executeRaw`ALTER TABLE "Memory" ADD COLUMN "clusterParticipationCount" INTEGER NOT NULL DEFAULT 0`
-      } catch {
-        /* Column already exists */
-      }
-
       await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "Memory_contentHash_key" ON "Memory"("contentHash")`
-      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_contentHash_idx" ON "Memory"("contentHash")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_extractedAt_idx" ON "Memory"("extractedAt")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_confidence_idx" ON "Memory"("confidence")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_extractedAt_confidence_idx" ON "Memory"("extractedAt", "confidence")`
