@@ -675,11 +675,14 @@ describe('End-to-End System Validation - Task 7.8', () => {
       interactionQuality = InteractionQuality.POSITIVE
     }
 
-    const convertedParticipants = conversation.participants.map((p) => ({
-      id: p.id,
-      name: p.name,
-      role: p.role === 'author' ? ParticipantRole.SELF : ParticipantRole.OTHER,
-    }))
+    const convertedParticipants = (conversation.participants || []).map(
+      (p) => ({
+        id: p?.id || 'unknown',
+        name: p?.name || 'Unknown',
+        role:
+          p?.role === 'author' ? ParticipantRole.SELF : ParticipantRole.OTHER,
+      }),
+    )
 
     const memory: ExtractedMemory = {
       id: `memory-${conversation.id}-${Date.now()}`,
@@ -781,9 +784,13 @@ describe('End-to-End System Validation - Task 7.8', () => {
         },
         participantDynamics: {
           emotionalLeader:
-            convertedParticipants[1]?.id || convertedParticipants[0].id,
+            convertedParticipants[1]?.id ||
+            convertedParticipants[0]?.id ||
+            'unknown',
           primarySupporter:
-            convertedParticipants[1]?.id || convertedParticipants[0].id,
+            convertedParticipants[1]?.id ||
+            convertedParticipants[0]?.id ||
+            'unknown',
           supportBalance:
             conversationType === 'crisis' ? 'unidirectional' : 'balanced',
           mutualVulnerability: conversationType !== 'therapeutic-breakthrough',
