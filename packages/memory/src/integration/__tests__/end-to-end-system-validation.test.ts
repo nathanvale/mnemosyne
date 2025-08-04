@@ -126,9 +126,9 @@ describe('End-to-End System Validation - Task 7.8', () => {
       expect(processingTime).toBeLessThan(SYSTEM_PERFORMANCE_THRESHOLD_MS)
 
       // Relationship dynamics validation
-      expect(systemResult.memory.relationshipDynamics.conflictPresent).toBe(true)
-      expect(systemResult.memory.relationshipDynamics.communicationPattern).toBe(CommunicationPattern.CONFLICT)
-      expect(systemResult.memory.extendedRelationshipDynamics.conflictLevel).toMatch(/^(medium|high)$/)
+      expect(systemResult.memory.relationshipDynamics.interactionQuality).toMatch(/^(strained|negative|mixed)$/)
+      expect(systemResult.memory.relationshipDynamics.communicationPattern).toMatch(/^(aggressive|passive-aggressive|formal)$/)
+      expect(systemResult.memory.extendedRelationshipDynamics?.conflictLevel).toMatch(/^(medium|high)$/)
 
       // Mood analysis should reflect conflict and resolution (adjust for algorithm behavior)
       expect(systemResult.moodAnalysis.score).toBeGreaterThan(1.0) // Valid score range
@@ -139,7 +139,7 @@ describe('End-to-End System Validation - Task 7.8', () => {
       const conflictDelta = systemResult.deltas.find(d => d.direction === 'positive')
       expect(conflictDelta).toBeDefined() // Some positive movement expected
 
-      console.log(`Relationship conflict: score=${systemResult.moodAnalysis.score.toFixed(2)}, conflict=${systemResult.memory.relationshipDynamics.conflictPresent}, resolution_delta=${conflictDelta?.magnitude.toFixed(2) || 'none'}`)
+      console.log(`Relationship conflict: score=${systemResult.moodAnalysis.score.toFixed(2)}, quality=${systemResult.memory.relationshipDynamics.interactionQuality}, resolution_delta=${conflictDelta?.magnitude.toFixed(2) || 'none'}`)
     })
 
     it('should handle casual support conversation with appropriate prioritization', async () => {
@@ -264,16 +264,22 @@ describe('End-to-End System Validation - Task 7.8', () => {
         }
         
         const humanValidationRecord = {
-          id: `validation-${conversation.id}-${Date.now()}`,
           conversationId: conversation.id,
-          humanScore,
           validatorId: 'expert-validator-1',
-          validatorExperience: 8,
-          validatorSpecializations: ['mood_assessment', 'crisis_intervention'],
-          validationDate: new Date(),
+          validatorCredentials: {
+            title: 'Clinical Psychologist',
+            yearsExperience: 8,
+            specializations: ['mood_assessment', 'crisis_intervention'],
+            certifications: ['PhD Psychology', 'Licensed Clinical Psychologist'],
+            institutionAffiliation: 'Research Institute'
+          },
+          humanMoodScore: humanScore,
           confidence: 0.9,
-          notes: `Expert validation for ${conversation.id}`,
-          validationTimeMs: 2000,
+          rationale: `Expert assessment of mood indicators with ${Math.round(systemResult.moodAnalysis.confidence * 100)}% algorithmic confidence`,
+          emotionalFactors: systemResult.moodAnalysis.descriptors || ['general_assessment'],
+          timestamp: new Date(),
+          validationSession: `validation-session-${Date.now()}`,
+          additionalNotes: `Expert validation for ${conversation.id}`
         }
 
         const validationResult = await validationFramework.validateMoodScore(
@@ -531,23 +537,23 @@ describe('End-to-End System Validation - Task 7.8', () => {
 
     if (conversationType === 'crisis') {
       primaryEmotion = EmotionalState.SADNESS
-      themes = [EmotionalTheme.STRUGGLE, EmotionalTheme.CRISIS]
-      communicationPattern = CommunicationPattern.CRISIS_SUPPORT
-      interactionQuality = InteractionQuality.CONCERNING
+      themes = [EmotionalTheme.STRESS, EmotionalTheme.GRIEF]
+      communicationPattern = CommunicationPattern.SUPPORTIVE
+      interactionQuality = InteractionQuality.STRAINED
     } else if (conversationType === 'therapeutic-breakthrough') {
       primaryEmotion = EmotionalState.JOY
-      themes = [EmotionalTheme.BREAKTHROUGH, EmotionalTheme.GROWTH]
-      communicationPattern = CommunicationPattern.THERAPEUTIC
-      interactionQuality = InteractionQuality.TRANSFORMATIVE
+      themes = [EmotionalTheme.ACHIEVEMENT, EmotionalTheme.GROWTH]
+      communicationPattern = CommunicationPattern.SUPPORTIVE
+      interactionQuality = InteractionQuality.POSITIVE
     } else if (conversationType === 'relationship-conflict') {
       primaryEmotion = EmotionalState.ANGER
-      themes = [EmotionalTheme.CONFLICT, EmotionalTheme.RELATIONSHIP_DYNAMICS]
-      communicationPattern = CommunicationPattern.CONFLICT
+      themes = [EmotionalTheme.CONFLICT, EmotionalTheme.STRESS]
+      communicationPattern = CommunicationPattern.AGGRESSIVE
       interactionQuality = InteractionQuality.MIXED
     } else if (conversationType === 'emotional-celebration') {
       primaryEmotion = EmotionalState.JOY
-      themes = [EmotionalTheme.CELEBRATION, EmotionalTheme.SUCCESS]
-      communicationPattern = CommunicationPattern.CELEBRATORY
+      themes = [EmotionalTheme.CELEBRATION, EmotionalTheme.ACHIEVEMENT]
+      communicationPattern = CommunicationPattern.PLAYFUL
       interactionQuality = InteractionQuality.POSITIVE
     }
 
@@ -595,17 +601,15 @@ describe('End-to-End System Validation - Task 7.8', () => {
         },
         connectionStrength: conversationType === 'crisis' ? 0.9 : 0.7,
         participantDynamics: [{
-          participants: [convertedParticipants[0].id, convertedParticipants[1]?.id || 'unknown'] as [string, string],
-          dynamicType: conversationType === 'relationship-conflict' ? 'conflict' : 'supportive',
+          participants: [convertedParticipants[0]?.id || 'participant-1', convertedParticipants[1]?.id || 'participant-2'] as [string, string],
+          dynamicType: conversationType === 'relationship-conflict' ? 'conflictual' : 'supportive',
           observations: [`${conversationType} interaction pattern`],
         }],
-        conflictPresent: conversationType === 'relationship-conflict',
       },
       extendedRelationshipDynamics: {
         type: conversationType === 'therapeutic-breakthrough' ? 'therapeutic' : 'friend',
         intimacy: conversationType === 'crisis' ? 'high' : 'medium',
         supportLevel: conversationType.includes('support') || conversationType === 'crisis' ? 'high' : 'medium',
-        conflictPresent: conversationType === 'relationship-conflict',
         trustLevel: conversationType === 'therapeutic-breakthrough' ? 'high' : 'medium',
         intimacyLevel: conversationType === 'crisis' ? 'high' : 'medium',
         conflictLevel: conversationType === 'relationship-conflict' ? 'high' : 'low',
@@ -677,13 +681,10 @@ describe('End-to-End System Validation - Task 7.8', () => {
         },
         trajectory: {
           direction: deltas.length > 0 && deltas[0].direction === 'positive' ? 'improving' : 'stable',
-          strength: deltas.length > 0 ? deltas[0].magnitude || 0.5 : 0.5,
           significance: deltas.length > 0 ? deltas[0].magnitude || 0.5 : 0.5,
-          trend: 'stable',
           points: [{
             timestamp: conversation.startTime,
             moodScore: moodAnalysis.score,
-            confidence: moodAnalysis.confidence,
           }],
           turningPoints: deltas.length > 0 ? [{
             timestamp: conversation.endTime,

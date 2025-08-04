@@ -240,16 +240,16 @@ describe('Scalability and Load Testing - Task 7.5', () => {
 
       // Process in batches of 25 to simulate real-world usage patterns
       const batchSize = 25
-      const batches = []
+      const batches: any[][] = []
       for (let i = 0; i < stressTestConversations.length; i += batchSize) {
         batches.push(stressTestConversations.slice(i, i + batchSize))
       }
 
       const { result, timeMs, memoryUsage } = await measurePerformance(
         async () => {
-          const batchPromises = batches.map((batch) =>
+          const batchPromises = batches.map((batch: any[]) =>
             Promise.all(
-              batch.map((conversation) =>
+              batch.map((conversation: any) =>
                 moodAnalyzer.analyzeConversation(conversation),
               ),
             ),
@@ -324,16 +324,16 @@ describe('Scalability and Load Testing - Task 7.5', () => {
 
       let totalProcessed = 0
       const chunkSize = 10
-      const chunks = []
+      const chunks: any[][] = []
       for (let i = 0; i < largeDatasetConversations.length; i += chunkSize) {
         chunks.push(largeDatasetConversations.slice(i, i + chunkSize))
       }
 
       const { result, timeMs, memoryUsage } = await measurePerformance(
         async () => {
-          const allResults = []
+          const allResults: any[] = []
           for (const chunk of chunks) {
-            const chunkPromises = chunk.map((conversation) =>
+            const chunkPromises = chunk.map((conversation: any) =>
               moodAnalyzer.analyzeConversation(conversation),
             )
             const chunkResults = await Promise.all(chunkPromises)
@@ -523,7 +523,7 @@ describe('Scalability and Load Testing - Task 7.5', () => {
       expect(timeMs).toBeLessThan(PERFORMANCE_THRESHOLD_MS / 2)
 
       // Count successful vs failed analyses
-      const successfulAnalyses = result.filter((r) => !r.metadata?.error).length
+      const successfulAnalyses = result.filter((r) => !(r as any).metadata?.error).length
       const successRate = (successfulAnalyses / result.length) * 100
 
       expect(successRate).toBeGreaterThan(70) // At least 70% should succeed

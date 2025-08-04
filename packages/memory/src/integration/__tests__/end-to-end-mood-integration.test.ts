@@ -474,16 +474,22 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
           moodAnalysis,
         }
         const humanValidationRecord = {
-          id: `validation-${Date.now()}`,
           conversationId: conversation.id,
-          humanScore,
           validatorId: 'test-validator',
-          validatorExperience: 5,
-          validatorSpecializations: [],
-          validationDate: new Date(),
+          validatorCredentials: {
+            title: 'Clinical Psychologist',
+            yearsExperience: 5,
+            specializations: ['mood disorders', 'cognitive therapy'],
+            certifications: ['PhD Psychology'],
+            institutionAffiliation: 'Test University'
+          },
+          humanMoodScore: humanScore,
           confidence: 0.9,
-          notes: 'integration-test',
-          validationTimeMs: 1000,
+          rationale: 'Positive emotional indicators with moderate confidence',
+          emotionalFactors: ['optimism', 'engagement', 'social connection'],
+          timestamp: new Date(),
+          validationSession: 'integration-test-session',
+          additionalNotes: 'integration-test'
         }
         const validationResult = await validationFramework.validateMoodScore(
           [conversationWithMoodAnalysis],
@@ -550,9 +556,9 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
 
           // Enhanced significance with delta awareness
           const deltaSignificance = deltaResults.reduce((max, delta) => 
-            Math.max(max, delta.significance || 0), 0)
+            Math.max(max, delta.magnitude || 0), 0)
           
-          memory.significance.overall += deltaSignificance * 0.3 // Delta bonus
+          memory.significance.overall = Math.min(10, memory.significance.overall + deltaSignificance * 0.3) // Delta bonus capped at 10
 
           processedMemories.push(memory)
         }
