@@ -110,7 +110,16 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         operationPromises.push(operationPromise)
       }
 
-      const results = await Promise.all(operationPromises)
+      interface OperationResult {
+        success: boolean
+        iteration: number
+        moodScoreId?: string
+        factorCount?: number
+        error?: string
+      }
+      const results = (await Promise.all(
+        operationPromises,
+      )) as OperationResult[]
       const successes = results.filter((r) => r.success)
 
       // Should have high success rate for thread safety
@@ -213,8 +222,15 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         return Promise.all(rapidPromises)
       })
 
+      interface RapidOperationResult {
+        success: boolean
+        memoryIndex: number
+        iteration: number
+        moodScoreId?: string
+        error?: string
+      }
       const allResults = await Promise.all(rapidOperations)
-      const flatResults = allResults.flat()
+      const flatResults = allResults.flat() as RapidOperationResult[]
       const allSuccesses = flatResults.filter((r) => r.success)
 
       // Should handle rapid operations successfully (relaxed for SQLite)
@@ -302,7 +318,13 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         deltaPromises.push(deltaPromise)
       }
 
-      const deltaResults = await Promise.all(deltaPromises)
+      interface DeltaResult {
+        success: boolean
+        iteration: number
+        deltaCount?: number
+        error?: string
+      }
+      const deltaResults = (await Promise.all(deltaPromises)) as DeltaResult[]
       const deltaSuccesses = deltaResults.filter((r) => r.success)
 
       // Should have high success rate for thread safety (relaxed for SQLite)
@@ -313,7 +335,7 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
       const storedDeltas =
         await deltaHistoryService.getDeltaHistoryByMemoryId(baseMemoryId)
       const expectedDeltaCount = deltaSuccesses.reduce(
-        (sum, s) => sum + s.deltaCount,
+        (sum, s) => sum + (s.deltaCount || 0),
         0,
       )
       expect(storedDeltas.length).toBe(expectedDeltaCount)
@@ -398,7 +420,16 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         validationPromises.push(validationPromise)
       }
 
-      const validationResults = await Promise.all(validationPromises)
+      interface ValidationResult {
+        success: boolean
+        iteration: number
+        validationId?: string
+        memoryId?: string
+        error?: string
+      }
+      const validationResults = (await Promise.all(
+        validationPromises,
+      )) as ValidationResult[]
       const validationSuccesses = validationResults.filter((r) => r.success)
 
       // Should handle concurrent validations successfully (relaxed for SQLite)
@@ -542,7 +573,17 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         multiServicePromises.push(multiServicePromise)
       }
 
-      const multiResults = await Promise.all(multiServicePromises)
+      interface MultiServiceResult {
+        success: boolean
+        iteration: number
+        moodScoreId?: string
+        deltaCount?: number
+        validationId?: string
+        error?: string
+      }
+      const multiResults = (await Promise.all(
+        multiServicePromises,
+      )) as MultiServiceResult[]
       const multiSuccesses = multiResults.filter((r) => r.success)
 
       // Should handle concurrent multi-service operations successfully (relaxed for SQLite)

@@ -249,8 +249,17 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       const totalLoadTime = loadTestEnd - loadTestStart
 
       // Analyze results
-      const successes = loadTestResults.filter((r) => r.success)
-      const failures = loadTestResults.filter((r) => !r.success)
+      interface LoadTestResult {
+        success: boolean
+        iteration: number
+        responseTime: number
+        moodScoreId?: string
+        factorCount?: number
+        error?: string
+      }
+      const typedResults = loadTestResults as LoadTestResult[]
+      const successes = typedResults.filter((r) => r.success)
+      const failures = typedResults.filter((r) => !r.success)
       const responseTimes = successes.map((r) => r.responseTime)
 
       const avgResponseTime =
@@ -288,7 +297,7 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       if (failures.length > 0) {
         console.log(
           `- Sample failure reasons:`,
-          failures.slice(0, 3).map((f) => f.error),
+          failures.slice(0, 3).map((f) => f.error || 'Unknown error'),
         )
       }
     }, 30000)
@@ -389,7 +398,8 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       const successesByWorker = new Map<number, WorkerResult[]>()
       const responseTimesByWorker = new Map<number, number[]>()
 
-      results.forEach((result: WorkerResult) => {
+      const typedResults = results as WorkerResult[]
+      typedResults.forEach((result) => {
         if (result.success) {
           if (!successesByWorker.has(result.workerId)) {
             successesByWorker.set(result.workerId, [])
@@ -414,7 +424,7 @@ describe('Performance Benchmarks - Concurrent Execution', () => {
       }
 
       // Verify overall performance
-      const totalSuccesses = results.filter((r) => r.success).length
+      const totalSuccesses = typedResults.filter((r) => r.success).length
       const overallSuccessRate =
         totalSuccesses / (workerCount * operationsPerWorker)
       expect(overallSuccessRate).toBeGreaterThan(0.1) // 10%+ overall (heavily relaxed for SQLite)
