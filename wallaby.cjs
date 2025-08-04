@@ -93,17 +93,17 @@ module.exports = () => ({
     // Override console methods with truncation
     console.log = (...args) => {
       if (process.env.WALLABY_QUIET === 'true') return // Silent mode
-      originalConsole.log(...args.map(arg => truncateMessage(arg)))
+      originalConsole.log(...args.map((arg) => truncateMessage(arg)))
     }
 
     console.warn = (...args) => {
       // Always show warnings but truncate them
-      originalConsole.warn(...args.map(arg => truncateMessage(arg)))
+      originalConsole.warn(...args.map((arg) => truncateMessage(arg)))
     }
 
     console.error = (...args) => {
       // Always show errors but truncate them
-      originalConsole.error(...args.map(arg => truncateMessage(arg)))
+      originalConsole.error(...args.map((arg) => truncateMessage(arg)))
     }
 
     // Store original methods for restoration if needed
