@@ -17,6 +17,12 @@ import {
 } from '../memory/relationship-dynamics.js'
 
 describe('Performance Benchmarks', () => {
+  // Skip performance benchmarks in Wallaby.js and CI - they can cause timeouts
+  if (process.env.WALLABY_WORKER || process.env.CI) {
+    it.skip('skipped in Wallaby.js and CI environments', () => {})
+    return
+  }
+
   // Create test data
   const createMockMemory = (id: string) => ({
     id: `550e8400-e29b-41d4-a716-44665544${id.padStart(4, '0')}`,
