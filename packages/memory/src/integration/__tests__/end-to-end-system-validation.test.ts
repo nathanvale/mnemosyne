@@ -17,11 +17,11 @@ import type {
 
 import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
 import { DeltaDetector } from '../../mood-scoring/delta-detector'
-import { ValidationFramework } from '../../mood-scoring/validation-framework'
 import { PerformanceMonitoringService } from '../../mood-scoring/performance-monitor'
+import { ValidationFramework } from '../../mood-scoring/validation-framework'
+import { WorkerDatabaseFactory } from '../../persistence/__tests__/worker-database-factory'
 import { EmotionalSignificanceAnalyzer } from '../../significance/analyzer'
 import { MemoryPrioritizer } from '../../significance/prioritizer'
-import { WorkerDatabaseFactory } from '../../persistence/__tests__/worker-database-factory'
 
 // System validation targets and thresholds
 const SYSTEM_PERFORMANCE_THRESHOLD_MS = 2000

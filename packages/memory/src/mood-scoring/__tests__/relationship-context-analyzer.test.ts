@@ -5,8 +5,8 @@ import type {
   // RelationshipDynamics,
   // MoodAnalysisResult,
 } from '../../types'
-import { createTestConversationData } from '../../__tests__/test-helpers'
 
+import { createTestConversationData } from '../../__tests__/test-helpers'
 import { RelationshipContextAnalyzer } from '../relationship-context-analyzer'
 
 describe('RelationshipContextAnalyzer - Relationship Context Integration System', () => {

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
 import { ParticipantRole, EmotionalState, EmotionalTheme, CommunicationPattern, InteractionQuality } from '@studio/schema'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 import type {
   ExtractedMemory,

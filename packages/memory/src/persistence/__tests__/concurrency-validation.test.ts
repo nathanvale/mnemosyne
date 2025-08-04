@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { PrismaClient } from '@studio/db'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 
 import type { MoodAnalysisResult } from '../../types'
+
 import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
 import { DeltaDetector } from '../../mood-scoring/delta-detector'
 import { WorkerDatabaseFactory } from './worker-database-factory'
