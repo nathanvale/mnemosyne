@@ -11,6 +11,7 @@
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
+    "lint": "eslint src --max-warnings 0",
     "test:storybook": "vitest --project=storybook",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

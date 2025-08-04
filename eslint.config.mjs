@@ -1,33 +1,18 @@
-import { FlatCompat } from '@eslint/eslintrc'
-import perfectionist from 'eslint-plugin-perfectionist'
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from 'eslint-plugin-storybook'
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { baseConfig } from '@studio/eslint-config/base'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-})
-
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
-  ...storybook.configs['flat/recommended'],
+// Root-level ESLint configuration for the monorepo
+export default [
+  ...baseConfig,
   {
-    plugins: { perfectionist },
-    rules: { 'perfectionist/sort-imports': 'error' },
-  },
-  {
+    // Root-specific ignores
     ignores: [
-      'src/generated/**/*',
-      'node_modules/**/*',
-      '.next/**/*',
-      'dist/**/*',
-      'build/**/*',
+      'packages/*/dist/**/*',
+      'apps/*/dist/**/*',
+      'apps/*/.next/**/*',
+      'apps/*/build/**/*',
+      'packages/db/generated/**/*',
+      'packages/db/prisma/wallaby*',
+      'pnpm-lock.yaml',
     ],
   },
 ]
-
-export default eslintConfig

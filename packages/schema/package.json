@@ -21,6 +21,7 @@
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
+    "lint": "eslint src --max-warnings 0",
     "test:ci": "vitest run"
   },
   "dependencies": {

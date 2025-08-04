@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
-  "globalEnv": ["NODE_ENV"],
+  "globalEnv": ["NODE_ENV", "WALLABY_WORKER", "CI"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -30,17 +30,24 @@
       "dependsOn": ["^build"]
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^lint", "@studio/eslint-config#build"],
       "inputs": [
         "src/**",
         "*.js",
         "*.ts",
         "*.tsx",
-        ".eslintrc.*",
+        "*.mjs",
         "eslint.config.*",
-        "package.json"
+        "package.json",
+        "tsconfig.json"
       ],
-      "outputs": []
+      "outputs": [],
+      "cache": true
+    },
+    "//#lint:root": {
+      "inputs": ["*.js", "*.ts", "*.mjs", "eslint.config.*", "package.json"],
+      "outputs": [],
+      "cache": true
     },
     "type-check": {
       "dependsOn": ["^build"],

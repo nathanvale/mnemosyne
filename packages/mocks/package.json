@@ -9,7 +9,8 @@
   "scripts": {
     "build": "echo 'Mocks package - build via turbo'",
     "dev": "echo 'Mocks package dev placeholder'",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
   },
   "dependencies": {
     "msw": "^2.10.2"
