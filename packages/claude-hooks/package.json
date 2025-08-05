@@ -9,23 +9,20 @@
     "./types": "./src/types/index.ts"
   },
   "scripts": {
-    "build": "tsc && node scripts/build-hooks.js",
-    "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",
     "format:check": "prettier --check src",
-    "clean": "rm -rf dist hooks *.tsbuildinfo",
-    "setup": "pnpm run build && node scripts/setup-hooks.js"
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "tsx": "^4.20.3",
     "zod": "^3.25.74"
   },
   "devDependencies": {
     "@studio/eslint-config": "workspace:*",
     "@studio/typescript-config": "workspace:*",
     "@types/node": "^22.5.4",
-    "esbuild": "^0.24.2",
     "eslint": "^9.30.0",
     "prettier": "^3.4.2",
     "typescript": "^5.8.3",

@@ -1,1 +1,2 @@
-/Users/nathanvale/code/mnemosyne/packages/claude-hooks/hooks/quality-check.cjs
+#!/usr/bin/env tsx
+import '@studio/claude-hooks/quality-check'

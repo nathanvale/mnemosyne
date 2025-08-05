@@ -1,1 +1,2 @@
-/Users/nathanvale/code/mnemosyne/packages/claude-hooks/hooks/sound-notification.cjs
+#!/usr/bin/env tsx
+import '@studio/claude-hooks/sound-notification'
