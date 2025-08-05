@@ -35,6 +35,8 @@ This is a **Turborepo monorepo** containing:
 git clone <repository>
 cd mnemosyne
 pnpm install
+
+# Claude hooks will be automatically set up during install
 ```
 
 ### Development
@@ -126,6 +128,35 @@ pnpm storybook
 # Build Storybook for production
 pnpm build-storybook
 ```
+
+## 🤖 Claude Code Integration
+
+This repository includes automated quality checks and notifications for Claude Code:
+
+### Automatic Setup
+
+Claude hooks are automatically set up when you run `pnpm install`. The hooks provide:
+
+- **Quality Check Hook**: Runs TypeScript, ESLint, and Prettier checks on code changes
+- **Sound Notification Hook**: Plays notification sounds when tasks complete
+- **TDD Support**: Automatically creates dummy implementations for missing imports in test files
+
+### Manual Setup (if needed)
+
+```bash
+# Set up Claude hooks manually
+pnpm setup:hooks
+
+# Or rebuild and set up from scratch
+pnpm --filter @studio/claude-hooks setup
+```
+
+### Hook Features
+
+- 🎯 **Smart Import Resolution**: Creates dummy implementations during TDD workflow
+- 🔧 **Auto-fixing**: Can automatically fix ESLint and Prettier issues
+- 🔊 **Sound Notifications**: Customizable sounds for success/warning/error
+- 📝 **TypeScript Cache**: Intelligent tsconfig resolution for monorepo
 
 ## 🎯 Turborepo Features
 
