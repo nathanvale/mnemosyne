@@ -50,7 +50,7 @@
       "dependsOn": ["^build"]
     },
     "lint": {
-      "dependsOn": ["^lint", "@studio/eslint-config#build"],
+      "dependsOn": ["^lint"],
       "inputs": [
         "src/**",
         "*.js",
@@ -58,6 +58,8 @@
         "*.tsx",
         "*.mjs",
         "eslint.config.*",
+        ".eslintrc",
+        ".eslintrc.*",
         "package.json",
         "tsconfig.json"
       ],
