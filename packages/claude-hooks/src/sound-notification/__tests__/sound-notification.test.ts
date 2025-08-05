@@ -4,15 +4,26 @@ import type { SoundNotificationConfig } from '../../types/config.js'
 
 import { loadSoundConfig } from '../config.js'
 
-// Mock fs module
-vi.mock('fs', () => ({
-  promises: {
-    readFile: vi.fn(),
-  },
-  statSync: vi.fn().mockReturnValue({
+// Mock fs module - need to mock the exact way it's imported
+vi.mock('fs', () => {
+  const mockReadFile = vi.fn()
+  const mockStatSync = vi.fn().mockReturnValue({
     isFile: () => true,
-  }),
-}))
+  })
+
+  return {
+    default: {
+      promises: {
+        readFile: mockReadFile,
+      },
+      statSync: mockStatSync,
+    },
+    promises: {
+      readFile: mockReadFile,
+    },
+    statSync: mockStatSync,
+  }
+})
 
 describe('Sound Notification Hook', () => {
   beforeEach(() => {
