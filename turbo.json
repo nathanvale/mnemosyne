@@ -1,7 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
-  "globalEnv": ["NODE_ENV"],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "TMPDIR",
+    "DATABASE_URL",
+    "TEST_VERBOSE",
+    "VITEST",
+    "NEXT_PUBLIC_BUILD_VERSION",
+    "LOG_LEVEL",
+    "LOGGER_MODE",
+    "LOGGER_PRETTY",
+    "LOGGER_CALLSITE",
+    "ALLOWED_ORIGINS"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -30,17 +43,21 @@
       "dependsOn": ["^build"]
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^lint"],
       "inputs": [
         "src/**",
         "*.js",
         "*.ts",
         "*.tsx",
-        ".eslintrc.*",
+        "*.mjs",
         "eslint.config.*",
-        "package.json"
+        ".eslintrc",
+        ".eslintrc.*",
+        "package.json",
+        "tsconfig.json"
       ],
-      "outputs": []
+      "outputs": [],
+      "cache": true
     },
     "type-check": {
       "dependsOn": ["^build"],
@@ -52,7 +69,16 @@
       "inputs": ["src/**", "vitest.config.*", "package.json", ".storybook/**"],
       "outputs": [],
       "env": ["NODE_ENV"],
-      "passThroughEnv": ["CI"]
+      "passThroughEnv": [
+        "CI",
+        "WALLABY_WORKER",
+        "WALLABY_WORKER_ID",
+        "VITEST_WORKER_ID",
+        "VITEST_POOL_ID",
+        "JEST_WORKER_ID",
+        "WALLABY_QUIET",
+        "WALLABY_SCHEMA_VERSION"
+      ]
     },
     "test:storybook": {
       "dependsOn": ["^build", "build-storybook"],

@@ -13,6 +13,8 @@
     "dev": "prisma generate --watch",
     "type-check": "prisma generate && tsc --noEmit",
     "test": "vitest",
+    "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force",
     "db:migrate": "prisma migrate dev",

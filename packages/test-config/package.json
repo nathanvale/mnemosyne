@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "echo 'Test config package dev placeholder'",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^6.6.3",

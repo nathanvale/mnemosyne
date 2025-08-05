@@ -498,7 +498,7 @@ export class EmotionalContextBuilder {
 
   private identifyEmotionalSafetyFactors(
     allMessages: string,
-    conversation: ConversationData & { moodAnalysis: MoodAnalysisResult },
+    _conversation: ConversationData & { moodAnalysis: MoodAnalysisResult },
   ): string[] {
     const safetyFactors: string[] = []
 

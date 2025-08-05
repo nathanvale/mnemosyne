@@ -476,7 +476,7 @@ class EmotionalSignificanceWeighterImpl
       parts.push(`involving ${memory.participants.length} participants`)
     }
 
-    return parts.join(' ') + '.'
+    return `${parts.join(' ')}.`
   }
 }
 

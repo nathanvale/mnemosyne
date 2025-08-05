@@ -764,10 +764,9 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
             messages: [
               {
                 ...testConversations[0].messages[0],
-                content:
-                  testConversations[0].messages[0].content +
-                  ' '.repeat(1000) +
-                  'Extended content.',
+                content: `${
+                  testConversations[0].messages[0].content + ' '.repeat(1000)
+                }Extended content.`,
               },
             ],
           },
@@ -948,7 +947,7 @@ describe('End-to-End Mood Integration - Task 7.7', () => {
     return {
       id: cp.id,
       name: cp.name,
-      role: role,
+      role,
     }
   }
 

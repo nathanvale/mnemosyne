@@ -388,7 +388,7 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
 
             const validationResult =
               await validationService.storeValidationResult({
-                memoryId: memoryId,
+                memoryId,
                 humanScore: 6.0 + i * 0.2,
                 algorithmScore: 6.2 + i * 0.15,
                 agreement: 0.85 + (i % 3) * 0.05,
@@ -439,7 +439,7 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
       // Verify data integrity across all memories
       for (const memoryId of memoryIds) {
         const memoryValidations = await prisma.validationResult.findMany({
-          where: { memoryId: memoryId },
+          where: { memoryId },
         })
 
         const expectedCount = validationSuccesses.filter(

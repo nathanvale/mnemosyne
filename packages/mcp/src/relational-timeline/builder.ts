@@ -146,7 +146,7 @@ export class RelationalTimelineBuilder {
         id: uuidv4(),
         timestamp: new Date(memory.timestamp),
         type: 'significant_moment',
-        description: memory.content.substring(0, 100) + '...',
+        description: `${memory.content.substring(0, 100)}...`,
         emotionalImpact: significance,
         participants: memory.participants.map((p: any) => p.id), // eslint-disable-line @typescript-eslint/no-explicit-any
         sourceMemoryId: memory.id,
@@ -310,7 +310,7 @@ export class RelationalTimelineBuilder {
       summary += `. Primary patterns: ${dominantTypes.join(' and ')}`
     }
 
-    return summary + '.'
+    return `${summary}.`
   }
 
   /**

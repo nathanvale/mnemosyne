@@ -305,9 +305,11 @@ export type AsyncValidationFunction = (
  * Type guard for checking if an object has been validated
  */
 export function isValidated<T>(obj: unknown): obj is ValidatedType<T> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard requires checking __validated property on unknown object
   return (
-    obj !== null && typeof obj === 'object' && (obj as any).__validated === true
+    obj !== null &&
+    typeof obj === 'object' &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type guard requires checking __validated property on unknown object
+    (obj as any).__validated === true
   )
 }
 
@@ -322,7 +324,6 @@ export function markAsValidated<T>(obj: T): ValidatedType<T> {
  * Remove validation marker from an object
  */
 export function removeValidationMarker<T>(obj: ValidatedType<T>): T {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { __validated, ...rest } = obj
+  const { __validated: _, ...rest } = obj
   return rest as T
 }

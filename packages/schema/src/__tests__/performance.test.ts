@@ -114,7 +114,7 @@ describe('Performance Benchmarks', () => {
       expect(duration).toBeLessThan(100) // Should complete in less than 100ms
       expect(rate).toBeGreaterThan(10) // Should process at least 10 items per ms
 
-      console.log(
+      console.info(
         `Type guard performance: ${memories.length} items in ${duration.toFixed(2)}ms (${rate.toFixed(2)} items/ms)`,
       )
     })
@@ -140,7 +140,7 @@ describe('Performance Benchmarks', () => {
       expect(validCount).toBe(1000)
       expect(duration).toBeLessThan(50) // Should be faster than full memory validation
 
-      console.log(
+      console.info(
         `Emotional context type guard: ${contexts.length} items in ${duration.toFixed(2)}ms`,
       )
     })
@@ -171,10 +171,10 @@ describe('Performance Benchmarks', () => {
       )
       const overheadRatio = (duration - totalValidationTime) / duration
 
-      console.log(
+      console.info(
         `Schema validation: ${memories.length} items in ${duration.toFixed(2)}ms (${averageTime.toFixed(2)}ms avg)`,
       )
-      console.log(`Validation overhead: ${(overheadRatio * 100).toFixed(1)}%`)
+      console.info(`Validation overhead: ${(overheadRatio * 100).toFixed(1)}%`)
 
       expect(overheadRatio).toBeLessThan(0.5) // Overhead should be less than 50%
     })
@@ -197,10 +197,10 @@ describe('Performance Benchmarks', () => {
       expect(summary.invalidObjects).toBe(0)
       expect(duration).toBeLessThan(200) // Should complete batch in reasonable time
 
-      console.log(
+      console.info(
         `Batch validation: ${participants.length} items in ${duration.toFixed(2)}ms`,
       )
-      console.log(
+      console.info(
         `Average validation time: ${summary.averageValidationTime?.toFixed(3)}ms`,
       )
     })
@@ -224,7 +224,7 @@ describe('Performance Benchmarks', () => {
       expect(duration).toBeLessThan(50) // Should be very fast
       expect(rate).toBeGreaterThan(20) // Should process at least 20 items per ms
 
-      console.log(
+      console.info(
         `Export transformation: ${memories.length} items in ${duration.toFixed(2)}ms (${rate.toFixed(2)} items/ms)`,
       )
     })
@@ -248,7 +248,7 @@ describe('Performance Benchmarks', () => {
       expect(normalized.every((m) => m.tags[0] <= m.tags[1])).toBe(true) // Verify sorting
       expect(duration).toBeLessThan(100) // Should complete in reasonable time
 
-      console.log(
+      console.info(
         `Normalization: ${memories.length} items in ${duration.toFixed(2)}ms`,
       )
     })
@@ -275,14 +275,14 @@ describe('Performance Benchmarks', () => {
         const finalMemory = performance.memory.usedJSHeapSize
         const memoryIncrease = finalMemory - initialMemory
 
-        console.log(
+        console.info(
           `Memory usage increase: ${(memoryIncrease / 1024 / 1024).toFixed(2)} MB`,
         )
 
         // Should not increase memory by more than 10MB for 100 operations
         expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024)
       } else {
-        console.log('Memory measurement not available in this environment')
+        console.info('Memory measurement not available in this environment')
       }
     })
   })
@@ -308,10 +308,10 @@ describe('Performance Benchmarks', () => {
       const largeDuration = performance.now() - largeStart
       const largeRate = largeDataset.length / largeDuration
 
-      console.log(
+      console.info(
         `Small dataset (${smallDataset.length}): ${smallDuration.toFixed(2)}ms (${smallRate.toFixed(2)} items/ms)`,
       )
-      console.log(
+      console.info(
         `Large dataset (${largeDataset.length}): ${largeDuration.toFixed(2)}ms (${largeRate.toFixed(2)} items/ms)`,
       )
 

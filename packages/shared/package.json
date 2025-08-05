@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "echo 'Shared package build placeholder'",
-    "dev": "echo 'Shared package dev placeholder'"
+    "dev": "echo 'Shared package dev placeholder'",
+    "lint": "eslint src --max-warnings 0"
   },
   "dependencies": {},
   "devDependencies": {}

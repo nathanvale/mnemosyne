@@ -1,4 +1,4 @@
-import { PrismaClient } from '@studio/db'
+import { PrismaClient, Prisma } from '@studio/db'
 
 type PrismaTransaction = Omit<
   PrismaClient,
@@ -359,7 +359,7 @@ export class ValidationResultStorageService {
   async getValidationResults(
     query: ValidationQuery,
   ): Promise<ValidationResult[]> {
-    const where: any = {}
+    const where: Prisma.ValidationResultWhereInput = {}
 
     if (query.validationMethod) {
       where.validationMethod = query.validationMethod
@@ -377,7 +377,7 @@ export class ValidationResultStorageService {
       where.validatorId = query.validatorId
     }
 
-    const orderBy: any = {}
+    const orderBy: Prisma.ValidationResultOrderByWithRelationInput = {}
     if (query.sortBy) {
       orderBy[query.sortBy] = query.sortOrder || 'desc'
     } else {
@@ -523,7 +523,15 @@ export class ValidationResultStorageService {
     }
   }
 
-  private extractMetricValue(result: any, metricType: string): number {
+  private extractMetricValue(
+    result: {
+      agreement: number
+      discrepancy: number
+      humanScore: number
+      algorithmScore: number
+    },
+    metricType: string,
+  ): number {
     switch (metricType) {
       case 'correlation':
         return result.agreement
@@ -783,7 +791,7 @@ export class ValidationResultStorageService {
       }
     }
   }> {
-    const where: any = {}
+    const where: Prisma.ValidationResultWhereInput = {}
 
     if (filters.dateRange) {
       where.validatedAt = {

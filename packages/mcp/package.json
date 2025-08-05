@@ -10,7 +10,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint src --max-warnings 0",
     "test": "vitest",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

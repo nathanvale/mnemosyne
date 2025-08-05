@@ -937,7 +937,7 @@ export class EdgeCaseHandler {
 
   private determineRecommendedApproach(
     complexityScore: number,
-    complexityTypes: EmotionalComplexityAssessment['complexityTypes'],
+    _complexityTypes: EmotionalComplexityAssessment['complexityTypes'],
   ): EmotionalComplexityAssessment['recommendedApproach'] {
     if (complexityScore < 0.3) return 'standard_analysis'
     if (complexityScore < 0.6) return 'multi_interpretation'
@@ -1531,7 +1531,11 @@ export class EdgeCaseHandler {
 
   private determineResolutionStrategy(
     conflict: number,
-    emotions: Array<{ emotion: string; intensity: number; confidence: number }>,
+    _emotions: Array<{
+      emotion: string
+      intensity: number
+      confidence: number
+    }>,
   ): string {
     if (conflict < 0.3) return 'primary_emotion_focus'
     if (conflict < 0.6) return 'weighted_emotional_average'
