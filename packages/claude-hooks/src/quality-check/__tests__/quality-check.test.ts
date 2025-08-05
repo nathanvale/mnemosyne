@@ -4,23 +4,26 @@ import type { QualityCheckConfig } from '../../types/config.js'
 
 import { loadQualityConfig } from '../config.js'
 
-// Mock fs module
-vi.mock('fs', () => ({
-  default: {
-    promises: {
-      readFile: vi.fn(),
-    },
-    statSync: vi.fn().mockReturnValue({
-      isFile: () => true,
-    }),
-  },
-  promises: {
-    readFile: vi.fn(),
-  },
-  statSync: vi.fn().mockReturnValue({
+// Mock fs module - need to mock the exact way it's imported
+vi.mock('fs', () => {
+  const mockReadFile = vi.fn()
+  const mockStatSync = vi.fn().mockReturnValue({
     isFile: () => true,
-  }),
-}))
+  })
+
+  return {
+    default: {
+      promises: {
+        readFile: mockReadFile,
+      },
+      statSync: mockStatSync,
+    },
+    promises: {
+      readFile: mockReadFile,
+    },
+    statSync: mockStatSync,
+  }
+})
 
 describe('Quality Check Hook', () => {
   beforeEach(() => {
