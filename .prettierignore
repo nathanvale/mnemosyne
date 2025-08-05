@@ -8,3 +8,5 @@ public/**
 *.ico
 pnpm-lock.yaml
 /.vscode/
+.claude/hooks/**
+packages/claude-hooks/.claude/hooks/**
