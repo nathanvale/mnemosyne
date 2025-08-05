@@ -57,38 +57,47 @@ export class WorkerDatabaseFactory {
   static getWorkerId(): string {
     if (this.workerId) return this.workerId
 
-    // Debug logging to understand worker identification (suppressed in Wallaby quiet mode)
-    if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
-      console.log('🔍 Worker ID Detection:')
+    // Enhanced debug logging for CI environment troubleshooting
+    const isCI = process.env.CI === 'true'
+    const shouldLog =
+      (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) || isCI
+
+    if (shouldLog) {
+      console.log('🔍 Worker ID Detection (CI:', isCI, '):')
       console.log('  VITEST_WORKER_ID:', process.env.VITEST_WORKER_ID)
       console.log('  WALLABY_WORKER_ID:', process.env.WALLABY_WORKER_ID)
       console.log('  JEST_WORKER_ID:', process.env.JEST_WORKER_ID)
       console.log('  process.pid:', process.pid)
+      console.log('  NODE_ENV:', process.env.NODE_ENV)
+      console.log('  CI:', process.env.CI)
     }
 
     // Vitest worker ID
     if (process.env.VITEST_WORKER_ID) {
       this.workerId = process.env.VITEST_WORKER_ID
+      if (shouldLog) console.log('  ✓ Using VITEST_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
     // Wallaby.js worker ID
     if (process.env.WALLABY_WORKER_ID) {
       this.workerId = process.env.WALLABY_WORKER_ID
+      if (shouldLog) console.log('  ✓ Using WALLABY_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
     // Jest worker ID (if needed)
     if (process.env.JEST_WORKER_ID) {
       this.workerId = process.env.JEST_WORKER_ID
+      if (shouldLog) console.log('  ✓ Using JEST_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
     // Fallback: Use process ID for worker identification
     // This works for both Vitest (which forks processes) and single-threaded execution
     this.workerId = process.pid.toString()
-    if (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) {
-      console.log('  Using process.pid as worker ID:', this.workerId)
+    if (shouldLog) {
+      console.log('  ⚠️ Fallback to process.pid as worker ID:', this.workerId)
     }
     return this.workerId
   }
@@ -187,12 +196,23 @@ export class WorkerDatabaseFactory {
    * Falls back to sequential execution for Wallaby.js due to SQLite I/O issues
    */
   static async createWorkerPrismaClient(): Promise<PrismaClient> {
+    const isCI = process.env.CI === 'true'
+
+    if (isCI) {
+      console.log('🚀 Creating worker Prisma client in CI environment')
+    }
+
     // Check if running in Wallaby.js - use simpler approach to avoid disk I/O errors
     if (process.env.WALLABY_WORKER === 'true') {
+      if (isCI) console.log('  → Using Wallaby client in CI')
       return this.createWallabyPrismaClient()
     }
 
     const workerId = this.getWorkerId()
+
+    if (isCI) {
+      console.log(`  → Creating client for worker ${workerId} in CI`)
+    }
 
     // Register cleanup handlers on first use
     this.registerCleanupHandlers()
@@ -301,6 +321,15 @@ export class WorkerDatabaseFactory {
   private static async migrateWorkerDatabase(
     prisma: PrismaClient,
   ): Promise<void> {
+    const workerId = this.getWorkerId()
+    const isCI = process.env.CI === 'true'
+
+    if (isCI) {
+      console.log(
+        `🔧 Starting database migration for worker ${workerId} in CI environment`,
+      )
+    }
+
     try {
       // Configure SQLite for better concurrent access
       // WAL mode allows readers and writers to work concurrently
@@ -314,6 +343,12 @@ export class WorkerDatabaseFactory {
 
       // Enable foreign keys
       await prisma.$queryRaw`PRAGMA foreign_keys = ON`
+
+      if (isCI) {
+        console.log(
+          `  ✓ SQLite PRAGMA settings configured for worker ${workerId}`,
+        )
+      }
 
       // Use Prisma's internal schema sync mechanism
       // This is the equivalent of 'prisma db push' but programmatically
@@ -374,6 +409,10 @@ export class WorkerDatabaseFactory {
         )
       `
 
+      if (isCI) {
+        console.log(`  ✓ Memory table created for worker ${workerId}`)
+      }
+
       await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "Memory_contentHash_key" ON "Memory"("contentHash")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_extractedAt_idx" ON "Memory"("extractedAt")`
       await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_confidence_idx" ON "Memory"("confidence")`
@@ -384,10 +423,21 @@ export class WorkerDatabaseFactory {
       // Continue with other essential tables for testing
       await this.createMoodScoringTables(prisma)
 
+      if (isCI) {
+        console.log(`  ✓ Mood scoring tables created for worker ${workerId}`)
+      }
+
       // Create clustering tables for tone-tagged memory clustering
       await this.createClusteringTables(prisma)
+
+      if (isCI) {
+        console.log(`  ✓ Clustering tables created for worker ${workerId}`)
+        console.log(
+          `🎉 Database migration completed successfully for worker ${workerId}`,
+        )
+      }
     } catch (error) {
-      if (process.env.WALLABY_QUIET) {
+      if (process.env.WALLABY_QUIET && !isCI) {
         console.error(
           `DB migration failed for worker ${this.getWorkerId()}: ${simplifyError(error)}`,
         )
