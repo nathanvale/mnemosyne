@@ -3,11 +3,7 @@
   "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
   "globalEnv": [
     "NODE_ENV",
-    "WALLABY_WORKER",
     "CI",
-    "VITEST_WORKER_ID",
-    "VITEST_POOL_ID",
-    "WALLABY_WORKER_ID",
     "TMPDIR",
     "DATABASE_URL",
     "TEST_VERBOSE",
@@ -17,9 +13,6 @@
     "LOGGER_MODE",
     "LOGGER_PRETTY",
     "LOGGER_CALLSITE",
-    "WALLABY_QUIET",
-    "JEST_WORKER_ID",
-    "WALLABY_SCHEMA_VERSION",
     "ALLOWED_ORIGINS"
   ],
   "tasks": {
@@ -76,7 +69,16 @@
       "inputs": ["src/**", "vitest.config.*", "package.json", ".storybook/**"],
       "outputs": [],
       "env": ["NODE_ENV"],
-      "passThroughEnv": ["CI"]
+      "passThroughEnv": [
+        "CI",
+        "WALLABY_WORKER",
+        "WALLABY_WORKER_ID",
+        "VITEST_WORKER_ID",
+        "VITEST_POOL_ID",
+        "JEST_WORKER_ID",
+        "WALLABY_QUIET",
+        "WALLABY_SCHEMA_VERSION"
+      ]
     },
     "test:storybook": {
       "dependsOn": ["^build", "build-storybook"],
