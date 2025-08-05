@@ -65,17 +65,36 @@ export class WorkerDatabaseFactory {
     if (shouldLog) {
       console.log('🔍 Worker ID Detection (CI:', isCI, '):')
       console.log('  VITEST_WORKER_ID:', process.env.VITEST_WORKER_ID)
+      console.log('  VITEST_POOL_ID:', process.env.VITEST_POOL_ID)
       console.log('  WALLABY_WORKER_ID:', process.env.WALLABY_WORKER_ID)
       console.log('  JEST_WORKER_ID:', process.env.JEST_WORKER_ID)
       console.log('  process.pid:', process.pid)
       console.log('  NODE_ENV:', process.env.NODE_ENV)
       console.log('  CI:', process.env.CI)
+
+      // Show all VITEST environment variables for debugging
+      const vitestEnvVars = Object.keys(process.env).filter((key) =>
+        key.startsWith('VITEST'),
+      )
+      if (vitestEnvVars.length > 0) {
+        console.log(
+          '  All VITEST env vars:',
+          vitestEnvVars.map((key) => `${key}=${process.env[key]}`),
+        )
+      }
     }
 
-    // Vitest worker ID
+    // Vitest worker ID (works with both threads and forks pool)
     if (process.env.VITEST_WORKER_ID) {
       this.workerId = process.env.VITEST_WORKER_ID
       if (shouldLog) console.log('  ✓ Using VITEST_WORKER_ID:', this.workerId)
+      return this.workerId
+    }
+
+    // Vitest fork pool ID (CI environment with forks pool)
+    if (process.env.VITEST_POOL_ID) {
+      this.workerId = process.env.VITEST_POOL_ID
+      if (shouldLog) console.log('  ✓ Using VITEST_POOL_ID:', this.workerId)
       return this.workerId
     }
 
@@ -95,9 +114,20 @@ export class WorkerDatabaseFactory {
 
     // Fallback: Use process ID for worker identification
     // This works for both Vitest (which forks processes) and single-threaded execution
-    this.workerId = process.pid.toString()
-    if (shouldLog) {
-      console.log('  ⚠️ Fallback to process.pid as worker ID:', this.workerId)
+    if (isCI) {
+      // In CI, add a timestamp to ensure uniqueness across runs
+      this.workerId = `ci-${process.pid}-${Date.now()}`
+      if (shouldLog) {
+        console.log(
+          '  ⚠️ CI fallback to process.pid + timestamp as worker ID:',
+          this.workerId,
+        )
+      }
+    } else {
+      this.workerId = process.pid.toString()
+      if (shouldLog) {
+        console.log('  ⚠️ Fallback to process.pid as worker ID:', this.workerId)
+      }
     }
     return this.workerId
   }

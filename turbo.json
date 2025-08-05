@@ -6,6 +6,7 @@
     "WALLABY_WORKER",
     "CI",
     "VITEST_WORKER_ID",
+    "VITEST_POOL_ID",
     "WALLABY_WORKER_ID",
     "TMPDIR",
     "DATABASE_URL",
