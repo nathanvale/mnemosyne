@@ -16,7 +16,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "tsx": "^4.20.3",
+    "tsx": "workspace:*",
     "zod": "^3.25.74"
   },
   "devDependencies": {
