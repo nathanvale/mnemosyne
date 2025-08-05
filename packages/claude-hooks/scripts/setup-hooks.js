@@ -54,6 +54,23 @@ async function fileExists(filePath) {
 }
 
 /**
+ * Create directory recursively (fallback for older Node.js versions)
+ */
+async function createDirectoryRecursively(dirPath) {
+  try {
+    await fs.access(dirPath)
+    return // Directory already exists
+  } catch {
+    // Directory doesn't exist, create parent first
+    const parent = path.dirname(dirPath)
+    if (parent !== dirPath) {
+      await createDirectoryRecursively(parent)
+    }
+    await fs.mkdir(dirPath)
+  }
+}
+
+/**
  * Create a symlink with cross-platform support
  */
 async function createSymlink(source, target) {
@@ -69,7 +86,16 @@ async function createSymlink(source, target) {
 
   // Ensure target directory exists
   const targetDir = path.dirname(target)
-  await fs.mkdir(targetDir, { recursive: true })
+  try {
+    await fs.mkdir(targetDir, { recursive: true })
+  } catch (error) {
+    // If recursive option is not supported, create directories one by one
+    if (error.code === 'EINVAL') {
+      await createDirectoryRecursively(targetDir)
+    } else {
+      throw error
+    }
+  }
 
   // Create symlink
   try {
