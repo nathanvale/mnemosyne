@@ -6,6 +6,14 @@ import { loadQualityConfig } from '../config.js'
 
 // Mock fs module
 vi.mock('fs', () => ({
+  default: {
+    promises: {
+      readFile: vi.fn(),
+    },
+    statSync: vi.fn().mockReturnValue({
+      isFile: () => true,
+    }),
+  },
   promises: {
     readFile: vi.fn(),
   },
