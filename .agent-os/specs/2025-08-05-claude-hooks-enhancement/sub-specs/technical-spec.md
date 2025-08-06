@@ -84,7 +84,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 // SubagentStop Hook
 {
   "type": "command",
-  "command": "npx tsx /path/to/subagent_stop.ts"
+  "command": "npx tsx /path/to/subagent-stop.ts"
 }
 ```
 

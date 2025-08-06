@@ -76,7 +76,7 @@ interface SubagentStopEvent {
 **CLI Usage:**
 
 ```bash
-echo '{"type":"SubagentStop","data":{}}' | npx tsx subagent_stop.ts
+echo '{"type":"SubagentStop","data":{}}' | npx tsx subagent-stop.ts
 ```
 
 ## Configuration APIs
@@ -234,7 +234,7 @@ type HookHandler = (event: ClaudeHookEvent) => Promise<void>
         "hooks": [
           {
             "type": "command",
-            "command": "npx tsx .claude/hooks/subagent_stop.ts"
+            "command": "npx tsx .claude/hooks/subagent-stop.ts"
           }
         ]
       }

@@ -30,7 +30,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.3 Write tests for stop hook with transcript processing
   - [x] 3.4 Implement stop.ts hook with --chat flag
   - [x] 3.5 Write tests for subagent stop hook
-  - [x] 3.6 Implement subagent_stop.ts hook
+  - [x] 3.6 Implement subagent-stop.ts hook
   - [x] 3.7 Verify all tests pass
 
 - [x] 4. Add Event Logging System

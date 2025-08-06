@@ -12,6 +12,28 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Check for Node.js availability
+check_nodejs() {
+    echo "Checking Node.js availability..."
+    if command -v node >/dev/null 2>&1; then
+        NODE_VERSION=$(node --version)
+        echo -e "  ${GREEN}✓${NC} Node.js is installed: $NODE_VERSION"
+        return 0
+    else
+        echo -e "  ${RED}✗${NC} Node.js is not installed or not in PATH"
+        echo -e "  ${YELLOW}⚠${NC} Node.js is required for JSON validation in this script"
+        echo -e "  ${YELLOW}⚠${NC} Continuing with basic checks only..."
+        return 1
+    fi
+}
+
+# Store Node.js availability
+NODE_AVAILABLE=false
+if check_nodejs; then
+    NODE_AVAILABLE=true
+fi
+echo ""
+
 # Check function
 check_hook() {
     local hook_name=$1
@@ -48,11 +70,15 @@ check_hook() {
     
     # Check configuration file exists in .claude directory
     if [ -f "$config_file" ]; then
-        # Validate JSON syntax
-        if node -e "JSON.parse(require('fs').readFileSync('$config_file', 'utf8'))" 2>/dev/null; then
-            echo -e "  ${GREEN}✓${NC} Configuration is valid JSON: $config_file"
+        # Validate JSON syntax only if Node.js is available
+        if [ "$NODE_AVAILABLE" = true ]; then
+            if node -e "JSON.parse(require('fs').readFileSync('$config_file', 'utf8'))" 2>/dev/null; then
+                echo -e "  ${GREEN}✓${NC} Configuration is valid JSON: $config_file"
+            else
+                echo -e "  ${RED}✗${NC} Configuration has invalid JSON: $config_file"
+            fi
         else
-            echo -e "  ${RED}✗${NC} Configuration has invalid JSON: $config_file"
+            echo -e "  ${YELLOW}⚠${NC} Configuration exists but cannot validate JSON (Node.js not available): $config_file"
         fi
     else
         echo -e "  ${YELLOW}⚠${NC} Configuration missing: $config_file (optional)"

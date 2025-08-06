@@ -18,28 +18,51 @@ Location: `.claude/hooks/notification.config.json`
 
 ```json
 {
-  "settings": {
-    "soundEnabled": true, // Enable sound notifications
-    "speechEnabled": false, // Enable speech (macOS only)
-    "volume": "medium", // Volume level: low, medium, high
-    "cooldownMs": 5000, // Cooldown between notifications (ms)
-    "allowUrgentOverride": false, // Allow urgent messages to bypass cooldown
-    "quietHours": {
-      "enabled": true, // Enable quiet hours
-      "start": "22:00", // Start time (24-hour format)
-      "end": "08:00", // End time (24-hour format)
-      "allowUrgentOverride": false // Allow urgent messages during quiet hours
-    },
-    "logging": {
-      "enabled": true, // Enable event logging
-      "logDir": "~/.claude/logs", // Log directory path
-      "useLocalDir": false // Use project-local .claude/logs
-    },
-    "speech": {
-      "message": "Claude needs your attention", // Speech message
-      "voice": "Alex", // macOS voice name
-      "rate": 200 // Speech rate (words per minute)
-    }
+  "debug": false, // Enable debug logging
+  "notify": true, // Enable sound notifications
+  "speak": false, // Enable speech (macOS only)
+  "cooldownPeriod": 5000, // Cooldown between notifications (ms)
+  "allowUrgentOverride": false, // Allow urgent messages to bypass cooldown
+  "quietHours": {
+    "enabled": true, // Enable quiet hours
+    "ranges": [
+      // Array of quiet hour time ranges
+      {
+        "start": "22:00", // Start time (24-hour format)
+        "end": "08:00", // End time (24-hour format)
+        "name": "Night" // Optional name for this range
+      }
+    ],
+    "allowUrgentOverride": false, // Allow urgent messages during quiet hours
+    "days": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ], // Days when quiet hours apply
+    "timezone": "local" // Timezone for quiet hours
+  },
+  "speech": {
+    "enabled": false, // Enable speech
+    "voice": "Alex", // macOS voice name
+    "rate": 200, // Speech rate (words per minute)
+    "volume": 0.7 // Volume level (0.0 to 1.0)
+  },
+  "perTypeSettings": {
+    // Override settings per notification type
+    "urgent": 0, // No cooldown for urgent notifications
+    "notification": 5000, // 5 second cooldown for regular notifications
+    "stop": 2000 // 2 second cooldown for stop notifications
+  },
+  "logging": {
+    // Event logging configuration (EventLoggerConfig)
+    "logDir": "~/.claude/logs", // Log directory path
+    "useLocalDir": false, // Use project-local .claude/logs
+    "maxFileSize": 10485760, // Max file size in bytes (10MB)
+    "retentionDays": 30 // Days to retain log files
   }
 }
 ```
@@ -50,33 +73,46 @@ Location: `.claude/hooks/stop.config.json`
 
 ```json
 {
-  "settings": {
-    "soundEnabled": true, // Enable completion sounds
-    "speechEnabled": false, // Enable speech announcements
-    "transcriptEnabled": true, // Enable chat transcript logging
-    "volume": "medium", // Volume level
-    "cooldownMs": 2000, // Cooldown between notifications
-    "quietHours": {
-      "enabled": true,
-      "start": "22:00",
-      "end": "08:00"
-    },
-    "logging": {
-      "enabled": true,
-      "logDir": "~/.claude/logs",
-      "maxLogSizeMB": 10, // Max size before rotation
-      "maxLogFiles": 5 // Number of rotated files to keep
-    },
-    "transcript": {
-      "enabled": true, // Enable transcript processing
-      "includeTimestamps": true, // Include timestamps in transcript
-      "formatMarkdown": true // Format transcript as markdown
-    },
-    "speech": {
-      "message": "Task completed successfully",
-      "voice": "Samantha",
-      "rate": 180
-    }
+  "debug": false, // Enable debug logging
+  "notify": true, // Enable sound notifications
+  "speak": false, // Enable speech announcements
+  "cooldownPeriod": 2000, // Cooldown between notifications (ms)
+  "allowUrgentOverride": false, // Allow urgent messages to bypass cooldown
+  "quietHours": {
+    "enabled": true, // Enable quiet hours
+    "ranges": [
+      {
+        "start": "22:00",
+        "end": "08:00",
+        "name": "Night"
+      }
+    ],
+    "allowUrgentOverride": false,
+    "days": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday"
+    ],
+    "timezone": "local"
+  },
+  "speech": {
+    "enabled": false,
+    "voice": "Samantha",
+    "rate": 180,
+    "volume": 0.7
+  },
+  "logging": {
+    "logDir": "~/.claude/logs",
+    "useLocalDir": false,
+    "maxFileSize": 10485760, // 10MB in bytes
+    "retentionDays": 30
+  },
+  "perTypeSettings": {
+    "stop": 2000 // Specific cooldown for stop events
   }
 }
 ```
@@ -87,24 +123,30 @@ Location: `.claude/hooks/subagent-stop.config.json`
 
 ```json
 {
-  "settings": {
-    "soundEnabled": true,
-    "volume": "low", // Lower volume for subagents
-    "loggingEnabled": true,
-    "trackMetrics": true, // Track subagent performance metrics
-    "alertLongRunning": true, // Alert for long-running subagents
-    "longRunningThresholdMs": 30000, // Threshold for long-running (ms)
-    "logging": {
-      "enabled": true,
-      "logDir": "~/.claude/logs",
-      "includeSubagentDetails": true, // Log detailed subagent info
-      "aggregateMetrics": true // Aggregate metrics across subagents
-    },
-    "notifications": {
-      "onSuccess": true, // Notify on successful completion
-      "onFailure": true, // Notify on failures
-      "onLongRunning": true // Notify when exceeding threshold
-    }
+  "debug": false,
+  "notify": true, // Enable sound notifications
+  "speak": false,
+  "cooldownPeriod": 5000,
+  "allowUrgentOverride": false,
+  "quietHours": {
+    "enabled": false, // Often disabled for subagents
+    "ranges": [],
+    "allowUrgentOverride": true
+  },
+  "speech": {
+    "enabled": false,
+    "voice": "Alex",
+    "rate": 200,
+    "volume": 0.5 // Lower volume for subagents
+  },
+  "logging": {
+    "logDir": "~/.claude/logs",
+    "useLocalDir": false,
+    "maxFileSize": 10485760,
+    "retentionDays": 30
+  },
+  "perTypeSettings": {
+    "subagent": 1000 // Shorter cooldown for subagent notifications
   }
 }
 ```
@@ -117,30 +159,25 @@ Location: `.claude/hooks/quality-check.config.json`
 {
   "version": "1.0.0",
   "name": "Quality Check Hook",
+  "description": "Automated code quality checks for Claude hooks",
   "projectType": "react-app", // Project type for optimizations
   "typescript": {
     "enabled": true, // Enable TypeScript checking
     "showDependencyErrors": false, // Show errors from node_modules
-    "jsx": "react", // JSX mode: react, preserve, react-native
-    "strict": true, // Enable strict type checking
-    "skipLibCheck": true // Skip checking declaration files
+    "jsx": "react" // JSX mode: react, react-jsx, react-jsxdev, preserve, react-native
   },
   "eslint": {
     "enabled": true, // Enable ESLint checking
     "autofix": true, // Auto-fix fixable issues
-    "extends": ["react-app"], // ESLint configurations to extend
-    "maxWarnings": 0, // Maximum allowed warnings
-    "cache": true // Enable ESLint cache
+    "extends": ["react-app"] // ESLint configurations to extend
   },
   "prettier": {
     "enabled": true, // Enable Prettier checking
-    "autofix": true, // Auto-format files
-    "configPath": ".prettierrc" // Path to Prettier config
+    "autofix": true // Auto-format files
   },
   "general": {
     "autofixSilent": true, // Don't report auto-fixed issues
-    "debug": false, // Enable debug logging
-    "parallel": true // Run checks in parallel
+    "debug": false // Enable debug logging
   },
   "rules": {
     "console": {
@@ -175,17 +212,45 @@ Location: `.claude/hooks/sound-notification.config.json` (if using this legacy h
 
 ```json
 {
+  "version": "1.0.0",
+  "name": "Sound Notification Hook",
+  "description": "Play sounds on Claude Code events",
+  "triggers": {
+    "successTools": ["Write", "Edit", "MultiEdit"], // Tools that trigger success sounds
+    "completionPatterns": ["Task completed", "Tests pass"] // Text patterns that trigger sounds
+  },
+  "sounds": {
+    "success": {
+      "enabled": true,
+      "file": "/System/Library/Sounds/Glass.aiff",
+      "fallback": "/System/Library/Sounds/Ping.aiff"
+    },
+    "warning": {
+      "enabled": true,
+      "file": "/System/Library/Sounds/Funk.aiff",
+      "fallback": "/System/Library/Sounds/Pop.aiff"
+    },
+    "error": {
+      "enabled": false,
+      "file": "/System/Library/Sounds/Basso.aiff",
+      "fallback": "/System/Library/Sounds/Sosumi.aiff"
+    }
+  },
   "settings": {
     "playOnSuccess": true, // Play sound on successful completion
     "playOnWarning": true, // Play sound when warnings occur
     "playOnError": false, // Play sound on errors
-    "volume": "medium",
-    "soundDelay": 0, // Delay before playing (ms)
-    "cooldown": 2000, // Cooldown between sounds (ms)
-    "sounds": {
-      "success": "/System/Library/Sounds/Glass.aiff",
-      "warning": "/System/Library/Sounds/Funk.aiff",
-      "error": "/System/Library/Sounds/Basso.aiff"
+    "volume": "medium", // Volume level: low, medium, high
+    "delay": 0, // Delay before playing (ms)
+    "cooldown": 2000 // Cooldown between sounds (ms)
+  },
+  "filters": {
+    "minExecutionTime": 1000, // Minimum execution time to trigger sound (ms)
+    "excludeTools": ["Read", "Grep"], // Tools to exclude from triggering sounds
+    "quietHours": {
+      "enabled": false,
+      "start": "22:00",
+      "end": "08:00"
     }
   }
 }
