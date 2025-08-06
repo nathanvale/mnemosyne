@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "micromatch": "^4.0.8",
+    "openai": "^5.12.0",
     "tsx": "^4.20.3",
     "zod": "^3.25.74"
   },

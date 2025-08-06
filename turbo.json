@@ -56,7 +56,8 @@
     "CLAUDE_HOOKS_QUIET_HOURS_ENABLED",
     "SOME_OTHER_VAR",
     "CUSTOM_DEBUG",
-    "CUSTOM_LIST"
+    "CUSTOM_LIST",
+    "OPENAI_API_KEY"
   ],
   "tasks": {
     "build": {
