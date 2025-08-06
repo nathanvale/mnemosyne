@@ -6,9 +6,18 @@
   "exports": {
     "./sound-notification": "./src/sound-notification/index.ts",
     "./quality-check": "./src/quality-check/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./notification": "./src/notification/index.ts",
+    "./stop": "./src/stop/index.ts",
+    "./subagent-stop": "./src/subagent-stop/index.ts",
+    "./base-hook": "./src/base-hook.ts",
+    "./config": "./src/config/config-schema.ts",
+    "./logging": "./src/logging/index.ts",
+    "./audio": "./src/audio/index.ts",
+    "./speech": "./src/speech/index.ts"
   },
   "scripts": {
+    "build": "echo 'Using tsx for direct TypeScript execution - no build needed'",
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",
@@ -16,12 +25,14 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "micromatch": "^4.0.8",
     "tsx": "^4.20.3",
     "zod": "^3.25.74"
   },
   "devDependencies": {
     "@studio/eslint-config": "workspace:*",
     "@studio/typescript-config": "workspace:*",
+    "@types/micromatch": "^4.0.9",
     "@types/node": "^22.5.4",
     "eslint": "^9.30.0",
     "prettier": "^3.4.2",

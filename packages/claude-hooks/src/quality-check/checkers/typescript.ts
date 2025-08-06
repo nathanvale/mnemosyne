@@ -17,6 +17,7 @@ import {
   resolveImportPath,
 } from '../import-parser.js'
 import { TypeScriptConfigCache } from '../typescript-cache.js'
+import { createConfigValidator } from '../typescript-config-validator.js'
 
 export interface TypeScriptChecker {
   check(): Promise<string[]>
@@ -77,6 +78,20 @@ export async function createTypeScriptChecker(
         if (!existsSync(configPath)) {
           log.debug(`No TypeScript config found: ${configPath}`)
           return errors
+        }
+
+        // Check if file is excluded from TypeScript project
+        const configValidator = createConfigValidator()
+        const isFileIncluded = await configValidator.isFileIncluded(
+          filePath,
+          configPath,
+        )
+
+        if (!isFileIncluded) {
+          log.info(
+            `Skipping TypeScript check for excluded file: ${path.relative(projectRoot, filePath)}`,
+          )
+          return errors // Return early, no TypeScript checking for excluded files
         }
 
         log.debug(

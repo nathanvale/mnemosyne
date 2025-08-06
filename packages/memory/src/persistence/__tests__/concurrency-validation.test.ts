@@ -3,13 +3,11 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 
 import type { MoodAnalysisResult } from '../../types'
 
-import { MoodScoringAnalyzer } from '../../mood-scoring/analyzer'
 import { DeltaDetector } from '../../mood-scoring/delta-detector'
 import { WorkerDatabaseFactory } from './worker-database-factory'
 
 describe('Concurrency Validation Tests - Phase 2', () => {
   let prisma: PrismaClient
-  let _moodAnalyzer: MoodScoringAnalyzer
   let deltaDetector: DeltaDetector
 
   beforeEach(async () => {
@@ -17,7 +15,6 @@ describe('Concurrency Validation Tests - Phase 2', () => {
     prisma = await WorkerDatabaseFactory.createWorkerPrismaClient()
     await WorkerDatabaseFactory.cleanWorkerData(prisma)
 
-    _moodAnalyzer = new MoodScoringAnalyzer()
     deltaDetector = new DeltaDetector()
   }, 30000)
 
@@ -87,7 +84,6 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
       // Analyze results
       const successes = results.filter((r) => r.success)
-      const _failures = results.filter((r) => !r.success)
 
       // Should have high success rate (allow for some expected failures due to timing)
       const successRate = successes.length / concurrentOperations
@@ -322,7 +318,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       // Create data in current worker's database
       const memoryId = `isolation-memory-${currentWorkerId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-      const _memory = await prisma.memory.create({
+      await prisma.memory.create({
         data: {
           id: memoryId,
           sourceMessageIds: JSON.stringify([1, 2, 3]),

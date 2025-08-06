@@ -18,7 +18,11 @@ import {
 } from '../import-parser.js'
 
 export interface ESLintChecker {
-  check(): Promise<{ errors: string[]; autofixes: string[] }>
+  check(): Promise<{
+    errors: string[]
+    autofixes: string[]
+    warnings: string[]
+  }>
 }
 
 export async function createESLintChecker(
@@ -33,29 +37,35 @@ export async function createESLintChecker(
   const projectRoot = findProjectRoot(path.dirname(filePath))
   const isTestFile = /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(filePath)
 
-  // Try to load ESLint
+  // Try to load ESLint using standard import
   let ESLint: typeof import('eslint').ESLint
+
   try {
-    const eslintModule = await import(
-      path.join(projectRoot, 'node_modules', 'eslint', 'lib', 'api.js')
-    )
+    const eslintModule = await import('eslint')
     ESLint = eslintModule.ESLint
-  } catch {
-    log.debug('ESLint not found in project - will skip ESLint checks')
+  } catch (error) {
+    log.debug(
+      `Failed to load ESLint: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
     return null
   }
 
   return {
-    async check(): Promise<{ errors: string[]; autofixes: string[] }> {
+    async check(): Promise<{
+      errors: string[]
+      autofixes: string[]
+      warnings: string[]
+    }> {
       const errors: string[] = []
       const autofixes: string[] = []
+      const warnings: string[] = []
 
       log.info('Running ESLint...')
 
       try {
         const eslint = new ESLint({
           fix: config.eslintAutofix,
-          cwd: projectRoot,
+          cwd: process.cwd(), // Use monorepo root for ESLint
         })
 
         let results = await eslint.lintFiles([filePath])
@@ -133,6 +143,46 @@ export async function createESLintChecker(
           }
         }
 
+        // Check for unused variable errors that might be incorrectly "fixed" with underscores
+        if (result?.messages) {
+          const unusedVarErrors = result.messages.filter(
+            (msg) => msg.ruleId === '@typescript-eslint/no-unused-vars',
+          )
+
+          if (unusedVarErrors.length > 0) {
+            // Analyze if these are legitimate underscore cases or code that should be deleted
+            for (const error of unusedVarErrors) {
+              const line = error.line
+              const varName = error.message.match(/'([^']+)'/)?.[1]
+
+              if (varName && !varName.startsWith('_')) {
+                // This is a genuinely unused variable that should be considered for deletion
+                warnings.push(
+                  `Line ${line}: Variable '${varName}' is unused. Consider deleting it instead of adding an underscore prefix.`,
+                )
+              } else if (varName?.startsWith('_')) {
+                // Check if this underscore usage is legitimate
+                const fileContent = await readFile(filePath)
+                const lines = fileContent.split('\n')
+                const codeLine = lines[line - 1]
+
+                // Check for legitimate underscore patterns
+                const isDestructuring = /\[.*_.*\]|\{.*_.*\}/.test(codeLine)
+                const isCatchBlock = /catch.*\(_/.test(codeLine)
+                const isFunctionParam = /function.*\(.*_|=>.*\(.*_/.test(
+                  codeLine,
+                )
+
+                if (!isDestructuring && !isCatchBlock && !isFunctionParam) {
+                  warnings.push(
+                    `Line ${line}: Variable '${varName}' uses underscore prefix but may not be a legitimate case. Consider deletion.`,
+                  )
+                }
+              }
+            }
+          }
+        }
+
         if (result && (result.errorCount > 0 || result.warningCount > 0)) {
           if (config.eslintAutofix) {
             log.warning('ESLint issues found, attempting auto-fix...')
@@ -187,7 +237,14 @@ export async function createESLintChecker(
         )
       }
 
-      return { errors, autofixes }
+      // Add warnings to errors if we found potential misuse of underscores
+      if (warnings.length > 0) {
+        errors.push(
+          `\n⚠️  Potential misuse of underscore prefix detected:\n${warnings.join('\n')}`,
+        )
+      }
+
+      return { errors, autofixes, warnings }
     },
   }
 }

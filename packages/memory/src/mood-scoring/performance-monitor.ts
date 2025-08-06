@@ -296,9 +296,6 @@ export class PerformanceMonitoringService {
     const recentMetrics = this.metrics.filter(
       (metric) => metric.timestamp >= cutoffDate,
     )
-    const _recentQualityMetrics = this.qualityMetrics.filter(
-      (metric) => metric.timestamp >= cutoffDate,
-    )
 
     // Calculate key metrics
     const avgProcessingTime =

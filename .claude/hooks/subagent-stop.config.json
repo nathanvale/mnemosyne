@@ -1,0 +1,7 @@
+{
+  "settings": {
+    "notify": true,
+    "speak": true,
+    "debug": false
+  }
+}

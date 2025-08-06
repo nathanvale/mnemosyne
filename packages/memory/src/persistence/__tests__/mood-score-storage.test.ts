@@ -586,9 +586,6 @@ describe('Mood Score Storage - Task 6.1', () => {
         algorithmVersion: '2.0.0',
       }
 
-      // Mock transaction context - in real implementation this would be a Prisma transaction
-      const _mockTransaction = {}
-
       // Test that the method accepts transaction context without throwing
       expect(async () => {
         await storageService.storeMoodScore(
@@ -609,9 +606,6 @@ describe('Mood Score Storage - Task 6.1', () => {
           factors: ['supportive_response'],
         },
       ]
-
-      // Mock transaction context
-      const _mockTransaction = {}
 
       // Test that the method accepts transaction context without throwing
       expect(async () => {

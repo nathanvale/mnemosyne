@@ -557,7 +557,7 @@ describe('Validation Result Storage - Task 6.5', () => {
 
     it('should handle cascade deletion when memory is removed', async () => {
       // Store validation result
-      const _stored = await storageService.storeValidationResult({
+      await storageService.storeValidationResult({
         memoryId: testMemoryId,
         humanScore: 8.0,
         algorithmScore: 7.8,

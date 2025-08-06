@@ -5,14 +5,10 @@
 
 import path from 'path'
 
-import type { FileToolInput } from '../types/claude.js'
+import type { FileToolInput, ClaudePostToolUseEvent } from '../types/claude.js'
 
 import { HookExitCode } from '../types/claude.js'
-import {
-  parseJsonInput,
-  fileExists,
-  isSourceFile,
-} from '../utils/file-utils.js'
+import { fileExists, isSourceFile } from '../utils/file-utils.js'
 import { createLogger, colors } from '../utils/logger.js'
 import { createCommonIssuesChecker } from './checkers/common-issues.js'
 import { createESLintChecker } from './checkers/eslint.js'
@@ -83,7 +79,7 @@ class QualityChecker {
       checkers[0] ? checkers[0].check() : Promise.resolve([]),
       checkers[1]
         ? checkers[1].check()
-        : Promise.resolve({ errors: [], autofixes: [] }),
+        : Promise.resolve({ errors: [], autofixes: [], warnings: [] }),
       checkers[2]
         ? checkers[2].check()
         : Promise.resolve({ errors: [], autofixes: [] }),
@@ -167,10 +163,35 @@ class QualityChecker {
 }
 
 /**
- * Extract file path from tool input
+ * Extract file path from tool input or PostToolUse event
  */
-function extractFilePath(input: FileToolInput): string | null {
-  const { tool_input } = input
+function extractFilePath(
+  input: FileToolInput | ClaudePostToolUseEvent,
+): string | null {
+  // Handle PostToolUse event format
+  if ('hook_event_name' in input && input.hook_event_name === 'PostToolUse') {
+    // Claude Code format - extract from tool_input
+    const toolInput = input.tool_input
+    if (toolInput) {
+      return (
+        (toolInput.file_path as string) ||
+        (toolInput.path as string) ||
+        (toolInput.notebook_path as string) ||
+        null
+      )
+    }
+    // Fallback to test format in data
+    return input.data?.file_path || null
+  }
+
+  // Handle test format PostToolUse event
+  if ('type' in input && input.type === 'PostToolUse') {
+    return input.data?.file_path || null
+  }
+
+  // Handle legacy FileToolInput format
+  const fileInput = input as FileToolInput
+  const { tool_input } = fileInput
   if (!tool_input) {
     return null
   }
@@ -224,10 +245,13 @@ function printSummary(errors: string[], autofixes: string[]): void {
  * Main entry point
  */
 async function main(): Promise<void> {
-  // Load configuration
+  // Load auto-config from .claude/hooks/quality-check.config.json
+  // Note: Auto-config loading available but not currently used
+
+  // Use auto-config path or fallback to legacy path
   const configPath = path.join(
     process.cwd(),
-    '.claude/hooks/react-app/hook-config.json',
+    '.claude/hooks/quality-check.config.json',
   )
   const config = await loadQualityConfig(configPath)
   const log = createLogger('INFO', config.debug)
@@ -241,8 +265,22 @@ async function main(): Promise<void> {
   // Debug: show loaded configuration
   log.debug(`Loaded config: ${JSON.stringify(config, null, 2)}`)
 
-  // Parse input
-  const input = await parseJsonInput<FileToolInput>()
+  // Parse input - handle both FileToolInput and PostToolUse event formats
+  // Read JSON directly to avoid type constraint issues
+  let inputData = ''
+  for await (const chunk of process.stdin) {
+    inputData += chunk
+  }
+
+  let input: FileToolInput | ClaudePostToolUseEvent | null = null
+  if (inputData.trim()) {
+    try {
+      input = JSON.parse(inputData) as FileToolInput | ClaudePostToolUseEvent
+    } catch {
+      input = null
+    }
+  }
+
   const filePath = input ? extractFilePath(input) : null
 
   if (!filePath) {
@@ -297,6 +335,10 @@ async function main(): Promise<void> {
   // Print summary
   printSummary(errors, autofixes)
 
+  // Check if all issues were auto-fixed silently
+  const allAutoFixed =
+    config.autofixSilent && autofixes.length > 0 && errors.length === 0
+
   // Separate edited file errors from other issues
   const editedFileErrors = errors.filter(
     (e) =>
@@ -311,8 +353,8 @@ async function main(): Promise<void> {
   const dependencyWarnings = errors.filter((e) => !editedFileErrors.includes(e))
 
   // Exit with appropriate code
-  if (editedFileErrors.length > 0) {
-    // Critical - blocks immediately
+  if (editedFileErrors.length > 0 && !allAutoFixed) {
+    // Critical - blocks immediately (unless everything was auto-fixed)
     console.error(
       `\n${colors.red}🛑 FAILED - Fix issues in your edited file! 🛑${colors.reset}`,
     )

@@ -35,7 +35,17 @@ export async function createCommonIssuesChecker(
           asAnyRule.enabled !== false
         ) {
           lines.forEach((line, index) => {
-            if (line.includes('as any')) {
+            // Check for 'as any' but exclude string literals and comments
+            const asAnyRegex = /\bas\s+any\b/
+            // Remove string literals and comments from the line for checking
+            const lineWithoutStrings = line
+              .replace(/"[^"]*"/g, '') // Remove double-quoted strings
+              .replace(/'[^']*'/g, '') // Remove single-quoted strings
+              .replace(/`[^`]*`/g, '') // Remove template literals
+              .replace(/\/\/.*$/, '') // Remove single-line comments
+              .replace(/\/\*.*?\*\//g, '') // Remove inline comments
+
+            if (asAnyRegex.test(lineWithoutStrings)) {
               const severity = asAnyRule.severity || 'error'
               const message =
                 asAnyRule.message ||
