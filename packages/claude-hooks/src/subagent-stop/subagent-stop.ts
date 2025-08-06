@@ -3,12 +3,18 @@
  * Notifies when a subagent completes its task
  */
 
+import type {
+  TTSProvider,
+  TTSProviderConfig,
+} from '../speech/providers/tts-provider.js'
 import type { ClaudeSubagentStopEvent } from '../types/claude.js'
 
 import { AudioPlayer } from '../audio/audio-player.js'
 import { detectPlatform, Platform } from '../audio/platform.js'
 import { BaseHook, type HookConfig } from '../base-hook.js'
-import { SpeechEngine } from '../speech/speech-engine.js'
+// Import providers to trigger registration
+import '../speech/providers/index.js'
+import { TTSProviderFactory } from '../speech/providers/provider-factory.js'
 
 export interface SubagentStopHookConfig extends HookConfig {
   notify?: boolean
@@ -19,7 +25,8 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
   private readonly notify: boolean
   private readonly speak: boolean
   private readonly player: AudioPlayer
-  private readonly speechEngine: SpeechEngine
+  private ttsProvider: TTSProvider | null = null
+  private readonly ttsProviderPromise: Promise<TTSProvider>
   private readonly platform: Platform
 
   constructor(config: SubagentStopHookConfig = {}) {
@@ -27,7 +34,25 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
     this.notify = config.notify ?? false
     this.speak = config.speak ?? false
     this.player = new AudioPlayer()
-    this.speechEngine = new SpeechEngine()
+
+    // Initialize TTS provider using factory (async)
+    const ttsConfig = {
+      provider: 'auto' as const,
+      fallbackProvider: 'macos' as const,
+      macos: { enabled: true },
+    }
+    const factoryConfig = {
+      provider: ttsConfig.provider,
+      fallbackProvider: ttsConfig.fallbackProvider,
+      openai: undefined as TTSProviderConfig | undefined,
+      macos: ttsConfig.macos as TTSProviderConfig | undefined,
+    }
+    this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
+      factoryConfig,
+    ).then((provider) => {
+      this.ttsProvider = provider
+      return provider
+    })
     this.platform = detectPlatform()
   }
 
@@ -96,8 +121,11 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
   }
 
   private async handleSpeech(event: ClaudeSubagentStopEvent): Promise<void> {
-    if (!this.speechEngine.isSupported()) {
-      this.log.debug('Speech not supported on this platform')
+    // Wait for TTS provider to be initialized
+    const ttsProvider = await this.ttsProviderPromise
+
+    if (!(await ttsProvider.isAvailable())) {
+      this.log.debug('TTS provider not available')
       return
     }
 
@@ -107,11 +135,13 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
     const speechMessage = `${agentTypeDisplay} completed`
 
     try {
-      const success = await this.speechEngine.speak(speechMessage)
-      if (success) {
+      const result = await ttsProvider.speak(speechMessage)
+      if (result.success) {
         this.log.success('Speech notification delivered')
       } else {
-        this.log.warning('Failed to deliver speech notification')
+        this.log.warning(
+          `Failed to deliver speech notification: ${result.error || 'Unknown error'}`,
+        )
       }
     } catch (error) {
       this.log.error(
