@@ -13,5 +13,11 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "hooks"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "src/__tests__/**/*",
+    "**/__tests__/**/*"
+  ]
 }

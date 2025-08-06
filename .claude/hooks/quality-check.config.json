@@ -1,0 +1,18 @@
+{
+  "typescript": {
+    "enabled": true,
+    "showDependencyErrors": false
+  },
+  "eslint": {
+    "enabled": true,
+    "autofix": true
+  },
+  "prettier": {
+    "enabled": true,
+    "autofix": true
+  },
+  "general": {
+    "autofixSilent": true,
+    "debug": false
+  }
+}

@@ -1,0 +1,206 @@
+/**
+ * Notification hook for Claude Code
+ * Plays sound when Claude needs user attention
+ */
+
+import type { ClaudeNotificationEvent } from '../types/claude.js'
+
+import { AudioPlayer } from '../audio/audio-player.js'
+import { detectPlatform, Platform } from '../audio/platform.js'
+import { BaseHook, type HookConfig } from '../base-hook.js'
+import { loadConfigFromEnv } from '../config/config-schema.js'
+import { Cooldown } from '../speech/cooldown.js'
+import { QuietHours } from '../speech/quiet-hours.js'
+import { SpeechEngine } from '../speech/speech-engine.js'
+
+export interface NotificationHookConfig extends HookConfig {
+  notify?: boolean
+  speak?: boolean
+  cooldownPeriod?: number
+  allowUrgentOverride?: boolean
+  quietHours?: {
+    enabled: boolean
+    ranges: Array<{ start: string; end: string; name?: string }>
+    allowUrgentOverride?: boolean
+  }
+}
+
+export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
+  private readonly notify: boolean
+  private readonly speak: boolean
+  private readonly player: AudioPlayer
+  private readonly speechEngine: SpeechEngine
+  private readonly platform: Platform
+  private readonly cooldown: Cooldown
+  private readonly quietHours: QuietHours
+
+  constructor(config: NotificationHookConfig = {}) {
+    // Load configuration from environment variables
+    const envConfig = loadConfigFromEnv(config)
+
+    super('Notification', envConfig)
+    this.notify = envConfig.notify ?? false
+    this.speak = envConfig.speak ?? false
+    this.player = new AudioPlayer()
+    this.speechEngine = new SpeechEngine()
+    this.platform = detectPlatform()
+
+    // Initialize cooldown system
+    this.cooldown = new Cooldown({
+      cooldownPeriod: envConfig.cooldownPeriod ?? 5000, // 5 seconds default
+      allowUrgentOverride: envConfig.allowUrgentOverride ?? false,
+    })
+
+    // Initialize quiet hours system
+    this.quietHours = new QuietHours({
+      enabled: envConfig.quietHours?.enabled ?? false,
+      ranges: envConfig.quietHours?.ranges ?? [],
+      allowUrgentOverride: envConfig.quietHours?.allowUrgentOverride ?? false,
+    })
+  }
+
+  protected async handle(event: ClaudeNotificationEvent): Promise<void> {
+    this.log.info('Notification received')
+
+    // Extract message from either root level (Claude format) or data (test format)
+    const message = event.message || event.data?.message
+    const priority = event.data?.priority || 'medium'
+
+    if (this.config.debug) {
+      this.log.debug(`Notification message: ${message}`)
+      if (event.session_id) {
+        this.log.debug(`Session ID: ${event.session_id}`)
+      }
+      if (event.cwd) {
+        this.log.debug(`Working directory: ${event.cwd}`)
+      }
+    }
+
+    const isUrgent = priority === 'high'
+
+    // Check quiet hours
+    if (this.quietHours.isQuietTime(undefined, isUrgent)) {
+      this.log.debug('Notification suppressed due to quiet hours')
+      return
+    }
+
+    // Check cooldown period
+    if (!this.cooldown.canNotify(isUrgent, 'notification')) {
+      const remaining = this.cooldown.getRemainingCooldown('notification')
+      this.log.debug(
+        `Notification suppressed due to cooldown (${Math.round(remaining / 1000)}s remaining)`,
+      )
+      return
+    }
+
+    // Handle speech if enabled
+    if (this.speak) {
+      await this.handleSpeech(event)
+    }
+
+    // Only play sound if notify is enabled
+    if (!this.notify) {
+      this.log.debug('Notification sound disabled')
+      return
+    }
+
+    // Check if platform is supported
+    if (this.platform === Platform.Unsupported) {
+      this.log.warning('Audio notifications not supported on this platform')
+      return
+    }
+
+    // Get appropriate sound based on priority
+    const sounds = this.player.getSystemSounds(this.platform)
+    let soundFile: string
+
+    switch (priority) {
+      case 'high':
+        soundFile = sounds.error || sounds.notification
+        break
+      case 'low':
+        soundFile = sounds.success || sounds.notification
+        break
+      case 'medium':
+      default:
+        soundFile = sounds.notification
+        break
+    }
+
+    if (!soundFile) {
+      this.log.warning('No notification sound available for platform')
+      return
+    }
+
+    // Play the sound
+    try {
+      const success = await this.player.playSound(soundFile, this.platform)
+      if (!success) {
+        this.log.warning('Failed to play notification sound')
+      } else {
+        this.log.success('Notification sound played')
+        // Record successful notification for cooldown tracking
+        this.cooldown.recordNotification('notification')
+      }
+    } catch (error) {
+      this.log.error(
+        `Error playing notification sound: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
+  }
+
+  private async handleSpeech(event: ClaudeNotificationEvent): Promise<void> {
+    if (!this.speechEngine.isSupported()) {
+      this.log.debug('Speech not supported on this platform')
+      return
+    }
+
+    // Extract message from either root level (Claude format) or data (test format)
+    const message =
+      event.message || event.data?.message || 'Claude needs your attention'
+    const priority = event.data?.priority || 'medium'
+
+    const speechMessage = `${priority} priority: ${message}`
+
+    try {
+      const success = await this.speechEngine.speak(speechMessage)
+      if (success) {
+        this.log.success('Speech notification delivered')
+      } else {
+        this.log.warning('Failed to deliver speech notification')
+      }
+    } catch (error) {
+      this.log.error(
+        `Error delivering speech notification: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      )
+    }
+  }
+}
+
+// Hook entry point
+export async function main(): Promise<void> {
+  // Load auto-config from .claude/hooks/notification.config.json
+  const { loadAutoConfig } = await import('../utils/auto-config.js')
+  const jsonConfig =
+    await loadAutoConfig<NotificationHookConfig>('notification')
+
+  // Merge with CLI arguments (CLI args override JSON)
+  const config: NotificationHookConfig = {
+    ...jsonConfig,
+    notify: process.argv.includes('--notify') || jsonConfig.notify,
+    speak: process.argv.includes('--speak') || jsonConfig.speak,
+    debug: process.argv.includes('--debug') || jsonConfig.debug,
+  }
+
+  await BaseHook.execute(NotificationHook, config)
+}
+
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error('Fatal error:', error)
+    process.exit(1)
+  })
+}

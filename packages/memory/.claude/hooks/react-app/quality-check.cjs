@@ -10,8 +10,8 @@
  */
 
 const fs = require('fs').promises
-const path = require('path')
 const crypto = require('crypto')
+const path = require('path')
 
 /**
  * Find project root by looking for package.json
@@ -1187,6 +1187,9 @@ async function main() {
     )
     console.error(
       `${colors.yellow}  3. Continue with your original task once all checks pass${colors.reset}`,
+    )
+    console.error(
+      `${colors.yellow}  4. If you are currently performing TDD and an import missing to a file that doesnt existing create a temp failing function in its place${colors.reset}`,
     )
     process.exit(2)
   } else if (dependencyWarnings.length > 0) {

@@ -1,0 +1,16 @@
+{
+  "settings": {
+    "notify": true,
+    "speak": true,
+    "debug": false,
+    "cooldownPeriod": 3000,
+    "allowUrgentOverride": false,
+    "quietHours": {
+      "enabled": false,
+      "ranges": [
+        { "start": "22:00", "end": "08:00", "name": "Night" }
+      ],
+      "allowUrgentOverride": true
+    }
+  }
+}
