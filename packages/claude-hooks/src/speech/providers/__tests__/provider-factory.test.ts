@@ -249,14 +249,14 @@ describe('TTSProviderFactory', () => {
   })
 
   describe('Provider With Fallback', () => {
-    it('should create provider with fallback', () => {
+    it('should create provider with fallback', async () => {
       const config = {
         provider: 'openai' as const,
         fallbackProvider: 'macos' as const,
         openai: { apiKey: 'test-key' },
       }
 
-      const provider = TTSProviderFactory.createWithFallback(config)
+      const provider = await TTSProviderFactory.createWithFallback(config)
 
       expect(provider).toBeDefined()
       expect(provider.getProviderInfo().name).toBe('openai')
@@ -269,7 +269,7 @@ describe('TTSProviderFactory', () => {
         openai: { apiKey: 'test-key' },
       }
 
-      const provider = TTSProviderFactory.createWithFallback(config)
+      const provider = await TTSProviderFactory.createWithFallback(config)
 
       // Mock primary provider to fail
       const fallbackProvider = provider as unknown as {

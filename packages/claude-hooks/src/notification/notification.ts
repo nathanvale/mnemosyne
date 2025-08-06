@@ -3,15 +3,21 @@
  * Plays sound when Claude needs user attention
  */
 
+import type {
+  TTSProvider,
+  TTSProviderConfig,
+} from '../speech/providers/tts-provider.js'
 import type { ClaudeNotificationEvent } from '../types/claude.js'
 
 import { AudioPlayer } from '../audio/audio-player.js'
 import { detectPlatform, Platform } from '../audio/platform.js'
 import { BaseHook, type HookConfig } from '../base-hook.js'
-import { loadConfigFromEnv } from '../config/config-schema.js'
+import { loadConfigFromEnv } from '../config/env-config.js'
 import { Cooldown } from '../speech/cooldown.js'
+// Import providers to trigger registration
+import '../speech/providers/index.js'
+import { TTSProviderFactory } from '../speech/providers/provider-factory.js'
 import { QuietHours } from '../speech/quiet-hours.js'
-import { SpeechEngine } from '../speech/speech-engine.js'
 
 export interface NotificationHookConfig extends HookConfig {
   notify?: boolean
@@ -23,13 +29,31 @@ export interface NotificationHookConfig extends HookConfig {
     ranges: Array<{ start: string; end: string; name?: string }>
     allowUrgentOverride?: boolean
   }
+  tts?: {
+    provider: 'openai' | 'macos' | 'auto'
+    fallbackProvider?: 'macos' | 'none'
+    openai?: {
+      apiKey?: string
+      model?: 'tts-1' | 'tts-1-hd'
+      voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+      speed?: number
+      format?: 'mp3' | 'opus' | 'aac' | 'flac'
+    }
+    macos?: {
+      voice?: string
+      rate?: number
+      volume?: number
+      enabled?: boolean
+    }
+  }
 }
 
 export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
   private readonly notify: boolean
   private readonly speak: boolean
   private readonly player: AudioPlayer
-  private readonly speechEngine: SpeechEngine
+  private ttsProvider: TTSProvider | null = null
+  private readonly ttsProviderPromise: Promise<TTSProvider>
   private readonly platform: Platform
   private readonly cooldown: Cooldown
   private readonly quietHours: QuietHours
@@ -42,7 +66,25 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     this.notify = envConfig.notify ?? false
     this.speak = envConfig.speak ?? false
     this.player = new AudioPlayer()
-    this.speechEngine = new SpeechEngine()
+
+    // Initialize TTS provider using factory (async) with environment config
+    const ttsConfig = envConfig.tts || {
+      provider: 'auto' as const,
+      fallbackProvider: 'macos' as const,
+      macos: { enabled: true },
+    }
+    const factoryConfig = {
+      provider: ttsConfig.provider,
+      fallbackProvider: ttsConfig.fallbackProvider,
+      openai: ttsConfig.openai as TTSProviderConfig | undefined,
+      macos: ttsConfig.macos as TTSProviderConfig | undefined,
+    }
+    this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
+      factoryConfig,
+    ).then((provider) => {
+      this.ttsProvider = provider
+      return provider
+    })
     this.platform = detectPlatform()
 
     // Initialize cooldown system
@@ -150,8 +192,11 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
   }
 
   private async handleSpeech(event: ClaudeNotificationEvent): Promise<void> {
-    if (!this.speechEngine.isSupported()) {
-      this.log.debug('Speech not supported on this platform')
+    // Wait for TTS provider to be initialized
+    const ttsProvider = await this.ttsProviderPromise
+
+    if (!(await ttsProvider.isAvailable())) {
+      this.log.debug('TTS provider not available')
       return
     }
 
@@ -163,11 +208,13 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     const speechMessage = `${priority} priority: ${message}`
 
     try {
-      const success = await this.speechEngine.speak(speechMessage)
-      if (success) {
+      const result = await ttsProvider.speak(speechMessage)
+      if (result.success) {
         this.log.success('Speech notification delivered')
       } else {
-        this.log.warning('Failed to deliver speech notification')
+        this.log.warning(
+          `Failed to deliver speech notification: ${result.error || 'Unknown error'}`,
+        )
       }
     } catch (error) {
       this.log.error(

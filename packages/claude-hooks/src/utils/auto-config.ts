@@ -6,6 +6,7 @@
 import { promises as fs } from 'fs'
 import path from 'path'
 
+import { loadConfigFromEnv } from '../config/env-config.js'
 import { findProjectRoot } from './config-loader.js'
 
 /**
@@ -30,17 +31,23 @@ export async function loadAutoConfig<T extends Record<string, unknown>>(
 
     // Try to load the config
     const content = await fs.readFile(configPath, 'utf8')
-    const config = JSON.parse(content) as T
+    let config = JSON.parse(content) as T
 
-    // Extract settings if it exists, otherwise return the whole config
+    // Extract settings if it exists, otherwise use the whole config
     if (config && typeof config === 'object' && 'settings' in config) {
-      return (config as unknown as { settings: T }).settings
+      config = (config as unknown as { settings: T }).settings
     }
 
-    return config
+    // Apply environment variable overrides
+    const configWithEnv = loadConfigFromEnv(
+      config as Record<string, unknown>,
+    ) as T
+
+    return configWithEnv
   } catch {
-    // Config not found or invalid - return empty object
-    return {} as T
+    // Config not found or invalid - try to load just from environment variables
+    const envOnlyConfig = loadConfigFromEnv({}) as T
+    return envOnlyConfig
   }
 }
 

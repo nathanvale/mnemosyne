@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-npx tsx -e "import '@studio/claude-hooks/quality-check'"
+npx tsx src/quality-check/index.ts

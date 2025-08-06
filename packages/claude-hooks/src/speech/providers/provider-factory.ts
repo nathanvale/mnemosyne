@@ -158,7 +158,25 @@ export class TTSProviderFactory {
   /**
    * Create provider with fallback
    */
-  static createWithFallback(config: FactoryConfig): TTSProvider {
+  static async createWithFallback(config: FactoryConfig): Promise<TTSProvider> {
+    // Handle 'auto' provider by detecting best available
+    if (config.provider === 'auto') {
+      try {
+        return await this.detectBestProvider(config)
+      } catch {
+        // If auto detection fails, fall back to manual creation with fallback
+        const fallbackProvider = config.fallbackProvider || 'macos'
+        if (fallbackProvider === 'none') {
+          throw new Error('No TTS provider available and fallback disabled')
+        }
+        const fallbackConfig: FactoryConfig = {
+          ...config,
+          provider: fallbackProvider,
+        }
+        return this.create(fallbackConfig)
+      }
+    }
+
     const primary = this.create(config)
 
     let fallback: TTSProvider | null = null

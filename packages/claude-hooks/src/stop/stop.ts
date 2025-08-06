@@ -20,6 +20,12 @@ import { TTSProviderFactory } from '../speech/providers/provider-factory.js'
 export interface StopHookConfig extends HookConfig {
   chat?: boolean
   speak?: boolean
+  tts?: {
+    provider: 'openai' | 'macos' | 'auto'
+    fallbackProvider?: 'macos' | 'none'
+    openai?: TTSProviderConfig
+    macos?: TTSProviderConfig
+  }
 }
 
 export class StopHook extends BaseHook<ClaudeStopEvent> {
@@ -37,8 +43,8 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
     this.speak = config.speak ?? false
     this.player = new AudioPlayer()
 
-    // Initialize TTS provider using factory (async)
-    const ttsConfig = {
+    // Initialize TTS provider using factory (async) with configuration from config file
+    const ttsConfig = config.tts || {
       provider: 'auto' as const,
       fallbackProvider: 'macos' as const,
       macos: { enabled: true },
@@ -46,7 +52,7 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
     const factoryConfig = {
       provider: ttsConfig.provider,
       fallbackProvider: ttsConfig.fallbackProvider,
-      openai: undefined as TTSProviderConfig | undefined,
+      openai: ttsConfig.openai as TTSProviderConfig | undefined,
       macos: ttsConfig.macos as TTSProviderConfig | undefined,
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(

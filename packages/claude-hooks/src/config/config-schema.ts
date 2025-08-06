@@ -3,7 +3,7 @@
  * Provides comprehensive validation and type safety for all hook configurations
  */
 
-export * from './env-config.js'
+// Note: env-config.js imports from this file, so we can't re-export it here
 
 export interface HookConfig {
   debug?: boolean
@@ -38,11 +38,43 @@ export interface SpeechConfig {
   enabled?: boolean
 }
 
+/**
+ * OpenAI TTS Provider Configuration
+ */
+export interface OpenAITTSConfig {
+  apiKey?: string
+  model?: 'tts-1' | 'tts-1-hd'
+  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+  speed?: number // 0.25 to 4.0
+  format?: 'mp3' | 'opus' | 'aac' | 'flac'
+}
+
+/**
+ * macOS TTS Provider Configuration
+ */
+export interface MacOSTTSConfig {
+  voice?: string
+  rate?: number // Words per minute
+  volume?: number // 0.0 to 1.0
+  enabled?: boolean
+}
+
+/**
+ * TTS Provider Configuration
+ */
+export interface TTSConfig {
+  provider: 'openai' | 'macos' | 'auto'
+  fallbackProvider?: 'macos' | 'none'
+  openai?: OpenAITTSConfig
+  macos?: MacOSTTSConfig
+}
+
 export interface CompleteHookConfig extends HookConfig {
   cooldownPeriod?: number
   allowUrgentOverride?: boolean
   quietHours?: QuietHoursConfig
   speech?: SpeechConfig
+  tts?: TTSConfig
   perTypeSettings?: Partial<Record<NotificationType, number>>
 }
 
@@ -125,6 +157,11 @@ export class ConfigValidator {
     // Validate speech configuration
     if (cfg.speech !== undefined) {
       this.validateSpeechConfig(cfg.speech, errors, warnings)
+    }
+
+    // Validate TTS configuration
+    if (cfg.tts !== undefined) {
+      this.validateTTSConfig(cfg.tts, errors, warnings)
     }
 
     // Validate per-type settings
@@ -407,6 +444,200 @@ export class ConfigValidator {
   }
 
   /**
+   * Validate TTS configuration
+   */
+  private static validateTTSConfig(
+    tts: unknown,
+    errors: ValidationError[],
+    _warnings: ValidationError[],
+  ): void {
+    if (typeof tts !== 'object' || tts === null) {
+      errors.push({
+        field: 'tts',
+        message: 'tts configuration must be an object',
+        value: tts,
+      })
+      return
+    }
+
+    const t = tts as Record<string, unknown>
+
+    // Validate provider (required)
+    const validProviders = ['openai', 'macos', 'auto']
+    if (
+      typeof t.provider !== 'string' ||
+      !validProviders.includes(t.provider)
+    ) {
+      errors.push({
+        field: 'tts.provider',
+        message: `tts.provider must be one of: ${validProviders.join(', ')}`,
+        value: t.provider,
+      })
+    }
+
+    // Validate fallbackProvider (optional)
+    if (t.fallbackProvider !== undefined) {
+      const validFallbacks = ['macos', 'none']
+      if (
+        typeof t.fallbackProvider !== 'string' ||
+        !validFallbacks.includes(t.fallbackProvider)
+      ) {
+        errors.push({
+          field: 'tts.fallbackProvider',
+          message: `tts.fallbackProvider must be one of: ${validFallbacks.join(', ')}`,
+          value: t.fallbackProvider,
+        })
+      }
+    }
+
+    // Validate OpenAI config (optional)
+    if (t.openai !== undefined) {
+      this.validateOpenAIConfig(t.openai, errors, _warnings)
+    }
+
+    // Validate macOS config (optional)
+    if (t.macos !== undefined) {
+      this.validateMacOSConfig(t.macos, errors, _warnings)
+    }
+  }
+
+  /**
+   * Validate OpenAI TTS configuration
+   */
+  private static validateOpenAIConfig(
+    openai: unknown,
+    errors: ValidationError[],
+    _warnings: ValidationError[],
+  ): void {
+    if (typeof openai !== 'object' || openai === null) {
+      errors.push({
+        field: 'tts.openai',
+        message: 'tts.openai must be an object',
+        value: openai,
+      })
+      return
+    }
+
+    const o = openai as Record<string, unknown>
+
+    // Validate apiKey (optional, can be empty string)
+    if (o.apiKey !== undefined && typeof o.apiKey !== 'string') {
+      errors.push({
+        field: 'tts.openai.apiKey',
+        message: 'tts.openai.apiKey must be a string',
+        value: o.apiKey,
+      })
+    }
+
+    // Validate model (optional)
+    if (o.model !== undefined) {
+      const validModels = ['tts-1', 'tts-1-hd']
+      if (typeof o.model !== 'string' || !validModels.includes(o.model)) {
+        errors.push({
+          field: 'tts.openai.model',
+          message: `tts.openai.model must be one of: ${validModels.join(', ')}`,
+          value: o.model,
+        })
+      }
+    }
+
+    // Validate voice (optional)
+    if (o.voice !== undefined) {
+      const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+      if (typeof o.voice !== 'string' || !validVoices.includes(o.voice)) {
+        errors.push({
+          field: 'tts.openai.voice',
+          message: `tts.openai.voice must be one of: ${validVoices.join(', ')}`,
+          value: o.voice,
+        })
+      }
+    }
+
+    // Validate speed (optional)
+    if (o.speed !== undefined) {
+      if (typeof o.speed !== 'number' || o.speed < 0.25 || o.speed > 4.0) {
+        errors.push({
+          field: 'tts.openai.speed',
+          message: 'tts.openai.speed must be a number between 0.25 and 4.0',
+          value: o.speed,
+        })
+      }
+    }
+
+    // Validate format (optional)
+    if (o.format !== undefined) {
+      const validFormats = ['mp3', 'opus', 'aac', 'flac']
+      if (typeof o.format !== 'string' || !validFormats.includes(o.format)) {
+        errors.push({
+          field: 'tts.openai.format',
+          message: `tts.openai.format must be one of: ${validFormats.join(', ')}`,
+          value: o.format,
+        })
+      }
+    }
+  }
+
+  /**
+   * Validate macOS TTS configuration
+   */
+  private static validateMacOSConfig(
+    macos: unknown,
+    errors: ValidationError[],
+    _warnings: ValidationError[],
+  ): void {
+    if (typeof macos !== 'object' || macos === null) {
+      errors.push({
+        field: 'tts.macos',
+        message: 'tts.macos must be an object',
+        value: macos,
+      })
+      return
+    }
+
+    const m = macos as Record<string, unknown>
+
+    // Validate voice (optional)
+    if (m.voice !== undefined && typeof m.voice !== 'string') {
+      errors.push({
+        field: 'tts.macos.voice',
+        message: 'tts.macos.voice must be a string',
+        value: m.voice,
+      })
+    }
+
+    // Validate rate (optional)
+    if (m.rate !== undefined) {
+      if (typeof m.rate !== 'number' || m.rate <= 0 || m.rate > 500) {
+        errors.push({
+          field: 'tts.macos.rate',
+          message: 'tts.macos.rate must be a positive number <= 500',
+          value: m.rate,
+        })
+      }
+    }
+
+    // Validate volume (optional)
+    if (m.volume !== undefined) {
+      if (typeof m.volume !== 'number' || m.volume < 0 || m.volume > 1) {
+        errors.push({
+          field: 'tts.macos.volume',
+          message: 'tts.macos.volume must be a number between 0 and 1',
+          value: m.volume,
+        })
+      }
+    }
+
+    // Validate enabled (optional)
+    if (m.enabled !== undefined && typeof m.enabled !== 'boolean') {
+      errors.push({
+        field: 'tts.macos.enabled',
+        message: 'tts.macos.enabled must be a boolean',
+        value: m.enabled,
+      })
+    }
+  }
+
+  /**
    * Validate per-type settings
    */
   private static validatePerTypeSettings(
@@ -490,6 +721,22 @@ export class ConfigValidator {
         rate: 200,
         volume: 0.7,
         enabled: false,
+      },
+      tts: {
+        provider: 'auto',
+        fallbackProvider: 'macos',
+        openai: {
+          model: 'tts-1',
+          voice: 'alloy',
+          speed: 1.0,
+          format: 'mp3',
+        },
+        macos: {
+          voice: 'Alex',
+          rate: 200,
+          volume: 0.7,
+          enabled: true,
+        },
       },
       perTypeSettings: {},
     }

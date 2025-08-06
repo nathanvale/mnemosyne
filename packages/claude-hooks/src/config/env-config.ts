@@ -73,7 +73,7 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     },
   },
 
-  // Speech configuration
+  // Speech configuration (legacy)
   {
     envVar: 'CLAUDE_HOOKS_SPEECH_ENABLED',
     configPath: 'speech.enabled',
@@ -93,6 +93,67 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     envVar: 'CLAUDE_HOOKS_SPEECH_VOLUME',
     configPath: 'speech.volume',
     type: 'number',
+  },
+
+  // TTS Provider configuration
+  {
+    envVar: 'CLAUDE_HOOKS_TTS_PROVIDER',
+    configPath: 'tts.provider',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_TTS_FALLBACK_PROVIDER',
+    configPath: 'tts.fallbackProvider',
+    type: 'string',
+  },
+
+  // OpenAI TTS configuration
+  {
+    envVar: 'OPENAI_API_KEY',
+    configPath: 'tts.openai.apiKey',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_OPENAI_TTS_MODEL',
+    configPath: 'tts.openai.model',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_OPENAI_TTS_VOICE',
+    configPath: 'tts.openai.voice',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_OPENAI_TTS_SPEED',
+    configPath: 'tts.openai.speed',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_OPENAI_TTS_FORMAT',
+    configPath: 'tts.openai.format',
+    type: 'string',
+  },
+
+  // macOS TTS configuration
+  {
+    envVar: 'CLAUDE_HOOKS_MACOS_TTS_VOICE',
+    configPath: 'tts.macos.voice',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_MACOS_TTS_RATE',
+    configPath: 'tts.macos.rate',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_MACOS_TTS_VOLUME',
+    configPath: 'tts.macos.volume',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_MACOS_TTS_ENABLED',
+    configPath: 'tts.macos.enabled',
+    type: 'boolean',
   },
 ]
 
