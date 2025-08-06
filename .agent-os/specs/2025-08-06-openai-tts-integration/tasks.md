@@ -30,14 +30,14 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 3.4 Update existing tests to work with new interface
   - [ ] 3.5 Verify all tests pass
 
-- [ ] 4. Implement Audio Caching System
-  - [ ] 4.1 Write tests for cache manager
-  - [ ] 4.2 Create AudioCache class with LRU eviction
-  - [ ] 4.3 Implement cache key generation
-  - [ ] 4.4 Add TTL-based expiration
-  - [ ] 4.5 Implement cache size management
-  - [ ] 4.6 Add cache cleanup on startup
-  - [ ] 4.7 Verify all tests pass
+- [x] 4. Implement Audio Caching System
+  - [x] 4.1 Write tests for cache manager
+  - [x] 4.2 Create AudioCache class with LRU eviction
+  - [x] 4.3 Implement cache key generation
+  - [x] 4.4 Add TTL-based expiration
+  - [x] 4.5 Implement cache size management
+  - [x] 4.6 Add cache cleanup on startup
+  - [x] 4.7 Verify all tests pass
 
 - [ ] 5. Update Configuration and Integration
   - [ ] 5.1 Write tests for updated configuration

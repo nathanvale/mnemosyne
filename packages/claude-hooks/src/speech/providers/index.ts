@@ -11,6 +11,10 @@ export type { OpenAIConfig } from './openai-provider.js'
 export { MacOSProvider } from './macos-provider.js'
 export type { MacOSConfig } from './macos-provider.js'
 
+// Export audio cache
+export { AudioCache } from './audio-cache.js'
+export type { AudioCacheConfig, CacheEntry, CacheStats } from './audio-cache.js'
+
 // Export base types
 export type {
   TTSProvider,

@@ -17,6 +17,7 @@ import type {
   TTSProviderConfig,
 } from './tts-provider.js'
 
+import { AudioCache } from './audio-cache.js'
 import { BaseTTSProvider } from './tts-provider.js'
 
 const execAsync = promisify(exec)
@@ -44,6 +45,7 @@ export class OpenAIProvider extends BaseTTSProvider {
   private retryCount = 0
   private readonly maxRetries = 3
   private readonly retryDelay = 1000 // Start with 1 second delay
+  private cache: AudioCache
 
   constructor(config: OpenAIConfig = {}) {
     super(config)
@@ -69,6 +71,9 @@ export class OpenAIProvider extends BaseTTSProvider {
 
     // Set up temp directory for audio files
     this.tempDir = join(tmpdir(), 'claude-hooks-tts')
+
+    // Initialize audio cache
+    this.cache = new AudioCache()
   }
 
   async speak(text: string): Promise<SpeakResult> {
@@ -95,6 +100,28 @@ export class OpenAIProvider extends BaseTTSProvider {
       const inputText =
         text.length > 4096 ? `${text.substring(0, 4093)}...` : text
 
+      // Generate cache key
+      const cacheKey = await this.cache.generateKey(
+        inputText,
+        this.openaiConfig.model,
+        this.openaiConfig.voice,
+        this.openaiConfig.speed,
+      )
+
+      // Check cache first
+      const cachedEntry = await this.cache.get(cacheKey)
+      if (cachedEntry) {
+        // Use cached audio
+        await this.playCachedAudio(cachedEntry.data)
+
+        // Reset retry count on success
+        this.retryCount = 0
+
+        return this.createSuccessResult({
+          duration: cachedEntry.data.length / 1000, // Rough estimate
+        })
+      }
+
       // Call OpenAI API
       const response = await this.client!.audio.speech.create({
         model: this.openaiConfig.model,
@@ -107,19 +134,17 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Convert response to buffer
       const buffer = Buffer.from(await response.arrayBuffer())
 
-      // Ensure temp directory exists
-      await mkdir(this.tempDir, { recursive: true })
+      // Cache the result
+      await this.cache.set(cacheKey, buffer, {
+        provider: 'openai',
+        voice: this.openaiConfig.voice,
+        model: this.openaiConfig.model,
+        speed: this.openaiConfig.speed,
+        format: this.openaiConfig.format,
+      })
 
-      // Save audio to temp file
-      const filename = `openai-tts-${Date.now()}.${this.openaiConfig.format}`
-      const filepath = join(this.tempDir, filename)
-      await writeFile(filepath, buffer)
-
-      // Play the audio file
-      await this.playAudio(filepath)
-
-      // Clean up temp file
-      await this.cleanupFile(filepath)
+      // Play the audio
+      await this.playCachedAudio(buffer)
 
       // Reset retry count on success
       this.retryCount = 0
@@ -295,6 +320,30 @@ export class OpenAIProvider extends BaseTTSProvider {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  /**
+   * Play cached audio data directly
+   */
+  private async playCachedAudio(audioData: Buffer): Promise<void> {
+    try {
+      // Ensure temp directory exists
+      await mkdir(this.tempDir, { recursive: true })
+
+      // Write audio data to temp file for playback
+      const filename = `openai-cached-${Date.now()}.${this.openaiConfig.format}`
+      const filepath = join(this.tempDir, filename)
+      await writeFile(filepath, audioData)
+
+      // Play the audio file
+      await this.playAudio(filepath)
+
+      // Clean up temp file
+      await this.cleanupFile(filepath)
+    } catch {
+      // Playback failed, but TTS generation succeeded
+      // Don't fail the whole operation
+    }
   }
 
   /**
