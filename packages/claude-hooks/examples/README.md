@@ -86,6 +86,21 @@ Modern TTS configuration with OpenAI TTS primary and macOS fallback, using envir
 
 **Usage**: Copy to `.claude/hooks/stop.config.json`
 
+### OpenAI Voice Options (`stop-openai-voices.json`)
+
+Comprehensive example showing all available OpenAI TTS voices with descriptions and recommended use cases.
+
+**Available Voices:**
+
+- `alloy` - Balanced, neutral voice (default)
+- `echo` - Clear, professional voice
+- `fable` - Warm, storytelling voice
+- `onyx` - Deep, authoritative voice
+- `nova` - Bright, energetic voice
+- `shimmer` - Soft, friendly voice
+
+**Usage**: Copy to `.claude/hooks/stop.config.json` and customize the voice selection
+
 ## Subagent Stop Hook Examples
 
 ### Basic Subagent Tracking (`subagent-stop-basic.json`)

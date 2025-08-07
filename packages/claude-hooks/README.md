@@ -597,7 +597,13 @@ For OpenAI text-to-speech integration, set the following environment variables:
 
 - `OPENAI_API_KEY` - Your OpenAI API key (required)
 - `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
-- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection: "alloy" (default), "echo", "fable", "onyx", "nova", "shimmer"
+- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection:
+  - `alloy` (default) - Balanced, neutral voice
+  - `echo` - Clear, professional voice
+  - `fable` - Warm, storytelling voice
+  - `onyx` - Deep, authoritative voice
+  - `nova` - Bright, energetic voice
+  - `shimmer` - Soft, friendly voice
 - `CLAUDE_HOOKS_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
 - `CLAUDE_HOOKS_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
 
@@ -631,6 +637,8 @@ Or add to your `.claude/hooks/stop.config.json`:
 ```
 
 **Note:** The `apiKey` field uses environment variable substitution (`${OPENAI_API_KEY}`) to securely reference your API key without hardcoding it in the config file.
+
+**Voice Selection:** See `examples/stop-openai-voices.json` for a comprehensive example with all available voices, descriptions, and recommended use cases for different scenarios.
 
 ## CLI Arguments
 
