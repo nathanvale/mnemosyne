@@ -192,6 +192,11 @@ describe('Notification Hook Integration', () => {
   })
 
   it('should handle malformed JSON input gracefully', async () => {
+    // Skip in Wallaby due to file system and spawn issues
+    if (process.env.WALLABY_WORKER) {
+      return
+    }
+
     const config = {
       settings: {
         soundEnabled: false,

@@ -15,10 +15,10 @@ import type {
   Voice,
   TTSProviderInfo,
   TTSProviderConfig,
-} from './tts-provider.js'
+} from './tts-provider'
 
-import { AudioCache } from './audio-cache.js'
-import { BaseTTSProvider } from './tts-provider.js'
+import { AudioCache } from './audio-cache'
+import { BaseTTSProvider } from './tts-provider'
 
 const execAsync = promisify(exec)
 
@@ -403,17 +403,37 @@ export class OpenAIProvider extends BaseTTSProvider {
           cmd = 'afplay'
           args = [filepath]
         } else if (platform === 'win32') {
+          // Windows - properly escape the filepath for PowerShell
+          // Escape special characters that could break PowerShell syntax
+          const escapedPath = filepath
+            .replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/'/g, "''") // Escape single quotes for PowerShell
+            .replace(/`/g, '``') // Escape backticks
+            .replace(/\$/g, '`$') // Escape dollar signs
+
           cmd = 'powershell'
           args = [
-            '-c',
-            `(New-Object Media.SoundPlayer '${filepath}').PlaySync()`,
+            '-NoProfile',
+            '-Command',
+            `(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()`,
           ]
         } else {
-          // Linux - try multiple players
+          // Linux - try multiple players with error reporting
           cmd = 'sh'
           args = [
             '-c',
-            `aplay "${filepath}" || paplay "${filepath}" || ffplay -nodisp -autoexit "${filepath}"`,
+            `
+            if command -v aplay >/dev/null 2>&1; then
+              aplay "${filepath}" 2>&1 || echo "[OpenAI TTS] aplay failed with exit code $?" >&2
+            elif command -v paplay >/dev/null 2>&1; then
+              paplay "${filepath}" 2>&1 || echo "[OpenAI TTS] paplay failed with exit code $?" >&2
+            elif command -v ffplay >/dev/null 2>&1; then
+              ffplay -nodisp -autoexit "${filepath}" 2>&1 || echo "[OpenAI TTS] ffplay failed with exit code $?" >&2
+            else
+              echo "[OpenAI TTS] No audio player found (tried aplay, paplay, ffplay)" >&2
+              exit 1
+            fi
+            `.trim(),
           ]
         }
 
@@ -436,11 +456,32 @@ export class OpenAIProvider extends BaseTTSProvider {
           command = `afplay "${filepath}"`
           console.error(`[OpenAI TTS] Playing audio with afplay: ${filepath}`)
         } else if (platform === 'win32') {
-          // Windows
-          command = `powershell -c "(New-Object Media.SoundPlayer '${filepath}').PlaySync()"`
+          // Windows - properly escape the filepath for PowerShell
+          const escapedPath = filepath
+            .replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/'/g, "''") // Escape single quotes
+            .replace(/`/g, '``') // Escape backticks
+            .replace(/\$/g, '`$') // Escape dollar signs
+
+          command = `powershell -NoProfile -Command "(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()"`
+          console.error(
+            `[OpenAI TTS] Playing audio with PowerShell: ${filepath}`,
+          )
         } else {
-          // Linux
-          command = `aplay "${filepath}" || paplay "${filepath}" || ffplay -nodisp -autoexit "${filepath}"`
+          // Linux - try multiple players with proper error reporting
+          command = `
+            if command -v aplay >/dev/null 2>&1; then
+              aplay "${filepath}" 2>&1 || { echo "[OpenAI TTS] aplay failed with exit code $?" >&2; exit 1; }
+            elif command -v paplay >/dev/null 2>&1; then
+              paplay "${filepath}" 2>&1 || { echo "[OpenAI TTS] paplay failed with exit code $?" >&2; exit 1; }
+            elif command -v ffplay >/dev/null 2>&1; then
+              ffplay -nodisp -autoexit "${filepath}" 2>&1 || { echo "[OpenAI TTS] ffplay failed with exit code $?" >&2; exit 1; }
+            else
+              echo "[OpenAI TTS] No audio player found (tried aplay, paplay, ffplay)" >&2
+              exit 1
+            fi
+          `.trim()
+          console.error(`[OpenAI TTS] Playing audio on Linux: ${filepath}`)
         }
 
         await execAsync(command)
