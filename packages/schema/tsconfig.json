@@ -1,14 +1,9 @@
 {
-  "extends": "../shared/tsconfig.json",
+  "extends": "@studio/typescript-config/library.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
-    "noEmit": false,
-    "allowImportingTsExtensions": false
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"]
+  "exclude": ["dist", "node_modules"]
 }

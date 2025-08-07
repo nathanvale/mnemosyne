@@ -3,21 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
   "files": [
-    "dist",
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'Just-in-Time package - no build needed'",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",

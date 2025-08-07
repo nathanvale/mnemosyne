@@ -3,21 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "require": "./dist/src/index.js"
-    }
+    ".": "./src/index.ts"
   },
   "files": [
-    "dist",
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'Just-in-Time package - no build needed'",
     "dev": "echo 'Scripts package dev placeholder'",
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",

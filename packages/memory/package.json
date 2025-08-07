@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'Just-in-Time package - no build needed'",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",

@@ -1,13 +1,7 @@
 {
-  "extends": "../shared/tsconfig.package.json",
+  "extends": "@studio/typescript-config/library.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "types": []
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"],

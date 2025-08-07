@@ -7,6 +7,7 @@
     "./base.json": "./base.json",
     "./nextjs.json": "./nextjs.json",
     "./library.json": "./library.json",
+    "./test.json": "./test.json",
     "./package.json": "./package.json"
   },
   "scripts": {

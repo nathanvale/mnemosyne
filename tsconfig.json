@@ -15,16 +15,34 @@
     }
   },
   "references": [
-    { "path": "./packages/shared" },
+    // Level 0: Core configuration packages (no dependencies)
     { "path": "./packages/typescript-config" },
     { "path": "./packages/prettier-config" },
+    { "path": "./packages/eslint-config" },
+
+    // Level 1: Base packages (transit nodes - no package dependencies)
+    { "path": "./packages/shared" },
+    { "path": "./packages/schema" },
+
+    // Level 2: Core functionality packages (depend on Level 1)
+    { "path": "./packages/logger" },
+    { "path": "./packages/validation" },
     { "path": "./packages/db" },
+
+    // Level 3: Feature packages (depend on Level 2)
+    { "path": "./packages/memory" },
     { "path": "./packages/mocks" },
     { "path": "./packages/test-config" },
-    { "path": "./packages/logger" },
     { "path": "./packages/scripts" },
+    { "path": "./packages/mcp" },
+
+    // Level 4: UI and specialized packages
     { "path": "./packages/ui" },
-    { "path": "./apps/studio" }
+    { "path": "./packages/claude-hooks" },
+
+    // Level 5: Applications
+    { "path": "./apps/studio" },
+    { "path": "./apps/docs" }
   ],
   "include": [
     "next-env.d.ts",
