@@ -461,9 +461,10 @@ pnpm run test
 ### How Configuration Works
 
 1. **Auto-Config Loading** - Hooks automatically load `.claude/hooks/{hookName}.config.json`
-2. **Environment Variables** - Override any JSON setting using `CLAUDE_HOOKS_*` variables
-3. **CLI Arguments** - Override both JSON and environment settings
-4. **Defaults** - Built-in fallbacks if nothing else is specified
+2. **Environment Variable Substitution** - Use `${VAR_NAME}` syntax in JSON config files
+3. **Environment Variables** - Override any JSON setting using `CLAUDE_HOOKS_*` variables
+4. **CLI Arguments** - Override both JSON and environment settings
+5. **Defaults** - Built-in fallbacks if nothing else is specified
 
 ### Configuration Priority
 
@@ -471,15 +472,52 @@ pnpm run test
 Defaults < JSON File < Environment Variables < CLI Arguments
 ```
 
+### Environment Variable Substitution
+
+You can use `${VAR_NAME}` syntax in JSON config files to reference environment variables:
+
+```json
+{
+  "settings": {
+    "speak": true,
+    "tts": {
+      "provider": "auto",
+      "fallbackProvider": "macos",
+      "openai": {
+        "apiKey": "${OPENAI_API_KEY}",
+        "model": "tts-1",
+        "voice": "nova",
+        "speed": 0.9,
+        "format": "mp3"
+      },
+      "macos": {
+        "voice": "Alex",
+        "rate": 200,
+        "volume": 0.7,
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+**Features:**
+
+- Substitutes `${OPENAI_API_KEY}` with the actual environment variable value
+- Keeps the placeholder if environment variable is not found (with warning)
+- Works with any environment variable in any JSON field
+- Processed before configuration validation
+
 ### Example Configuration Loading
 
 The hooks use automatic configuration discovery:
 
 1. Find project root (where `.claude/` directory exists)
 2. Load `.claude/hooks/{hookName}.config.json`
-3. Extract `settings` object from JSON
-4. Apply environment variable overrides
-5. Apply CLI argument overrides
+3. **Process environment variable substitution** (`${VAR_NAME}` → actual values)
+4. Extract `settings` object from JSON
+5. Apply environment variable overrides
+6. Apply CLI argument overrides
 
 ## Architecture
 
@@ -582,6 +620,7 @@ Or add to your `.claude/hooks/stop.config.json`:
     "tts": {
       "provider": "openai",
       "openai": {
+        "apiKey": "${OPENAI_API_KEY}",
         "voice": "nova",
         "model": "tts-1-hd",
         "speed": 0.9
@@ -590,6 +629,8 @@ Or add to your `.claude/hooks/stop.config.json`:
   }
 }
 ```
+
+**Note:** The `apiKey` field uses environment variable substitution (`${OPENAI_API_KEY}`) to securely reference your API key without hardcoding it in the config file.
 
 ## CLI Arguments
 

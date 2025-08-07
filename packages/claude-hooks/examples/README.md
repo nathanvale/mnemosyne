@@ -4,19 +4,41 @@ This directory contains example configurations for various Claude Code hooks. Co
 
 ## How to Use
 
-### Method 1: Direct Commands (Simplest)
+1. **Install the package**: `npm install -g @studio/claude-hooks`
+2. **Copy an example configuration** to `.claude/hooks/` directory
+3. **Rename it** to match the hook name (e.g., `notification.config.json`)
+4. **Configure Claude Code settings** to use CLI commands:
 
-1. Copy an example configuration to `.claude/hooks/` directory
-2. Rename it to match the hook name (e.g., `notification.config.json`)
-3. Configure hooks in `.claude/settings.local.json` to use direct `npx tsx` commands
-4. The hooks will automatically load their configuration
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-notification"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
-### Method 2: Hook Scripts (Legacy)
-
-1. Copy an example configuration to your `.claude/hooks/` directory
-2. Rename it to match the hook name (e.g., `notification.config.json`)
-3. Create executable hook scripts if needed
-4. The hook will automatically use the configuration when triggered
+The hooks will automatically load their configuration from the `.claude/hooks/` directory.
 
 ## Notification Hook Examples
 
@@ -55,6 +77,12 @@ Enables chat transcript logging with configurable log rotation.
 ### Speech Completion (`stop-speech-completion.json`)
 
 Uses speech synthesis with quiet hours support (macOS only).
+
+**Usage**: Copy to `.claude/hooks/stop.config.json`
+
+### OpenAI TTS Integration (`stop-openai-tts.json`)
+
+Modern TTS configuration with OpenAI TTS primary and macOS fallback, using environment variable substitution for secure API key handling.
 
 **Usage**: Copy to `.claude/hooks/stop.config.json`
 
@@ -138,10 +166,19 @@ All settings can be overridden with environment variables. See the main README.m
 
 To test a configuration:
 
-1. Set up the hook with your configuration
-2. Trigger the appropriate Claude Code event
-3. Check logs in your configured log directory for debugging
-4. Adjust settings as needed
+1. **Install globally**: `npm install -g @studio/claude-hooks`
+2. **Test manually**:
+
+   ```bash
+   # Test notification hook
+   echo '{"message": "Test"}' | claude-hooks-notification
+
+   # Test stop hook
+   echo '{"result": "success"}' | claude-hooks-stop
+   ```
+
+3. **Check logs** in your configured log directory for debugging
+4. **Adjust settings** as needed
 
 ## Platform-Specific Notes
 
