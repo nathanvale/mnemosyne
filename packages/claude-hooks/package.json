@@ -28,7 +28,9 @@
     "claude-hooks-stop": "./dist/bin/claude-hooks-stop.js",
     "claude-hooks-notification": "./dist/bin/claude-hooks-notification.js",
     "claude-hooks-quality": "./dist/bin/claude-hooks-quality.js",
-    "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js"
+    "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js",
+    "claude-hooks-cache-stats": "./dist/bin/claude-hooks-cache-stats.js",
+    "claude-hooks-cache-explorer": "./dist/bin/claude-hooks-cache-explorer.js"
   },
   "files": [
     "dist/**/*",
@@ -95,7 +97,10 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
+    "cache:explorer": "tsx src/bin/claude-hooks-cache-explorer.ts",
+    "cache:clear": "tsx src/bin/claude-hooks-cache-explorer.ts --clear"
   },
   "dependencies": {
     "micromatch": "^4.0.8",

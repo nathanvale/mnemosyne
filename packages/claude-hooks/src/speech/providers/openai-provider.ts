@@ -171,6 +171,7 @@ export class OpenAIProvider extends BaseTTSProvider {
         model: this.openaiConfig.model,
         speed: this.openaiConfig.speed,
         format: this.openaiConfig.format,
+        text: inputText,
       })
 
       // Play the audio

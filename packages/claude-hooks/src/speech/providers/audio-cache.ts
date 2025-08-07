@@ -26,6 +26,7 @@ export interface CacheEntry {
     model?: string
     speed?: number
     format?: string
+    text?: string
   }
 }
 
