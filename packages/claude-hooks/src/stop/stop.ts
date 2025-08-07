@@ -37,11 +37,11 @@ export interface StopHookConfig extends HookConfig {
 
 export class StopHook extends BaseHook<ClaudeStopEvent> {
   private readonly chat: boolean
-  private readonly speak: boolean
+  private speak: boolean // Remove readonly to allow disabling on error
   private readonly notifySound: boolean
   private readonly player: AudioPlayer
   private ttsProvider: TTSProvider | null = null
-  private readonly ttsProviderPromise: Promise<TTSProvider>
+  private readonly ttsProviderPromise: Promise<TTSProvider | null>
   private readonly platform: Platform
   private readonly transcriptParser: TranscriptParser
 
@@ -67,13 +67,24 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,
-    ).then((provider) => {
-      this.ttsProvider = provider
-      this.log.debug(
-        `TTS Provider selected: ${provider.getProviderInfo().displayName}`,
-      )
-      return provider
-    })
+    )
+      .then((provider) => {
+        this.ttsProvider = provider
+        this.log.debug(
+          `TTS Provider selected: ${provider.getProviderInfo().displayName}`,
+        )
+        return provider
+      })
+      .catch((error) => {
+        // Log the error and disable TTS functionality
+        this.log.error(`Failed to initialize TTS provider: ${error}`)
+        this.speak = false // Disable speech since provider initialization failed
+
+        // Return null to indicate provider is not available
+        // This allows the application to continue without TTS functionality
+        this.ttsProvider = null
+        return null
+      })
 
     this.platform = detectPlatform()
     this.transcriptParser = new TranscriptParser()
@@ -150,6 +161,12 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
   private async handleSpeech(event: ClaudeStopEvent): Promise<void> {
     // Wait for TTS provider to be initialized
     const ttsProvider = await this.ttsProviderPromise
+
+    // Check if provider initialization failed
+    if (!ttsProvider) {
+      this.log.debug('TTS provider initialization failed')
+      return
+    }
 
     if (!(await ttsProvider.isAvailable())) {
       this.log.debug('TTS provider not available')
