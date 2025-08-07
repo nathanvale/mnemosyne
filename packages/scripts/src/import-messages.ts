@@ -5,7 +5,7 @@ import { createHash } from 'crypto'
 import { parse } from 'fast-csv'
 import fs from 'fs'
 
-export const prisma = new PrismaClient()
+export const prisma: PrismaClient = new PrismaClient()
 
 /**
  * Creates a stable content-based hash for message deduplication.

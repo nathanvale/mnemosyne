@@ -10,20 +10,47 @@
       "@studio/ui": ["./packages/ui/src"],
       "@studio/mocks": ["./packages/mocks/src"],
       "@studio/shared": ["./packages/shared/src"],
+      "@studio/schema": ["./packages/schema/src"],
+      "@studio/memory": ["./packages/memory/src"],
+      "@studio/mcp": ["./packages/mcp/src"],
+      "@studio/validation": ["./packages/validation/src"],
+      "@studio/claude-hooks": ["./packages/claude-hooks/src"],
+      "@studio/eslint-config": ["./packages/eslint-config/src"],
       "@studio/typescript-config": ["./packages/typescript-config/src"],
       "@studio/prettier-config": ["./packages/prettier-config"]
     }
   },
   "references": [
+    // Level 0: Configuration packages (no internal deps)
     { "path": "./packages/shared" },
     { "path": "./packages/typescript-config" },
     { "path": "./packages/prettier-config" },
+    { "path": "./packages/eslint-config" },
+
+    // Level 1: Core schema (no internal deps)
+    { "path": "./packages/schema" },
+
+    // Level 2: Basic services (depend on schema)
     { "path": "./packages/db" },
-    { "path": "./packages/mocks" },
-    { "path": "./packages/test-config" },
     { "path": "./packages/logger" },
+
+    // Level 3: Core functionality (depend on level 1-2)
+    { "path": "./packages/memory" },
+    { "path": "./packages/test-config" },
+    { "path": "./packages/mocks" },
+
+    // Level 4: Extended services (depend on level 1-3)
+    { "path": "./packages/validation" },
+    { "path": "./packages/mcp" },
+
+    // Level 5: Complex packages (depend on multiple levels)
     { "path": "./packages/scripts" },
     { "path": "./packages/ui" },
+
+    // Level 6: External integrations (depend on many packages)
+    { "path": "./packages/claude-hooks" },
+
+    // Level 7: Applications (depend on all)
     { "path": "./apps/studio" }
   ],
   "include": [
