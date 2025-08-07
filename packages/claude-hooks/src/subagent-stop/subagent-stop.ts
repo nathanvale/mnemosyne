@@ -35,7 +35,7 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
   private readonly speak: boolean
   private readonly player: AudioPlayer
   private ttsProvider: TTSProvider | null = null
-  private readonly ttsProviderPromise: Promise<TTSProvider>
+  private readonly ttsProviderPromise: Promise<TTSProvider | null>
   private readonly platform: Platform
 
   constructor(config: SubagentStopHookConfig = {}) {
@@ -54,10 +54,22 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,
-    ).then((provider) => {
-      this.ttsProvider = provider
-      return provider
-    })
+    )
+      .then((provider) => {
+        this.ttsProvider = provider
+        return provider
+      })
+      .catch((error) => {
+        // Log the error but don't crash - speech features will be disabled
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        this.log.error(
+          `Failed to initialize TTS provider: ${errorMessage} (provider: ${factoryConfig.provider}, fallback: ${factoryConfig.fallbackProvider})`,
+        )
+        // Return null to indicate initialization failure
+        this.ttsProvider = null
+        return null
+      })
     this.platform = detectPlatform()
   }
 
@@ -128,6 +140,12 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
   private async handleSpeech(event: ClaudeSubagentStopEvent): Promise<void> {
     // Wait for TTS provider to be initialized
     const ttsProvider = await this.ttsProviderPromise
+
+    // Check if provider initialization failed
+    if (!ttsProvider) {
+      this.log.debug('TTS provider initialization failed - speech disabled')
+      return
+    }
 
     if (!(await ttsProvider.isAvailable())) {
       this.log.debug('TTS provider not available')

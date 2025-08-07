@@ -7,7 +7,7 @@ import type {
   TTSProvider,
   TTSProviderConfig,
   SpeakResult,
-} from './tts-provider'
+} from './tts-provider.js'
 
 /**
  * Provider constructor type
@@ -127,12 +127,12 @@ export class TTSProviderFactory {
    */
   static registerProvider(
     name: string,
-    constructor: ProviderConstructor,
+    providerConstructor: ProviderConstructor,
   ): void {
     if (this.providers.has(name)) {
       throw new Error(`Provider ${name} is already registered`)
     }
-    this.providers.set(name, constructor)
+    this.providers.set(name, providerConstructor)
   }
 
   /**

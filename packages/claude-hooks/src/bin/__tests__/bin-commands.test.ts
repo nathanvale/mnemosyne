@@ -128,7 +128,7 @@ describe('Bin Commands', () => {
   })
 
   describe('Error Handling', () => {
-    it('should handle missing main function gracefully', () => {
+    it('should handle missing main function gracefully', async () => {
       // Each bin file should have proper error handling
       const binFiles = [
         'claude-hooks-stop.ts',
@@ -137,7 +137,7 @@ describe('Bin Commands', () => {
         'claude-hooks-subagent.ts',
       ]
 
-      binFiles.forEach(async (file) => {
+      for (const file of binFiles) {
         const binPath = path.join(binDir, file)
         const exists = await fs
           .stat(binPath)
@@ -149,7 +149,7 @@ describe('Bin Commands', () => {
           expect(content).toContain('.catch((error')
           expect(content).toContain('console.error')
         }
-      })
+      }
     })
   })
 
