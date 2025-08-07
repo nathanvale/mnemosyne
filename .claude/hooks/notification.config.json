@@ -1,16 +1,32 @@
 {
-  "settings": {
-    "notify": true,
-    "speak": true,
-    "debug": false,
-    "cooldownPeriod": 3000,
-    "allowUrgentOverride": false,
-    "quietHours": {
-      "enabled": false,
-      "ranges": [
-        { "start": "22:00", "end": "08:00", "name": "Night" }
-      ],
-      "allowUrgentOverride": true
+  "notifySound": false,
+  "speak": true,
+  "debug": true,
+  "cooldownPeriod": 5000,
+  "allowUrgentOverride": true,
+  "quietHours": {
+    "enabled": true,
+    "ranges": [
+      { "start": "22:00", "end": "08:00", "name": "night" },
+      { "start": "12:00", "end": "13:00", "name": "lunch" }
+    ],
+    "allowUrgentOverride": true
+  },
+  "tts": {
+    "provider": "auto",
+    "fallbackProvider": "macos",
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "tts-1",
+      "voice": "nova",
+      "speed": 1.1,
+      "format": "mp3"
+    },
+    "macos": {
+      "voice": "Alex",
+      "rate": 200,
+      "volume": 0.8,
+      "enabled": true
     }
   }
 }

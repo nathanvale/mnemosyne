@@ -33,6 +33,7 @@
     "CLAUDE_HOOKS_VOLUME",
     "CLAUDE_HOOKS_NOTIFICATION_SOUND",
     "CLAUDE_HOOKS_NOTIFICATION_SPEECH",
+    "CLAUDE_HOOKS_NOTIFY_SOUND",
     "CLAUDE_HOOKS_NOTIFICATION_VOLUME",
     "CLAUDE_HOOKS_QUIET_HOURS_START",
     "CLAUDE_HOOKS_QUIET_HOURS_END",
@@ -95,7 +96,8 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "package.json"]
     },
     "lint": {
       "dependsOn": ["^lint"],
@@ -139,6 +141,25 @@
       "dependsOn": ["^build", "build-storybook"],
       "inputs": ["src/**", ".storybook/**", "package.json"],
       "outputs": []
+    },
+    "test:build": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "dist/**",
+        "scripts/__tests__/**",
+        "vitest.config.build.ts",
+        "package.json"
+      ],
+      "outputs": [],
+      "cache": true,
+      "env": ["NODE_ENV"],
+      "passThroughEnv": [
+        "CI",
+        "WALLABY_WORKER",
+        "WALLABY_WORKER_ID",
+        "VITEST_WORKER_ID",
+        "VITEST_POOL_ID"
+      ]
     },
     "format": {
       "inputs": [

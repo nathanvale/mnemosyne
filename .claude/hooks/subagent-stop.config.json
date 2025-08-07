@@ -1,7 +1,23 @@
 {
-  "settings": {
-    "notify": true,
-    "speak": true,
-    "debug": false
+  "notifySound": false,
+  "speak": true,
+  "debug": false,
+  "cooldownPeriod": 2000,
+  "tts": {
+    "provider": "auto",
+    "fallbackProvider": "macos",
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "tts-1",
+      "voice": "echo",
+      "speed": 0.9,
+      "format": "mp3"
+    },
+    "macos": {
+      "voice": "Alex",
+      "rate": 200,
+      "volume": 0.7,
+      "enabled": true
+    }
   }
 }

@@ -1,7 +1,23 @@
 {
-  "settings": {
-    "chat": true,
-    "speak": true,
-    "debug": false
+  "notifySound": false,
+  "speak": true,
+  "debug": false,
+  "cooldownPeriod": 3000,
+  "tts": {
+    "provider": "openai",
+    "fallbackProvider": "macos",
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "tts-1",
+      "voice": "nova",
+      "speed": 1.0,
+      "format": "mp3"
+    },
+    "macos": {
+      "voice": "Alex",
+      "rate": 250,
+      "volume": 0.7,
+      "enabled": true
+    }
   }
 }
