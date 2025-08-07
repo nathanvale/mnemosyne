@@ -163,42 +163,109 @@ class QualityChecker {
 }
 
 /**
+ * Normalize file path to fix duplicate segments
+ * Handles cases where paths like /packages/claude-hooks/packages/claude-hooks/src/file.ts
+ * get incorrectly duplicated
+ */
+function normalizePath(
+  filePath: string,
+  log: ReturnType<typeof createLogger>,
+): string {
+  // Check for duplicate segments in the path
+  const segments = filePath.split('/')
+  const normalized: string[] = []
+
+  // Track if we've seen packages/claude-hooks sequence
+  let lastWasPackages = false
+  let lastWasClaudeHooks = false
+
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]
+
+    // Check for duplicate packages/claude-hooks pattern
+    if (
+      segment === 'packages' &&
+      lastWasPackages &&
+      i + 1 < segments.length &&
+      segments[i + 1] === 'claude-hooks' &&
+      lastWasClaudeHooks
+    ) {
+      // Skip this duplicate packages/claude-hooks
+      log.debug(
+        `Skipping duplicate segment: packages/claude-hooks at position ${i}`,
+      )
+      i++ // Skip the next 'claude-hooks' as well
+      continue
+    }
+
+    normalized.push(segment)
+
+    // Update tracking
+    lastWasPackages = segment === 'packages'
+    lastWasClaudeHooks = segment === 'claude-hooks'
+  }
+
+  const normalizedPath = normalized.join('/')
+
+  if (normalizedPath !== filePath) {
+    log.warning(`Path normalization: Fixed duplicate segments`)
+    log.debug(`  Original: ${filePath}`)
+    log.debug(`  Normalized: ${normalizedPath}`)
+  }
+
+  return normalizedPath
+}
+
+/**
  * Extract file path from tool input or PostToolUse event
  */
 function extractFilePath(
   input: FileToolInput | ClaudePostToolUseEvent,
+  log: ReturnType<typeof createLogger>,
 ): string | null {
+  let filePath: string | null = null
+
   // Handle PostToolUse event format
   if ('hook_event_name' in input && input.hook_event_name === 'PostToolUse') {
     // Claude Code format - extract from tool_input
     const toolInput = input.tool_input
     if (toolInput) {
-      return (
+      filePath =
         (toolInput.file_path as string) ||
         (toolInput.path as string) ||
         (toolInput.notebook_path as string) ||
         null
-      )
     }
     // Fallback to test format in data
-    return input.data?.file_path || null
+    if (!filePath) {
+      filePath = input.data?.file_path || null
+    }
   }
 
   // Handle test format PostToolUse event
-  if ('type' in input && input.type === 'PostToolUse') {
-    return input.data?.file_path || null
+  else if ('type' in input && input.type === 'PostToolUse') {
+    filePath = input.data?.file_path || null
   }
 
   // Handle legacy FileToolInput format
-  const fileInput = input as FileToolInput
-  const { tool_input } = fileInput
-  if (!tool_input) {
-    return null
+  else {
+    const fileInput = input as FileToolInput
+    const { tool_input } = fileInput
+    if (tool_input) {
+      filePath =
+        tool_input.file_path ||
+        tool_input.path ||
+        tool_input.notebook_path ||
+        null
+    }
   }
 
-  return (
-    tool_input.file_path || tool_input.path || tool_input.notebook_path || null
-  )
+  // Normalize the path if we found one
+  if (filePath) {
+    filePath = normalizePath(filePath, log)
+  }
+
+  return filePath
 }
 
 /**
@@ -281,7 +348,7 @@ async function main(): Promise<void> {
     }
   }
 
-  const filePath = input ? extractFilePath(input) : null
+  const filePath = input ? extractFilePath(input, log) : null
 
   if (!filePath) {
     log.warning(

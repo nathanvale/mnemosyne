@@ -105,6 +105,34 @@ export async function createTypeScriptChecker(
           path.dirname(configPath),
         )
 
+        // Validate the file path before TypeScript checking
+        if (!existsSync(filePath)) {
+          log.warning(`File not found at path: ${filePath}`)
+
+          // Check if this might be a duplicate path issue
+          if (
+            filePath.includes('packages/claude-hooks/packages/claude-hooks')
+          ) {
+            const fixedPath = filePath.replace(
+              /packages\/claude-hooks\/packages\/claude-hooks/g,
+              'packages/claude-hooks',
+            )
+            if (existsSync(fixedPath)) {
+              log.warning(`Found file at corrected path: ${fixedPath}`)
+              log.error(
+                `Path duplication detected - this should have been caught earlier`,
+              )
+              errors.push(
+                'Path duplication issue detected - file path was incorrectly duplicated',
+              )
+              return errors
+            }
+          }
+
+          errors.push(`File does not exist: ${filePath}`)
+          return errors
+        }
+
         // Create program with just the edited file
         log.debug(`TypeScript checking edited file only`)
         let program = ts.createProgram([filePath], parsedConfig.options)
