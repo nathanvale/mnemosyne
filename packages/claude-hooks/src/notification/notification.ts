@@ -230,9 +230,9 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     // Extract message from either root level (Claude format) or data (test format)
     const message =
       event.message || event.data?.message || 'Claude needs your attention'
-    const priority = event.data?.priority || 'medium'
 
-    const speechMessage = `${priority} priority: ${message}`
+    // Just speak the message without priority prefix - priority is only used for sound selection
+    const speechMessage = message
 
     try {
       // Use detached mode so audio continues even if Claude terminates the process

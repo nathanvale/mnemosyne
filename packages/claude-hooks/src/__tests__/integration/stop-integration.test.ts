@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
 import { writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -163,20 +163,24 @@ describe('Stop Hook Integration', () => {
         data: { message: `Test ${eventType} event` },
       })
 
-      // Escape single quotes in JSON for shell command
-      const escapedInput = stdinInput.replace(/'/g, "'\\''")
-      const command = `echo '${escapedInput}' | tsx ${hookPath}`
-
       expect(() => {
-        execSync(command, {
+        // Use spawnSync directly instead of shell command
+        const result = spawnSync('tsx', [hookPath], {
           cwd: tempDir,
           env: {
             ...process.env,
             CLAUDE_HOOKS_DEBUG: 'true',
             CLAUDE_HOOKS_CONFIG_PATH: configPath,
           },
+          input: stdinInput,
+          encoding: 'utf8',
           stdio: 'pipe',
         })
+
+        // Check for errors
+        if (result.error) {
+          throw result.error
+        }
       }).not.toThrow()
     }
   })
