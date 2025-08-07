@@ -18,7 +18,7 @@
     "openai": {
       "apiKey": "${OPENAI_API_KEY}",
       "model": "tts-1",
-      "voice": "nova",
+      "voice": "echo",
       "speed": 1.0,
       "format": "mp3"
     },

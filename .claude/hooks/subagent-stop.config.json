@@ -9,7 +9,7 @@
     "openai": {
       "apiKey": "${OPENAI_API_KEY}",
       "model": "tts-1",
-      "voice": "nova",
+      "voice": "fable",
       "speed": 0.9,
       "format": "mp3"
     },
