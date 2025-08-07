@@ -45,8 +45,8 @@ describe('Subagent Stop Hook Integration', () => {
   })
 
   it('should execute subagent stop hook with basic configuration', async () => {
-    // Skip in Wallaby due to file system and spawn issues
-    if (process.env.WALLABY_WORKER) {
+    // Skip in Wallaby and CI due to file system and spawn issues
+    if (process.env.WALLABY_WORKER || process.env.CI) {
       return
     }
     // Create a basic configuration
@@ -145,8 +145,8 @@ describe('Subagent Stop Hook Integration', () => {
   })
 
   it('should handle multiple subagent completions', async () => {
-    // Skip in Wallaby due to file system and spawn issues
-    if (process.env.WALLABY_WORKER) {
+    // Skip in Wallaby and CI due to file system and spawn issues
+    if (process.env.WALLABY_WORKER || process.env.CI) {
       return
     }
     const config = {

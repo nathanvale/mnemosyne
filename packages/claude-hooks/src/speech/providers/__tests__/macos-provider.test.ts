@@ -23,9 +23,20 @@ import { MacOSProvider } from '../macos-provider.js'
 
 describe('MacOSProvider', () => {
   let provider: MacOSProvider
+  let originalPlatform: string
 
   beforeEach(() => {
     vi.clearAllMocks()
+
+    // Save original platform
+    originalPlatform = process.platform
+
+    // Mock platform as macOS for tests
+    Object.defineProperty(process, 'platform', {
+      value: 'darwin',
+      writable: true,
+      configurable: true,
+    })
 
     // Default mock for exec (successful speech)
     mockExec.mockImplementation((_cmd, callback) => {
@@ -38,6 +49,13 @@ describe('MacOSProvider', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+
+    // Restore original platform
+    Object.defineProperty(process, 'platform', {
+      value: originalPlatform,
+      writable: true,
+      configurable: true,
+    })
   })
 
   describe('Configuration', () => {
