@@ -16,19 +16,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "composite": true,
+    "composite": false,
     "jsx": "preserve",
     "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "**/__tests__/**"
-  ]
+  "exclude": ["node_modules", "dist", "build"]
 }

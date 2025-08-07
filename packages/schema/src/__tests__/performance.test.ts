@@ -260,9 +260,12 @@ describe('Performance Benchmarks', () => {
         createMockMemory(i.toString()),
       )
 
-      // Measure memory usage if available
-      if (performance.memory) {
-        const initialMemory = performance.memory.usedJSHeapSize
+      // Measure memory usage if available (Chrome-specific)
+      const performanceWithMemory = performance as Performance & {
+        memory?: { usedJSHeapSize: number }
+      }
+      if (performanceWithMemory.memory) {
+        const initialMemory = performanceWithMemory.memory.usedJSHeapSize
 
         // Perform various operations
         memories.forEach((memory) => {
@@ -272,7 +275,7 @@ describe('Performance Benchmarks', () => {
           normalizeMemory(memory)
         })
 
-        const finalMemory = performance.memory.usedJSHeapSize
+        const finalMemory = performanceWithMemory.memory.usedJSHeapSize
         const memoryIncrease = finalMemory - initialMemory
 
         console.info(
