@@ -46,7 +46,10 @@ export class MacOSProvider extends BaseTTSProvider {
     this.cache = new AudioCache()
   }
 
-  async speak(text: string): Promise<SpeakResult> {
+  async speak(
+    text: string,
+    _options?: { detached?: boolean },
+  ): Promise<SpeakResult> {
     const startTime = Date.now()
 
     // Validate text
@@ -68,6 +71,7 @@ export class MacOSProvider extends BaseTTSProvider {
       const command = `say -v ${this.macosConfig.voice} -r ${this.macosConfig.rate} "${escapedText}"`
 
       // Execute say command
+      console.error(`[macOS TTS] Executing say command: ${command}`)
       await execAsync(command)
 
       const duration = Date.now() - startTime

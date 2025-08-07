@@ -14,10 +14,13 @@ import { detectPlatform, Platform } from '../audio/platform.js'
 import { BaseHook, type HookConfig } from '../base-hook.js'
 // Import providers to trigger registration
 import '../speech/providers/index.js'
-import { TTSProviderFactory } from '../speech/providers/provider-factory.js'
+import {
+  TTSProviderFactory,
+  type FactoryConfig,
+} from '../speech/providers/provider-factory.js'
 
 export interface SubagentStopHookConfig extends HookConfig {
-  notify?: boolean
+  notifySound?: boolean
   speak?: boolean
   tts?: {
     provider: 'openai' | 'macos' | 'auto'
@@ -28,7 +31,7 @@ export interface SubagentStopHookConfig extends HookConfig {
 }
 
 export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
-  private readonly notify: boolean
+  private readonly notifySound: boolean
   private readonly speak: boolean
   private readonly player: AudioPlayer
   private ttsProvider: TTSProvider | null = null
@@ -37,21 +40,17 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
 
   constructor(config: SubagentStopHookConfig = {}) {
     super('SubagentStop', config)
-    this.notify = config.notify ?? false
+    this.notifySound = config.notifySound ?? false
     this.speak = config.speak ?? false
     this.player = new AudioPlayer()
 
     // Initialize TTS provider using factory (async) with configuration from config file
-    const ttsConfig = config.tts || {
-      provider: 'auto' as const,
-      fallbackProvider: 'macos' as const,
-      macos: { enabled: true },
-    }
-    const factoryConfig = {
-      provider: ttsConfig.provider,
-      fallbackProvider: ttsConfig.fallbackProvider,
-      openai: ttsConfig.openai as TTSProviderConfig | undefined,
-      macos: ttsConfig.macos as TTSProviderConfig | undefined,
+    const ttsConfig = config.tts as Partial<FactoryConfig> | undefined
+    const factoryConfig: FactoryConfig = {
+      provider: ttsConfig?.provider || 'auto',
+      fallbackProvider: ttsConfig?.fallbackProvider || 'macos',
+      openai: ttsConfig?.openai as TTSProviderConfig | undefined,
+      macos: ttsConfig?.macos || { enabled: true },
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,
@@ -88,8 +87,8 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
       await this.handleSpeech(event)
     }
 
-    // Only play sound if notify is enabled
-    if (!this.notify) {
+    // Only play sound if notifySound is enabled
+    if (!this.notifySound) {
       this.log.debug('Subagent notification sound disabled')
       return
     }
@@ -179,7 +178,8 @@ export async function main(): Promise<void> {
   // Merge with CLI arguments (CLI args override JSON)
   const config: SubagentStopHookConfig = {
     ...jsonConfig,
-    notify: process.argv.includes('--notify') || jsonConfig.notify,
+    notifySound:
+      process.argv.includes('--notify-sound') || jsonConfig.notifySound,
     speak: process.argv.includes('--speak') || jsonConfig.speak,
     debug: process.argv.includes('--debug') || jsonConfig.debug,
   }

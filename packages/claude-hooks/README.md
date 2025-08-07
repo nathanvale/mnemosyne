@@ -1,33 +1,101 @@
 # @studio/claude-hooks
 
-TypeScript implementation of Claude Code hooks for task completion notifications, quality checking, and audio features.
+Claude Code hooks for task completion notifications, quality checks, and TTS integration. Provides both TypeScript source for monorepo development and compiled npm package for standalone installation.
 
 ## Overview
 
-This package provides TypeScript implementations of Claude Code hooks:
+This package provides Claude Code hook implementations:
 
+- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with OpenAI TTS support
 - **Notification Hook**: Plays attention sounds when Claude needs user input
-- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with optional chat transcript processing
-- **Subagent Stop Hook**: Tracks and notifies when Claude subagents complete their work
 - **Quality Check Hook**: Runs TypeScript, ESLint, and Prettier checks on code changes
+- **Subagent Stop Hook**: Tracks and notifies when Claude subagents complete their work
 
 ## Features
 
 - 🎯 **Type Safety**: Full TypeScript implementation with comprehensive types
 - 🧩 **Modular Architecture**: Clean separation of concerns with reusable utilities
 - 🔧 **Configurable**: Environment variables and JSON configuration support
-- 🎵 **Cross-Platform Audio**: macOS (afplay), Windows (PowerShell), Linux (aplay/paplay/play)
-- 🗣️ **Speech Support**: macOS speech synthesis with configurable messages
+- 🎵 **Cross-Platform Audio**: macOS, Windows, Linux support
+- 🗣️ **OpenAI TTS Integration**: High-quality text-to-speech with voice options
+- 🍎 **macOS Speech**: Native macOS speech synthesis support
 - 📄 **Event Logging**: JSON-based logging with rotation and transcript processing
 - ⏰ **Smart Scheduling**: Quiet hours and cooldown periods for notifications
 - 🚀 **Fast**: Optimized execution with intelligent caching
-- 📦 **Monorepo Ready**: Designed for Turborepo with proper caching
+- 📦 **NPM Ready**: Install as standalone package or use in monorepo
 
 ## Installation
 
-This package provides TypeScript implementations of Claude Code hooks. The simplest approach is to call them directly from Claude Code settings.
+### Option 1: NPM Package (Recommended)
 
-### Quick Start (Simplest Approach)
+Install globally for easy access:
+
+```bash
+npm install -g @studio/claude-hooks
+```
+
+Or install locally in your project:
+
+```bash
+npm install @studio/claude-hooks
+```
+
+Then configure Claude Code settings with bin commands:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-notification"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-quality"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-subagent"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Option 2: Monorepo Development
+
+If you're working within the mnemosyne monorepo:
 
 1. **Install dependencies** (from repository root):
 
@@ -158,6 +226,47 @@ EOF
 
 4. **Test the hooks** - Trigger Claude Code events to verify they work
 
+## Bin Commands
+
+When installed as an npm package, the following commands are available:
+
+| Command                     | Description                                        | Hook Type    |
+| --------------------------- | -------------------------------------------------- | ------------ |
+| `claude-hooks-stop`         | Task completion notifications with TTS support     | Stop         |
+| `claude-hooks-notification` | User attention notifications                       | Notification |
+| `claude-hooks-quality`      | Code quality checks (TypeScript, ESLint, Prettier) | PostToolUse  |
+| `claude-hooks-subagent`     | Subagent completion tracking                       | SubagentStop |
+
+### Command Examples
+
+```bash
+# Test the stop hook manually
+echo '{"result": "success"}' | claude-hooks-stop
+
+# Test the notification hook
+echo '{"message": "Test notification"}' | claude-hooks-notification
+
+# Test the quality check hook
+echo '{"tool_name": "Edit", "tool_input": {"file_path": "/path/to/file.ts"}}' | claude-hooks-quality
+
+# Test the subagent hook
+echo '{"data": {"subagentType": "general-purpose"}}' | claude-hooks-subagent
+```
+
+### Global vs Local Installation
+
+**Global installation** (recommended for most users):
+
+- Commands available from anywhere: `claude-hooks-stop`
+- Simpler Claude Code configuration
+- Works across all projects
+
+**Local installation** (for project-specific needs):
+
+- Commands available via npx: `npx claude-hooks-stop`
+- Version locked to your project
+- Use `./node_modules/.bin/claude-hooks-stop` in Claude Code settings
+
 ## Usage
 
 Each hook requires:
@@ -243,8 +352,9 @@ Plays completion sounds when Claude finishes tasks.
 **Features:**
 
 - Task completion sounds (success/error)
+- OpenAI TTS with voice selection
+- macOS speech synthesis fallback
 - Chat transcript logging
-- Speech announcements (macOS)
 - Platform-specific sound selection
 
 ### Subagent Stop Hook
@@ -443,6 +553,44 @@ Environment variables can override any JSON configuration setting. Use the forma
 - `CLAUDE_HOOKS_PRETTIER_AUTOFIX` - Enable Prettier auto-fixing
 - `CLAUDE_HOOKS_AUTOFIX_SILENT` - Don't block when auto-fixing succeeds
 
+### OpenAI TTS Configuration
+
+For OpenAI text-to-speech integration, set the following environment variables:
+
+- `OPENAI_API_KEY` - Your OpenAI API key (required)
+- `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
+- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection: "alloy" (default), "echo", "fable", "onyx", "nova", "shimmer"
+- `CLAUDE_HOOKS_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
+- `CLAUDE_HOOKS_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+
+Example OpenAI TTS configuration:
+
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+export CLAUDE_HOOKS_TTS_PROVIDER="openai"
+export CLAUDE_HOOKS_TTS_VOICE="nova"
+export CLAUDE_HOOKS_TTS_MODEL="tts-1-hd"
+export CLAUDE_HOOKS_TTS_SPEED="0.9"
+```
+
+Or add to your `.claude/hooks/stop.config.json`:
+
+```json
+{
+  "settings": {
+    "speak": true,
+    "tts": {
+      "provider": "openai",
+      "openai": {
+        "voice": "nova",
+        "model": "tts-1-hd",
+        "speed": 0.9
+      }
+    }
+  }
+}
+```
+
 ## CLI Arguments
 
 The hooks support command-line flags that override both JSON and environment configuration:
@@ -487,11 +635,151 @@ Tests cover:
 
 The build process:
 
-1. Compiles TypeScript to JavaScript
-2. Bundles each hook with esbuild
-3. Outputs CommonJS files with proper shebangs
-4. Creates executable hook files in `hooks/` directory
+1. Compiles TypeScript to JavaScript with source maps
+2. Generates TypeScript declaration files for type safety
+3. Adds proper shebangs to bin files and makes them executable
+4. Creates distributable package in `dist/` directory
 
 ## License
 
-Private - Part of the mnemosyne monorepo
+MIT - See LICENSE file for details
+
+## Contributing
+
+This package is part of the mnemosyne monorepo. Contributions welcome!
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make changes and add tests
+4. Run tests: `pnpm test`
+5. Run quality checks: `pnpm check`
+6. Submit a pull request
+
+## Migration from Universal Hooks
+
+If you've been using the universal hook scripts (`.claude/hooks/universal-stop-hook.sh`, etc.), follow these steps to migrate to the npm package approach:
+
+### Step 1: Install the Package
+
+```bash
+# Install globally (recommended)
+npm install -g @studio/claude-hooks
+
+# Or install locally in your project
+npm install @studio/claude-hooks
+```
+
+### Step 2: Update Your Claude Code Settings
+
+Replace the universal hook script commands with the new bin commands in your `.claude/settings.local.json`:
+
+**Before (universal hooks):**
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/universal-stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**After (npm package):**
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-notification"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-quality"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-subagent"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Step 3: Test the Migration
+
+Test each hook to ensure it works correctly:
+
+```bash
+# Test each command manually
+echo '{"result": "success"}' | claude-hooks-stop
+echo '{"message": "Test"}' | claude-hooks-notification
+echo '{"tool_name": "Edit", "tool_input": {"file_path": "test.ts"}}' | claude-hooks-quality
+echo '{"data": {"subagentType": "general-purpose"}}' | claude-hooks-subagent
+```
+
+### Step 4: Remove Old Files (Optional)
+
+Once you've verified the new setup works, you can remove the old universal hook scripts:
+
+```bash
+# Remove deprecated universal hooks
+rm .claude/hooks/universal-stop-hook.sh
+rm .claude/hooks/subagent-stop-hook.sh
+# Remove other old script files as needed
+```
+
+### Benefits of the Migration
+
+- ✅ **Cross-platform compatibility** - Works on Windows, macOS, and Linux
+- ✅ **Simplified configuration** - No more complex bash scripts
+- ✅ **Version management** - Lock to specific versions with npm
+- ✅ **Better error handling** - Proper exit codes and error messages
+- ✅ **Standard npm patterns** - Follows Node.js ecosystem conventions
+- ✅ **Easier updates** - Use `npm update -g @studio/claude-hooks`
+
+## Support
+
+- **Issues**: Report bugs and feature requests on [GitHub Issues](https://github.com/nathanvale/mnemosyne/issues)
+- **Documentation**: Full documentation available in the [mnemosyne docs](https://nathanvale.github.io/mnemosyne/)
+- **Discord**: Join the community for discussion and support

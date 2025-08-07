@@ -34,9 +34,12 @@ class FallbackProvider implements TTSProvider {
     private fallbackProvider: TTSProvider | null,
   ) {}
 
-  async speak(text: string): Promise<SpeakResult> {
+  async speak(
+    text: string,
+    options?: { detached?: boolean },
+  ): Promise<SpeakResult> {
     try {
-      const result = await this.primaryProvider.speak(text)
+      const result = await this.primaryProvider.speak(text, options)
       if (result.success) {
         return result
       }
@@ -44,7 +47,7 @@ class FallbackProvider implements TTSProvider {
       // Primary failed, try fallback
       if (this.fallbackProvider) {
         try {
-          return await this.fallbackProvider.speak(text)
+          return await this.fallbackProvider.speak(text, options)
         } catch {
           // Fallback also failed
         }
@@ -197,12 +200,22 @@ export class TTSProviderFactory {
   static async detectBestProvider(config: FactoryConfig): Promise<TTSProvider> {
     // Priority order: OpenAI (if API key), macOS (if available)
 
-    // Try OpenAI first if API key is available
-    if (config.openai?.apiKey) {
+    // Try OpenAI first if API key is available (in config or environment)
+    const hasOpenAIKey = config.openai?.apiKey || process.env['OPENAI_API_KEY']
+    if (hasOpenAIKey) {
       const openaiProvider = this.providers.get('openai')
       if (openaiProvider) {
-        const provider = new openaiProvider(config.openai)
+        const provider = new openaiProvider(config.openai || {})
         if (await provider.isAvailable()) {
+          // Create with fallback if specified
+          if (config.fallbackProvider && config.fallbackProvider !== 'none') {
+            const fallbackConfig: FactoryConfig = {
+              ...config,
+              provider: config.fallbackProvider,
+            }
+            const fallback = this.create(fallbackConfig)
+            return new FallbackProvider(provider, fallback)
+          }
           return provider
         }
       }

@@ -54,6 +54,8 @@ describe('OpenAIProvider', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Clear environment variable to ensure test isolation
+    delete process.env.OPENAI_API_KEY
 
     // Default mock response for OpenAI
     mockCreate.mockResolvedValue({
@@ -71,6 +73,8 @@ describe('OpenAIProvider', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    // Clean up environment variable
+    delete process.env.OPENAI_API_KEY
   })
 
   describe('Configuration', () => {

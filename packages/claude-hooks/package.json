@@ -1,29 +1,101 @@
 {
   "name": "@studio/claude-hooks",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
+  "description": "Claude Code hooks for task completion notifications, quality checks, and TTS integration",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "tts",
+    "notifications",
+    "quality-check",
+    "ai",
+    "development"
+  ],
+  "homepage": "https://github.com/nathanvale/mnemosyne/tree/main/packages/claude-hooks",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/mnemosyne.git",
+    "directory": "packages/claude-hooks"
+  },
+  "license": "MIT",
+  "author": "Nathan Vale",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "claude-hooks-stop": "./dist/bin/claude-hooks-stop.js",
+    "claude-hooks-notification": "./dist/bin/claude-hooks-notification.js",
+    "claude-hooks-quality": "./dist/bin/claude-hooks-quality.js",
+    "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
-    "./sound-notification": "./src/sound-notification/index.ts",
-    "./quality-check": "./src/quality-check/index.ts",
-    "./types": "./src/types/index.ts",
-    "./notification": "./src/notification/index.ts",
-    "./stop": "./src/stop/index.ts",
-    "./subagent-stop": "./src/subagent-stop/index.ts",
-    "./base-hook": "./src/base-hook.ts",
-    "./config": "./src/config/config-schema.ts",
-    "./logging": "./src/logging/index.ts",
-    "./audio": "./src/audio/index.ts",
-    "./speech": "./src/speech/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./sound-notification": {
+      "import": "./dist/sound-notification/index.js",
+      "types": "./dist/sound-notification/index.d.ts"
+    },
+    "./quality-check": {
+      "import": "./dist/quality-check/index.js",
+      "types": "./dist/quality-check/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./notification": {
+      "import": "./dist/notification/notification.js",
+      "types": "./dist/notification/notification.d.ts"
+    },
+    "./stop": {
+      "import": "./dist/stop/stop.js",
+      "types": "./dist/stop/stop.d.ts"
+    },
+    "./subagent-stop": {
+      "import": "./dist/subagent-stop/subagent-stop.js",
+      "types": "./dist/subagent-stop/subagent-stop.d.ts"
+    },
+    "./base-hook": {
+      "import": "./dist/base-hook.js",
+      "types": "./dist/base-hook.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config/config-schema.js",
+      "types": "./dist/config/config-schema.d.ts"
+    },
+    "./logging": {
+      "import": "./dist/logging/index.js",
+      "types": "./dist/logging/index.d.ts"
+    },
+    "./audio": {
+      "import": "./dist/audio/index.js",
+      "types": "./dist/audio/index.d.ts"
+    },
+    "./speech": {
+      "import": "./dist/speech/index.js",
+      "types": "./dist/speech/index.d.ts"
+    }
   },
   "scripts": {
-    "build": "echo 'Using tsx for direct TypeScript execution - no build needed'",
+    "build": "tsc && node scripts/fix-shebangs.js",
+    "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
+    "test:build": "./scripts/test-build.sh",
     "lint": "eslint src --max-warnings 0",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "micromatch": "^4.0.8",

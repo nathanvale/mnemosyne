@@ -16,6 +16,17 @@ vi.mock('../../audio/platform.js', () => ({
     Unsupported: 'unsupported',
   },
 }))
+vi.mock('../../speech/providers/provider-factory.js', () => ({
+  TTSProviderFactory: {
+    createWithFallback: vi.fn().mockResolvedValue({
+      speak: vi.fn().mockResolvedValue(undefined),
+      getProviderInfo: vi
+        .fn()
+        .mockReturnValue({ displayName: 'Mock Provider' }),
+      isAvailable: vi.fn().mockResolvedValue(true),
+    }),
+  },
+}))
 
 // Mock file system
 vi.mock('node:fs/promises', () => {

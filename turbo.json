@@ -5,6 +5,7 @@
     "NODE_ENV",
     "CI",
     "TMPDIR",
+    "TURBO_HASH",
     "DATABASE_URL",
     "TEST_VERBOSE",
     "VITEST",

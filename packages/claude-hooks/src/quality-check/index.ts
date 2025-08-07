@@ -425,11 +425,16 @@ process.on('unhandledRejection', (error) => {
   process.exit(HookExitCode.GeneralError)
 })
 
-// Run main
-main().catch((error) => {
-  const log = createLogger('INFO', false)
-  log.error(
-    `Fatal error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-  )
-  process.exit(HookExitCode.GeneralError)
-})
+// Export main for bin entry
+export { main }
+
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    const log = createLogger('INFO', false)
+    log.error(
+      `Fatal error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
+    process.exit(HookExitCode.GeneralError)
+  })
+}

@@ -7,7 +7,7 @@
 
 export interface HookConfig {
   debug?: boolean
-  notify?: boolean
+  notifySound?: boolean
   speak?: boolean
 }
 
@@ -184,7 +184,7 @@ export class ConfigValidator {
     errors: ValidationError[],
     _warnings: ValidationError[],
   ): void {
-    const booleanFields = ['debug', 'notify', 'speak']
+    const booleanFields = ['debug', 'notifySound', 'speak']
 
     booleanFields.forEach((field) => {
       if (config[field] !== undefined && typeof config[field] !== 'boolean') {
@@ -705,7 +705,7 @@ export class ConfigValidator {
   static getDefaultConfig(): CompleteHookConfig {
     return {
       debug: false,
-      notify: false,
+      notifySound: false,
       speak: false,
       cooldownPeriod: 5000, // 5 seconds
       allowUrgentOverride: false,

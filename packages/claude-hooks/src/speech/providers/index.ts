@@ -26,9 +26,31 @@ export type {
 
 import { MacOSProvider } from './macos-provider.js'
 import { OpenAIProvider } from './openai-provider.js'
-// Register providers with factory
 import { TTSProviderFactory } from './provider-factory.js'
 
-// Register providers on module load
-TTSProviderFactory.registerProvider('openai', OpenAIProvider)
-TTSProviderFactory.registerProvider('macos', MacOSProvider)
+// Ensure providers are registered when the factory is first used
+let providersRegistered = false
+
+/**
+ * Initialize the provider factory with default providers
+ */
+export function initializeProviders(): void {
+  if (providersRegistered) return
+
+  // Check if TTSProviderFactory and registerProvider method exist
+  if (typeof TTSProviderFactory?.registerProvider !== 'function') {
+    console.error('TTSProviderFactory.registerProvider is not a function:', {
+      TTSProviderFactory,
+      registerProvider: TTSProviderFactory?.registerProvider,
+      type: typeof TTSProviderFactory?.registerProvider,
+    })
+    return
+  }
+
+  TTSProviderFactory.registerProvider('openai', OpenAIProvider)
+  TTSProviderFactory.registerProvider('macos', MacOSProvider)
+  providersRegistered = true
+}
+
+// Auto-initialize on module load
+initializeProviders()

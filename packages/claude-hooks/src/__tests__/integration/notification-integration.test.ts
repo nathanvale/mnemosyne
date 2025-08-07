@@ -32,6 +32,10 @@ describe('Notification Hook Integration', () => {
   })
 
   it('should execute notification hook with basic configuration', async () => {
+    // Skip in Wallaby due to file system and spawn issues
+    if (process.env.WALLABY_WORKER) {
+      return
+    }
     // Create a basic configuration
     const config = {
       settings: {

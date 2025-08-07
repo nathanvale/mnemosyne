@@ -16,11 +16,14 @@ import { loadConfigFromEnv } from '../config/env-config.js'
 import { Cooldown } from '../speech/cooldown.js'
 // Import providers to trigger registration
 import '../speech/providers/index.js'
-import { TTSProviderFactory } from '../speech/providers/provider-factory.js'
+import {
+  TTSProviderFactory,
+  type FactoryConfig,
+} from '../speech/providers/provider-factory.js'
 import { QuietHours } from '../speech/quiet-hours.js'
 
 export interface NotificationHookConfig extends HookConfig {
-  notify?: boolean
+  notifySound?: boolean
   speak?: boolean
   cooldownPeriod?: number
   allowUrgentOverride?: boolean
@@ -49,7 +52,7 @@ export interface NotificationHookConfig extends HookConfig {
 }
 
 export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
-  private readonly notify: boolean
+  private readonly notifySound: boolean
   private readonly speak: boolean
   private readonly player: AudioPlayer
   private ttsProvider: TTSProvider | null = null
@@ -63,21 +66,17 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     const envConfig = loadConfigFromEnv(config)
 
     super('Notification', envConfig)
-    this.notify = envConfig.notify ?? false
+    this.notifySound = envConfig.notifySound ?? false
     this.speak = envConfig.speak ?? false
     this.player = new AudioPlayer()
 
     // Initialize TTS provider using factory (async) with environment config
-    const ttsConfig = envConfig.tts || {
-      provider: 'auto' as const,
-      fallbackProvider: 'macos' as const,
-      macos: { enabled: true },
-    }
-    const factoryConfig = {
-      provider: ttsConfig.provider,
-      fallbackProvider: ttsConfig.fallbackProvider,
-      openai: ttsConfig.openai as TTSProviderConfig | undefined,
-      macos: ttsConfig.macos as TTSProviderConfig | undefined,
+    const ttsConfig = envConfig.tts as Partial<FactoryConfig> | undefined
+    const factoryConfig: FactoryConfig = {
+      provider: ttsConfig?.provider || 'auto',
+      fallbackProvider: ttsConfig?.fallbackProvider || 'macos',
+      openai: ttsConfig?.openai as TTSProviderConfig | undefined,
+      macos: ttsConfig?.macos || { enabled: true },
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,
@@ -135,17 +134,29 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
       return
     }
 
-    // Handle speech if enabled
+    // Prepare parallel operations for speech and sound
+    const promises: Promise<void>[] = []
+
+    // Add speech promise if enabled
     if (this.speak) {
-      await this.handleSpeech(event)
+      promises.push(this.handleSpeech(event))
     }
 
-    // Only play sound if notify is enabled
-    if (!this.notify) {
-      this.log.debug('Notification sound disabled')
-      return
+    // Add sound promise if enabled
+    if (this.notifySound) {
+      const soundPromise = this.handleSound(priority)
+      if (soundPromise) {
+        promises.push(soundPromise)
+      }
     }
 
+    // Execute speech and sound in parallel
+    if (promises.length > 0) {
+      await Promise.allSettled(promises)
+    }
+  }
+
+  private async handleSound(priority: string): Promise<void> {
     // Check if platform is supported
     if (this.platform === Platform.Unsupported) {
       this.log.warning('Audio notifications not supported on this platform')
@@ -208,7 +219,8 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     const speechMessage = `${priority} priority: ${message}`
 
     try {
-      const result = await ttsProvider.speak(speechMessage)
+      // Use detached mode so audio continues even if Claude terminates the process
+      const result = await ttsProvider.speak(speechMessage, { detached: true })
       if (result.success) {
         this.log.success('Speech notification delivered')
       } else {
@@ -236,7 +248,8 @@ export async function main(): Promise<void> {
   // Merge with CLI arguments (CLI args override JSON)
   const config: NotificationHookConfig = {
     ...jsonConfig,
-    notify: process.argv.includes('--notify') || jsonConfig.notify,
+    notifySound:
+      process.argv.includes('--notify-sound') || jsonConfig.notifySound,
     speak: process.argv.includes('--speak') || jsonConfig.speak,
     debug: process.argv.includes('--debug') || jsonConfig.debug,
   }

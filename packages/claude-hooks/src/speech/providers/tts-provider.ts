@@ -50,7 +50,7 @@ export interface TTSProvider {
   /**
    * Speak the given text
    */
-  speak(text: string): Promise<SpeakResult>
+  speak(text: string, options?: { detached?: boolean }): Promise<SpeakResult>
 
   /**
    * Check if the provider is available
@@ -99,7 +99,10 @@ export abstract class BaseTTSProvider implements TTSProvider {
     this.config = { ...config }
   }
 
-  abstract speak(text: string): Promise<SpeakResult>
+  abstract speak(
+    text: string,
+    options?: { detached?: boolean },
+  ): Promise<SpeakResult>
   abstract isAvailable(): Promise<boolean>
   abstract getProviderInfo(): TTSProviderInfo
 

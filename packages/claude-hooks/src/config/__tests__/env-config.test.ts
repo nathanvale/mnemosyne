@@ -38,14 +38,14 @@ describe('Environment Configuration', () => {
   describe('Basic Environment Variable Loading', () => {
     it('should load boolean configuration from environment variables', () => {
       process.env.CLAUDE_HOOKS_DEBUG = 'true'
-      process.env.CLAUDE_HOOKS_NOTIFY = 'false'
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = 'false'
       process.env.CLAUDE_HOOKS_SPEAK = '1'
 
       const loader = new EnvConfigLoader()
       const config = loader.loadFromEnv()
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
       expect(config.speak).toBe(true)
     })
 
@@ -76,7 +76,7 @@ describe('Environment Configuration', () => {
     it('should not override config when environment variable is not set', () => {
       const baseConfig = {
         debug: true,
-        notify: false,
+        notifySound: false,
         cooldownPeriod: 5000,
       }
 
@@ -84,7 +84,7 @@ describe('Environment Configuration', () => {
       const config = loader.loadFromEnv(baseConfig)
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
       expect(config.cooldownPeriod).toBe(5000)
     })
 
@@ -145,13 +145,13 @@ describe('Environment Configuration', () => {
 
     it('should handle whitespace in boolean values', () => {
       process.env.CLAUDE_HOOKS_DEBUG = '  true  '
-      process.env.CLAUDE_HOOKS_NOTIFY = '  false  '
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = '  false  '
 
       const loader = new EnvConfigLoader()
       const config = loader.loadFromEnv()
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
     })
   })
 
@@ -285,7 +285,7 @@ describe('Environment Configuration', () => {
   describe('Environment Variable Inspection', () => {
     it('should return only relevant environment variables', () => {
       process.env.CLAUDE_HOOKS_DEBUG = 'true'
-      process.env.CLAUDE_HOOKS_NOTIFY = 'false'
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = 'false'
       process.env.SOME_OTHER_VAR = 'value'
 
       const loader = new EnvConfigLoader()
@@ -293,7 +293,7 @@ describe('Environment Configuration', () => {
 
       expect(relevantVars).toEqual({
         CLAUDE_HOOKS_DEBUG: 'true',
-        CLAUDE_HOOKS_NOTIFY: 'false',
+        CLAUDE_HOOKS_NOTIFY_SOUND: 'false',
       })
       expect(relevantVars.SOME_OTHER_VAR).toBeUndefined()
     })
@@ -382,7 +382,7 @@ describe('Environment Configuration', () => {
     it('should include all expected default mappings', () => {
       const expectedEnvVars = [
         'CLAUDE_HOOKS_DEBUG',
-        'CLAUDE_HOOKS_NOTIFY',
+        'CLAUDE_HOOKS_NOTIFY_SOUND',
         'CLAUDE_HOOKS_SPEAK',
         'CLAUDE_HOOKS_COOLDOWN_PERIOD',
         'CLAUDE_HOOKS_ALLOW_URGENT_OVERRIDE',
@@ -419,7 +419,7 @@ describe('Environment Configuration', () => {
     it('should have correct config paths for all default mappings', () => {
       const expectedMappings = [
         { envVar: 'CLAUDE_HOOKS_DEBUG', configPath: 'debug' },
-        { envVar: 'CLAUDE_HOOKS_NOTIFY', configPath: 'notify' },
+        { envVar: 'CLAUDE_HOOKS_NOTIFY_SOUND', configPath: 'notifySound' },
         { envVar: 'CLAUDE_HOOKS_SPEAK', configPath: 'speak' },
         {
           envVar: 'CLAUDE_HOOKS_COOLDOWN_PERIOD',

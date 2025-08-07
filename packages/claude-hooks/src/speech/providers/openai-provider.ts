@@ -3,7 +3,7 @@
  * Uses OpenAI's Text-to-Speech API for high-quality voice synthesis
  */
 
-import { exec } from 'node:child_process'
+import { exec, spawn } from 'node:child_process'
 import { writeFile, unlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -76,25 +76,44 @@ export class OpenAIProvider extends BaseTTSProvider {
     this.cache = new AudioCache()
   }
 
-  async speak(text: string): Promise<SpeakResult> {
+  async speak(
+    text: string,
+    options?: { detached?: boolean },
+  ): Promise<SpeakResult> {
+    const detached = options?.detached ?? false
+    console.error(
+      '[OpenAI TTS] speak() called with text:',
+      `${text.substring(0, 50)}...`,
+    )
+
     // Validate text
     const cleanText = this.validateText(text)
     if (!cleanText) {
+      console.error('[OpenAI TTS] Empty text, returning error')
       return this.createErrorResult('Empty text')
     }
 
     // Check if client is available
     if (!this.client) {
+      console.error(
+        '[OpenAI TTS] No OpenAI client (API key missing), returning error',
+      )
       return this.createErrorResult('OpenAI API key not configured')
     }
 
+    console.error(
+      '[OpenAI TTS] Client available, proceeding with TTS generation',
+    )
     // Apply rate limiting
     await this.applyRateLimit()
 
-    return this.speakWithRetry(cleanText)
+    return this.speakWithRetry(cleanText, detached)
   }
 
-  private async speakWithRetry(text: string): Promise<SpeakResult> {
+  private async speakWithRetry(
+    text: string,
+    detached = false,
+  ): Promise<SpeakResult> {
     try {
       // Truncate very long text to API limit (4096 chars)
       const inputText =
@@ -112,7 +131,7 @@ export class OpenAIProvider extends BaseTTSProvider {
       const cachedEntry = await this.cache.get(cacheKey)
       if (cachedEntry) {
         // Use cached audio
-        await this.playCachedAudio(cachedEntry.data)
+        await this.playCachedAudio(cachedEntry.data, detached)
 
         // Reset retry count on success
         this.retryCount = 0
@@ -144,7 +163,7 @@ export class OpenAIProvider extends BaseTTSProvider {
       })
 
       // Play the audio
-      await this.playCachedAudio(buffer)
+      await this.playCachedAudio(buffer, detached)
 
       // Reset retry count on success
       this.retryCount = 0
@@ -158,7 +177,7 @@ export class OpenAIProvider extends BaseTTSProvider {
         this.retryCount++
         const delay = this.retryDelay * Math.pow(2, this.retryCount - 1) // Exponential backoff
         await this.sleep(delay)
-        return this.speakWithRetry(text)
+        return this.speakWithRetry(text, detached)
       }
 
       // Reset retry count on final failure
@@ -325,7 +344,10 @@ export class OpenAIProvider extends BaseTTSProvider {
   /**
    * Play cached audio data directly
    */
-  private async playCachedAudio(audioData: Buffer): Promise<void> {
+  private async playCachedAudio(
+    audioData: Buffer,
+    detached = false,
+  ): Promise<void> {
     try {
       // Ensure temp directory exists
       await mkdir(this.tempDir, { recursive: true })
@@ -336,10 +358,12 @@ export class OpenAIProvider extends BaseTTSProvider {
       await writeFile(filepath, audioData)
 
       // Play the audio file
-      await this.playAudio(filepath)
+      await this.playAudio(filepath, detached)
 
-      // Clean up temp file
-      await this.cleanupFile(filepath)
+      // Don't clean up immediately if detached (let audio finish)
+      if (!detached) {
+        await this.cleanupFile(filepath)
+      }
     } catch {
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
@@ -349,23 +373,61 @@ export class OpenAIProvider extends BaseTTSProvider {
   /**
    * Play audio file using system command
    */
-  private async playAudio(filepath: string): Promise<void> {
+  private async playAudio(filepath: string, detached = false): Promise<void> {
     try {
       const platform = process.platform
 
-      let command: string
-      if (platform === 'darwin') {
-        // macOS
-        command = `afplay "${filepath}"`
-      } else if (platform === 'win32') {
-        // Windows
-        command = `powershell -c "(New-Object Media.SoundPlayer '${filepath}').PlaySync()"`
-      } else {
-        // Linux
-        command = `aplay "${filepath}" || paplay "${filepath}" || ffplay -nodisp -autoexit "${filepath}"`
-      }
+      if (detached) {
+        // Use spawn for detached process that continues after parent exits
+        let args: string[] = []
+        let cmd: string
 
-      await execAsync(command)
+        if (platform === 'darwin') {
+          cmd = 'afplay'
+          args = [filepath]
+        } else if (platform === 'win32') {
+          cmd = 'powershell'
+          args = [
+            '-c',
+            `(New-Object Media.SoundPlayer '${filepath}').PlaySync()`,
+          ]
+        } else {
+          // Linux - try multiple players
+          cmd = 'sh'
+          args = [
+            '-c',
+            `aplay "${filepath}" || paplay "${filepath}" || ffplay -nodisp -autoexit "${filepath}"`,
+          ]
+        }
+
+        console.error(
+          `[OpenAI TTS] Playing audio (detached) with ${cmd}: ${filepath}`,
+        )
+
+        const child = spawn(cmd, args, {
+          detached: true,
+          stdio: 'ignore',
+        })
+
+        // Unref allows parent to exit independently
+        child.unref()
+      } else {
+        // Use exec for normal playback (waits for completion)
+        let command: string
+        if (platform === 'darwin') {
+          // macOS
+          command = `afplay "${filepath}"`
+          console.error(`[OpenAI TTS] Playing audio with afplay: ${filepath}`)
+        } else if (platform === 'win32') {
+          // Windows
+          command = `powershell -c "(New-Object Media.SoundPlayer '${filepath}').PlaySync()"`
+        } else {
+          // Linux
+          command = `aplay "${filepath}" || paplay "${filepath}" || ffplay -nodisp -autoexit "${filepath}"`
+        }
+
+        await execAsync(command)
+      }
     } catch {
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation

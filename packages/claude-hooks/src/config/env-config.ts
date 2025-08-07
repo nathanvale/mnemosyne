@@ -20,9 +20,20 @@ export interface EnvVarMapping {
  * Default environment variable mappings
  */
 export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
+  // Configuration directory override
+  {
+    envVar: 'CLAUDE_HOOKS_CONFIG_DIR',
+    configPath: 'configDir',
+    type: 'string',
+  },
+
   // Basic hook configuration
   { envVar: 'CLAUDE_HOOKS_DEBUG', configPath: 'debug', type: 'boolean' },
-  { envVar: 'CLAUDE_HOOKS_NOTIFY', configPath: 'notify', type: 'boolean' },
+  {
+    envVar: 'CLAUDE_HOOKS_NOTIFY_SOUND',
+    configPath: 'notifySound',
+    type: 'boolean',
+  },
   { envVar: 'CLAUDE_HOOKS_SPEAK', configPath: 'speak', type: 'boolean' },
 
   // Cooldown configuration

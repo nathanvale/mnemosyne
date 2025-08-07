@@ -15,6 +15,17 @@ vi.mock('../../audio/platform.js', () => ({
     Unsupported: 'unsupported',
   },
 }))
+vi.mock('../../speech/providers/provider-factory.js', () => ({
+  TTSProviderFactory: {
+    createWithFallback: vi.fn().mockResolvedValue({
+      speak: vi.fn().mockResolvedValue(undefined),
+      getProviderInfo: vi
+        .fn()
+        .mockReturnValue({ displayName: 'Mock Provider' }),
+      isAvailable: vi.fn().mockResolvedValue(true),
+    }),
+  },
+}))
 
 // Mock process.stdin
 const mockStdin = {
@@ -58,7 +69,7 @@ describe('SubagentStopHook', () => {
     })
 
     it('should create instance with custom config', () => {
-      const hook = new SubagentStopHook({ notify: true, debug: true })
+      const hook = new SubagentStopHook({ notifySound: true, debug: true })
       expect(hook).toBeInstanceOf(SubagentStopHook)
     })
   })
@@ -92,7 +103,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: true })
+      const hook = new SubagentStopHook({ notifySound: true })
 
       try {
         await hook.run()
@@ -129,7 +140,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: false })
+      const hook = new SubagentStopHook({ notifySound: false })
 
       try {
         await hook.run()
@@ -159,7 +170,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: false, debug: true })
+      const hook = new SubagentStopHook({ notifySound: false, debug: true })
 
       try {
         await hook.run()
@@ -197,7 +208,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: true })
+      const hook = new SubagentStopHook({ notifySound: true })
 
       try {
         await hook.run()
@@ -280,7 +291,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: true })
+      const hook = new SubagentStopHook({ notifySound: true })
 
       try {
         await hook.run()
@@ -309,7 +320,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: true })
+      const hook = new SubagentStopHook({ notifySound: true })
 
       try {
         await hook.run()
@@ -343,7 +354,7 @@ describe('SubagentStopHook', () => {
           yield Buffer.from(JSON.stringify(event))
         })
 
-      const hook = new SubagentStopHook({ notify: true })
+      const hook = new SubagentStopHook({ notifySound: true })
 
       try {
         await hook.run()
