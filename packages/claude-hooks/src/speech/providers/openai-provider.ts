@@ -127,9 +127,16 @@ export class OpenAIProvider extends BaseTTSProvider {
         this.openaiConfig.speed,
       )
 
+      console.error(
+        `[OpenAI TTS] Cache key for "${inputText.substring(0, 30)}...": ${cacheKey.substring(0, 16)}...`,
+      )
+
       // Check cache first
       const cachedEntry = await this.cache.get(cacheKey)
       if (cachedEntry) {
+        console.error(
+          `[OpenAI TTS] Cache HIT! Using cached audio (${cachedEntry.data.length} bytes)`,
+        )
         // Use cached audio
         await this.playCachedAudio(cachedEntry.data, detached)
 
@@ -152,6 +159,10 @@ export class OpenAIProvider extends BaseTTSProvider {
 
       // Convert response to buffer
       const buffer = Buffer.from(await response.arrayBuffer())
+
+      console.error(
+        `[OpenAI TTS] Caching new audio (${buffer.length} bytes) for: "${inputText.substring(0, 30)}..."`,
+      )
 
       // Cache the result
       await this.cache.set(cacheKey, buffer, {
@@ -357,6 +368,10 @@ export class OpenAIProvider extends BaseTTSProvider {
       const filepath = join(this.tempDir, filename)
       await writeFile(filepath, audioData)
 
+      console.error(
+        `[OpenAI TTS] Playing cached audio from: ${filepath}, size: ${audioData.length} bytes`,
+      )
+
       // Play the audio file
       await this.playAudio(filepath, detached)
 
@@ -364,7 +379,9 @@ export class OpenAIProvider extends BaseTTSProvider {
       if (!detached) {
         await this.cleanupFile(filepath)
       }
-    } catch {
+    } catch (error) {
+      // Log the error for debugging
+      console.error('[OpenAI TTS] Error playing cached audio:', error)
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
     }
@@ -428,7 +445,8 @@ export class OpenAIProvider extends BaseTTSProvider {
 
         await execAsync(command)
       }
-    } catch {
+    } catch (error) {
+      console.error('[OpenAI TTS] Error in playAudio:', error)
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
     }

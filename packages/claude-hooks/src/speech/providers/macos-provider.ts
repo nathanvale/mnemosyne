@@ -3,8 +3,7 @@
  * Uses the built-in macOS 'say' command for text-to-speech
  */
 
-import { exec } from 'node:child_process'
-import { promisify } from 'node:util'
+import { spawn } from 'node:child_process'
 
 import type {
   SpeakResult,
@@ -14,8 +13,6 @@ import type {
 } from './tts-provider.js'
 
 import { BaseTTSProvider } from './tts-provider.js'
-
-const execAsync = promisify(exec)
 
 /**
  * macOS-specific configuration
@@ -34,9 +31,9 @@ export class MacOSProvider extends BaseTTSProvider {
   constructor(config: MacOSConfig = {}) {
     super(config)
 
-    // Set defaults
+    // Set defaults with validation
     this.macosConfig = {
-      voice: config.voice || 'Samantha',
+      voice: this.validateVoice(config.voice) || 'Samantha',
       rate: this.clampRate(config.rate || 200),
     }
   }
@@ -59,15 +56,32 @@ export class MacOSProvider extends BaseTTSProvider {
     }
 
     try {
-      // Escape quotes in text
-      const escapedText = cleanText.replace(/"/g, '\\"')
+      // Execute say command securely with spawn
+      console.error(
+        `[macOS TTS] Executing say with voice: ${this.macosConfig.voice}, rate: ${this.macosConfig.rate}`,
+      )
 
-      // Build say command
-      const command = `say -v ${this.macosConfig.voice} -r ${this.macosConfig.rate} "${escapedText}"`
+      await new Promise<void>((resolve, reject) => {
+        const sayProcess = spawn('say', [
+          '-v',
+          this.macosConfig.voice,
+          '-r',
+          String(this.macosConfig.rate),
+          cleanText,
+        ])
 
-      // Execute say command
-      console.error(`[macOS TTS] Executing say command: ${command}`)
-      await execAsync(command)
+        sayProcess.on('close', (code) => {
+          if (code === 0) {
+            resolve()
+          } else {
+            reject(new Error(`say command failed with exit code ${code}`))
+          }
+        })
+
+        sayProcess.on('error', (error) => {
+          reject(error)
+        })
+      })
 
       const duration = Date.now() - startTime
 
@@ -163,7 +177,10 @@ export class MacOSProvider extends BaseTTSProvider {
     const macosConfig = config as MacOSConfig
 
     if (macosConfig.voice !== undefined) {
-      this.macosConfig.voice = macosConfig.voice
+      const validatedVoice = this.validateVoice(macosConfig.voice)
+      if (validatedVoice) {
+        this.macosConfig.voice = validatedVoice
+      }
     }
 
     if (macosConfig.rate !== undefined) {
@@ -176,6 +193,85 @@ export class MacOSProvider extends BaseTTSProvider {
    */
   private clampRate(rate: number): number {
     return Math.max(50, Math.min(500, rate))
+  }
+
+  /**
+   * Validate voice name against allowed list to prevent injection
+   */
+  private validateVoice(voice: string | undefined): string | undefined {
+    if (!voice) return undefined
+
+    // List of known safe macOS voices
+    const allowedVoices = [
+      'Alex',
+      'Alice',
+      'Allison',
+      'Ava',
+      'Bahh',
+      'Bells',
+      'Boing',
+      'Bruce',
+      'Bubbles',
+      'Cellos',
+      'Daniel',
+      'Deranged',
+      'Diego',
+      'Ellen',
+      'Fiona',
+      'Fred',
+      'Good News',
+      'Hysterical',
+      'Ioana',
+      'Joana',
+      'Junior',
+      'Kanya',
+      'Karen',
+      'Kathy',
+      'Kyoko',
+      'Laura',
+      'Lekha',
+      'Luca',
+      'Luciana',
+      'Maged',
+      'Mariska',
+      'Mei-Jia',
+      'Melina',
+      'Milena',
+      'Moira',
+      'Monica',
+      'Nora',
+      'Paulina',
+      'Rishi',
+      'Samantha',
+      'Sara',
+      'Satu',
+      'Sin-ji',
+      'Tessa',
+      'Thomas',
+      'Ting-Ting',
+      'Veena',
+      'Victoria',
+      'Xander',
+      'Yelda',
+      'Yuna',
+      'Yuri',
+      'Zosia',
+      'Zuzana',
+    ]
+
+    // Only allow alphanumeric characters, spaces, and hyphens for voice names
+    if (!/^[a-zA-Z0-9\s\-]+$/.test(voice)) {
+      return undefined
+    }
+
+    // Check against allowed voices list (case insensitive)
+    const normalizedVoice = voice.trim()
+    const isAllowed = allowedVoices.some(
+      (allowedVoice) =>
+        allowedVoice.toLowerCase() === normalizedVoice.toLowerCase(),
+    )
+
+    return isAllowed ? normalizedVoice : undefined
   }
 
   /**

@@ -7,16 +7,16 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { MacOSConfig } from '../macos-provider.js'
 
 // Use vi.hoisted to ensure mocks are available when modules are imported
-const { mockExec } = vi.hoisted(() => {
+const { mockSpawn } = vi.hoisted(() => {
   return {
-    mockExec: vi.fn(),
+    mockSpawn: vi.fn(),
   }
 })
 
 // Mock child_process for macOS say command
 vi.mock('node:child_process', () => ({
-  default: { exec: mockExec },
-  exec: mockExec,
+  default: { spawn: mockSpawn },
+  spawn: mockSpawn,
 }))
 
 import { MacOSProvider } from '../macos-provider.js'
@@ -38,12 +38,19 @@ describe('MacOSProvider', () => {
       configurable: true,
     })
 
-    // Default mock for exec (successful speech)
-    mockExec.mockImplementation((_cmd, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, '', '')
+    // Default mock for spawn (successful speech)
+    mockSpawn.mockImplementation(() => {
+      const mockProcess = {
+        on: vi.fn(
+          (event: string, callback: (code?: number, error?: Error) => void) => {
+            if (event === 'close') {
+              // Simulate successful completion
+              setTimeout(() => callback(0), 10)
+            }
+          },
+        ),
       }
-      return {} as ReturnType<typeof import('node:child_process').exec>
+      return mockProcess
     })
   })
 
@@ -116,10 +123,13 @@ describe('MacOSProvider', () => {
         const result = await provider.speak('Test text')
 
         expect(result.success).toBe(true)
-        expect(mockExec).toHaveBeenCalledWith(
-          expect.stringContaining(`-v ${voice}`),
-          expect.any(Function),
-        )
+        expect(mockSpawn).toHaveBeenCalledWith('say', [
+          '-v',
+          voice,
+          '-r',
+          '200',
+          'Test text',
+        ])
       })
     })
   })
@@ -136,10 +146,13 @@ describe('MacOSProvider', () => {
         provider = new MacOSProvider(config)
         await provider.speak('Test text')
 
-        expect(mockExec).toHaveBeenCalledWith(
-          expect.stringContaining(`-r ${rate}`),
-          expect.any(Function),
-        )
+        expect(mockSpawn).toHaveBeenCalledWith('say', [
+          '-v',
+          'Samantha',
+          '-r',
+          String(rate),
+          'Test text',
+        ])
       }
     })
 
@@ -151,9 +164,9 @@ describe('MacOSProvider', () => {
       provider = new MacOSProvider(config)
       await provider.speak('Test text')
 
-      expect(mockExec).toHaveBeenCalledWith(
-        expect.stringContaining('-r 500'), // Clamped to max
-        expect.any(Function),
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'say',
+        ['-v', 'Samantha', '-r', '500', 'Test text'], // Clamped to max
       )
     })
   })
@@ -168,10 +181,13 @@ describe('MacOSProvider', () => {
       provider = new MacOSProvider(config)
       await provider.speak('Hello world')
 
-      expect(mockExec).toHaveBeenCalledWith(
-        'say -v Alex -r 180 "Hello world"',
-        expect.any(Function),
-      )
+      expect(mockSpawn).toHaveBeenCalledWith('say', [
+        '-v',
+        'Alex',
+        '-r',
+        '180',
+        'Hello world',
+      ])
     })
 
     it('should handle empty text', async () => {
@@ -182,7 +198,7 @@ describe('MacOSProvider', () => {
 
       expect(result.success).toBe(false)
       expect(result.error).toContain('Empty text')
-      expect(mockExec).not.toHaveBeenCalled()
+      expect(mockSpawn).not.toHaveBeenCalled()
     })
 
     it('should escape quotes in text', async () => {
@@ -191,10 +207,13 @@ describe('MacOSProvider', () => {
       provider = new MacOSProvider(config)
       await provider.speak('Say "hello" to the world')
 
-      expect(mockExec).toHaveBeenCalledWith(
-        expect.stringContaining('Say \\"hello\\" to the world'),
-        expect.any(Function),
-      )
+      expect(mockSpawn).toHaveBeenCalledWith('say', [
+        '-v',
+        'Samantha',
+        '-r',
+        '200',
+        'Say "hello" to the world',
+      ])
     })
 
     it('should handle very long text', async () => {
@@ -206,7 +225,7 @@ describe('MacOSProvider', () => {
 
       // Should still work (no truncation limit like OpenAI)
       expect(result.success).toBe(true)
-      expect(mockExec).toHaveBeenCalled()
+      expect(mockSpawn).toHaveBeenCalled()
     })
   })
 
@@ -214,11 +233,26 @@ describe('MacOSProvider', () => {
     it('should handle say command failure', async () => {
       const config: MacOSConfig = {}
 
-      mockExec.mockImplementation((_cmd, callback) => {
-        if (typeof callback === 'function') {
-          callback(new Error('say command failed'), '', 'Command not found')
+      mockSpawn.mockImplementation(() => {
+        const mockProcess = {
+          on: vi.fn(
+            (
+              event: string,
+              callback: (code?: number, error?: Error) => void,
+            ) => {
+              if (event === 'close') {
+                // Simulate command failure
+                setTimeout(() => callback(1), 10)
+              } else if (event === 'error') {
+                setTimeout(
+                  () => callback(undefined, new Error('say command failed')),
+                  10,
+                )
+              }
+            },
+          ),
         }
-        return {} as ReturnType<typeof import('node:child_process').exec>
+        return mockProcess
       })
 
       provider = new MacOSProvider(config)
@@ -231,11 +265,15 @@ describe('MacOSProvider', () => {
     it('should handle missing say command', async () => {
       const config: MacOSConfig = {}
 
-      mockExec.mockImplementation((_cmd, callback) => {
-        if (typeof callback === 'function') {
-          callback(new Error('Command not found'), '', '')
+      mockSpawn.mockImplementation(() => {
+        const mockProcess = {
+          on: vi.fn((event: string, callback: (error: Error) => void) => {
+            if (event === 'error') {
+              setTimeout(() => callback(new Error('Command not found')), 10)
+            }
+          }),
         }
-        return {} as ReturnType<typeof import('node:child_process').exec>
+        return mockProcess
       })
 
       provider = new MacOSProvider(config)
@@ -248,15 +286,15 @@ describe('MacOSProvider', () => {
     it('should handle voice not available', async () => {
       const config: MacOSConfig = {}
 
-      mockExec.mockImplementation((_cmd, callback) => {
-        if (typeof callback === 'function') {
-          callback(
-            new Error('Voice not available'),
-            '',
-            "Voice 'InvalidVoice' not available",
-          )
+      mockSpawn.mockImplementation(() => {
+        const mockProcess = {
+          on: vi.fn((event: string, callback: (error: Error) => void) => {
+            if (event === 'error') {
+              setTimeout(() => callback(new Error('Voice not available')), 10)
+            }
+          }),
         }
-        return {} as ReturnType<typeof import('node:child_process').exec>
+        return mockProcess
       })
 
       provider = new MacOSProvider(config)
@@ -401,13 +439,20 @@ describe('MacOSProvider', () => {
       const config: MacOSConfig = {}
 
       // Mock a delay to simulate speech duration
-      mockExec.mockImplementation((_cmd, callback) => {
-        setTimeout(() => {
-          if (typeof callback === 'function') {
-            callback(null, '', '')
-          }
-        }, 100)
-        return {} as ReturnType<typeof import('node:child_process').exec>
+      mockSpawn.mockImplementation(() => {
+        const mockProcess = {
+          on: vi.fn(
+            (
+              event: string,
+              callback: (code?: number, error?: Error) => void,
+            ) => {
+              if (event === 'close') {
+                setTimeout(() => callback(0), 100)
+              }
+            },
+          ),
+        }
+        return mockProcess
       })
 
       provider = new MacOSProvider(config)
