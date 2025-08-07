@@ -196,11 +196,16 @@ mnemosyne/
   - `base.json` - Common settings for all packages (ES2022, bundler resolution, strict mode)
   - `library.json` - Library packages with declaration generation and source maps
   - `nextjs.json` - Next.js applications with framework-specific settings
-- **Project references**: Optimized builds with package dependencies and composite projects
+- **Transit node architecture**: Root tsconfig.json organizes packages by dependency levels for parallel type checking
+  - Level 0: Configuration packages (no internal deps)
+  - Level 1: Core schema (no internal deps)
+  - Level 2-7: Packages organized by dependency hierarchy for optimal parallelization
+- **Project references**: All packages migrated from shared config to centralized TypeScript configurations
 - **Module resolution**: Uses `"bundler"` strategy for optimal compatibility
-- **Path mapping**: `@studio/*` imports for all packages
+- **Path mapping**: `@studio/*` imports for all packages configured in root tsconfig.json
 - **Strict mode**: Enabled across all packages with comprehensive type checking
 - **Modern target**: ES2022 with ESNext modules for optimal tree-shaking
+- **Mixed export strategy**: Packages export TypeScript source for internal use, compiled JS for external consumption
 
 ### ESLint Configuration
 

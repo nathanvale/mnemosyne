@@ -1,16 +1,9 @@
 {
-  "extends": "../shared/tsconfig.package.json",
+  "extends": "../typescript-config/library.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "jsx": "react-jsx",
-    "noEmit": false,
-    "allowImportingTsExtensions": false
+    "jsx": "react-jsx"
   },
-  "references": [{ "path": "../schema" }, { "path": "../logger" }],
   "include": ["src/**/*"],
   "exclude": [
     "dist",
@@ -19,5 +12,6 @@
     "src/**/*.stories.*",
     "src/logger-demo.tsx",
     "src/logging-test.tsx"
-  ]
+  ],
+  "references": [{ "path": "../schema" }, { "path": "../logger" }]
 }
