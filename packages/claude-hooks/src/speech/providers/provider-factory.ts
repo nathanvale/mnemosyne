@@ -7,7 +7,7 @@ import type {
   TTSProvider,
   TTSProviderConfig,
   SpeakResult,
-} from './tts-provider.js'
+} from './tts-provider'
 
 /**
  * Provider constructor type
@@ -96,20 +96,20 @@ class FallbackProvider implements TTSProvider {
   }
 
   // Optional methods - delegate to primary
-  async getVoices?() {
+  async getVoices() {
     if (this.primaryProvider.getVoices) {
       return await this.primaryProvider.getVoices()
     }
     return []
   }
 
-  async preloadAudio?(text: string) {
+  async preloadAudio(text: string) {
     if (this.primaryProvider.preloadAudio) {
       await this.primaryProvider.preloadAudio(text)
     }
   }
 
-  cancelSpeech?() {
+  cancelSpeech() {
     if (this.primaryProvider.cancelSpeech) {
       this.primaryProvider.cancelSpeech()
     }
