@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { AudioCache } from './packages/claude-hooks/src/speech/providers/audio-cache.js'
+
+import { AudioCache } from './packages/claude-hooks/dist/speech/providers/audio-cache.js'
 
 const cache = new AudioCache()
 const cacheConfig = cache.getConfiguration()
@@ -11,14 +12,10 @@ try {
   // Get current stats
   const stats = await cache.getStats()
   console.log('📊 Current Cache Stats:')
-  console.log(
-    '   Request Count:',
-    stats.hitRate === 0
-      ? 'Unknown (hitRate = 0)'
-      : Math.round(cache.hitCount / stats.hitRate),
-  )
-  console.log('   Hit Count:', 'Unknown (private property)')
-  console.log('   Hit Rate:', (stats.hitRate * 100).toFixed(1) + '%')
+  console.log(`   Entry Count: ${stats.entryCount}`)
+  console.log(`   Total Size: ${(stats.totalSize / 1024).toFixed(2)} KB`)
+  console.log(`   Hit Rate: ${(stats.hitRate * 100).toFixed(1)}%`)
+  console.log(`   Request/Hit Counts: Not available (private properties)`)
   console.log('')
 
   // Let's look at the actual cached content to see if "task repeated" is there
@@ -48,7 +45,7 @@ try {
         f.startsWith(testKey.substring(0, 16)),
       )
       if (exists) {
-        console.log(`     ✅ FOUND IN CACHE!`)
+        console.log('     ✅ FOUND IN CACHE!')
       }
     } catch (err) {
       console.log(`     ❌ Error: ${err.message}`)
@@ -67,10 +64,10 @@ try {
       const key = entryFile.replace('.json', '')
 
       console.log(`   Entry ${i + 1}:`)
-      console.log('     Full Key:', key)
-      console.log('     Voice:', entry.metadata.voice)
-      console.log('     Model:', entry.metadata.model)
-      console.log('     Speed:', entry.metadata.speed)
+      console.log(`     Full Key: ${key}`)
+      console.log(`     Voice: ${entry.metadata.voice}`)
+      console.log(`     Model: ${entry.metadata.model}`)
+      console.log(`     Speed: ${entry.metadata.speed}`)
       console.log('')
 
       // Let's try to reverse engineer what text might create this key
@@ -97,8 +94,7 @@ try {
   const testText = 'task repeated'
   const testKey = await cache.generateKey(testText, 'tts-1', 'nova', 1.0)
   console.log(
-    '   Generated key for "task repeated":',
-    testKey.substring(0, 16) + '...',
+    `   Generated key for "task repeated": ${testKey.substring(0, 16)}...`,
   )
 
   const cachedEntry = await cache.get(testKey)
@@ -108,5 +104,5 @@ try {
     console.log('   ❌ Cache MISS - "task repeated" not in cache')
   }
 } catch (error) {
-  console.log('❌ Error:', error.message)
+  console.log(`❌ Error: ${error.message}`)
 }

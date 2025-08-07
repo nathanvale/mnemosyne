@@ -163,7 +163,9 @@ describe('Stop Hook Integration', () => {
         data: { message: `Test ${eventType} event` },
       })
 
-      const command = `echo '${stdinInput}' | tsx ${hookPath}`
+      // Escape single quotes in JSON for shell command
+      const escapedInput = stdinInput.replace(/'/g, "'\\''")
+      const command = `echo '${escapedInput}' | tsx ${hookPath}`
 
       expect(() => {
         execSync(command, {

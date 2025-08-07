@@ -52,7 +52,7 @@ export async function loadConfig<T extends Record<string, unknown>>(
  */
 export function findProjectRoot(startPath: string): string {
   let currentPath = startPath
-  const foundPackageJsonAt: string | null = null
+  let foundPackageJsonAt: string | null = null
 
   while (currentPath !== '/') {
     // Check for monorepo indicators first
@@ -91,8 +91,8 @@ export function findProjectRoot(startPath: string): string {
       try {
         const packageStat = statSync(path.join(currentPath, 'package.json'))
         if (packageStat.isFile()) {
-          // Don't return immediately, keep looking for monorepo root
-          return currentPath // For now, return to maintain backward compat
+          // Store the location but continue searching for monorepo root
+          foundPackageJsonAt = currentPath
         }
       } catch {
         // No package.json here
