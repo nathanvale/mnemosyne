@@ -43,13 +43,23 @@ class FallbackProvider implements TTSProvider {
       if (result.success) {
         return result
       }
-    } catch {
+    } catch (primaryError) {
+      // Log primary provider error for debugging
+      console.error(
+        `[FallbackTTSProvider] Primary provider (${this.primaryProvider.getProviderInfo().name}) failed:`,
+        primaryError,
+      )
+
       // Primary failed, try fallback
       if (this.fallbackProvider) {
         try {
           return await this.fallbackProvider.speak(text, options)
-        } catch {
-          // Fallback also failed
+        } catch (fallbackError) {
+          // Log fallback provider error for debugging
+          console.error(
+            `[FallbackTTSProvider] Fallback provider (${this.fallbackProvider.getProviderInfo().name}) also failed:`,
+            fallbackError,
+          )
         }
       }
     }

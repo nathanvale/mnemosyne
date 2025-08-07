@@ -138,6 +138,11 @@ describe('Stop Hook Integration', () => {
   })
 
   it('should handle various event types gracefully', async () => {
+    // Skip in Wallaby due to shell execution issues
+    if (process.env.WALLABY_WORKER) {
+      return
+    }
+
     const config = {
       settings: {
         soundEnabled: false,
