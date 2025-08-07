@@ -1,0 +1,7 @@
+{
+  "settings": {
+    "chat": false,
+    "speak": false,
+    "debug": true
+  }
+}

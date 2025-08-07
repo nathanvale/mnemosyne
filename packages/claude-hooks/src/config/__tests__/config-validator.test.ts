@@ -81,7 +81,7 @@ describe('ConfigValidator Integration', () => {
     it('should reject invalid basic configuration', () => {
       const config = {
         debug: 'true', // should be boolean
-        notify: 1, // should be boolean
+        notifySound: 1, // should be boolean
         speak: null, // should be boolean
       }
 
@@ -90,7 +90,7 @@ describe('ConfigValidator Integration', () => {
       expect(result.isValid).toBe(false)
       expect(result.errors).toHaveLength(3)
       expect(result.errors.map((e) => e.field)).toContain('debug')
-      expect(result.errors.map((e) => e.field)).toContain('notify')
+      expect(result.errors.map((e) => e.field)).toContain('notifySound')
       expect(result.errors.map((e) => e.field)).toContain('speak')
     })
 
@@ -278,7 +278,7 @@ describe('ConfigValidator Integration', () => {
       const defaultConfig = ConfigValidator.getDefaultConfig()
 
       expect(defaultConfig.debug).toBe(false)
-      expect(defaultConfig.notify).toBe(false)
+      expect(defaultConfig.notifySound).toBe(false)
       expect(defaultConfig.speak).toBe(false)
       expect(defaultConfig.cooldownPeriod).toBe(5000)
       expect(defaultConfig.allowUrgentOverride).toBe(false)

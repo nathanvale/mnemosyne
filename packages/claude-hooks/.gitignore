@@ -1,10 +1,17 @@
 # Build outputs
 dist/
 *.tsbuildinfo
+tsconfig-cache.json
 
 # Test coverage
 coverage/
 .nyc_output/
+
+# Generated test files
+**/__tests__/**/*.d.ts
+**/__tests__/**/*.d.ts.map
+**/__tests__/**/*.js
+**/__tests__/**/*.js.map
 
 # Editor directories
 .vscode/

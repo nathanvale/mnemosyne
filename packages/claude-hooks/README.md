@@ -1,33 +1,101 @@
 # @studio/claude-hooks
 
-TypeScript implementation of Claude Code hooks for task completion notifications, quality checking, and audio features.
+Claude Code hooks for task completion notifications, quality checks, and TTS integration. Provides both TypeScript source for monorepo development and compiled npm package for standalone installation.
 
 ## Overview
 
-This package provides TypeScript implementations of Claude Code hooks:
+This package provides Claude Code hook implementations:
 
+- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with OpenAI TTS support
 - **Notification Hook**: Plays attention sounds when Claude needs user input
-- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with optional chat transcript processing
-- **Subagent Stop Hook**: Tracks and notifies when Claude subagents complete their work
 - **Quality Check Hook**: Runs TypeScript, ESLint, and Prettier checks on code changes
+- **Subagent Stop Hook**: Tracks and notifies when Claude subagents complete their work
 
 ## Features
 
 - 🎯 **Type Safety**: Full TypeScript implementation with comprehensive types
 - 🧩 **Modular Architecture**: Clean separation of concerns with reusable utilities
 - 🔧 **Configurable**: Environment variables and JSON configuration support
-- 🎵 **Cross-Platform Audio**: macOS (afplay), Windows (PowerShell), Linux (aplay/paplay/play)
-- 🗣️ **Speech Support**: macOS speech synthesis with configurable messages
+- 🎵 **Cross-Platform Audio**: macOS, Windows, Linux support
+- 🗣️ **OpenAI TTS Integration**: High-quality text-to-speech with voice options
+- 🍎 **macOS Speech**: Native macOS speech synthesis support
 - 📄 **Event Logging**: JSON-based logging with rotation and transcript processing
 - ⏰ **Smart Scheduling**: Quiet hours and cooldown periods for notifications
 - 🚀 **Fast**: Optimized execution with intelligent caching
-- 📦 **Monorepo Ready**: Designed for Turborepo with proper caching
+- 📦 **NPM Ready**: Install as standalone package or use in monorepo
 
 ## Installation
 
-This package provides TypeScript implementations of Claude Code hooks. The simplest approach is to call them directly from Claude Code settings.
+### Option 1: NPM Package (Recommended)
 
-### Quick Start (Simplest Approach)
+Install globally for easy access:
+
+```bash
+npm install -g @studio/claude-hooks
+```
+
+Or install locally in your project:
+
+```bash
+npm install @studio/claude-hooks
+```
+
+Then configure Claude Code settings with bin commands:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-notification"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-quality"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-hooks-subagent"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Option 2: Monorepo Development
+
+If you're working within the mnemosyne monorepo:
 
 1. **Install dependencies** (from repository root):
 
@@ -158,6 +226,47 @@ EOF
 
 4. **Test the hooks** - Trigger Claude Code events to verify they work
 
+## Bin Commands
+
+When installed as an npm package, the following commands are available:
+
+| Command                     | Description                                        | Hook Type    |
+| --------------------------- | -------------------------------------------------- | ------------ |
+| `claude-hooks-stop`         | Task completion notifications with TTS support     | Stop         |
+| `claude-hooks-notification` | User attention notifications                       | Notification |
+| `claude-hooks-quality`      | Code quality checks (TypeScript, ESLint, Prettier) | PostToolUse  |
+| `claude-hooks-subagent`     | Subagent completion tracking                       | SubagentStop |
+
+### Command Examples
+
+```bash
+# Test the stop hook manually
+echo '{"result": "success"}' | claude-hooks-stop
+
+# Test the notification hook
+echo '{"message": "Test notification"}' | claude-hooks-notification
+
+# Test the quality check hook
+echo '{"tool_name": "Edit", "tool_input": {"file_path": "/path/to/file.ts"}}' | claude-hooks-quality
+
+# Test the subagent hook
+echo '{"data": {"subagentType": "general-purpose"}}' | claude-hooks-subagent
+```
+
+### Global vs Local Installation
+
+**Global installation** (recommended for most users):
+
+- Commands available from anywhere: `claude-hooks-stop`
+- Simpler Claude Code configuration
+- Works across all projects
+
+**Local installation** (for project-specific needs):
+
+- Commands available via npx: `npx claude-hooks-stop`
+- Version locked to your project
+- Use `./node_modules/.bin/claude-hooks-stop` in Claude Code settings
+
 ## Usage
 
 Each hook requires:
@@ -243,8 +352,9 @@ Plays completion sounds when Claude finishes tasks.
 **Features:**
 
 - Task completion sounds (success/error)
+- OpenAI TTS with voice selection
+- macOS speech synthesis fallback
 - Chat transcript logging
-- Speech announcements (macOS)
 - Platform-specific sound selection
 
 ### Subagent Stop Hook
@@ -351,9 +461,10 @@ pnpm run test
 ### How Configuration Works
 
 1. **Auto-Config Loading** - Hooks automatically load `.claude/hooks/{hookName}.config.json`
-2. **Environment Variables** - Override any JSON setting using `CLAUDE_HOOKS_*` variables
-3. **CLI Arguments** - Override both JSON and environment settings
-4. **Defaults** - Built-in fallbacks if nothing else is specified
+2. **Environment Variable Substitution** - Use `${VAR_NAME}` syntax in JSON config files
+3. **Environment Variables** - Override any JSON setting using `CLAUDE_HOOKS_*` variables
+4. **CLI Arguments** - Override both JSON and environment settings
+5. **Defaults** - Built-in fallbacks if nothing else is specified
 
 ### Configuration Priority
 
@@ -361,15 +472,52 @@ pnpm run test
 Defaults < JSON File < Environment Variables < CLI Arguments
 ```
 
+### Environment Variable Substitution
+
+You can use `${VAR_NAME}` syntax in JSON config files to reference environment variables:
+
+```json
+{
+  "settings": {
+    "speak": true,
+    "tts": {
+      "provider": "auto",
+      "fallbackProvider": "macos",
+      "openai": {
+        "apiKey": "${OPENAI_API_KEY}",
+        "model": "tts-1",
+        "voice": "nova",
+        "speed": 0.9,
+        "format": "mp3"
+      },
+      "macos": {
+        "voice": "Alex",
+        "rate": 200,
+        "volume": 0.7,
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+**Features:**
+
+- Substitutes `${OPENAI_API_KEY}` with the actual environment variable value
+- Keeps the placeholder if environment variable is not found (with warning)
+- Works with any environment variable in any JSON field
+- Processed before configuration validation
+
 ### Example Configuration Loading
 
 The hooks use automatic configuration discovery:
 
 1. Find project root (where `.claude/` directory exists)
 2. Load `.claude/hooks/{hookName}.config.json`
-3. Extract `settings` object from JSON
-4. Apply environment variable overrides
-5. Apply CLI argument overrides
+3. **Process environment variable substitution** (`${VAR_NAME}` → actual values)
+4. Extract `settings` object from JSON
+5. Apply environment variable overrides
+6. Apply CLI argument overrides
 
 ## Architecture
 
@@ -443,6 +591,55 @@ Environment variables can override any JSON configuration setting. Use the forma
 - `CLAUDE_HOOKS_PRETTIER_AUTOFIX` - Enable Prettier auto-fixing
 - `CLAUDE_HOOKS_AUTOFIX_SILENT` - Don't block when auto-fixing succeeds
 
+### OpenAI TTS Configuration
+
+For OpenAI text-to-speech integration, set the following environment variables:
+
+- `OPENAI_API_KEY` - Your OpenAI API key (required)
+- `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
+- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection:
+  - `alloy` (default) - Balanced, neutral voice
+  - `echo` - Clear, professional voice
+  - `fable` - Warm, storytelling voice
+  - `onyx` - Deep, authoritative voice
+  - `nova` - Bright, energetic voice
+  - `shimmer` - Soft, friendly voice
+- `CLAUDE_HOOKS_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
+- `CLAUDE_HOOKS_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+
+Example OpenAI TTS configuration:
+
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+export CLAUDE_HOOKS_TTS_PROVIDER="openai"
+export CLAUDE_HOOKS_TTS_VOICE="nova"
+export CLAUDE_HOOKS_TTS_MODEL="tts-1-hd"
+export CLAUDE_HOOKS_TTS_SPEED="0.9"
+```
+
+Or add to your `.claude/hooks/stop.config.json`:
+
+```json
+{
+  "settings": {
+    "speak": true,
+    "tts": {
+      "provider": "openai",
+      "openai": {
+        "apiKey": "${OPENAI_API_KEY}",
+        "voice": "nova",
+        "model": "tts-1-hd",
+        "speed": 0.9
+      }
+    }
+  }
+}
+```
+
+**Note:** The `apiKey` field uses environment variable substitution (`${OPENAI_API_KEY}`) to securely reference your API key without hardcoding it in the config file.
+
+**Voice Selection:** See `examples/stop-openai-voices.json` for a comprehensive example with all available voices, descriptions, and recommended use cases for different scenarios.
+
 ## CLI Arguments
 
 The hooks support command-line flags that override both JSON and environment configuration:
@@ -487,11 +684,28 @@ Tests cover:
 
 The build process:
 
-1. Compiles TypeScript to JavaScript
-2. Bundles each hook with esbuild
-3. Outputs CommonJS files with proper shebangs
-4. Creates executable hook files in `hooks/` directory
+1. Compiles TypeScript to JavaScript with source maps
+2. Generates TypeScript declaration files for type safety
+3. Adds proper shebangs to bin files and makes them executable
+4. Creates distributable package in `dist/` directory
 
 ## License
 
-Private - Part of the mnemosyne monorepo
+MIT - See LICENSE file for details
+
+## Contributing
+
+This package is part of the mnemosyne monorepo. Contributions welcome!
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make changes and add tests
+4. Run tests: `pnpm test`
+5. Run quality checks: `pnpm check`
+6. Submit a pull request
+
+## Support
+
+- **Issues**: Report bugs and feature requests on [GitHub Issues](https://github.com/nathanvale/mnemosyne/issues)
+- **Documentation**: Full documentation available in the [mnemosyne docs](https://nathanvale.github.io/mnemosyne/)
+- **Discord**: Join the community for discussion and support

@@ -30,19 +30,22 @@ describe('Environment Configuration', () => {
   afterEach(() => {
     // Restore original environment
     process.env = originalEnv
+
+    // Clear OPENAI_API_KEY as well
+    delete process.env.OPENAI_API_KEY
   })
 
   describe('Basic Environment Variable Loading', () => {
     it('should load boolean configuration from environment variables', () => {
       process.env.CLAUDE_HOOKS_DEBUG = 'true'
-      process.env.CLAUDE_HOOKS_NOTIFY = 'false'
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = 'false'
       process.env.CLAUDE_HOOKS_SPEAK = '1'
 
       const loader = new EnvConfigLoader()
       const config = loader.loadFromEnv()
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
       expect(config.speak).toBe(true)
     })
 
@@ -73,7 +76,7 @@ describe('Environment Configuration', () => {
     it('should not override config when environment variable is not set', () => {
       const baseConfig = {
         debug: true,
-        notify: false,
+        notifySound: false,
         cooldownPeriod: 5000,
       }
 
@@ -81,7 +84,7 @@ describe('Environment Configuration', () => {
       const config = loader.loadFromEnv(baseConfig)
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
       expect(config.cooldownPeriod).toBe(5000)
     })
 
@@ -142,13 +145,13 @@ describe('Environment Configuration', () => {
 
     it('should handle whitespace in boolean values', () => {
       process.env.CLAUDE_HOOKS_DEBUG = '  true  '
-      process.env.CLAUDE_HOOKS_NOTIFY = '  false  '
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = '  false  '
 
       const loader = new EnvConfigLoader()
       const config = loader.loadFromEnv()
 
       expect(config.debug).toBe(true)
-      expect(config.notify).toBe(false)
+      expect(config.notifySound).toBe(false)
     })
   })
 
@@ -282,7 +285,7 @@ describe('Environment Configuration', () => {
   describe('Environment Variable Inspection', () => {
     it('should return only relevant environment variables', () => {
       process.env.CLAUDE_HOOKS_DEBUG = 'true'
-      process.env.CLAUDE_HOOKS_NOTIFY = 'false'
+      process.env.CLAUDE_HOOKS_NOTIFY_SOUND = 'false'
       process.env.SOME_OTHER_VAR = 'value'
 
       const loader = new EnvConfigLoader()
@@ -290,7 +293,7 @@ describe('Environment Configuration', () => {
 
       expect(relevantVars).toEqual({
         CLAUDE_HOOKS_DEBUG: 'true',
-        CLAUDE_HOOKS_NOTIFY: 'false',
+        CLAUDE_HOOKS_NOTIFY_SOUND: 'false',
       })
       expect(relevantVars.SOME_OTHER_VAR).toBeUndefined()
     })
@@ -379,7 +382,7 @@ describe('Environment Configuration', () => {
     it('should include all expected default mappings', () => {
       const expectedEnvVars = [
         'CLAUDE_HOOKS_DEBUG',
-        'CLAUDE_HOOKS_NOTIFY',
+        'CLAUDE_HOOKS_NOTIFY_SOUND',
         'CLAUDE_HOOKS_SPEAK',
         'CLAUDE_HOOKS_COOLDOWN_PERIOD',
         'CLAUDE_HOOKS_ALLOW_URGENT_OVERRIDE',
@@ -392,6 +395,18 @@ describe('Environment Configuration', () => {
         'CLAUDE_HOOKS_SPEECH_VOICE',
         'CLAUDE_HOOKS_SPEECH_RATE',
         'CLAUDE_HOOKS_SPEECH_VOLUME',
+        // TTS environment variables
+        'CLAUDE_HOOKS_TTS_PROVIDER',
+        'CLAUDE_HOOKS_TTS_FALLBACK_PROVIDER',
+        'OPENAI_API_KEY',
+        'CLAUDE_HOOKS_OPENAI_TTS_MODEL',
+        'CLAUDE_HOOKS_OPENAI_TTS_VOICE',
+        'CLAUDE_HOOKS_OPENAI_TTS_SPEED',
+        'CLAUDE_HOOKS_OPENAI_TTS_FORMAT',
+        'CLAUDE_HOOKS_MACOS_TTS_VOICE',
+        'CLAUDE_HOOKS_MACOS_TTS_RATE',
+        'CLAUDE_HOOKS_MACOS_TTS_VOLUME',
+        'CLAUDE_HOOKS_MACOS_TTS_ENABLED',
       ]
 
       const mappedEnvVars = DEFAULT_ENV_MAPPINGS.map((m) => m.envVar)
@@ -404,7 +419,7 @@ describe('Environment Configuration', () => {
     it('should have correct config paths for all default mappings', () => {
       const expectedMappings = [
         { envVar: 'CLAUDE_HOOKS_DEBUG', configPath: 'debug' },
-        { envVar: 'CLAUDE_HOOKS_NOTIFY', configPath: 'notify' },
+        { envVar: 'CLAUDE_HOOKS_NOTIFY_SOUND', configPath: 'notifySound' },
         { envVar: 'CLAUDE_HOOKS_SPEAK', configPath: 'speak' },
         {
           envVar: 'CLAUDE_HOOKS_COOLDOWN_PERIOD',
@@ -428,6 +443,186 @@ describe('Environment Configuration', () => {
         expect(mapping).toBeDefined()
         expect(mapping?.configPath).toBe(expected.configPath)
       })
+    })
+  })
+
+  describe('TTS Environment Variables', () => {
+    beforeEach(() => {
+      // Clear all TTS-related environment variables
+      Object.keys(process.env).forEach((key) => {
+        if (key.includes('TTS') || key === 'OPENAI_API_KEY') {
+          delete process.env[key]
+        }
+      })
+    })
+
+    it('should load TTS provider configuration from environment variables', () => {
+      process.env.CLAUDE_HOOKS_TTS_PROVIDER = 'openai'
+      process.env.CLAUDE_HOOKS_TTS_FALLBACK_PROVIDER = 'macos'
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv()
+
+      expect(config.tts?.provider).toBe('openai')
+      expect(config.tts?.fallbackProvider).toBe('macos')
+    })
+
+    it('should load OpenAI TTS configuration from environment variables', () => {
+      process.env.OPENAI_API_KEY = 'sk-test-key-123'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_MODEL = 'tts-1-hd'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_VOICE = 'nova'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_SPEED = '1.25'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_FORMAT = 'mp3'
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv()
+
+      expect(config.tts?.openai?.apiKey).toBe('sk-test-key-123')
+      expect(config.tts?.openai?.model).toBe('tts-1-hd')
+      expect(config.tts?.openai?.voice).toBe('nova')
+      expect(config.tts?.openai?.speed).toBe(1.25)
+      expect(config.tts?.openai?.format).toBe('mp3')
+    })
+
+    it('should load macOS TTS configuration from environment variables', () => {
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOICE = 'Alex'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_RATE = '200'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOLUME = '0.8'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_ENABLED = 'true'
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv()
+
+      expect(config.tts?.macos?.voice).toBe('Alex')
+      expect(config.tts?.macos?.rate).toBe(200)
+      expect(config.tts?.macos?.volume).toBe(0.8)
+      expect(config.tts?.macos?.enabled).toBe(true)
+    })
+
+    it('should create nested TTS objects when they do not exist', () => {
+      process.env.OPENAI_API_KEY = 'sk-test-key'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOICE = 'Alex'
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv({})
+
+      expect(config.tts?.openai?.apiKey).toBe('sk-test-key')
+      expect(config.tts?.macos?.voice).toBe('Alex')
+    })
+
+    it('should merge with existing TTS configuration', () => {
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_MODEL = 'tts-1-hd'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_RATE = '250'
+
+      const baseConfig = {
+        tts: {
+          provider: 'auto' as const,
+          openai: {
+            apiKey: 'existing-key',
+            voice: 'alloy' as const,
+          },
+          macos: {
+            voice: 'Samantha',
+            enabled: true,
+          },
+        },
+      }
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv(baseConfig)
+
+      // Should preserve existing values
+      expect(config.tts?.provider).toBe('auto')
+      expect(config.tts?.openai?.apiKey).toBe('existing-key')
+      expect(config.tts?.openai?.voice).toBe('alloy')
+      expect(config.tts?.macos?.voice).toBe('Samantha')
+      expect(config.tts?.macos?.enabled).toBe(true)
+
+      // Should add new values from environment
+      expect(config.tts?.openai?.model).toBe('tts-1-hd')
+      expect(config.tts?.macos?.rate).toBe(250)
+    })
+
+    it('should validate TTS environment variables', () => {
+      process.env.OPENAI_API_KEY = 'sk-valid-key'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_SPEED = '1.5'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_ENABLED = 'true'
+
+      const loader = new EnvConfigLoader()
+      const validation = loader.validateEnvVars()
+
+      expect(validation.isValid).toBe(true)
+      expect(validation.errors).toEqual([])
+    })
+
+    it('should detect invalid TTS numeric values', () => {
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_SPEED = 'invalid-speed'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_RATE = 'not-a-number'
+
+      const loader = new EnvConfigLoader()
+      const validation = loader.validateEnvVars()
+
+      expect(validation.isValid).toBe(false)
+      expect(validation.errors).toHaveLength(2)
+      expect(validation.errors[0]).toContain('CLAUDE_HOOKS_OPENAI_TTS_SPEED')
+      expect(validation.errors[1]).toContain('CLAUDE_HOOKS_MACOS_TTS_RATE')
+    })
+
+    it('should detect invalid TTS boolean values', () => {
+      process.env.CLAUDE_HOOKS_MACOS_TTS_ENABLED = 'maybe'
+
+      const loader = new EnvConfigLoader()
+      const validation = loader.validateEnvVars()
+
+      expect(validation.isValid).toBe(false)
+      expect(validation.errors).toHaveLength(1)
+      expect(validation.errors[0]).toContain('CLAUDE_HOOKS_MACOS_TTS_ENABLED')
+    })
+
+    it('should include TTS environment variables in relevant vars check', () => {
+      process.env.OPENAI_API_KEY = 'sk-test-key'
+      process.env.CLAUDE_HOOKS_TTS_PROVIDER = 'openai'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOICE = 'Alex'
+      process.env.OTHER_VAR = 'ignored'
+
+      const loader = new EnvConfigLoader()
+      const relevantVars = loader.getRelevantEnvVars()
+
+      expect(relevantVars.OPENAI_API_KEY).toBe('sk-test-key')
+      expect(relevantVars.CLAUDE_HOOKS_TTS_PROVIDER).toBe('openai')
+      expect(relevantVars.CLAUDE_HOOKS_MACOS_TTS_VOICE).toBe('Alex')
+      expect(relevantVars.OTHER_VAR).toBeUndefined()
+    })
+
+    it('should support complete TTS configuration from environment', () => {
+      // Set all TTS environment variables
+      process.env.CLAUDE_HOOKS_TTS_PROVIDER = 'openai'
+      process.env.CLAUDE_HOOKS_TTS_FALLBACK_PROVIDER = 'macos'
+      process.env.OPENAI_API_KEY = 'sk-complete-test-key'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_MODEL = 'tts-1'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_VOICE = 'echo'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_SPEED = '0.75'
+      process.env.CLAUDE_HOOKS_OPENAI_TTS_FORMAT = 'opus'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOICE = 'Alex'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_RATE = '180'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_VOLUME = '0.9'
+      process.env.CLAUDE_HOOKS_MACOS_TTS_ENABLED = 'false'
+
+      const loader = new EnvConfigLoader()
+      const config = loader.loadFromEnv()
+
+      // Verify complete configuration was loaded
+      expect(config.tts?.provider).toBe('openai')
+      expect(config.tts?.fallbackProvider).toBe('macos')
+      expect(config.tts?.openai?.apiKey).toBe('sk-complete-test-key')
+      expect(config.tts?.openai?.model).toBe('tts-1')
+      expect(config.tts?.openai?.voice).toBe('echo')
+      expect(config.tts?.openai?.speed).toBe(0.75)
+      expect(config.tts?.openai?.format).toBe('opus')
+      expect(config.tts?.macos?.voice).toBe('Alex')
+      expect(config.tts?.macos?.rate).toBe(180)
+      expect(config.tts?.macos?.volume).toBe(0.9)
+      expect(config.tts?.macos?.enabled).toBe(false)
     })
   })
 })

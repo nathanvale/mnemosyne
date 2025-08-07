@@ -2,7 +2,7 @@
  * Configuration loading utilities
  */
 
-import { promises as fs, statSync } from 'fs'
+import { promises as fs, statSync, readFileSync } from 'fs'
 import path from 'path'
 
 /**
@@ -43,22 +43,119 @@ export async function loadConfig<T extends Record<string, unknown>>(
 }
 
 /**
- * Find project root by looking for package.json
+ * Find project root by looking for monorepo indicators or package.json
+ * Priority order:
+ * 1. Directory with pnpm-workspace.yaml (pnpm monorepo)
+ * 2. Directory with lerna.json (lerna monorepo)
+ * 3. Directory with .claude/hooks (explicit config directory)
+ * 4. Directory with package.json (regular project)
  */
 export function findProjectRoot(startPath: string): string {
   let currentPath = startPath
+  let foundPackageJsonAt: string | null = null
+
   while (currentPath !== '/') {
+    // Check for monorepo indicators first
     try {
-      const stat = statSync(path.join(currentPath, 'package.json'))
-      if (stat.isFile()) {
+      // Check for pnpm workspace
+      const pnpmStat = statSync(path.join(currentPath, 'pnpm-workspace.yaml'))
+      if (pnpmStat.isFile()) {
         return currentPath
       }
     } catch {
-      // Continue searching
+      // Not a pnpm workspace
     }
+
+    try {
+      // Check for lerna monorepo
+      const lernaStat = statSync(path.join(currentPath, 'lerna.json'))
+      if (lernaStat.isFile()) {
+        return currentPath
+      }
+    } catch {
+      // Not a lerna monorepo
+    }
+
+    try {
+      // Check for .claude/hooks directory
+      const claudeStat = statSync(path.join(currentPath, '.claude', 'hooks'))
+      if (claudeStat.isDirectory()) {
+        return currentPath
+      }
+    } catch {
+      // No .claude/hooks directory
+    }
+
+    // Remember the first package.json we find, but keep looking for monorepo root
+    if (!foundPackageJsonAt) {
+      try {
+        const packageStat = statSync(path.join(currentPath, 'package.json'))
+        if (packageStat.isFile()) {
+          // Store the location but continue searching for monorepo root
+          foundPackageJsonAt = currentPath
+        }
+      } catch {
+        // No package.json here
+      }
+    }
+
     currentPath = path.dirname(currentPath)
   }
+
+  // If we found a package.json earlier, use that
+  if (foundPackageJsonAt) {
+    return foundPackageJsonAt
+  }
+
   return process.cwd()
+}
+
+/**
+ * Find the monorepo root by looking for workspace indicators
+ * This is more aggressive than findProjectRoot and specifically looks for monorepo markers
+ */
+export function findMonorepoRoot(startPath: string): string | null {
+  let currentPath = startPath
+
+  while (currentPath !== '/') {
+    // Check for pnpm workspace
+    try {
+      const pnpmStat = statSync(path.join(currentPath, 'pnpm-workspace.yaml'))
+      if (pnpmStat.isFile()) {
+        return currentPath
+      }
+    } catch {
+      // Not a pnpm workspace
+    }
+
+    // Check for lerna monorepo
+    try {
+      const lernaStat = statSync(path.join(currentPath, 'lerna.json'))
+      if (lernaStat.isFile()) {
+        return currentPath
+      }
+    } catch {
+      // Not a lerna monorepo
+    }
+
+    // Check for yarn workspaces (package.json with workspaces field)
+    try {
+      const packagePath = path.join(currentPath, 'package.json')
+      const packageStat = statSync(packagePath)
+      if (packageStat.isFile()) {
+        const packageContent = JSON.parse(readFileSync(packagePath, 'utf8'))
+        if (packageContent.workspaces) {
+          return currentPath
+        }
+      }
+    } catch {
+      // Not a yarn workspace root
+    }
+
+    currentPath = path.dirname(currentPath)
+  }
+
+  return null
 }
 
 /**

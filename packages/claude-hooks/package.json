@@ -1,32 +1,82 @@
 {
   "name": "@studio/claude-hooks",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
+  "description": "Claude Code hooks for task completion notifications, quality checks, and TTS integration",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "tts",
+    "notifications",
+    "quality-check",
+    "ai",
+    "development"
+  ],
+  "homepage": "https://github.com/nathanvale/mnemosyne/tree/main/packages/claude-hooks",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/mnemosyne.git",
+    "directory": "packages/claude-hooks"
+  },
+  "license": "MIT",
+  "author": "Nathan Vale",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "claude-hooks-stop": "./dist/bin/claude-hooks-stop.js",
+    "claude-hooks-notification": "./dist/bin/claude-hooks-notification.js",
+    "claude-hooks-quality": "./dist/bin/claude-hooks-quality.js",
+    "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js",
+    "claude-hooks-cache-stats": "./dist/bin/claude-hooks-cache-stats.js",
+    "claude-hooks-cache-explorer": "./dist/bin/claude-hooks-cache-explorer.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
-    "./sound-notification": "./src/sound-notification/index.ts",
-    "./quality-check": "./src/quality-check/index.ts",
-    "./types": "./src/types/index.ts",
-    "./notification": "./src/notification/index.ts",
-    "./stop": "./src/stop/index.ts",
-    "./subagent-stop": "./src/subagent-stop/index.ts",
-    "./base-hook": "./src/base-hook.ts",
-    "./config": "./src/config/config-schema.ts",
-    "./logging": "./src/logging/index.ts",
-    "./audio": "./src/audio/index.ts",
-    "./speech": "./src/speech/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config/config-schema.js",
+      "types": "./dist/config/config-schema.d.ts"
+    },
+    "./speech": {
+      "import": "./dist/speech/index.js",
+      "types": "./dist/speech/index.d.ts"
+    }
   },
   "scripts": {
-    "build": "echo 'Using tsx for direct TypeScript execution - no build needed'",
+    "build": "tsc && node scripts/fix-shebangs.js",
+    "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",
+    "test:build": "./scripts/test-build.sh",
     "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "prepublishOnly": "pnpm build",
+    "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
+    "cache:explorer": "tsx src/bin/claude-hooks-cache-explorer.ts",
+    "cache:clear": "tsx src/bin/claude-hooks-cache-explorer.ts --clear"
   },
   "dependencies": {
     "micromatch": "^4.0.8",
-    "tsx": "^4.20.3",
+    "openai": "^5.12.0",
     "zod": "^3.25.74"
   },
   "devDependencies": {
@@ -36,6 +86,7 @@
     "@types/node": "^22.5.4",
     "eslint": "^9.30.0",
     "prettier": "^3.4.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },

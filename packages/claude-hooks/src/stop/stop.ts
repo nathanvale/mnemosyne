@@ -3,24 +3,45 @@
  * Plays sound when Claude completes a task
  */
 
+import type {
+  TTSProvider,
+  TTSProviderConfig,
+} from '../speech/providers/tts-provider.js'
 import type { ClaudeStopEvent } from '../types/claude.js'
 
 import { AudioPlayer } from '../audio/audio-player.js'
 import { detectPlatform, Platform } from '../audio/platform.js'
 import { BaseHook, type HookConfig } from '../base-hook.js'
 import { TranscriptParser } from '../logging/transcript-parser.js'
-import { SpeechEngine } from '../speech/speech-engine.js'
+// Import providers and ensure registration
+import { initializeProviders } from '../speech/providers/index.js'
+import {
+  TTSProviderFactory,
+  type FactoryConfig,
+} from '../speech/providers/provider-factory.js'
+
+// Ensure providers are registered
+initializeProviders()
 
 export interface StopHookConfig extends HookConfig {
   chat?: boolean
   speak?: boolean
+  notifySound?: boolean
+  tts?: {
+    provider: 'openai' | 'macos' | 'auto'
+    fallbackProvider?: 'macos' | 'none'
+    openai?: TTSProviderConfig
+    macos?: TTSProviderConfig
+  }
 }
 
 export class StopHook extends BaseHook<ClaudeStopEvent> {
   private readonly chat: boolean
-  private readonly speak: boolean
+  private speak: boolean // Remove readonly to allow disabling on error
+  private readonly notifySound: boolean
   private readonly player: AudioPlayer
-  private readonly speechEngine: SpeechEngine
+  private ttsProvider: TTSProvider | null = null
+  private readonly ttsProviderPromise: Promise<TTSProvider | null>
   private readonly platform: Platform
   private readonly transcriptParser: TranscriptParser
 
@@ -28,8 +49,43 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
     super('Stop', config)
     this.chat = config.chat ?? false
     this.speak = config.speak ?? false
+    this.notifySound = config.notifySound ?? true
     this.player = new AudioPlayer()
-    this.speechEngine = new SpeechEngine()
+
+    // Initialize TTS provider using factory (async) with configuration from config file
+    const ttsConfig = config.tts as Partial<FactoryConfig> | undefined
+
+    // Debug log the TTS config being used
+    this.log.debug(`TTS Config: ${JSON.stringify(ttsConfig, null, 2)}`)
+    this.log.debug(`OpenAI API Key available: ${!!process.env.OPENAI_API_KEY}`)
+
+    const factoryConfig: FactoryConfig = {
+      provider: ttsConfig?.provider || 'auto',
+      fallbackProvider: ttsConfig?.fallbackProvider || 'macos',
+      openai: ttsConfig?.openai as TTSProviderConfig | undefined,
+      macos: ttsConfig?.macos || { enabled: true },
+    }
+    this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
+      factoryConfig,
+    )
+      .then((provider) => {
+        this.ttsProvider = provider
+        this.log.debug(
+          `TTS Provider selected: ${provider.getProviderInfo().displayName}`,
+        )
+        return provider
+      })
+      .catch((error) => {
+        // Log the error and disable TTS functionality
+        this.log.error(`Failed to initialize TTS provider: ${error}`)
+        this.speak = false // Disable speech since provider initialization failed
+
+        // Return null to indicate provider is not available
+        // This allows the application to continue without TTS functionality
+        this.ttsProvider = null
+        return null
+      })
+
     this.platform = detectPlatform()
     this.transcriptParser = new TranscriptParser()
   }
@@ -69,39 +125,51 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
       await this.handleSpeech(event)
     }
 
-    // Check if platform is supported
-    if (this.platform === Platform.Unsupported) {
-      this.log.warning('Audio notifications not supported on this platform')
-      return
-    }
-
-    // Get appropriate sound based on success
-    const sounds = this.player.getSystemSounds(this.platform)
-    const soundFile = success ? sounds.success : sounds.error
-
-    if (!soundFile) {
-      this.log.warning('No completion sound available for platform')
-      return
-    }
-
-    // Play the sound
-    try {
-      const played = await this.player.playSound(soundFile, this.platform)
-      if (!played) {
-        this.log.warning('Failed to play completion sound')
+    // Handle sound notification if enabled
+    if (this.notifySound) {
+      // Check if platform is supported
+      if (this.platform === Platform.Unsupported) {
+        this.log.warning('Audio notifications not supported on this platform')
+        return
       }
-    } catch (error) {
-      this.log.error(
-        `Error playing completion sound: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      )
+
+      // Get appropriate sound based on success
+      const sounds = this.player.getSystemSounds(this.platform)
+      const soundFile = success ? sounds.success : sounds.error
+
+      if (!soundFile) {
+        this.log.warning('No completion sound available for platform')
+        return
+      }
+
+      // Play the sound
+      try {
+        const played = await this.player.playSound(soundFile, this.platform)
+        if (!played) {
+          this.log.warning('Failed to play completion sound')
+        }
+      } catch (error) {
+        this.log.error(
+          `Error playing completion sound: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        )
+      }
     }
   }
 
   private async handleSpeech(event: ClaudeStopEvent): Promise<void> {
-    if (!this.speechEngine.isSupported()) {
-      this.log.debug('Speech not supported on this platform')
+    // Wait for TTS provider to be initialized
+    const ttsProvider = await this.ttsProviderPromise
+
+    // Check if provider initialization failed
+    if (!ttsProvider) {
+      this.log.debug('TTS provider initialization failed')
+      return
+    }
+
+    if (!(await ttsProvider.isAvailable())) {
+      this.log.debug('TTS provider not available')
       return
     }
 
@@ -119,11 +187,13 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
     }
 
     try {
-      const speechSuccess = await this.speechEngine.speak(speechMessage)
-      if (speechSuccess) {
+      const result = await ttsProvider.speak(speechMessage)
+      if (result.success) {
         this.log.success('Speech notification delivered')
       } else {
-        this.log.warning('Failed to deliver speech notification')
+        this.log.warning(
+          `Failed to deliver speech notification: ${result.error || 'Unknown error'}`,
+        )
       }
     } catch (error) {
       this.log.error(
@@ -174,6 +244,19 @@ export class StopHook extends BaseHook<ClaudeStopEvent> {
 
 // Hook entry point
 export async function main(): Promise<void> {
+  // Debug log to file to see if hook is being called
+  try {
+    const fs = await import('fs')
+    await fs.promises.appendFile(
+      '/tmp/claude-stop-hook.log',
+      `Stop hook called at ${new Date().toISOString()}\n` +
+        `Args: ${JSON.stringify(process.argv)}\n` +
+        `Env vars: OPENAI_API_KEY=${!!process.env.OPENAI_API_KEY}\n`,
+    )
+  } catch {
+    // Ignore logging errors
+  }
+
   // Load auto-config from .claude/hooks/stop.config.json
   const { loadAutoConfig } = await import('../utils/auto-config.js')
   const jsonConfig = await loadAutoConfig<StopHookConfig>('stop')

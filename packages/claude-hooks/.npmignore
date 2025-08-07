@@ -1,0 +1,55 @@
+# Source files - we ship compiled JS, not TS source
+src/
+scripts/
+*.ts
+!*.d.ts
+
+# Test files
+__tests__/
+*.test.js
+*.test.d.ts
+vitest.config.ts
+vitest.config.js
+coverage/
+.nyc_output/
+
+# Build configuration
+tsconfig.json
+tsconfig.*.json
+*.tsbuildinfo
+.eslintrc.*
+eslint.config.*
+.prettierrc
+.prettierignore
+
+# Development files
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+.cache/
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation source (README.md is included via files field)
+docs/
+*.md
+!README.md
+
+# IMPORTANT: dist/ is NOT ignored - we need it in the package!
+# The dist folder contains all our compiled JavaScript that users need
