@@ -41,7 +41,6 @@ export type {
 // Utility types
 export { HookExitCode } from './types/claude.js'
 
-// Export additional utilities
-export * from './utils/logger.js'
-export * from './utils/config-loader.js'
-export * from './utils/file-utils.js'
+// Export specific utilities
+export { createLogger, type Logger } from './utils/logger.js'
+export { loadConfig } from './utils/config-loader.js'

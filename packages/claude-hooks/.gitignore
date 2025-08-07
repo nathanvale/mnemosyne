@@ -1,6 +1,7 @@
 # Build outputs
 dist/
 *.tsbuildinfo
+tsconfig-cache.json
 
 # Test coverage
 coverage/
