@@ -13,7 +13,6 @@ import type {
   TTSProviderConfig,
 } from './tts-provider.js'
 
-import { AudioCache } from './audio-cache.js'
 import { BaseTTSProvider } from './tts-provider.js'
 
 const execAsync = promisify(exec)
@@ -31,7 +30,6 @@ export interface MacOSConfig extends TTSProviderConfig {
  */
 export class MacOSProvider extends BaseTTSProvider {
   private macosConfig: Required<MacOSConfig>
-  private cache: AudioCache
 
   constructor(config: MacOSConfig = {}) {
     super(config)
@@ -41,9 +39,6 @@ export class MacOSProvider extends BaseTTSProvider {
       voice: config.voice || 'Samantha',
       rate: this.clampRate(config.rate || 200),
     }
-
-    // Initialize audio cache
-    this.cache = new AudioCache()
   }
 
   async speak(

@@ -96,7 +96,17 @@ describe('AudioCache', () => {
       cache = new AudioCache(config)
       const actualConfig = cache.getConfiguration()
 
-      expect(actualConfig).toEqual(config)
+      // The cache should include default normalization options
+      const expectedConfig = {
+        ...config,
+        normalization: {
+          caseSensitive: false,
+          stripPriorityPrefixes: true,
+          normalizeWhitespace: true,
+        },
+      }
+
+      expect(actualConfig).toEqual(expectedConfig)
     })
 
     it('should allow disabling cache', async () => {
@@ -155,6 +165,135 @@ describe('AudioCache', () => {
 
       expect(key).toMatch(/^[a-f0-9]{64}$/)
       expect(key).toBeDefined()
+    })
+
+    it('should normalize text for better cache hits', async () => {
+      // Default cache with normalization enabled
+      cache = new AudioCache({ cacheDir: tempDir })
+
+      // Test case-insensitive matching
+      const key1 = await cache.generateKey(
+        'Task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key2 = await cache.generateKey(
+        'task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key3 = await cache.generateKey(
+        'TASK COMPLETED',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key1).toBe(key2)
+      expect(key1).toBe(key3)
+
+      // Test priority prefix stripping
+      const key4 = await cache.generateKey(
+        'medium priority: task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key5 = await cache.generateKey(
+        'high priority: task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key6 = await cache.generateKey(
+        'low priority: Task Completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key1).toBe(key4)
+      expect(key1).toBe(key5)
+      expect(key1).toBe(key6)
+
+      // Test whitespace normalization
+      const key7 = await cache.generateKey(
+        '  task completed  ',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key8 = await cache.generateKey(
+        'task  completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key1).toBe(key7)
+      expect(key1).toBe(key8)
+    })
+
+    it('should respect normalization configuration', async () => {
+      // Cache with normalization disabled
+      const legacyCache = new AudioCache({
+        cacheDir: tempDir,
+        normalization: {
+          caseSensitive: true,
+          stripPriorityPrefixes: false,
+          normalizeWhitespace: false,
+        },
+      })
+
+      // Test case-sensitive keys (should be different)
+      const key1 = await legacyCache.generateKey(
+        'Task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key2 = await legacyCache.generateKey(
+        'task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key1).not.toBe(key2)
+
+      // Test priority prefixes not stripped (should be different)
+      const key3 = await legacyCache.generateKey(
+        'task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key4 = await legacyCache.generateKey(
+        'medium priority: task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key3).not.toBe(key4)
+
+      // Test whitespace not normalized (should be different)
+      const key5 = await legacyCache.generateKey(
+        'task completed',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key6 = await legacyCache.generateKey(
+        '  task completed  ',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+
+      expect(key5).not.toBe(key6)
     })
   })
 

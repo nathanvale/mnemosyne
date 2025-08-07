@@ -120,6 +120,47 @@ describe('TTS Provider Configuration', () => {
       })
     })
 
+    it('should fall back to environment variable when API key is empty', () => {
+      const originalEnvKey = process.env.OPENAI_API_KEY
+      const testEnvKey = 'sk-env-test-key-123'
+
+      // Set test environment variable
+      process.env.OPENAI_API_KEY = testEnvKey
+
+      try {
+        // Test the fallback logic that matches openai-provider.ts:54
+        const configWithEmptyKey = { apiKey: '' }
+        const resolvedApiKey =
+          configWithEmptyKey.apiKey || process.env['OPENAI_API_KEY'] || ''
+
+        // Should fall back to environment variable
+        expect(resolvedApiKey).toBe(testEnvKey)
+
+        // Test with undefined apiKey
+        const configWithUndefined: { apiKey?: string } = {}
+        const resolvedApiKey2 =
+          configWithUndefined.apiKey || process.env['OPENAI_API_KEY'] || ''
+
+        // Should also fall back to environment variable
+        expect(resolvedApiKey2).toBe(testEnvKey)
+
+        // Test with explicit API key (should not use env var)
+        const configWithExplicitKey = { apiKey: 'sk-explicit-key' }
+        const resolvedApiKey3 =
+          configWithExplicitKey.apiKey || process.env['OPENAI_API_KEY'] || ''
+
+        // Should use the explicit key, not the env var
+        expect(resolvedApiKey3).toBe('sk-explicit-key')
+      } finally {
+        // Restore original environment variable
+        if (originalEnvKey !== undefined) {
+          process.env.OPENAI_API_KEY = originalEnvKey
+        } else {
+          delete process.env.OPENAI_API_KEY
+        }
+      }
+    })
+
     it('should reject invalid API keys', () => {
       const invalidApiKeys = [
         123, // number

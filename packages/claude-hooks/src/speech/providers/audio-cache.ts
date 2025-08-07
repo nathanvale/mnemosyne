@@ -39,6 +39,15 @@ interface CacheEntryFile {
 }
 
 /**
+ * Text normalization options for cache keys
+ */
+export interface CacheNormalizationConfig {
+  caseSensitive?: boolean // Whether text should be case-sensitive (default: false)
+  stripPriorityPrefixes?: boolean // Whether to remove priority prefixes (default: true)
+  normalizeWhitespace?: boolean // Whether to normalize whitespace (default: true)
+}
+
+/**
  * Audio cache configuration
  */
 export interface AudioCacheConfig {
@@ -47,6 +56,7 @@ export interface AudioCacheConfig {
   maxEntries?: number // Maximum number of cache entries
   enabled?: boolean // Enable/disable caching
   cacheDir?: string // Cache directory path
+  normalization?: CacheNormalizationConfig // Text normalization options
 }
 
 /**
@@ -67,6 +77,7 @@ export class AudioCache {
   private config: Required<AudioCacheConfig>
   private hitCount = 0
   private requestCount = 0
+  private initializationPromise: Promise<void> | null = null
 
   constructor(config: AudioCacheConfig = {}) {
     // Set default configuration
@@ -76,10 +87,41 @@ export class AudioCache {
       maxEntries: config.maxEntries ?? 1000,
       enabled: config.enabled ?? true,
       cacheDir: config.cacheDir ?? join(tmpdir(), 'claude-hooks-audio-cache'),
+      normalization: {
+        caseSensitive: config.normalization?.caseSensitive ?? false,
+        stripPriorityPrefixes:
+          config.normalization?.stripPriorityPrefixes ?? true,
+        normalizeWhitespace: config.normalization?.normalizeWhitespace ?? true,
+      },
     }
 
-    // Initialize cache directories
-    this.initializeDirectories()
+    // Don't initialize directories in constructor to avoid race conditions
+    // Directories will be initialized lazily on first use
+  }
+
+  /**
+   * Normalize text for cache key generation based on configuration
+   */
+  private normalizeText(text: string): string {
+    let normalized = text
+
+    // Normalize whitespace if enabled
+    if (this.config.normalization.normalizeWhitespace) {
+      normalized = normalized.trim().replace(/\s+/g, ' ')
+    }
+
+    // Strip priority prefixes if enabled
+    if (this.config.normalization.stripPriorityPrefixes) {
+      const priorityPrefixPattern = /^(low|medium|high)\s+priority:\s*/i
+      normalized = normalized.replace(priorityPrefixPattern, '')
+    }
+
+    // Convert to lowercase if case-insensitive
+    if (!this.config.normalization.caseSensitive) {
+      normalized = normalized.toLowerCase()
+    }
+
+    return normalized
   }
 
   /**
@@ -91,7 +133,10 @@ export class AudioCache {
     voice: string,
     speed: number,
   ): Promise<string> {
-    const input = `${text}|${model}|${voice}|${speed}`
+    // Normalize text based on configuration
+    const normalizedText = this.normalizeText(text)
+
+    const input = `${normalizedText}|${model}|${voice}|${speed}`
     const hash = createHash('sha256')
     hash.update(input, 'utf8')
     return hash.digest('hex')
@@ -108,6 +153,9 @@ export class AudioCache {
     }
 
     try {
+      // Ensure directories are initialized before accessing cache
+      await this.ensureInitialized()
+
       const entryPath = join(this.config.cacheDir, 'entries', `${key}.json`)
 
       // Check if entry file exists and get metadata
@@ -160,7 +208,7 @@ export class AudioCache {
 
     try {
       // Ensure directories exist
-      await this.initializeDirectories()
+      await this.ensureInitialized()
 
       // Check cache size limits and clean up if necessary
       await this.enforceLimits()
@@ -194,6 +242,9 @@ export class AudioCache {
     }
 
     try {
+      // Ensure directories are initialized before cleanup
+      await this.ensureInitialized()
+
       const entriesDir = join(this.config.cacheDir, 'entries')
 
       // Read all entry files
@@ -243,6 +294,9 @@ export class AudioCache {
     }
 
     try {
+      // Ensure directories are initialized before getting stats
+      await this.ensureInitialized()
+
       const entriesDir = join(this.config.cacheDir, 'entries')
       const audioDir = join(this.config.cacheDir, 'audio')
 
@@ -250,6 +304,7 @@ export class AudioCache {
       let totalSize = 0
       let oldestEntry = Date.now()
       let newestEntry = 0
+      let validEntryCount = 0
 
       for (const entryFile of entryFiles) {
         if (!entryFile.endsWith('.json')) continue
@@ -265,13 +320,14 @@ export class AudioCache {
           const mtime = entryStat.mtime.getTime()
           if (mtime < oldestEntry) oldestEntry = mtime
           if (mtime > newestEntry) newestEntry = mtime
+          validEntryCount++
         } catch {
           // Skip corrupted entries
         }
       }
 
       return {
-        entryCount: entryFiles.length,
+        entryCount: validEntryCount,
         totalSize,
         hitRate: this.requestCount > 0 ? this.hitCount / this.requestCount : 0,
         oldestEntry,
@@ -293,6 +349,16 @@ export class AudioCache {
    */
   getConfiguration(): AudioCacheConfig {
     return { ...this.config }
+  }
+
+  /**
+   * Ensure cache directories are initialized (lazy initialization)
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initializationPromise) {
+      this.initializationPromise = this.initializeDirectories()
+    }
+    await this.initializationPromise
   }
 
   /**

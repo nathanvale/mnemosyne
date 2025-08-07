@@ -80,10 +80,18 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,
-    ).then((provider) => {
-      this.ttsProvider = provider
-      return provider
-    })
+    )
+      .then((provider) => {
+        this.ttsProvider = provider
+        return provider
+      })
+      .catch((error) => {
+        this.log.error(
+          `Failed to initialize TTS provider: ${error.message}. Config: ${JSON.stringify(factoryConfig)}`,
+        )
+        // Re-throw to ensure the promise chain fails visibly
+        throw error
+      })
     this.platform = detectPlatform()
 
     // Initialize cooldown system
@@ -204,7 +212,15 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
 
   private async handleSpeech(event: ClaudeNotificationEvent): Promise<void> {
     // Wait for TTS provider to be initialized
-    const ttsProvider = await this.ttsProviderPromise
+    let ttsProvider: TTSProvider
+    try {
+      ttsProvider = await this.ttsProviderPromise
+    } catch (error) {
+      this.log.error(
+        `Error initializing TTS provider: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+      return
+    }
 
     if (!(await ttsProvider.isAvailable())) {
       this.log.debug('TTS provider not available')
