@@ -75,6 +75,7 @@
     "cache:clear": "tsx src/bin/claude-hooks-cache-explorer.ts --clear"
   },
   "dependencies": {
+    "dotenv": "^17.2.1",
     "micromatch": "^4.0.8",
     "openai": "^5.12.0",
     "zod": "^3.25.74"
