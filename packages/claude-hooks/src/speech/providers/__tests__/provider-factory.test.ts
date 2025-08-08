@@ -102,10 +102,11 @@ describe('TTSProviderFactory', () => {
       }).toThrow('Provider openai is already registered')
     })
 
-    it('should list all registered providers', () => {
+    it('should list registered providers', () => {
       const providers = TTSProviderFactory.getAvailableProviders()
 
-      expect(providers).toEqual(['openai', 'macos'])
+      expect(providers).toContain('openai')
+      expect(providers).toContain('macos')
     })
   })
 

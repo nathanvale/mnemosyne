@@ -1,56 +1,61 @@
-# .github/copilot-instructions.yml
+## GitHub Copilot: Working in this repo
 
-# 👋 Welcome to the GitHub Copilot custom instructions for this repo.
+Monorepo: Next.js 15 (App Router) + TypeScript (pure ESM), Turborepo, Prisma/SQLite, Vitest + MSW + Wallaby, Storybook. Start with `README.md` for commands and `CLAUDE.md` for deep architecture. Product/spec context lives in `.agent-os/`.
 
-# These help Copilot understand the goals, stack, and conventions of your project.
+### Architecture & imports
 
-name: Nathan's MVP – Relationship Memory Engine
+- Packages import via workspace alias: `import { PrismaClient } from '@studio/db'`, `import { logger } from '@studio/logger'`, `import { Button } from '@studio/ui'`.
+- Pure ES Modules ("type": "module" across the monorepo). Use `import`/`export` only; no `require()`/`__dirname`. For paths, use `import.meta.url` patterns.
+- Central configs (TS/ESLint/Prettier) live in dedicated packages. Next.js app: `apps/studio`. Docs: `apps/docs`.
 
-description: >
-This repo is a minimal Next.js 15 App Router MVP designed to import
-timestamped text message history
-(CSV between Nathan and Melanie), extract AI-inferred traits/events/observations, and use that
-memory to power downstream GPT features like meme generation and journaling. The backend stack
-includes Prism ORM, SQLite, and tRPC. Testing is fully driven by Vitest with MSW and Wallaby,
-and component development happens in Storybook.
+### Core workflows
 
-tags:
+- Dev/build: `pnpm dev`, `pnpm build`, `pnpm clean`. Scope with Turbo filters, e.g. `pnpm --filter "@studio/*" build`.
+- Tests: `pnpm test` (Vitest), `pnpm test:ci`, Storybook tests `pnpm test:storybook`.
+  _Prefer WallabyJS MCP server for live TDD._
+- Docs/Storybook: `pnpm docs:dev` (3001), `pnpm storybook` / `pnpm build-storybook`.
+- DB: `pnpm db:reset`. CSV import: `pnpm import:messages --in path/to/messages.csv [--preview]`.
 
-- nextjs
-- vitest
-- msw
-- storybook
-- prisma
-- tailwindcss
-- trpc
-- sqlite
-- openai
-- memory-engine
-- csv-import
-- relationship-insights
+### Testing patterns
 
-context:
+- MSW handlers in `packages/mocks`; reuse in Vitest and Storybook. Register only happy paths globally; put edge cases in individual tests/stories.
+- Use jsdom for component tests; prefer `screen.findBy*` for async; reset `vi` mocks in `beforeEach`.
+- Database tests isolate per worker. Use shared helpers from `packages/test-config` (see details in `CLAUDE.md`) rather than ad‑hoc Prisma clients.
 
-- This is an MVP project. Keep all implementations lean and test-driven.
-- Use MSW to mock all network behavior. Only happy paths are registered globally. Edge cases are per test or story.
-- Prisma is used for DB access: tables are `messages` (raw text) and `memory` (AI-inferred facts).
-- Wallaby is used for fast feedback on Vitest tests.
-- AI-generated memory objects are stored with fields like: `type`, `subject`, `summary`, `date?`, and `source_message_ids`.
+### Database & memory model
 
-code_style:
+- Prisma schema: `packages/db/prisma`; generated client: `packages/db/generated`. After schema edits, run `pnpm --filter @studio/db build`.
+- Message import uses SHA‑256 content hashing for deduplication and URL extraction. See `packages/scripts`.
+- Memory operations must initialize clustering fields: set `clusteringMetadata: null` and `clusterParticipationCount: 0` on create (tests rely on this).
 
-- TypeScript only
-- App Router + Server Components where possible
-- Tailwind CSS for styling
-- Use `@/` alias for `src/`
-- Shared mocks live in `@/mocks/handlers/*.ts` and are reused in both Vitest + Storybook
+### Logging
 
-copilot:
+- Use `@studio/logger` (Node + browser) for structured logs instead of `console.*`. In tests/stories, stub or spy logger methods as needed.
 
-- Favor test-first suggestions using Vitest + MSW
-- Scaffold Storybook stories with `parameters.msw` and `play()` using `userEvent`
-- Use AI model output to generate memory objects from messages
-- Avoid overly complex Next.js configurations — keep routes and pages simple
-- Encourage reusable TRPC routers, not giant monoliths
+### Conventions
 
-# ✅ This file should live at: .github/copilot-instructions.yml
+- TypeScript strict; path imports `@studio/*`. Formatting via Prettier (single quotes, no semicolons, trailing commas). Lint uses centralized config with import sorting.
+- Next.js App Router: API routes export named functions from `route.ts`. Components in `packages/ui` with stories under `__stories__`.
+
+### Standards
+
+- Also follow external engineering standards on your machine:
+  - `~/.agent-os/standards/code-style.md`
+  - `~/.agent-os/standards/best-practices.md`
+    These set the baseline; repo-specific overrides are defined in centralized `@studio/*` configs and the sections above.
+
+### What to read first
+
+- High‑level: `README.md`, `CLAUDE.md`. Product/specs: `.agent-os/` (e.g., mood scoring, memory processing, CSV import).
+- DB: `packages/db/prisma/schema` and generated client. Scripts: `packages/scripts/src`. UI: `packages/ui/src` and stories.
+
+### Tips for AI changes
+
+- Lead with a minimal Vitest or Storybook test; mock network via MSW. Prefer operation wrappers over raw Prisma in tests.
+- Scope Turbo tasks; keep ESM‑compatible imports; avoid cross‑package test utility imports—rely on `@studio/*` packages.
+
+### VS Code prompts
+
+- Reusable AgentOS prompts live at `.github/prompts/` (e.g., `AgentOS-Create-Spec`, `AgentOS-Build-Feature-from-Spec`, `AgentOS-Execute-Spec-Tasks`).
+
+Reference: Detailed architecture, DB test isolation, and Turborepo practices are in `CLAUDE.md`. Product behavior, tasks, and timelines live in `.agent-os/`.

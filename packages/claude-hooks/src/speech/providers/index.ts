@@ -10,6 +10,8 @@ export { OpenAIProvider } from './openai-provider.js'
 export type { OpenAIConfig } from './openai-provider.js'
 export { MacOSProvider } from './macos-provider.js'
 export type { MacOSConfig } from './macos-provider.js'
+export { ElevenLabsProvider } from './elevenlabs-provider.js'
+export type { ElevenLabsConfig } from './elevenlabs-provider.js'
 
 // Export audio cache
 export { AudioCache } from './audio-cache.js'
@@ -24,6 +26,7 @@ export type {
   Voice,
 } from './tts-provider.js'
 
+import { ElevenLabsProvider } from './elevenlabs-provider.js'
 import { MacOSProvider } from './macos-provider.js'
 import { OpenAIProvider } from './openai-provider.js'
 import { TTSProviderFactory } from './provider-factory.js'
@@ -49,6 +52,7 @@ export function initializeProviders(): void {
 
   TTSProviderFactory.registerProvider('openai', OpenAIProvider)
   TTSProviderFactory.registerProvider('macos', MacOSProvider)
+  TTSProviderFactory.registerProvider('elevenlabs', ElevenLabsProvider)
   providersRegistered = true
 }
 

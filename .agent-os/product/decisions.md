@@ -165,12 +165,117 @@
 - Unified API maintains developer experience
 - Enables platform-specific optimizations
 
+## Strategic Platform Decision
+
+### Convex Platform Migration
+
+**Date**: 2025-08-08  
+**Decision**: Migrate entire memory platform from SQLite/Prisma to Convex with Clerk authentication  
+**Status**: Approved for implementation  
+**Category**: Technical  
+**Impact**: Platform-wide architecture change
+
+#### Context
+
+Analysis of the sophisticated memory platform revealed:
+
+- **54 database tables** with complex emotional intelligence relationships
+- **1,184 lines** of TypeScript interfaces for emotional context
+- **Advanced mood scoring** with 5-dimensional psychological analysis
+- **Clustering algorithms** with feature extraction across emotional dimensions
+- **MCP endpoints** for agent integration (8 sophisticated APIs)
+- **Multi-application platform needs** - Support for Next.js apps, mobile, CLI tools
+
+#### Decision Rationale
+
+**Real-time Collaboration Benefits:**
+
+- Multiple users can validate memories simultaneously
+- Live psychological clustering as conversations are analyzed
+- Interactive emotional intelligence dashboard
+- Collaborative filtering and exploration of relationship patterns
+
+**TypeScript Excellence:**
+
+- End-to-end type safety from database to UI
+- Automatic type generation eliminates manual interface maintenance
+- Better developer experience with sophisticated emotional intelligence types
+- Reduced runtime errors in complex mood scoring algorithms
+
+**AI-First Architecture:**
+
+- Built-in support for complex emotional intelligence queries
+- Real-time subscriptions perfect for mood analysis workflows
+- Simplified integration for multiple AI agents and applications
+- Native support for the sophisticated clustering and delta detection systems
+
+**Multi-Application Platform:**
+
+- Single backend supporting multiple Next.js applications
+- Mobile app support with real-time emotional intelligence
+- CLI tools for batch processing with live progress updates
+- Public SDK for third-party emotional intelligence integrations
+
+#### Migration Strategy
+
+**Phase 2: Strategy & Planning (4-6 weeks)**
+
+- Map 54-table relational schema to Convex documents
+- Design migration scripts with zero downtime
+- Proof of concept with critical emotional intelligence features
+- Clerk integration architecture and multi-tenant design
+
+**Phase 3: Core Migration (6-8 weeks)**
+
+- Migrate all sophisticated database logic and relationships
+- Preserve 1,184 TypeScript interfaces for emotional context
+- Transfer mood scoring, clustering, and validation systems
+- Migrate MCP endpoints to Convex functions
+
+**Phase 4: Real-time Features (4-6 weeks)**
+
+- Add collaborative validation workflows
+- Implement live psychological clustering
+- Build real-time emotional intelligence dashboard
+- Create interactive memory exploration interfaces
+
+**Phase 5: Production Deployment (2-4 weeks)**
+
+- Multi-tenant Convex deployment with Clerk
+- Performance optimization for 10K+ memories
+- Enterprise monitoring and analytics
+- Public SDK and multi-app support
+
+#### Consequences
+
+**Positive:**
+
+- Real-time collaborative features enhance memory validation quality
+- TypeScript end-to-end reduces maintenance of complex emotional intelligence types
+- Multi-app platform enables ecosystem expansion (mobile, CLI, SDK)
+- Simplified deployment and scaling for sophisticated psychological algorithms
+- AI-first architecture better supports the advanced mood scoring and clustering systems
+
+**Negative:**
+
+- Significant migration effort for 54 sophisticated database tables
+- Learning curve for team on Convex platform
+- Temporary development pause during core migration phase
+- Risk of complexity in migrating advanced clustering and mood analysis logic
+
+**Mitigation:**
+
+- Phased migration approach maintains system stability
+- Comprehensive testing strategy preserves emotional intelligence accuracy
+- Parallel development possible during planning phase
+- Fallback plan to complete system on SQLite if migration blockers emerge
+
 ## Future Decision Points
 
-### Database Migration Strategy
+### Legacy Database Migration Strategy (Superseded)
 
-**When**: Before Phase 4 production deployment  
-**Options**:
+**When**: Superseded by Convex migration decision  
+**Historical Options**:
 
 - PostgreSQL for full SQL features
 - CockroachDB for global distribution

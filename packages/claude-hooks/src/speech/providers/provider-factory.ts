@@ -18,17 +18,18 @@ type ProviderConstructor = new (config: TTSProviderConfig) => TTSProvider
  * Factory configuration
  */
 export interface FactoryConfig {
-  provider: 'openai' | 'macos' | 'auto'
-  fallbackProvider?: 'macos' | 'none'
+  provider: 'openai' | 'macos' | 'elevenlabs' | 'auto'
+  fallbackProvider?: 'macos' | 'elevenlabs' | 'none'
   openai?: TTSProviderConfig
   macos?: TTSProviderConfig
+  elevenlabs?: TTSProviderConfig
   [key: string]: unknown
 }
 
 /**
  * Provider with fallback wrapper
  */
-class FallbackProvider implements TTSProvider {
+export class FallbackProvider implements TTSProvider {
   constructor(
     private primaryProvider: TTSProvider,
     private fallbackProvider: TTSProvider | null,
@@ -218,6 +219,28 @@ export class TTSProviderFactory {
         const provider = new openaiProvider(config.openai || {})
         if (await provider.isAvailable()) {
           // Create with fallback if specified
+          if (config.fallbackProvider && config.fallbackProvider !== 'none') {
+            const fallbackConfig: FactoryConfig = {
+              ...config,
+              provider: config.fallbackProvider,
+            }
+            const fallback = this.create(fallbackConfig)
+            return new FallbackProvider(provider, fallback)
+          }
+          return provider
+        }
+      }
+    }
+
+    // Try ElevenLabs if API key is available
+    const hasElevenKey =
+      (config.elevenlabs as { apiKey?: string } | undefined)?.apiKey ||
+      process.env['ELEVENLABS_API_KEY']
+    if (hasElevenKey) {
+      const elProvider = this.providers.get('elevenlabs')
+      if (elProvider) {
+        const provider = new elProvider(config.elevenlabs || {})
+        if (await provider.isAvailable()) {
           if (config.fallbackProvider && config.fallbackProvider !== 'none') {
             const fallbackConfig: FactoryConfig = {
               ...config,

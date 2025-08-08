@@ -70,7 +70,8 @@
     "OTHER_VAR",
     "CUSTOM_DEBUG",
     "CUSTOM_LIST",
-    "OPENAI_API_KEY"
+    "OPENAI_API_KEY",
+    "ELEVENLABS_API_KEY"
   ],
   "tasks": {
     "build": {
