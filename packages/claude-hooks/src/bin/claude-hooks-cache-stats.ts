@@ -6,6 +6,8 @@
  * Shows performance metrics and statistics for the TTS audio cache
  */
 
+// Load environment variables before any other imports
+import '../utils/env-loader.js'
 import { AudioCache } from '../speech/providers/audio-cache.js'
 
 /**

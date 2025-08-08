@@ -5,6 +5,8 @@
  * This file will be compiled to dist/bin/claude-hooks-subagent.js
  */
 
+// Load environment variables before any other imports
+import '../utils/env-loader.js'
 import { main } from '../subagent-stop/subagent-stop.js'
 
 // Execute the main function
