@@ -3,7 +3,7 @@
 These are the tasks to be completed for the spec detailed in @.agent-os/specs/2025-08-08-elevenlabs-tts-integration/spec.md
 
 > Created: 2025-08-08  
-> Status: Planning
+> Status: In Progress (90% Complete)
 
 ## Tasks
 
@@ -77,16 +77,30 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 10.4 Add troubleshooting guide for common issues
   - [x] 10.5 Create migration guide from other providers
 
-- [ ] 11. Integration Testing
-  - [ ] 11.1 Write end-to-end integration tests
-  - [ ] 11.2 Test provider switching and fallback scenarios
-  - [ ] 11.3 Verify cross-platform audio playback
-  - [ ] 11.4 Performance test streaming vs non-streaming
-  - [ ] 11.5 Ensure all integration tests pass
+- [x] 11. Integration Testing
+  - [x] 11.1 Write end-to-end integration tests
+  - [x] 11.2 Test provider switching and fallback scenarios
+  - [x] 11.3 Verify cross-platform audio playback
+  - [x] 11.4 Performance test streaming vs non-streaming
+  - [x] 11.5 Ensure all integration tests pass
 
-- [ ] 12. Final Validation
-  - [ ] 12.1 Test with real ElevenLabs API key
-  - [ ] 12.2 Verify all supported languages work
-  - [ ] 12.3 Validate all audio formats generate correctly
-  - [ ] 12.4 Ensure rate limiting compliance
-  - [ ] 12.5 Complete code review and cleanup
+- [ ] 12. Environment Variable Loading Fix (Blocked - See Issue #112)
+  - [ ] 12.1 Implement automatic .env loading (separate branch)
+  - [ ] 12.2 Create .env.example with ELEVENLABS_API_KEY
+  - [ ] 12.3 Configure Vitest to use .env.example for tests
+  - [ ] 12.4 Test environment variable substitution in JSON configs
+  - [ ] 12.5 Merge environment loading fix into this branch
+
+- [ ] 13. Final Validation with Real API Key
+  - [ ] 13.1 Test with real ElevenLabs API key from .env
+  - [ ] 13.2 Verify all supported voices work correctly
+  - [ ] 13.3 Test all audio output formats (mp3, pcm, ulaw, etc.)
+  - [ ] 13.4 Validate streaming performance with real API
+  - [ ] 13.5 Ensure rate limiting compliance with actual API
+
+- [ ] 14. Production Readiness
+  - [ ] 14.1 Complete code review and cleanup
+  - [ ] 14.2 Update package version for release
+  - [ ] 14.3 Create pull request with full description
+  - [ ] 14.4 Address any PR review comments
+  - [ ] 14.5 Merge to main branch
