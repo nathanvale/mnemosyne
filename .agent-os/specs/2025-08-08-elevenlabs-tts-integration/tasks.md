@@ -84,12 +84,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 11.4 Performance test streaming vs non-streaming
   - [x] 11.5 Ensure all integration tests pass
 
-- [ ] 12. Environment Variable Loading Fix (Blocked - See Issue #112)
-  - [ ] 12.1 Implement automatic .env loading (separate branch)
-  - [ ] 12.2 Create .env.example with ELEVENLABS_API_KEY
-  - [ ] 12.3 Configure Vitest to use .env.example for tests
-  - [ ] 12.4 Test environment variable substitution in JSON configs
-  - [ ] 12.5 Merge environment loading fix into this branch
+- [x] 12. Environment Variable Loading Fix (Completed via PR #114)
+  - [x] 12.1 Implement automatic .env loading (completed in main)
+  - [x] 12.2 Create .env.example with ELEVENLABS_API_KEY
+  - [x] 12.3 Configure Vitest to use .env.example for tests
+  - [x] 12.4 Test environment variable substitution in JSON configs
+  - [x] 12.5 Merge environment loading fix into this branch (rebased)
 
 - [ ] 13. Final Validation with Real API Key
   - [ ] 13.1 Test with real ElevenLabs API key from .env
