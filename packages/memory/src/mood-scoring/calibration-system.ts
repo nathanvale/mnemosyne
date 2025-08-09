@@ -37,10 +37,12 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
   public activeCalibrations: CalibrationAdjustment[] = []
   public calibrationHistory: CalibrationAdjustment[] = []
   public performanceTracking: AlgorithmCalibrationSystem['performanceTracking']
+  private randomSource: () => number
 
   constructor(
     config?: Partial<CalibrationSystemConfig>,
     baselineMetrics?: ValidationMetrics,
+    randomSource?: () => number, // Optional parameter for testing
   ) {
     this.config = {
       maxCalibrationsPerSession: 3,
@@ -56,6 +58,9 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
       currentMetrics: baselineMetrics || this.getDefaultBaselineMetrics(),
       improvementTrend: [],
     }
+
+    // Use provided randomSource for testing, or default to Math.random
+    this.randomSource = randomSource || (() => Math.random())
   }
 
   /**
@@ -450,7 +455,7 @@ export class AlgorithmCalibrationManager implements AlgorithmCalibrationSystem {
     })
 
     // Simulate parameter application with some success rate
-    return Math.random() > 0.1 // 90% success rate
+    return this.randomSource() > 0.1 // 90% success rate
   }
 
   private async revertCalibrationAdjustment(

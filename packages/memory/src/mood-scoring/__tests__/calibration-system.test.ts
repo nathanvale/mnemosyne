@@ -428,7 +428,20 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 
   describe('Parameter Adjustment Simulation', () => {
     it('should simulate parameter adjustment with high success rate', async () => {
-      const manager = calibrationManager as unknown as {
+      // Create pattern with exactly 14 successes and 6 failures (70% success rate)
+      const pattern = [
+        ...Array(14).fill(true), // 14 successes
+        ...Array(6).fill(false), // 6 failures
+      ]
+
+      const randomSource = createDeterministicRandomSource(pattern)
+      const manager = new AlgorithmCalibrationManager(
+        {},
+        undefined,
+        randomSource,
+      )
+
+      const managerAsUnknown = manager as unknown as {
         applyParameterAdjustments: (
           adjustment: CalibrationAdjustment,
         ) => Promise<boolean>
@@ -438,14 +451,14 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
       // Test multiple times to verify success rate
       const results = await Promise.all(
         Array.from({ length: 20 }, () =>
-          manager.applyParameterAdjustments(adjustment),
+          managerAsUnknown.applyParameterAdjustments(adjustment),
         ),
       )
 
       const successCount = results.filter(Boolean).length
       const successRate = successCount / results.length
 
-      expect(successRate).toBeGreaterThanOrEqual(0.7) // Should have ~90% success rate, but allow for randomness
+      expect(successRate).toBeGreaterThanOrEqual(0.7) // Now deterministic: exactly 70% success rate
     })
   })
 
@@ -500,6 +513,21 @@ describe('Algorithm Calibration System (Task 4.6)', () => {
 })
 
 // Helper functions for creating test data
+
+/**
+ * Creates a deterministic random source for testing
+ * @param pattern Array of booleans indicating success (true) or failure (false)
+ * @returns A function that returns deterministic values based on the pattern
+ */
+function createDeterministicRandomSource(pattern: boolean[]): () => number {
+  let index = 0
+  return () => {
+    const shouldSucceed = pattern[index % pattern.length]
+    index++
+    // Return > 0.1 for success, <= 0.1 for failure
+    return shouldSucceed ? 0.11 : 0.09
+  }
+}
 
 function createValidationResultWithBias(
   biasType:
