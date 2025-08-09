@@ -6,6 +6,8 @@
  * Browse, search, and manage TTS audio cache entries
  */
 
+// Load environment variables before any other imports
+import '../utils/env-loader.js'
 import { existsSync } from 'node:fs'
 import { readdir, readFile, unlink, stat, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
