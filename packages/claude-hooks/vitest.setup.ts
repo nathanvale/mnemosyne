@@ -6,11 +6,11 @@
 import * as dotenv from 'dotenv'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
-// Get the monorepo root directory
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const rootDir = join(__dirname, '../..')
+import { findMonorepoRoot } from './src/utils/env-loader.js'
+
+// Get the monorepo root directory using the shared root resolver
+const rootDir = findMonorepoRoot()
 const envExamplePath = join(rootDir, '.env.example')
 
 // Load .env.example with override to replace any existing environment variables

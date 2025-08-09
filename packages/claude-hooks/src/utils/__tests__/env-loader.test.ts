@@ -66,7 +66,7 @@ describe('env-loader', () => {
       const { loadEnv } = await import('../env-loader.js')
       const result = loadEnv()
 
-      // Since we're in test mode, it will load .env.example
+      // The path will contain '.env' (could be .env or .env.example)
       expect(result.path).toContain('.env')
       expect(result.isTestMode).toBe(true) // Always true in Vitest
     })

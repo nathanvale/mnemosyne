@@ -2,9 +2,11 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 
+import { findMonorepoRoot } from '../utils/env-loader.js'
+
 describe('.env.example file', () => {
-  // Navigate to monorepo root from packages/claude-hooks
-  const rootDir = join(process.cwd(), '../../')
+  // Use shared root resolver utility
+  const rootDir = findMonorepoRoot()
   const envExamplePath = join(rootDir, '.env.example')
 
   it('should exist in the monorepo root', () => {

@@ -101,11 +101,20 @@ function runCliCommand(
       stderr += data.toString()
     })
 
-    child.on('close', (code) => {
+    child.once('error', (err) => {
+      // Surface spawn errors (e.g., ENOENT for npx/tsx) as failures
+      resolve({
+        stdout,
+        stderr: `${stderr}${stderr ? '\n' : ''}${String(err.message || err)}`,
+        exitCode: 1,
+      })
+    })
+
+    child.once('close', (code) => {
       resolve({
         stdout,
         stderr,
-        exitCode: code ?? 0,
+        exitCode: code !== null ? code : 1, // treat signal termination as failure
       })
     })
   })

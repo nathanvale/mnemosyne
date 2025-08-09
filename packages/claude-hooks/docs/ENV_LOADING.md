@@ -14,7 +14,7 @@ Claude Hooks automatically loads environment variables from `.env` files in your
 
 ## File Structure
 
-```
+```text
 monorepo-root/
 ├── .env                 # Your actual API keys (git-ignored)
 ├── .env.example         # Example values for testing and documentation
@@ -146,7 +146,7 @@ If you're upgrading from a version without automatic env loading:
 
 Claude Code users can configure environment variables directly in their settings file instead of using .env files:
 
-**Option 1: Use settings.json for team consistency**
+#### Option 1: Use settings.json for team consistency
 
 ```json
 {
@@ -158,7 +158,7 @@ Claude Code users can configure environment variables directly in their settings
 }
 ```
 
-**Option 2: Prevent Claude from reading sensitive .env files**
+#### Option 2: Prevent Claude from reading sensitive .env files
 
 ```json
 {
