@@ -12,5 +12,9 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'dist/', 'hooks/', 'scripts/**/*.test.ts'],
     },
+    setupFiles: ['./vitest.setup.ts'],
+    env: {
+      NODE_ENV: 'test',
+    },
   },
 })

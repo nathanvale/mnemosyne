@@ -458,6 +458,25 @@ pnpm run test
 
 ## Configuration System
 
+### Automatic Environment Variable Loading
+
+Claude Hooks automatically loads environment variables from `.env` files in your monorepo root, similar to how Next.js handles environment variables. This means you no longer need to manually export environment variables before running CLI commands.
+
+**Key Features:**
+
+- 🔄 **Automatic Loading**: No need to export variables manually
+- 📁 **Monorepo Aware**: Works from any directory in your monorepo
+- 🧪 **Test Safety**: Tests automatically use `.env.example` values
+- 🔐 **Secure**: Real API keys stay in `.env` (git-ignored)
+
+**Setup:**
+
+1. Copy `.env.example` to `.env` and add your real API keys
+2. Run any command - environment variables are loaded automatically
+3. Tests will use safe values from `.env.example`
+
+See [Environment Loading Documentation](./docs/ENV_LOADING.md) for detailed information.
+
 ### How Configuration Works
 
 1. **Auto-Config Loading** - Hooks automatically load `.claude/hooks/{hookName}.config.json`
