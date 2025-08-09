@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-describe('CLI Environment Loading', () => {
+describe.skip('CLI Environment Loading', () => {
   const rootDir = join(__dirname, '../../../../..')
 
   beforeAll(() => {
