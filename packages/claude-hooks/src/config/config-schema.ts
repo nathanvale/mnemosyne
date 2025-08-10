@@ -96,12 +96,33 @@ export interface TTSConfig {
   elevenlabs?: ElevenLabsTTSConfig
 }
 
+/**
+ * Audio cache normalization configuration
+ */
+export interface AudioCacheNormalizationConfig {
+  caseSensitive?: boolean
+  stripPriorityPrefixes?: boolean
+  normalizeWhitespace?: boolean
+}
+
+/**
+ * Audio cache configuration
+ */
+export interface AudioCacheConfig {
+  enabled?: boolean
+  maxSizeMB?: number
+  maxAgeDays?: number
+  maxEntries?: number
+  normalization?: AudioCacheNormalizationConfig
+}
+
 export interface CompleteHookConfig extends HookConfig {
   cooldownPeriod?: number
   allowUrgentOverride?: boolean
   quietHours?: QuietHoursConfig
   speech?: SpeechConfig
   tts?: TTSConfig
+  audioCache?: AudioCacheConfig
   perTypeSettings?: Partial<Record<NotificationType, number>>
 }
 

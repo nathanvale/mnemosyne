@@ -43,8 +43,10 @@ vi.mock('node:fs/promises', () => ({
 
 // Mock child_process for audio playback
 vi.mock('node:child_process', () => ({
-  default: { exec: mockExec },
+  default: { exec: mockExec, execFile: vi.fn(), spawn: vi.fn() },
   exec: mockExec,
+  execFile: vi.fn(),
+  spawn: vi.fn(() => ({ unref: vi.fn() })),
 }))
 
 import { OpenAIProvider } from '../openai-provider.js'

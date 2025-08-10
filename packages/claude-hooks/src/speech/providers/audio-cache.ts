@@ -139,8 +139,11 @@ export class AudioCache {
     // Normalize text based on configuration
     const normalizedText = this.normalizeText(text)
 
+    // Normalize format string to lowercase to prevent cache duplicates
+    const normalizedFormat = (format || 'mp3').toLowerCase()
+
     // Include provider and format in the cache key to prevent collisions
-    const input = `${provider}|${normalizedText}|${model}|${voice}|${speed}|${format || 'mp3'}`
+    const input = `${provider}|${normalizedText}|${model}|${voice}|${speed}|${normalizedFormat}`
     const hash = createHash('sha256')
     hash.update(input, 'utf8')
     return hash.digest('hex')
@@ -416,7 +419,16 @@ export class AudioCache {
       } catch {
         // If we can't read the entry, try to remove with common extensions
         const audioDir = join(this.config.cacheDir, 'audio')
-        const possibleExtensions = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm']
+        const possibleExtensions = [
+          'mp3',
+          'opus',
+          'aac',
+          'flac',
+          'wav',
+          'pcm',
+          'ulaw',
+          'alaw',
+        ]
 
         await unlink(entryPath).catch(() => {})
 
@@ -436,15 +448,18 @@ export class AudioCache {
    * Get file extension from format string
    */
   private getFileExtension(format: string): string {
+    // Normalize format to lowercase for consistent matching
+    const normalizedFormat = format.toLowerCase()
+
     // Handle various format strings from different providers
-    if (format.includes('mp3')) return 'mp3'
-    if (format.includes('opus')) return 'opus'
-    if (format.includes('aac')) return 'aac'
-    if (format.includes('flac')) return 'flac'
-    if (format.includes('wav')) return 'wav'
-    if (format.includes('pcm')) return 'pcm'
-    if (format.includes('ulaw')) return 'ulaw'
-    if (format.includes('alaw')) return 'alaw'
+    if (normalizedFormat.includes('mp3')) return 'mp3'
+    if (normalizedFormat.includes('opus')) return 'opus'
+    if (normalizedFormat.includes('aac')) return 'aac'
+    if (normalizedFormat.includes('flac')) return 'flac'
+    if (normalizedFormat.includes('wav')) return 'wav'
+    if (normalizedFormat.includes('pcm')) return 'pcm'
+    if (normalizedFormat.includes('ulaw')) return 'ulaw'
+    if (normalizedFormat.includes('alaw')) return 'alaw'
 
     // Default to mp3 if format is unknown
     return 'mp3'

@@ -3,7 +3,7 @@
  * Uses OpenAI's Text-to-Speech API for high-quality voice synthesis
  */
 
-import { exec, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { writeFile, unlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -21,8 +21,6 @@ import { createLogger } from '../../utils/logger.js'
 import { AudioCache } from './audio-cache'
 import { translateAudioCacheConfig } from './cache-config-adapter'
 import { BaseTTSProvider } from './tts-provider'
-
-const execAsync = promisify(exec)
 
 /**
  * OpenAI-specific configuration
@@ -103,7 +101,7 @@ export class OpenAIProvider extends BaseTTSProvider {
     options?: { detached?: boolean },
   ): Promise<SpeakResult> {
     const detached = options?.detached ?? false
-    this.logger.debug(`speak() called with text: ${text.substring(0, 50)}...`)
+    this.logger.debug(`speak() called with text length: ${text.length} chars`)
 
     // Validate text
     const cleanText = this.validateText(text)
@@ -119,8 +117,6 @@ export class OpenAIProvider extends BaseTTSProvider {
     }
 
     this.logger.debug('Client available, proceeding with TTS generation')
-    // Apply rate limiting
-    await this.applyRateLimit()
 
     return this.speakWithRetry(cleanText, detached)
   }
@@ -130,6 +126,9 @@ export class OpenAIProvider extends BaseTTSProvider {
     detached = false,
   ): Promise<SpeakResult> {
     try {
+      // Apply rate limiting on each attempt (including retries)
+      await this.applyRateLimit()
+
       // Truncate very long text to API limit (4096 chars)
       const inputText =
         text.length > 4096 ? `${text.substring(0, 4093)}...` : text
@@ -144,9 +143,7 @@ export class OpenAIProvider extends BaseTTSProvider {
         this.openaiConfig.format,
       )
 
-      this.logger.debug(
-        `Cache key for "${inputText.substring(0, 30)}...": ${cacheKey.substring(0, 16)}...`,
-      )
+      this.logger.debug(`Generated cache key: ${cacheKey.substring(0, 16)}...`)
 
       // Check cache first
       const cachedEntry = await this.cache.get(cacheKey)
@@ -177,9 +174,7 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Convert response to buffer
       const buffer = Buffer.from(await response.arrayBuffer())
 
-      this.logger.debug(
-        `Caching new audio (${buffer.length} bytes) for: "${inputText.substring(0, 30)}..."`,
-      )
+      this.logger.debug(`Caching new audio (${buffer.length} bytes)`)
 
       // Cache the result
       await this.cache.set(cacheKey, buffer, {
@@ -438,11 +433,25 @@ export class OpenAIProvider extends BaseTTSProvider {
    * Validate filepath to prevent command injection
    */
   private validateFilepath(filepath: string): boolean {
-    // Only allow alphanumeric, dash, underscore, period, and forward slash
-    // Must start with / or ./ (absolute or relative path)
     // Must not contain .. (parent directory traversal)
-    const validPathRegex = /^(\/|\.\/)[a-zA-Z0-9\/_\-\.]+$/
-    return validPathRegex.test(filepath) && !filepath.includes('..')
+    if (filepath.includes('..')) return false
+
+    const platform = process.platform
+
+    if (platform === 'win32') {
+      // Windows path validation
+      // Allow drive letters, backslashes, forward slashes, and common path characters
+      // Examples: C:\temp\file.mp3, C:/temp/file.mp3, .\file.mp3
+      const windowsPathRegex =
+        /^([a-zA-Z]:[\\/]|\.[\\/]|[\\/])?[a-zA-Z0-9\s\\/\\_\-\.]+$/
+      return windowsPathRegex.test(filepath)
+    } else {
+      // POSIX path validation (Linux, macOS)
+      // Must start with / or ./ (absolute or relative path)
+      // Allow alphanumeric, dash, underscore, period, and forward slash
+      const posixPathRegex = /^(\/|\.\/)[a-zA-Z0-9\/_\-\.]+$/
+      return posixPathRegex.test(filepath)
+    }
   }
 
   /**
@@ -532,24 +541,30 @@ export class OpenAIProvider extends BaseTTSProvider {
         // Unref allows parent to exit independently
         child.unref()
       } else {
-        // Use exec for normal playback (waits for completion)
-        let command = ''
+        // Use execFile for normal playback (waits for completion) - more secure than exec
+        const { execFile } = await import('node:child_process')
+        const execFileAsync = promisify(execFile)
+
         if (platform === 'darwin') {
           // macOS
-          command = `afplay "${filepath}"`
           this.logger.debug(`Playing audio with afplay: ${filepath}`)
+          await execFileAsync('afplay', [filepath])
         } else if (platform === 'win32') {
-          // Windows - properly escape the filepath for PowerShell
+          // Windows - use execFile with PowerShell
           const escapedPath = filepath
             .replace(/\\/g, '\\\\') // Escape backslashes
             .replace(/'/g, "''") // Escape single quotes
             .replace(/`/g, '``') // Escape backticks
             .replace(/\$/g, '`$') // Escape dollar signs
 
-          command = `powershell -NoProfile -Command "(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()"`
           this.logger.debug(`Playing audio with PowerShell: ${filepath}`)
+          await execFileAsync('powershell', [
+            '-NoProfile',
+            '-Command',
+            `(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()`,
+          ])
         } else {
-          // Linux - try to find and use available audio player safely
+          // Linux - try to find and use available audio player with execFile
           const players = [
             { cmd: 'aplay', args: [filepath] },
             { cmd: 'paplay', args: [filepath] },
@@ -557,37 +572,29 @@ export class OpenAIProvider extends BaseTTSProvider {
           ]
 
           // Try each player in order
-          let commandSet = false
+          let playerExecuted = false
           for (const player of players) {
             try {
-              // Check if player exists
-              const { execSync } = await import('node:child_process')
-              try {
-                execSync(`which ${player.cmd}`, { stdio: 'ignore' })
-                // Player exists, build command
-                command = `${player.cmd} ${player.args.map((arg) => `"${arg}"`).join(' ')}`
-                commandSet = true
-                break
-              } catch {
-                // Player not found, try next
-                continue
-              }
+              // Try to execute the player directly
+              await execFileAsync(player.cmd, player.args)
+              playerExecuted = true
+              this.logger.debug(
+                `Playing audio on Linux with ${player.cmd}: ${filepath}`,
+              )
+              break
             } catch {
-              // Error checking, try next player
+              // Player not found or failed, try next
               continue
             }
           }
 
-          if (!commandSet) {
+          if (!playerExecuted) {
             this.logger.warning(
               'No audio player found on Linux (tried aplay, paplay, ffplay)',
             )
             return
           }
-          this.logger.debug(`Playing audio on Linux: ${filepath}`)
         }
-
-        await execAsync(command)
       }
     } catch (error) {
       this.logger.warning(`Error in playAudio: ${error}`)
