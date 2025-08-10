@@ -166,6 +166,72 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     configPath: 'tts.macos.enabled',
     type: 'boolean',
   },
+
+  // ElevenLabs TTS configuration
+  {
+    envVar: 'ELEVENLABS_API_KEY',
+    configPath: 'tts.elevenlabs.apiKey',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_VOICE_ID',
+    configPath: 'tts.elevenlabs.voiceId',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_MODEL_ID',
+    configPath: 'tts.elevenlabs.modelId',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_OUTPUT_FORMAT',
+    configPath: 'tts.elevenlabs.outputFormat',
+    type: 'string',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_SPEED',
+    configPath: 'tts.elevenlabs.speed',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_STABILITY',
+    configPath: 'tts.elevenlabs.stability',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_SIMILARITY_BOOST',
+    configPath: 'tts.elevenlabs.similarityBoost',
+    type: 'number',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_ENABLE_LOGGING',
+    configPath: 'tts.elevenlabs.enableLogging',
+    type: 'boolean',
+  },
+
+  // Audio Cache configuration
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_ENABLED',
+    configPath: 'audioCache.enabled',
+    type: 'boolean',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_MAX_SIZE_MB',
+    configPath: 'audioCache.maxSizeMB',
+    type: 'number',
+    parser: (value: string) => parseFloat(value) * 1024 * 1024, // Convert MB to bytes
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_MAX_AGE_DAYS',
+    configPath: 'audioCache.maxAgeDays',
+    type: 'number',
+    parser: (value: string) => parseFloat(value) * 24 * 60 * 60 * 1000, // Convert days to milliseconds
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_MAX_ENTRIES',
+    configPath: 'audioCache.maxEntries',
+    type: 'number',
+  },
 ]
 
 /**

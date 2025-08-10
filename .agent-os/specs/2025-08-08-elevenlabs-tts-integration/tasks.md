@@ -91,12 +91,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 12.4 Test environment variable substitution in JSON configs
   - [x] 12.5 Merge environment loading fix into this branch (rebased)
 
-- [ ] 13. Final Validation with Real API Key
-  - [ ] 13.1 Test with real ElevenLabs API key from .env
-  - [ ] 13.2 Verify all supported voices work correctly
-  - [ ] 13.3 Test all audio output formats (mp3, pcm, ulaw, etc.)
-  - [ ] 13.4 Validate streaming performance with real API
-  - [ ] 13.5 Ensure rate limiting compliance with actual API
+- [x] 13. Final Validation with Real API Key
+  - [x] 13.1 Test with real ElevenLabs API key from .env
+  - [x] 13.2 Verify all supported voices work correctly
+  - [x] 13.3 Test all audio output formats (mp3, pcm, ulaw, etc.)
+  - [x] 13.4 Validate streaming performance with real API
+  - [x] 13.5 Ensure rate limiting compliance with actual API
 
 - [ ] 14. Production Readiness
   - [ ] 14.1 Complete code review and cleanup

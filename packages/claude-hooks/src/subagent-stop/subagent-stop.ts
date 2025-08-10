@@ -3,6 +3,9 @@
  * Notifies when a subagent completes its task
  */
 
+// Load environment variables from .env file
+import '../utils/env-loader.js'
+
 import type {
   TTSProvider,
   TTSProviderConfig,
@@ -23,10 +26,11 @@ export interface SubagentStopHookConfig extends HookConfig {
   notifySound?: boolean
   speak?: boolean
   tts?: {
-    provider: 'openai' | 'macos' | 'auto'
-    fallbackProvider?: 'macos' | 'none'
+    provider: 'openai' | 'macos' | 'elevenlabs' | 'auto'
+    fallbackProvider?: 'macos' | 'elevenlabs' | 'none'
     openai?: TTSProviderConfig
     macos?: TTSProviderConfig
+    elevenlabs?: TTSProviderConfig
   }
 }
 
@@ -51,6 +55,7 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
       fallbackProvider: ttsConfig?.fallbackProvider || 'macos',
       openai: ttsConfig?.openai as TTSProviderConfig | undefined,
       macos: ttsConfig?.macos || { enabled: true },
+      elevenlabs: ttsConfig?.elevenlabs as TTSProviderConfig | undefined,
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,

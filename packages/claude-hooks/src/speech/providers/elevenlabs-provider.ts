@@ -118,6 +118,7 @@ export class ElevenLabsProvider extends BaseTTSProvider {
         text.length > 8000 ? `${text.substring(0, 7997)}...` : text
 
       const cacheKey = await this.cache.generateKey(
+        'elevenlabs',
         inputText,
         this.elConfig.modelId,
         this.elConfig.voiceId,
@@ -143,7 +144,7 @@ export class ElevenLabsProvider extends BaseTTSProvider {
         {
           text: inputText,
           modelId: this.elConfig.modelId,
-          outputFormat: this.elConfig.outputFormat,
+          outputFormat: this.elConfig.outputFormat as unknown as string,
           // Map voice settings where applicable (SDK tolerates extras)
           voiceSettings: {
             stability: this.elConfig.stability,
@@ -191,7 +192,7 @@ export class ElevenLabsProvider extends BaseTTSProvider {
   }
 
   async isAvailable(): Promise<boolean> {
-    return !!this.elConfig.apiKey
+    return !!this.elConfig.apiKey && !!this.elConfig.voiceId
   }
 
   getProviderInfo(): TTSProviderInfo {

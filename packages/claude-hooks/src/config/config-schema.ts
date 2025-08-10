@@ -60,13 +60,40 @@ export interface MacOSTTSConfig {
 }
 
 /**
+ * ElevenLabs TTS Provider Configuration
+ */
+export interface ElevenLabsTTSConfig {
+  apiKey?: string
+  voiceId?: string
+  modelId?:
+    | 'eleven_multilingual_v2'
+    | 'eleven_flash_v2_5'
+    | 'eleven_monolingual_v1'
+    | string
+  outputFormat?:
+    | 'mp3_44100_128'
+    | 'mp3_44100_192'
+    | 'mp3_22050_32'
+    | 'pcm_16000'
+    | 'ulaw_8000'
+    | 'alaw_8000'
+    | 'opus_48000_128'
+    | string
+  stability?: number // 0.0 to 1.0
+  similarityBoost?: number // 0.0 to 1.0
+  speed?: number // 0.5 to 2.0
+  enableLogging?: boolean
+}
+
+/**
  * TTS Provider Configuration
  */
 export interface TTSConfig {
-  provider: 'openai' | 'macos' | 'auto'
-  fallbackProvider?: 'macos' | 'none'
+  provider: 'openai' | 'macos' | 'elevenlabs' | 'auto'
+  fallbackProvider?: 'openai' | 'macos' | 'elevenlabs' | 'none'
   openai?: OpenAITTSConfig
   macos?: MacOSTTSConfig
+  elevenlabs?: ElevenLabsTTSConfig
 }
 
 export interface CompleteHookConfig extends HookConfig {
@@ -463,7 +490,7 @@ export class ConfigValidator {
     const t = tts as Record<string, unknown>
 
     // Validate provider (required)
-    const validProviders = ['openai', 'macos', 'auto']
+    const validProviders = ['openai', 'macos', 'elevenlabs', 'auto']
     if (
       typeof t.provider !== 'string' ||
       !validProviders.includes(t.provider)
@@ -477,7 +504,7 @@ export class ConfigValidator {
 
     // Validate fallbackProvider (optional)
     if (t.fallbackProvider !== undefined) {
-      const validFallbacks = ['macos', 'none']
+      const validFallbacks = ['openai', 'macos', 'elevenlabs', 'none']
       if (
         typeof t.fallbackProvider !== 'string' ||
         !validFallbacks.includes(t.fallbackProvider)
@@ -498,6 +525,11 @@ export class ConfigValidator {
     // Validate macOS config (optional)
     if (t.macos !== undefined) {
       this.validateMacOSConfig(t.macos, errors, _warnings)
+    }
+
+    // Validate ElevenLabs config (optional)
+    if (t.elevenlabs !== undefined) {
+      this.validateElevenLabsConfig(t.elevenlabs, errors, _warnings)
     }
   }
 
@@ -638,6 +670,116 @@ export class ConfigValidator {
   }
 
   /**
+   * Validate ElevenLabs TTS configuration
+   */
+  private static validateElevenLabsConfig(
+    elevenlabs: unknown,
+    errors: ValidationError[],
+    _warnings: ValidationError[],
+  ): void {
+    if (typeof elevenlabs !== 'object' || elevenlabs === null) {
+      errors.push({
+        field: 'tts.elevenlabs',
+        message: 'tts.elevenlabs must be an object',
+        value: elevenlabs,
+      })
+      return
+    }
+
+    const el = elevenlabs as Record<string, unknown>
+
+    // Validate apiKey (optional)
+    if (el.apiKey !== undefined && typeof el.apiKey !== 'string') {
+      errors.push({
+        field: 'tts.elevenlabs.apiKey',
+        message: 'tts.elevenlabs.apiKey must be a string',
+        value: el.apiKey,
+      })
+    }
+
+    // Validate voiceId (optional)
+    if (el.voiceId !== undefined && typeof el.voiceId !== 'string') {
+      errors.push({
+        field: 'tts.elevenlabs.voiceId',
+        message: 'tts.elevenlabs.voiceId must be a string',
+        value: el.voiceId,
+      })
+    }
+
+    // Validate modelId (optional)
+    if (el.modelId !== undefined && typeof el.modelId !== 'string') {
+      errors.push({
+        field: 'tts.elevenlabs.modelId',
+        message: 'tts.elevenlabs.modelId must be a string',
+        value: el.modelId,
+      })
+    }
+
+    // Validate outputFormat (optional)
+    if (el.outputFormat !== undefined && typeof el.outputFormat !== 'string') {
+      errors.push({
+        field: 'tts.elevenlabs.outputFormat',
+        message: 'tts.elevenlabs.outputFormat must be a string',
+        value: el.outputFormat,
+      })
+    }
+
+    // Validate stability (optional)
+    if (el.stability !== undefined) {
+      if (
+        typeof el.stability !== 'number' ||
+        el.stability < 0 ||
+        el.stability > 1
+      ) {
+        errors.push({
+          field: 'tts.elevenlabs.stability',
+          message: 'tts.elevenlabs.stability must be a number between 0 and 1',
+          value: el.stability,
+        })
+      }
+    }
+
+    // Validate similarityBoost (optional)
+    if (el.similarityBoost !== undefined) {
+      if (
+        typeof el.similarityBoost !== 'number' ||
+        el.similarityBoost < 0 ||
+        el.similarityBoost > 1
+      ) {
+        errors.push({
+          field: 'tts.elevenlabs.similarityBoost',
+          message:
+            'tts.elevenlabs.similarityBoost must be a number between 0 and 1',
+          value: el.similarityBoost,
+        })
+      }
+    }
+
+    // Validate speed (optional)
+    if (el.speed !== undefined) {
+      if (typeof el.speed !== 'number' || el.speed < 0.5 || el.speed > 2.0) {
+        errors.push({
+          field: 'tts.elevenlabs.speed',
+          message: 'tts.elevenlabs.speed must be a number between 0.5 and 2.0',
+          value: el.speed,
+        })
+      }
+    }
+
+    // Validate enableLogging (optional)
+    if (
+      el.enableLogging !== undefined &&
+      typeof el.enableLogging !== 'boolean'
+    ) {
+      errors.push({
+        field: 'tts.elevenlabs.enableLogging',
+        message: 'tts.elevenlabs.enableLogging must be a boolean',
+        value: el.enableLogging,
+      })
+    }
+  }
+
+  /**
    * Validate per-type settings
    */
   private static validatePerTypeSettings(
@@ -736,6 +878,14 @@ export class ConfigValidator {
           rate: 200,
           volume: 0.7,
           enabled: true,
+        },
+        elevenlabs: {
+          modelId: 'eleven_multilingual_v2',
+          outputFormat: 'mp3_44100_128',
+          stability: 0.5,
+          similarityBoost: 0.75,
+          speed: 1.0,
+          enableLogging: true,
         },
       },
       perTypeSettings: {},

@@ -4,7 +4,7 @@
  * Tests loading configuration from environment variables
  */
 
-import { beforeEach, describe, it, expect } from 'vitest'
+import { beforeEach, afterEach, describe, it, expect } from 'vitest'
 
 import {
   EnvConfigLoader,
@@ -25,6 +25,14 @@ describe('Environment Configuration', () => {
         delete process.env[key]
       }
     })
+
+    // Also clear API keys that may be loaded from .env.example
+    delete process.env.OPENAI_API_KEY
+    delete process.env.ELEVENLABS_API_KEY
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
+    delete process.env.TAVILY_API_KEY
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
+    delete process.env.FIRECRAWL_API_KEY
   })
 
   afterEach(() => {
@@ -94,7 +102,7 @@ describe('Environment Configuration', () => {
 
       const baseConfig = {
         debug: true,
-        notify: true,
+        notifySound: true,
         cooldownPeriod: 5000,
       }
 
@@ -102,7 +110,7 @@ describe('Environment Configuration', () => {
       const config = loader.loadFromEnv(baseConfig)
 
       expect(config.debug).toBe(false)
-      expect(config.notify).toBe(true) // Not overridden
+      expect(config.notifySound).toBe(true) // Not overridden
       expect(config.cooldownPeriod).toBe(10000)
     })
   })
@@ -366,14 +374,14 @@ describe('Environment Configuration', () => {
       process.env.CLAUDE_HOOKS_DEBUG = 'false'
 
       const baseConfig = {
-        notify: true,
+        notifySound: true,
         cooldownPeriod: 5000,
       }
 
       const config = loadConfigFromEnv(baseConfig)
 
       expect(config.debug).toBe(false) // From env
-      expect(config.notify).toBe(true) // From base
+      expect(config.notifySound).toBe(true) // From base
       expect(config.cooldownPeriod).toBe(5000) // From base
     })
   })

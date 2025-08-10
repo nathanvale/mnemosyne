@@ -18,6 +18,16 @@
       "rate": 250,
       "volume": 0.7,
       "enabled": true
+    },
+    "elevenlabs": {
+      "apiKey": "${ELEVENLABS_API_KEY}",
+      "voiceId": "EXAVITQu4vr4xnSDxMaL",
+      "modelId": "eleven_multilingual_v2",
+      "outputFormat": "mp3_44100_128",
+      "stability": 0.5,
+      "similarityBoost": 0.75,
+      "speed": 1.0,
+      "enableLogging": true
     }
   }
 }

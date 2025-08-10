@@ -10,7 +10,7 @@ The following features have been implemented and shipped:
 - [x] **Next.js 15 Application** - Modern React framework with App Router ([spec](@.agent-os/specs/2025-08-08-nextjs-15-application/spec.md))
 - [x] **Prisma Database Schema** - SQLite with Messages, Links, Assets tables ([spec](@.agent-os/specs/2025-08-08-prisma-database-schema/spec.md))
 - [x] **Package Architecture** - 15+ specialized @studio/\* packages ([spec](@.agent-os/specs/2025-08-08-package-architecture/spec.md))
-- [ ] **Automatic Environment Loading** - Zero-config .env loading for all Node/tsx scripts ([spec](@.agent-os/specs/2025-01-09-automatic-env-loading/spec.md))
+- [x] **Automatic Environment Loading** - Zero-config .env loading for all Node/tsx scripts ([spec](@.agent-os/specs/2025-01-09-automatic-env-loading/spec.md))
 
 ### Data Processing
 
@@ -33,7 +33,7 @@ The following features have been implemented and shipped:
 - [x] **OpenAI TTS Integration** - Text-to-speech capabilities with environment variable support ([spec](@.agent-os/specs/2025-08-06-openai-tts-integration/spec.md))
 - [x] **Turborepo Build Optimization** - Enhanced caching and test performance ([spec](@.agent-os/specs/2025-08-07-turborepo-build-test-optimization/spec.md))
 - [x] **NPM Package Distribution** - Package publishing and distribution workflow ([spec](@.agent-os/specs/2025-08-07-npm-package-distribution/spec.md))
-- [x] **ElevenLabs TTS Integration** - High-quality text-to-speech with multiple voices and streaming support ([spec](@.agent-os/specs/2025-08-08-elevenlabs-tts-integration/spec.md))
+- [ ] **ElevenLabs TTS Integration** - High-quality text-to-speech with multiple voices and streaming support ([spec](@.agent-os/specs/2025-08-08-elevenlabs-tts-integration/spec.md))
 
 ### Phase 2 Foundation
 

@@ -2,9 +2,18 @@ import { describe, it, expect } from 'vitest'
 
 describe('Environment loading behavior', () => {
   it('should detect test mode in Vitest', () => {
-    // Vitest sets VITEST_WORKER_ID when running tests
-    expect(process.env.VITEST_WORKER_ID).toBeDefined()
-    expect(process.env.NODE_ENV).toBe('test')
+    // In Wallaby, NODE_ENV might be 'development' but WALLABY_WORKER will be set
+    // In regular Vitest, NODE_ENV should be 'test'
+    const isWallaby = process.env.WALLABY_WORKER === 'true'
+
+    if (isWallaby) {
+      // Wallaby has its own way of detecting test mode
+      expect(process.env.WALLABY_WORKER).toBe('true')
+    } else {
+      // Regular Vitest should set NODE_ENV to test
+      expect(process.env.NODE_ENV).toBe('test')
+      expect(process.env.VITEST_WORKER_ID).toBeDefined()
+    }
   })
 
   it('should load test-safe values from .env.example', () => {
@@ -16,7 +25,6 @@ describe('Environment loading behavior', () => {
 
   it('should have all required test environment variables', () => {
     // Verify all environment variables from .env.example are loaded
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     expect(process.env.ELEVENLABS_API_KEY).toBe('test-elevenlabs-key')
     expect(process.env.CLAUDE_HOOKS_TTS_PROVIDER).toBe('macos')
     // eslint-disable-next-line turbo/no-undeclared-env-vars

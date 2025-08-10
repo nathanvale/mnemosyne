@@ -3,6 +3,9 @@
  * Plays sound when Claude needs user attention
  */
 
+// Load environment variables from .env file
+import '../utils/env-loader.js'
+
 import type {
   TTSProvider,
   TTSProviderConfig,
@@ -33,8 +36,8 @@ export interface NotificationHookConfig extends HookConfig {
     allowUrgentOverride?: boolean
   }
   tts?: {
-    provider: 'openai' | 'macos' | 'auto'
-    fallbackProvider?: 'macos' | 'none'
+    provider: 'openai' | 'macos' | 'elevenlabs' | 'auto'
+    fallbackProvider?: 'macos' | 'elevenlabs' | 'none'
     openai?: {
       apiKey?: string
       model?: 'tts-1' | 'tts-1-hd'
@@ -47,6 +50,16 @@ export interface NotificationHookConfig extends HookConfig {
       rate?: number
       volume?: number
       enabled?: boolean
+    }
+    elevenlabs?: {
+      apiKey?: string
+      voiceId?: string
+      modelId?: string
+      outputFormat?: string
+      stability?: number
+      similarityBoost?: number
+      speed?: number
+      enableLogging?: boolean
     }
   }
 }
@@ -77,6 +90,7 @@ export class NotificationHook extends BaseHook<ClaudeNotificationEvent> {
       fallbackProvider: ttsConfig?.fallbackProvider || 'macos',
       openai: ttsConfig?.openai as TTSProviderConfig | undefined,
       macos: ttsConfig?.macos || { enabled: true },
+      elevenlabs: ttsConfig?.elevenlabs as TTSProviderConfig | undefined,
     }
     this.ttsProviderPromise = TTSProviderFactory.createWithFallback(
       factoryConfig,

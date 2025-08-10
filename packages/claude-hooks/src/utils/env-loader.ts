@@ -62,8 +62,10 @@ export function isTestMode(): boolean {
   return (
     process.env.NODE_ENV === 'test' ||
     process.env.VITEST === 'true' ||
+    process.env.WALLABY_WORKER === 'true' || // Add Wallaby detection
     Boolean(process.env.VITEST_WORKER_ID) ||
-    Boolean(process.env.JEST_WORKER_ID)
+    Boolean(process.env.JEST_WORKER_ID) ||
+    Boolean(process.env.WALLABY_WORKER_ID)
   )
 }
 
@@ -124,26 +126,52 @@ export function loadEnv(): EnvLoadResult {
  */
 export function substituteEnvVars(value: string): string {
   return value.replace(/\$\{([^}]+)\}/g, (match, varName) => {
-    return process.env[varName] || match
+    const envValue = process.env[varName]
+    if (envValue === undefined) {
+      if (process.env.CLAUDE_HOOKS_DEBUG === 'true') {
+        console.error(
+          `[env-loader] Warning: Environment variable '${varName}' not found, keeping placeholder '${match}'`,
+        )
+      }
+      return match
+    }
+    return envValue
   })
 }
 
 /**
  * Load environment variables on module import
  * This ensures env vars are available before any other code runs
+ * Skip auto-loading in test environments to allow test setup control
  */
-const result = loadEnv()
+let result: EnvLoadResult
+if (!isTestMode()) {
+  result = loadEnv()
 
-// Log loading result in debug mode
-if (process.env.CLAUDE_HOOKS_DEBUG === 'true') {
-  // Use console.error for debug output (allowed by ESLint)
-  console.error('[env-loader] Environment loading result:', {
-    path: result.path,
-    loaded: result.loaded,
-    isTestMode: result.isTestMode,
-    fallbackUsed: result.fallbackUsed,
-    error: result.error,
-  })
+  // Log loading result in debug mode
+  if (process.env.CLAUDE_HOOKS_DEBUG === 'true') {
+    // Use console.error for debug output (allowed by ESLint)
+    console.error('[env-loader] Environment loading result:', {
+      path: result.path,
+      loaded: result.loaded,
+      isTestMode: result.isTestMode,
+      fallbackUsed: result.fallbackUsed,
+      error: result.error,
+    })
+  }
+} else {
+  // In test mode, create a minimal result indicating test mode
+  result = {
+    path: '',
+    loaded: false,
+    isTestMode: true,
+    error:
+      'Auto-loading skipped in test mode - environment managed by test setup',
+  }
+
+  if (process.env.CLAUDE_HOOKS_DEBUG === 'true') {
+    console.error('[env-loader] Skipped auto-loading in test mode')
+  }
 }
 
 export default result

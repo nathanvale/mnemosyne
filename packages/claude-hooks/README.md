@@ -164,7 +164,7 @@ pnpm install
 cat > .claude/hooks/notification.config.json << 'EOF'
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false,
     "cooldownPeriod": 3000,
@@ -217,7 +217,7 @@ EOF
 cat > .claude/hooks/subagent-stop.config.json << 'EOF'
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false
   }
@@ -296,7 +296,7 @@ Plays attention sounds when Claude needs user input.
 ```json
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false,
     "cooldownPeriod": 3000,
@@ -312,7 +312,7 @@ Plays attention sounds when Claude needs user input.
 
 **Properties:**
 
-- `notify` - Enable sound notifications
+- `notifySound` - Enable sound notifications
 - `speak` - Enable speech synthesis (macOS only)
 - `debug` - Enable debug logging
 - `cooldownPeriod` - Cooldown between notifications (ms)
@@ -369,7 +369,7 @@ Tracks when Claude's Task tool subagents complete their work.
 ```json
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false
   }
@@ -378,7 +378,7 @@ Tracks when Claude's Task tool subagents complete their work.
 
 **Properties:**
 
-- `notify` - Enable notification sounds
+- `notifySound` - Enable notification sounds
 - `speak` - Enable speech synthesis (macOS only)
 - `debug` - Enable debug logging
 
@@ -587,7 +587,7 @@ Environment variables can override any JSON configuration setting. Use the forma
 
 ### Notification Hook
 
-- `CLAUDE_HOOKS_NOTIFICATION_NOTIFY` - Enable sound notifications
+- `CLAUDE_HOOKS_NOTIFY_SOUND` - Enable sound notifications
 - `CLAUDE_HOOKS_NOTIFICATION_SPEAK` - Enable speech notifications (macOS only)
 - `CLAUDE_HOOKS_NOTIFICATION_COOLDOWN_PERIOD` - Cooldown between notifications (ms)
 - `CLAUDE_HOOKS_NOTIFICATION_ALLOW_URGENT_OVERRIDE` - Allow urgent notifications during cooldown
@@ -618,24 +618,24 @@ For OpenAI text-to-speech integration, set the following environment variables:
 
 - `OPENAI_API_KEY` - Your OpenAI API key (required)
 - `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
-- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection:
+- `CLAUDE_HOOKS_OPENAI_TTS_VOICE` - Voice selection:
   - `alloy` (default) - Balanced, neutral voice
   - `echo` - Clear, professional voice
   - `fable` - Warm, storytelling voice
   - `onyx` - Deep, authoritative voice
   - `nova` - Bright, energetic voice
   - `shimmer` - Soft, friendly voice
-- `CLAUDE_HOOKS_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
-- `CLAUDE_HOOKS_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+- `CLAUDE_HOOKS_OPENAI_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
+- `CLAUDE_HOOKS_OPENAI_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
 
 Example OpenAI TTS configuration:
 
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 export CLAUDE_HOOKS_TTS_PROVIDER="openai"
-export CLAUDE_HOOKS_TTS_VOICE="nova"
-export CLAUDE_HOOKS_TTS_MODEL="tts-1-hd"
-export CLAUDE_HOOKS_TTS_SPEED="0.9"
+export CLAUDE_HOOKS_OPENAI_TTS_VOICE="nova"
+export CLAUDE_HOOKS_OPENAI_TTS_MODEL="tts-1-hd"
+export CLAUDE_HOOKS_OPENAI_TTS_SPEED="0.9"
 ```
 
 Or add to your `.claude/hooks/stop.config.json`:
@@ -754,6 +754,106 @@ The hooks support command-line flags that override both JSON and environment con
 
 - `--notify` - Enable notification sounds
 - `--speak` - Enable speech synthesis (macOS only)
+
+## Audio Cache
+
+The hooks include an intelligent audio caching system that improves performance and reduces API costs by caching generated TTS audio files.
+
+### Overview
+
+The audio cache stores generated TTS audio locally to avoid redundant API calls when the same text is spoken multiple times. This is particularly useful for:
+
+- Repeated notifications and alerts
+- Common completion messages
+- Frequently used voice prompts
+- Testing and development
+
+### Configuration
+
+The cache can be configured using environment variables:
+
+- `CLAUDE_HOOKS_AUDIO_CACHE_ENABLED` - Enable/disable caching (default: true)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_SIZE_MB` - Maximum cache size in MB (default: 100)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_AGE_DAYS` - Maximum age of cached entries in days (default: 30)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_ENTRIES` - Maximum number of cached entries (default: 1000)
+
+Example configuration:
+
+```bash
+export CLAUDE_HOOKS_AUDIO_CACHE_ENABLED=true
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_SIZE_MB=200
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_AGE_DAYS=60
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_ENTRIES=2000
+```
+
+### Cache Location
+
+By default, cached audio files are stored in:
+
+- **macOS/Linux**: `$TMPDIR/claude-hooks-audio-cache`
+- **Windows**: `%TEMP%\claude-hooks-audio-cache`
+
+### Cache Management CLI Tools
+
+The package includes CLI tools for managing the audio cache:
+
+#### View Cache Statistics
+
+```bash
+claude-hooks-cache-stats
+```
+
+Shows:
+
+- Total cache size
+- Number of entries
+- Hit rate
+- Oldest and newest entries
+
+#### Explore and Manage Cache
+
+```bash
+claude-hooks-cache-explorer
+```
+
+Interactive tool to:
+
+- Browse cached entries
+- Play cached audio files
+- Delete specific entries
+- Clear entire cache
+
+For JSON output (useful for scripting):
+
+```bash
+claude-hooks-cache-stats --json
+```
+
+### Cache Behavior
+
+- **Key Generation**: Cache keys are generated from the text content, provider, voice, and other settings
+- **Text Normalization**: Text is normalized (case-insensitive, whitespace normalized) to improve cache hits
+- **Expiration**: Entries older than the configured max age are automatically removed
+- **Size Limits**: When cache exceeds size limits, oldest entries are evicted (LRU)
+- **Hit Rate**: Cache tracks hit rate to help monitor effectiveness
+
+### Disabling Cache
+
+To disable caching temporarily:
+
+```bash
+export CLAUDE_HOOKS_AUDIO_CACHE_ENABLED=false
+```
+
+Or permanently in your config:
+
+```json
+{
+  "audioCache": {
+    "enabled": false
+  }
+}
+```
 
 ## Troubleshooting
 
