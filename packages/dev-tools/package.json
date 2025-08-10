@@ -1,0 +1,36 @@
+{
+  "name": "@studio/dev-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Development tools and utilities for the mnemosyne monorepo",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "wallaby-status": "./dist/src/bin/wallaby-status.js"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/fix-shebangs.js",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "prepublishOnly": "npm run build",
+    "check": "pnpm format:check && pnpm lint && pnpm type-check && pnpm test -- --run"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^14.0.0",
+    "find-process": "^1.4.7"
+  },
+  "devDependencies": {
+    "@studio/eslint-config": "workspace:*",
+    "@studio/typescript-config": "workspace:*",
+    "@types/node": "^22.10.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

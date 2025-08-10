@@ -85,3 +85,4 @@ packages/db/prisma/:memory:
 .logs/
 
 .claude/settings.local.json
+.wallaby/
