@@ -134,12 +134,16 @@ export class AudioCache {
     model: string,
     voice: string,
     speed: number,
+    format?: string,
   ): Promise<string> {
     // Normalize text based on configuration
     const normalizedText = this.normalizeText(text)
 
-    // Include provider in the cache key to prevent collisions between providers
-    const input = `${provider}|${normalizedText}|${model}|${voice}|${speed}`
+    // Normalize format string to lowercase to prevent cache duplicates
+    const normalizedFormat = (format || 'mp3').toLowerCase()
+
+    // Include provider and format in the cache key to prevent collisions
+    const input = `${provider}|${normalizedText}|${model}|${voice}|${speed}|${normalizedFormat}`
     const hash = createHash('sha256')
     hash.update(input, 'utf8')
     return hash.digest('hex')
@@ -216,8 +220,10 @@ export class AudioCache {
       // Check cache size limits and clean up if necessary
       await this.enforceLimits()
 
-      // Create entry
-      const audioFile = `${key}.mp3`
+      // Create entry with correct format extension
+      const format = metadata.format || 'mp3'
+      const extension = this.getFileExtension(format)
+      const audioFile = `${key}.${extension}`
       const entry: CacheEntryFile = {
         timestamp: Date.now(),
         metadata,
@@ -314,9 +320,10 @@ export class AudioCache {
 
         try {
           const entryPath = join(entriesDir, entryFile)
+          const entryData = await readFile(entryPath, 'utf8')
+          const entry: CacheEntryFile = JSON.parse(entryData)
           const entryStat = await stat(entryPath)
-          const key = entryFile.replace('.json', '')
-          const audioPath = join(audioDir, `${key}.mp3`)
+          const audioPath = join(audioDir, entry.audioFile)
           const audioStat = await stat(audioPath)
 
           totalSize += entryStat.size + audioStat.size
@@ -398,19 +405,70 @@ export class AudioCache {
   private async removeEntry(key: string): Promise<void> {
     try {
       const entryPath = join(this.config.cacheDir, 'entries', `${key}.json`)
-      const audioPath = join(this.config.cacheDir, 'audio', `${key}.mp3`)
 
-      await Promise.all([
-        unlink(entryPath).catch(() => {}),
-        unlink(audioPath).catch(() => {}),
-      ])
+      // Read entry to get the actual audio filename
+      try {
+        const entryData = await readFile(entryPath, 'utf8')
+        const entry: CacheEntryFile = JSON.parse(entryData)
+        const audioPath = join(this.config.cacheDir, 'audio', entry.audioFile)
+
+        await Promise.all([
+          unlink(entryPath).catch(() => {}),
+          unlink(audioPath).catch(() => {}),
+        ])
+      } catch {
+        // If we can't read the entry, try to remove with common extensions
+        const audioDir = join(this.config.cacheDir, 'audio')
+        const possibleExtensions = [
+          'mp3',
+          'opus',
+          'aac',
+          'flac',
+          'wav',
+          'pcm',
+          'ulaw',
+          'alaw',
+        ]
+
+        await unlink(entryPath).catch(() => {})
+
+        // Try to remove audio files with various extensions
+        await Promise.all(
+          possibleExtensions.map((ext) =>
+            unlink(join(audioDir, `${key}.${ext}`)).catch(() => {}),
+          ),
+        )
+      }
     } catch {
       // Ignore removal errors
     }
   }
 
   /**
+   * Get file extension from format string
+   */
+  private getFileExtension(format: string): string {
+    // Normalize format to lowercase for consistent matching
+    const normalizedFormat = format.toLowerCase()
+
+    // Handle various format strings from different providers
+    if (normalizedFormat.includes('mp3')) return 'mp3'
+    if (normalizedFormat.includes('opus')) return 'opus'
+    if (normalizedFormat.includes('aac')) return 'aac'
+    if (normalizedFormat.includes('flac')) return 'flac'
+    if (normalizedFormat.includes('wav')) return 'wav'
+    if (normalizedFormat.includes('pcm')) return 'pcm'
+    if (normalizedFormat.includes('ulaw')) return 'ulaw'
+    if (normalizedFormat.includes('alaw')) return 'alaw'
+
+    // Default to mp3 if format is unknown
+    return 'mp3'
+  }
+
+  /**
    * Enforce cache size and count limits
+   * TODO: Optimize by combining stats gathering and eviction into a single pass
+   * to avoid double I/O operations on the cache directory
    */
   private async enforceLimits(): Promise<void> {
     try {
@@ -436,7 +494,9 @@ export class AudioCache {
         try {
           const key = entryFile.replace('.json', '')
           const entryPath = join(entriesDir, entryFile)
-          const audioPath = join(this.config.cacheDir, 'audio', `${key}.mp3`)
+          const entryData = await readFile(entryPath, 'utf8')
+          const entry: CacheEntryFile = JSON.parse(entryData)
+          const audioPath = join(this.config.cacheDir, 'audio', entry.audioFile)
 
           const [entryStat, audioStat] = await Promise.all([
             stat(entryPath),

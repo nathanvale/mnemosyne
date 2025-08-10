@@ -3,7 +3,7 @@
  * Uses OpenAI's Text-to-Speech API for high-quality voice synthesis
  */
 
-import { exec, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { writeFile, unlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -17,11 +17,10 @@ import type {
   TTSProviderConfig,
 } from './tts-provider'
 
+import { createLogger } from '../../utils/logger.js'
 import { AudioCache } from './audio-cache'
 import { translateAudioCacheConfig } from './cache-config-adapter'
 import { BaseTTSProvider } from './tts-provider'
-
-const execAsync = promisify(exec)
 
 /**
  * OpenAI-specific configuration
@@ -54,12 +53,14 @@ export class OpenAIProvider extends BaseTTSProvider {
   }
   private tempDir: string
   private lastRequestTime = 0
-  private readonly minRequestInterval = 1000 // 1 second between requests
+  private readonly minRequestInterval = 1000 // 1 second between requests (default)
+  private currentRateLimitDelay = 1000 // Adaptive rate limit delay
   private retryCount = 0
   private readonly maxRetries = 3
   private readonly retryDelay = 1000 // Start with 1 second delay
   private cache: AudioCache
   private debug: boolean
+  private logger = createLogger('OpenAI TTS', false)
 
   constructor(config: OpenAIConfig = {}) {
     super(config)
@@ -69,6 +70,7 @@ export class OpenAIProvider extends BaseTTSProvider {
 
     // Set debug flag from environment
     this.debug = process.env['CLAUDE_HOOKS_DEBUG'] === 'true'
+    this.logger = createLogger('OpenAI TTS', this.debug)
 
     // Set defaults
     this.openaiConfig = {
@@ -99,39 +101,22 @@ export class OpenAIProvider extends BaseTTSProvider {
     options?: { detached?: boolean },
   ): Promise<SpeakResult> {
     const detached = options?.detached ?? false
-    if (this.debug) {
-      console.error(
-        '[OpenAI TTS] speak() called with text:',
-        `${text.substring(0, 50)}...`,
-      )
-    }
+    this.logger.debug(`speak() called with text length: ${text.length} chars`)
 
     // Validate text
     const cleanText = this.validateText(text)
     if (!cleanText) {
-      if (this.debug) {
-        console.error('[OpenAI TTS] Empty text, returning error')
-      }
+      this.logger.debug('Empty text, returning error')
       return this.createErrorResult('Empty text')
     }
 
     // Check if client is available
     if (!this.client) {
-      if (this.debug) {
-        console.error(
-          '[OpenAI TTS] No OpenAI client (API key missing), returning error',
-        )
-      }
+      this.logger.debug('No OpenAI client (API key missing), returning error')
       return this.createErrorResult('OpenAI API key not configured')
     }
 
-    if (this.debug) {
-      console.error(
-        '[OpenAI TTS] Client available, proceeding with TTS generation',
-      )
-    }
-    // Apply rate limiting
-    await this.applyRateLimit()
+    this.logger.debug('Client available, proceeding with TTS generation')
 
     return this.speakWithRetry(cleanText, detached)
   }
@@ -141,33 +126,31 @@ export class OpenAIProvider extends BaseTTSProvider {
     detached = false,
   ): Promise<SpeakResult> {
     try {
+      // Apply rate limiting on each attempt (including retries)
+      await this.applyRateLimit()
+
       // Truncate very long text to API limit (4096 chars)
       const inputText =
         text.length > 4096 ? `${text.substring(0, 4093)}...` : text
 
-      // Generate cache key with provider name to prevent collisions
+      // Generate cache key with provider name and format to prevent collisions
       const cacheKey = await this.cache.generateKey(
         'openai',
         inputText,
         this.openaiConfig.model,
         this.openaiConfig.voice,
         this.openaiConfig.speed,
+        this.openaiConfig.format,
       )
 
-      if (this.debug) {
-        console.error(
-          `[OpenAI TTS] Cache key for "${inputText.substring(0, 30)}...": ${cacheKey.substring(0, 16)}...`,
-        )
-      }
+      this.logger.debug(`Generated cache key: ${cacheKey.substring(0, 16)}...`)
 
       // Check cache first
       const cachedEntry = await this.cache.get(cacheKey)
       if (cachedEntry) {
-        if (this.debug) {
-          console.error(
-            `[OpenAI TTS] Cache HIT! Using cached audio (${cachedEntry.data.length} bytes)`,
-          )
-        }
+        this.logger.debug(
+          `Cache HIT! Using cached audio (${cachedEntry.data.length} bytes)`,
+        )
         // Use cached audio
         await this.playCachedAudio(cachedEntry.data, detached)
 
@@ -191,11 +174,7 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Convert response to buffer
       const buffer = Buffer.from(await response.arrayBuffer())
 
-      if (this.debug) {
-        console.error(
-          `[OpenAI TTS] Caching new audio (${buffer.length} bytes) for: "${inputText.substring(0, 30)}..."`,
-        )
-      }
+      this.logger.debug(`Caching new audio (${buffer.length} bytes)`)
 
       // Cache the result
       await this.cache.set(cacheKey, buffer, {
@@ -210,8 +189,12 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Play the audio
       await this.playCachedAudio(buffer, detached)
 
-      // Reset retry count on success
+      // Reset retry count and adaptive rate limit on success
       this.retryCount = 0
+      this.currentRateLimitDelay = Math.max(
+        this.minRequestInterval,
+        this.currentRateLimitDelay * 0.9, // Gradually reduce delay on success
+      )
 
       return this.createSuccessResult({
         duration: buffer.length / 1000, // Approximate duration in seconds
@@ -220,6 +203,23 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Check if we should retry
       if (this.shouldRetry(error)) {
         this.retryCount++
+
+        // Adaptive backoff for rate limiting
+        if (
+          error &&
+          typeof error === 'object' &&
+          (error as { status?: number }).status === 429
+        ) {
+          // Double the rate limit delay on 429 errors
+          this.currentRateLimitDelay = Math.min(
+            this.currentRateLimitDelay * 2,
+            60000, // Cap at 60 seconds
+          )
+          this.logger.debug(
+            `Rate limit hit - increasing delay to ${this.currentRateLimitDelay}ms`,
+          )
+        }
+
         const delay = this.retryDelay * Math.pow(2, this.retryCount - 1) // Exponential backoff
         await this.sleep(delay)
         return this.speakWithRetry(text, detached)
@@ -337,13 +337,21 @@ export class OpenAIProvider extends BaseTTSProvider {
 
   /**
    * Apply rate limiting to prevent API overuse
+   * Uses adaptive delay based on recent 429 responses
    */
   private async applyRateLimit(): Promise<void> {
     const now = Date.now()
     const timeSinceLastRequest = now - this.lastRequestTime
+    const effectiveInterval = Math.max(
+      this.minRequestInterval,
+      this.currentRateLimitDelay,
+    )
 
-    if (timeSinceLastRequest < this.minRequestInterval) {
-      const waitTime = this.minRequestInterval - timeSinceLastRequest
+    if (timeSinceLastRequest < effectiveInterval) {
+      const waitTime = effectiveInterval - timeSinceLastRequest
+      this.logger.debug(
+        `Rate limiting: waiting ${waitTime}ms before next request`,
+      )
       await this.sleep(waitTime)
     }
 
@@ -402,11 +410,9 @@ export class OpenAIProvider extends BaseTTSProvider {
       const filepath = join(this.tempDir, filename)
       await writeFile(filepath, audioData)
 
-      if (this.debug) {
-        console.error(
-          `[OpenAI TTS] Playing cached audio from: ${filepath}, size: ${audioData.length} bytes`,
-        )
-      }
+      this.logger.debug(
+        `Playing cached audio from: ${filepath}, size: ${audioData.length} bytes`,
+      )
 
       // Play the audio file
       await this.playAudio(filepath, detached)
@@ -417,11 +423,34 @@ export class OpenAIProvider extends BaseTTSProvider {
       }
     } catch (error) {
       // Log the error for debugging
-      if (this.debug) {
-        console.error('[OpenAI TTS] Error playing cached audio:', error)
-      }
+      this.logger.warning(`Error playing cached audio: ${error}`)
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
+    }
+  }
+
+  /**
+   * Validate filepath to prevent command injection
+   */
+  private validateFilepath(filepath: string): boolean {
+    // Must not contain .. (parent directory traversal)
+    if (filepath.includes('..')) return false
+
+    const platform = process.platform
+
+    if (platform === 'win32') {
+      // Windows path validation
+      // Allow drive letters, backslashes, forward slashes, and common path characters
+      // Examples: C:\temp\file.mp3, C:/temp/file.mp3, .\file.mp3
+      const windowsPathRegex =
+        /^([a-zA-Z]:[\\/]|\.[\\/]|[\\/])?[a-zA-Z0-9\s\\/\\_\-\.]+$/
+      return windowsPathRegex.test(filepath)
+    } else {
+      // POSIX path validation (Linux, macOS)
+      // Must start with / or ./ (absolute or relative path)
+      // Allow alphanumeric, dash, underscore, period, and forward slash
+      const posixPathRegex = /^(\/|\.\/)[a-zA-Z0-9\/_\-\.]+$/
+      return posixPathRegex.test(filepath)
     }
   }
 
@@ -429,13 +458,20 @@ export class OpenAIProvider extends BaseTTSProvider {
    * Play audio file using system command
    */
   private async playAudio(filepath: string, detached = false): Promise<void> {
+    // Validate filepath to prevent injection
+    if (!this.validateFilepath(filepath)) {
+      this.logger.warning(
+        `Invalid filepath detected, skipping playback: ${filepath}`,
+      )
+      return
+    }
     try {
       const platform = process.platform
 
       if (detached) {
         // Use spawn for detached process that continues after parent exits
         let args: string[] = []
-        let cmd: string
+        let cmd = ''
 
         if (platform === 'darwin') {
           cmd = 'afplay'
@@ -456,30 +492,46 @@ export class OpenAIProvider extends BaseTTSProvider {
             `(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()`,
           ]
         } else {
-          // Linux - try multiple players with error reporting
-          cmd = 'sh'
-          args = [
-            '-c',
-            `
-            if command -v aplay >/dev/null 2>&1; then
-              aplay "${filepath}" 2>&1 || echo "[OpenAI TTS] aplay failed with exit code $?" >&2
-            elif command -v paplay >/dev/null 2>&1; then
-              paplay "${filepath}" 2>&1 || echo "[OpenAI TTS] paplay failed with exit code $?" >&2
-            elif command -v ffplay >/dev/null 2>&1; then
-              ffplay -nodisp -autoexit "${filepath}" 2>&1 || echo "[OpenAI TTS] ffplay failed with exit code $?" >&2
-            else
-              echo "[OpenAI TTS] No audio player found (tried aplay, paplay, ffplay)" >&2
-              exit 1
-            fi
-            `.trim(),
+          // Linux - try to find and use available audio player
+          // Use direct execution without shell to avoid injection risks
+          const players = [
+            { cmd: 'aplay', args: [filepath] },
+            { cmd: 'paplay', args: [filepath] },
+            { cmd: 'ffplay', args: ['-nodisp', '-autoexit', filepath] },
           ]
+
+          // Try each player in order
+          let playerFound = false
+          for (const player of players) {
+            try {
+              // Check if player exists using which command
+              const { execSync } = await import('node:child_process')
+              try {
+                execSync(`which ${player.cmd}`, { stdio: 'ignore' })
+                // Player exists, use it
+                cmd = player.cmd
+                args = player.args
+                playerFound = true
+                break
+              } catch {
+                // Player not found, try next
+                continue
+              }
+            } catch {
+              // Error checking, try next player
+              continue
+            }
+          }
+
+          if (!playerFound) {
+            this.logger.warning(
+              'No audio player found on Linux (tried aplay, paplay, ffplay)',
+            )
+            return
+          }
         }
 
-        if (this.debug) {
-          console.error(
-            `[OpenAI TTS] Playing audio (detached) with ${cmd}: ${filepath}`,
-          )
-        }
+        this.logger.debug(`Playing audio (detached) with ${cmd}: ${filepath}`)
 
         const child = spawn(cmd, args, {
           detached: true,
@@ -489,53 +541,63 @@ export class OpenAIProvider extends BaseTTSProvider {
         // Unref allows parent to exit independently
         child.unref()
       } else {
-        // Use exec for normal playback (waits for completion)
-        let command: string
+        // Use execFile for normal playback (waits for completion) - more secure than exec
+        const { execFile } = await import('node:child_process')
+        const execFileAsync = promisify(execFile)
+
         if (platform === 'darwin') {
           // macOS
-          command = `afplay "${filepath}"`
-          if (this.debug) {
-            console.error(`[OpenAI TTS] Playing audio with afplay: ${filepath}`)
-          }
+          this.logger.debug(`Playing audio with afplay: ${filepath}`)
+          await execFileAsync('afplay', [filepath])
         } else if (platform === 'win32') {
-          // Windows - properly escape the filepath for PowerShell
+          // Windows - use execFile with PowerShell
           const escapedPath = filepath
             .replace(/\\/g, '\\\\') // Escape backslashes
             .replace(/'/g, "''") // Escape single quotes
             .replace(/`/g, '``') // Escape backticks
             .replace(/\$/g, '`$') // Escape dollar signs
 
-          command = `powershell -NoProfile -Command "(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()"`
-          if (this.debug) {
-            console.error(
-              `[OpenAI TTS] Playing audio with PowerShell: ${filepath}`,
-            )
-          }
+          this.logger.debug(`Playing audio with PowerShell: ${filepath}`)
+          await execFileAsync('powershell', [
+            '-NoProfile',
+            '-Command',
+            `(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()`,
+          ])
         } else {
-          // Linux - try multiple players with proper error reporting
-          command = `
-            if command -v aplay >/dev/null 2>&1; then
-              aplay "${filepath}" 2>&1 || { echo "[OpenAI TTS] aplay failed with exit code $?" >&2; exit 1; }
-            elif command -v paplay >/dev/null 2>&1; then
-              paplay "${filepath}" 2>&1 || { echo "[OpenAI TTS] paplay failed with exit code $?" >&2; exit 1; }
-            elif command -v ffplay >/dev/null 2>&1; then
-              ffplay -nodisp -autoexit "${filepath}" 2>&1 || { echo "[OpenAI TTS] ffplay failed with exit code $?" >&2; exit 1; }
-            else
-              echo "[OpenAI TTS] No audio player found (tried aplay, paplay, ffplay)" >&2
-              exit 1
-            fi
-          `.trim()
-          if (this.debug) {
-            console.error(`[OpenAI TTS] Playing audio on Linux: ${filepath}`)
+          // Linux - try to find and use available audio player with execFile
+          const players = [
+            { cmd: 'aplay', args: [filepath] },
+            { cmd: 'paplay', args: [filepath] },
+            { cmd: 'ffplay', args: ['-nodisp', '-autoexit', filepath] },
+          ]
+
+          // Try each player in order
+          let playerExecuted = false
+          for (const player of players) {
+            try {
+              // Try to execute the player directly
+              await execFileAsync(player.cmd, player.args)
+              playerExecuted = true
+              this.logger.debug(
+                `Playing audio on Linux with ${player.cmd}: ${filepath}`,
+              )
+              break
+            } catch {
+              // Player not found or failed, try next
+              continue
+            }
+          }
+
+          if (!playerExecuted) {
+            this.logger.warning(
+              'No audio player found on Linux (tried aplay, paplay, ffplay)',
+            )
+            return
           }
         }
-
-        await execAsync(command)
       }
     } catch (error) {
-      if (this.debug) {
-        console.error('[OpenAI TTS] Error in playAudio:', error)
-      }
+      this.logger.warning(`Error in playAudio: ${error}`)
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
     }

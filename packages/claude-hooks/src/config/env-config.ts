@@ -239,6 +239,23 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     configPath: 'audioCache.maxEntries',
     type: 'number',
   },
+
+  // Audio Cache normalization options
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_CASE_SENSITIVE',
+    configPath: 'audioCache.normalization.caseSensitive',
+    type: 'boolean',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_STRIP_PRIORITY_PREFIXES',
+    configPath: 'audioCache.normalization.stripPriorityPrefixes',
+    type: 'boolean',
+  },
+  {
+    envVar: 'CLAUDE_HOOKS_AUDIO_CACHE_NORMALIZE_WHITESPACE',
+    configPath: 'audioCache.normalization.normalizeWhitespace',
+    type: 'boolean',
+  },
 ]
 
 /**
