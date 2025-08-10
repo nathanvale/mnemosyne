@@ -121,6 +121,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
       const result = await cache.get(key)
 
@@ -392,6 +393,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
       const audioData = Buffer.from('mock audio data')
 
@@ -465,6 +467,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       mockStat.mockResolvedValueOnce({
@@ -494,6 +497,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       // Mock file that is older than maxAge
@@ -515,6 +519,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
       const audioData = Buffer.from('mock audio data')
 
@@ -560,13 +565,27 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
       const audioData = Buffer.from('x'.repeat(500)) // 500 bytes
 
-      await cache.set(key, audioData, { provider: 'openai', voice: 'alloy' })
+      await cache.set(key, audioData, {
+        provider: 'openai',
+        voice: 'alloy',
+        format: 'mp3',
+      })
 
       // Mock getStats() - readdir returns the entry files
       mockReaddir.mockResolvedValue([`${key}.json`])
+
+      // Mock reading the entry file content
+      mockReadFile.mockResolvedValueOnce(
+        JSON.stringify({
+          timestamp: Date.now(),
+          metadata: { provider: 'openai', voice: 'alloy', format: 'mp3' },
+          audioFile: `${key}.mp3`,
+        }),
+      )
 
       // Mock stat calls for entry and audio files
       mockStat.mockResolvedValueOnce({
@@ -676,6 +695,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       // Miss
@@ -720,6 +740,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
       const audioData = Buffer.from('audio')
 
@@ -738,6 +759,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       mockStat.mockResolvedValue({ mtime: new Date(), size: 100 } as MockStats)
@@ -767,6 +789,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       mockStat.mockResolvedValueOnce({
@@ -792,6 +815,7 @@ describe('AudioCache', () => {
         'tts-1',
         'alloy',
         1.0,
+        'mp3',
       )
 
       // Entry file exists

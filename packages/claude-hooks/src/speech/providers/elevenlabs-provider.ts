@@ -141,6 +141,7 @@ export class ElevenLabsProvider extends BaseTTSProvider {
         this.elConfig.modelId,
         this.elConfig.voiceId,
         this.elConfig.speed,
+        this.elConfig.outputFormat,
       )
 
       const cachedEntry = await this.cache.get(cacheKey)

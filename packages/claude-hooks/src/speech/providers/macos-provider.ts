@@ -12,6 +12,7 @@ import type {
   TTSProviderConfig,
 } from './tts-provider.js'
 
+import { createLogger } from '../../utils/logger.js'
 import { BaseTTSProvider } from './tts-provider.js'
 
 /**
@@ -27,15 +28,29 @@ export interface MacOSConfig extends TTSProviderConfig {
  */
 export class MacOSProvider extends BaseTTSProvider {
   private macosConfig: Required<MacOSConfig>
+  private logger = createLogger('macOS TTS', false)
 
   constructor(config: MacOSConfig = {}) {
     super(config)
 
     // Set defaults with validation
+    const voice = this.validateVoice(config.voice)
+    if (config.voice && !voice) {
+      // Warn when an invalid voice was configured
+      const logger = createLogger('macOS TTS', true)
+      logger.warning(
+        `Invalid voice '${config.voice}' configured, using default 'Samantha'`,
+      )
+    }
+
     this.macosConfig = {
-      voice: this.validateVoice(config.voice) || 'Samantha',
+      voice: voice || 'Samantha',
       rate: this.clampRate(config.rate || 200),
     }
+
+    // Initialize logger with debug mode from environment
+    const debug = process.env['CLAUDE_HOOKS_DEBUG'] === 'true'
+    this.logger = createLogger('macOS TTS', debug)
   }
 
   async speak(
@@ -57,8 +72,8 @@ export class MacOSProvider extends BaseTTSProvider {
 
     try {
       // Execute say command securely with spawn
-      console.error(
-        `[macOS TTS] Executing say with voice: ${this.macosConfig.voice}, rate: ${this.macosConfig.rate}`,
+      this.logger.debug(
+        `Executing say with voice: ${this.macosConfig.voice}, rate: ${this.macosConfig.rate}`,
       )
 
       await new Promise<void>((resolve, reject) => {
