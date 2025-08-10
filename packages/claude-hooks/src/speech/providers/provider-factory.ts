@@ -46,6 +46,8 @@ export class FallbackProvider implements TTSProvider {
     try {
       const result = await this.primaryProvider.speak(text, options)
       if (result.success) {
+        // Set providerUsed to the actual provider that was used
+        result.providerUsed = this.primaryProvider.getProviderInfo().name
         return result
       }
       // Primary returned unsuccessful result, try fallback
@@ -67,7 +69,12 @@ export class FallbackProvider implements TTSProvider {
     // Primary failed, try fallback
     if (this.fallbackProvider) {
       try {
-        return await this.fallbackProvider.speak(text, options)
+        const result = await this.fallbackProvider.speak(text, options)
+        if (result.success) {
+          // Set providerUsed to the actual fallback provider that was used
+          result.providerUsed = this.fallbackProvider.getProviderInfo().name
+        }
+        return result
       } catch (fallbackError) {
         // Log fallback provider error for debugging
         if (this.debug) {
@@ -83,6 +90,7 @@ export class FallbackProvider implements TTSProvider {
     return {
       success: false,
       provider: this.primaryProvider.getProviderInfo().name,
+      providerUsed: this.primaryProvider.getProviderInfo().name,
       error: 'All providers failed',
     }
   }

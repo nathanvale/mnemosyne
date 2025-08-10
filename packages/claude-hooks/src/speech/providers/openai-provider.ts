@@ -18,6 +18,7 @@ import type {
 } from './tts-provider'
 
 import { AudioCache } from './audio-cache'
+import { translateAudioCacheConfig } from './cache-config-adapter'
 import { BaseTTSProvider } from './tts-provider'
 
 const execAsync = promisify(exec)
@@ -31,6 +32,12 @@ export interface OpenAIConfig extends TTSProviderConfig {
   voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
   speed?: number // 0.25 to 4.0
   format?: 'mp3' | 'opus' | 'aac' | 'flac'
+  audioCache?: {
+    enabled?: boolean
+    maxSizeMB?: number
+    maxAgeDays?: number
+    maxEntries?: number
+  }
 }
 
 /**
@@ -38,7 +45,13 @@ export interface OpenAIConfig extends TTSProviderConfig {
  */
 export class OpenAIProvider extends BaseTTSProvider {
   private client: OpenAI | null = null
-  private openaiConfig: Required<OpenAIConfig>
+  private openaiConfig: {
+    apiKey: string
+    model: 'tts-1' | 'tts-1-hd'
+    voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+    speed: number
+    format: 'mp3' | 'opus' | 'aac' | 'flac'
+  }
   private tempDir: string
   private lastRequestTime = 0
   private readonly minRequestInterval = 1000 // 1 second between requests
@@ -76,8 +89,9 @@ export class OpenAIProvider extends BaseTTSProvider {
     // Set up temp directory for audio files
     this.tempDir = join(tmpdir(), 'claude-hooks-tts')
 
-    // Initialize audio cache
-    this.cache = new AudioCache()
+    // Initialize audio cache with configuration
+    const cacheConfig = translateAudioCacheConfig(config.audioCache)
+    this.cache = new AudioCache(cacheConfig)
   }
 
   async speak(
@@ -161,7 +175,7 @@ export class OpenAIProvider extends BaseTTSProvider {
         this.retryCount = 0
 
         return this.createSuccessResult({
-          duration: cachedEntry.data.length / 1000, // Rough estimate
+          duration: cachedEntry.data.length / 1000, // Approximate duration in seconds
         })
       }
 
@@ -200,7 +214,7 @@ export class OpenAIProvider extends BaseTTSProvider {
       this.retryCount = 0
 
       return this.createSuccessResult({
-        duration: buffer.length / 1000, // Rough estimate
+        duration: buffer.length / 1000, // Approximate duration in seconds
       })
     } catch (error) {
       // Check if we should retry

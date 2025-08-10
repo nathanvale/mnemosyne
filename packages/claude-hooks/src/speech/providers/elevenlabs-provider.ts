@@ -18,6 +18,7 @@ import type {
 } from './tts-provider'
 
 import { AudioCache } from './audio-cache'
+import { translateAudioCacheConfig } from './cache-config-adapter'
 import { BaseTTSProvider } from './tts-provider'
 
 const execAsync = promisify(exec)
@@ -47,6 +48,12 @@ export interface ElevenLabsConfig extends TTSProviderConfig {
   similarityBoost?: number // 0-1
   speed?: number // 0.5 - 2.0
   enableLogging?: boolean // Zero-retention mode
+  audioCache?: {
+    enabled?: boolean
+    maxSizeMB?: number
+    maxAgeDays?: number
+    maxEntries?: number
+  }
 }
 
 /**
@@ -54,7 +61,16 @@ export interface ElevenLabsConfig extends TTSProviderConfig {
  */
 export class ElevenLabsProvider extends BaseTTSProvider {
   private client: ElevenLabsClient | null = null
-  private elConfig: Required<ElevenLabsConfig>
+  private elConfig: {
+    apiKey: string
+    voiceId: string
+    modelId: string
+    outputFormat: string
+    stability: number
+    similarityBoost: number
+    speed: number
+    enableLogging: boolean
+  }
   private tempDir: string
   private lastRequestTime = 0
   private readonly minRequestInterval = 750 // be polite
@@ -85,7 +101,9 @@ export class ElevenLabsProvider extends BaseTTSProvider {
     }
 
     this.tempDir = join(tmpdir(), 'claude-hooks-tts')
-    this.cache = new AudioCache()
+    // Initialize audio cache with configuration
+    const cacheConfig = translateAudioCacheConfig(config.audioCache)
+    this.cache = new AudioCache(cacheConfig)
   }
 
   async speak(
@@ -134,7 +152,7 @@ export class ElevenLabsProvider extends BaseTTSProvider {
         )
         this.retryCount = 0
         return this.createSuccessResult({
-          duration: cachedEntry.data.length / 1000,
+          duration: cachedEntry.data.length / 1000, // Approximate duration in seconds
         })
       }
 
@@ -144,7 +162,14 @@ export class ElevenLabsProvider extends BaseTTSProvider {
         {
           text: inputText,
           modelId: this.elConfig.modelId,
-          outputFormat: this.elConfig.outputFormat as unknown as string,
+          outputFormat: this.elConfig.outputFormat as
+            | 'mp3_44100_128'
+            | 'mp3_44100_192'
+            | 'mp3_22050_32'
+            | 'pcm_16000'
+            | 'ulaw_8000'
+            | 'alaw_8000'
+            | 'opus_48000_128',
           // Map voice settings where applicable (SDK tolerates extras)
           voiceSettings: {
             stability: this.elConfig.stability,
@@ -177,7 +202,9 @@ export class ElevenLabsProvider extends BaseTTSProvider {
 
       await this.playCachedAudio(buffer, this.extFromFormat(), detached)
       this.retryCount = 0
-      return this.createSuccessResult({ duration: buffer.length / 1000 })
+      return this.createSuccessResult({
+        duration: buffer.length / 1000, // Approximate duration in seconds
+      })
     } catch (error) {
       if (this.shouldRetry(error)) {
         this.retryCount++
