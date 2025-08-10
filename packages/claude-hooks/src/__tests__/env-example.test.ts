@@ -36,9 +36,15 @@ describe('.env.example file', () => {
     expect(content).toContain('CLAUDE_HOOKS_OPENAI_TTS_VOICE')
     expect(content).toContain('CLAUDE_HOOKS_OPENAI_TTS_SPEED')
 
-    // ElevenLabs TTS specific
-    expect(content).toContain('CLAUDE_HOOKS_ELEVENLABS_TTS_VOICE')
-    expect(content).toContain('CLAUDE_HOOKS_ELEVENLABS_TTS_MODEL')
+    // ElevenLabs TTS specific (check for either new or legacy format)
+    expect(
+      content.includes('ELEVENLABS_VOICE_ID') ||
+        content.includes('CLAUDE_HOOKS_ELEVENLABS_VOICE_ID'),
+    ).toBe(true)
+    expect(
+      content.includes('ELEVENLABS_MODEL_ID') ||
+        content.includes('CLAUDE_HOOKS_ELEVENLABS_MODEL_ID'),
+    ).toBe(true)
 
     // Sound notification configuration
     expect(content).toContain('CLAUDE_HOOKS_SOUND_SUCCESS')

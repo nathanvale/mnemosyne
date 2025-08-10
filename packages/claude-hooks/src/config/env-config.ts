@@ -173,14 +173,32 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     configPath: 'tts.elevenlabs.apiKey',
     type: 'string',
   },
+  // Support both old and new format for voice ID
+  {
+    envVar: 'ELEVENLABS_VOICE_ID',
+    configPath: 'tts.elevenlabs.voiceId',
+    type: 'string',
+  },
   {
     envVar: 'CLAUDE_HOOKS_ELEVENLABS_VOICE_ID',
     configPath: 'tts.elevenlabs.voiceId',
     type: 'string',
   },
+  // Support both old and new format for model ID
+  {
+    envVar: 'ELEVENLABS_MODEL_ID',
+    configPath: 'tts.elevenlabs.modelId',
+    type: 'string',
+  },
   {
     envVar: 'CLAUDE_HOOKS_ELEVENLABS_MODEL_ID',
     configPath: 'tts.elevenlabs.modelId',
+    type: 'string',
+  },
+  // Support both old and new format for output format
+  {
+    envVar: 'ELEVENLABS_OUTPUT_FORMAT',
+    configPath: 'tts.elevenlabs.outputFormat',
     type: 'string',
   },
   {
@@ -233,6 +251,72 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     type: 'number',
   },
 ]
+
+/**
+ * Apply environment variable overrides to a configuration object
+ * This function prioritizes newer environment variable names over legacy ones
+ */
+export function applyEnvOverrides(config: Partial<CompleteHookConfig>): void {
+  // Process mappings in order, with newer formats taking precedence
+  const prioritizedMappings = [...DEFAULT_ENV_MAPPINGS]
+
+  // Sort so that non-prefixed (newer) variables come after prefixed ones
+  // This ensures ELEVENLABS_VOICE_ID overrides CLAUDE_HOOKS_ELEVENLABS_VOICE_ID
+  prioritizedMappings.sort((a, b) => {
+    const aIsNew =
+      !a.envVar.startsWith('CLAUDE_HOOKS_') && a.envVar.includes('ELEVENLABS')
+    const bIsNew =
+      !b.envVar.startsWith('CLAUDE_HOOKS_') && b.envVar.includes('ELEVENLABS')
+
+    if (aIsNew === bIsNew) return 0
+    return aIsNew ? 1 : -1 // New format comes last (higher priority)
+  })
+
+  for (const mapping of prioritizedMappings) {
+    const envValue = process.env[mapping.envVar]
+    if (envValue !== undefined) {
+      const parsedValue = parseEnvValue(envValue, mapping)
+      setConfigValue(config, mapping.configPath, parsedValue)
+    }
+  }
+}
+
+/**
+ * Parse environment variable value based on type
+ */
+function parseEnvValue(value: string, mapping: EnvVarMapping): any {
+  if (mapping.parser) {
+    return mapping.parser(value)
+  }
+
+  switch (mapping.type) {
+    case 'boolean':
+      return value === 'true' || value === '1'
+    case 'number':
+      return parseFloat(value)
+    case 'string':
+    default:
+      return value
+  }
+}
+
+/**
+ * Set a nested configuration value using dot notation path
+ */
+function setConfigValue(config: any, path: string, value: any): void {
+  const parts = path.split('.')
+  let current = config
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i]
+    if (!current[part]) {
+      current[part] = {}
+    }
+    current = current[part]
+  }
+
+  current[parts[parts.length - 1]] = value
+}
 
 /**
  * Environment configuration loader
