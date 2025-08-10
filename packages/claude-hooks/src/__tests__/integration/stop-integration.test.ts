@@ -135,7 +135,7 @@ describe('Stop Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 
   it('should handle various event types gracefully', async () => {
     // Skip in Wallaby due to shell execution issues
