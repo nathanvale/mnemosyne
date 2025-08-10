@@ -43,53 +43,89 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 
 ### ConfidenceCalculator
 
+**Implementation**: `packages/validation/src/auto-confirmation/confidence-calculator.ts`
+
 Calculates overall confidence score by combining multiple factors:
 
-- Claude confidence score from validation response
-- Emotional coherence score based on sentiment consistency
-- Relationship accuracy score from relationship extraction quality
-- Context quality score from surrounding message context
+- **Claude confidence extraction**: `confidence-calculator.ts:42-44` - Extracts Claude's original confidence from memory metadata
+- **Emotional coherence calculation**: `confidence-calculator.ts:49-87` - Validates emotional context with schema checks and calculates coherence score
+- **Relationship accuracy assessment**: `confidence-calculator.ts:92-122` - Evaluates relationship dynamics quality and participant relationships
+- **Temporal consistency validation**: `confidence-calculator.ts:127-156` - Checks timestamp validity and temporal logic
+- **Content quality evaluation**: `confidence-calculator.ts:161-182` - Analyzes content length, meaningful words, and tag quality
+- **Weighted score calculation**: `confidence-calculator.ts:187-200` - Applies configurable weights to combine all factors
 
 ### ThresholdManager
 
+**Implementation**: `packages/validation/src/auto-confirmation/threshold-manager.ts`
+
 Manages confidence thresholds and optimization:
 
-- Configurable threshold boundaries (auto-approve, review, auto-reject)
-- Weekly optimization based on validation accuracy feedback
-- A/B testing framework for threshold strategies
-- User-specific calibration for personalized validation
+- **Configurable threshold boundaries**: `threshold-manager.ts:22-31` - Get/set threshold configuration with defaults
+- **Feedback analysis**: `threshold-manager.ts:65-128` - Analyzes validation feedback to identify accuracy patterns
+- **Threshold optimization**: `threshold-manager.ts:172-234` - Calculates new thresholds based on false positive/negative rates
+- **Performance tracking**: `threshold-manager.ts:153-167` - Tracks factor performance and updates weights dynamically
+- **Update reasoning**: `threshold-manager.ts:239-278` - Generates human-readable explanations for threshold changes
 
 ### AutoConfirmationEngine
 
+**Implementation**: `packages/validation/src/auto-confirmation/engine.ts`
+
 Main orchestrator for auto-confirmation decisions:
 
-- Evaluates memories using ConfidenceCalculator
-- Routes decisions based on ThresholdManager settings
-- Provides confidence breakdowns and reasoning explanations
-- Handles batch processing with progress tracking
+- **Memory evaluation**: `engine.ts:39-116` - Evaluates single memories with confidence calculation and decision routing
+- **Decision routing logic**: `engine.ts:54-95` - Routes to auto-approve (>0.75), review (0.50-0.75), or auto-reject (<0.50)
+- **Reasoning generation**: `engine.ts:51-95` - Provides detailed explanations for all decisions with factor analysis
+- **Batch processing**: `engine.ts:121-197` - Handles large-scale validation with progress tracking and error handling
+- **Configuration management**: `engine.ts:227-238` - Supports dynamic threshold updates and configuration changes
 
 ### CalibrationSystem
 
+**Implementation**: Distributed across `ThresholdManager` and `ValidationAnalytics`
+
 Continuous learning and optimization:
 
-- Tracks user validation decisions vs auto-confirmation predictions
-- Calculates false positive/negative rates
-- Optimizes thresholds based on accuracy targets
-- Provides feedback loop for system improvement
+- **Validation tracking**: `threshold-manager.ts:96-115` - Tracks user decisions vs auto-confirmation predictions
+- **Accuracy calculation**: `analytics/accuracy-tracker.ts:45-89` - Calculates false positive/negative rates with trend analysis
+- **Threshold optimization**: `threshold-manager.ts:283-308` - Estimates accuracy improvement from threshold changes
+- **Feedback loop**: `engine.ts:202-222` - Processes feedback and applies threshold updates automatically
 
 ### MonitoringDashboard
 
+**Implementation**: `packages/validation/src/analytics/validation-analytics.ts`
+
 Real-time performance monitoring:
 
-- Auto-confirmation rates and accuracy metrics
-- Confidence factor distribution analysis
-- Threshold effectiveness visualization
-- Alert system for quality issues
+- **Performance metrics tracking**: `validation-analytics.ts:198-215` - Updates processing time, throughput, and system uptime
+- **Batch analytics recording**: `validation-analytics.ts:42-74` - Records batch validation results with quality distribution
+- **System health monitoring**: `validation-analytics.ts:261-293` - Assesses system health with accuracy and throughput scores
+- **Alert generation**: `validation-analytics.ts:313-354` - Identifies health issues and generates actionable alerts
+- **Analytics reporting**: `validation-analytics.ts:93-111` - Provides comprehensive reports with recommendations
 
 ## Performance Requirements
 
-- Process 1000+ memories per minute in batch mode
-- Maintain <100ms response time for individual memory evaluation
-- Achieve 95%+ accuracy in auto-confirmation decisions
-- Support concurrent processing for multiple validation workflows
-- Provide real-time monitoring with <5 second data refresh
+**Implementation Reference**: `packages/validation/src/auto-confirmation/engine.ts:121-197`
+
+- **Process 1000+ memories per minute**: Batch processing optimized with concurrent evaluation and progress tracking
+- **<100ms individual evaluation**: Single memory evaluation in `engine.ts:39-116` designed for sub-100ms response
+- **95%+ accuracy target**: Monitored via `analytics/accuracy-tracker.ts:45-89` with configurable alerting
+- **Concurrent processing support**: Thread-safe design supports multiple validation workflows
+- **Real-time monitoring**: Analytics system in `validation-analytics.ts:93-111` provides <5 second refresh capability
+
+## Configuration Management
+
+**Default Configuration**: `packages/validation/src/config/defaults.ts`
+
+- **Threshold Settings**: `defaults.ts:10-20`
+  - Auto-approve threshold: 0.75
+  - Auto-reject threshold: 0.5
+  - Confidence factor weights with optimal default distribution
+- **Coverage Requirements**: `defaults.ts:25-35` - Sampling and validation coverage parameters
+- **Sampling Strategy**: `defaults.ts:40-68` - Balanced stratified sampling configuration with quality expectations
+
+## API Integration
+
+**Public Interface**: `packages/validation/src/index.ts`
+
+- **Factory Function**: `createAutoConfirmationEngine()` - Main entry point for engine creation
+- **Type Exports**: Complete TypeScript interfaces for all system components
+- **Configuration Types**: `ThresholdConfig`, `ValidationFeedback`, `AutoConfirmationResult` interfaces
