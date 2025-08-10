@@ -9,6 +9,7 @@
 export interface SpeakResult {
   success: boolean
   provider: string
+  providerUsed?: string // The actual provider used (useful when fallback occurs)
   cached?: boolean
   duration?: number
   error?: string

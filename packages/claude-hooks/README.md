@@ -618,24 +618,26 @@ For OpenAI text-to-speech integration, set the following environment variables:
 
 - `OPENAI_API_KEY` - Your OpenAI API key (required)
 - `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
-- `CLAUDE_HOOKS_OPENAI_TTS_VOICE` - Voice selection:
+- `CLAUDE_HOOKS_OPENAI_VOICE` - Voice selection:
   - `alloy` (default) - Balanced, neutral voice
   - `echo` - Clear, professional voice
   - `fable` - Warm, storytelling voice
   - `onyx` - Deep, authoritative voice
   - `nova` - Bright, energetic voice
   - `shimmer` - Soft, friendly voice
-- `CLAUDE_HOOKS_OPENAI_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
-- `CLAUDE_HOOKS_OPENAI_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+- `CLAUDE_HOOKS_OPENAI_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
+- `CLAUDE_HOOKS_OPENAI_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+- `CLAUDE_HOOKS_OPENAI_FORMAT` - Audio format: "mp3" (default), "opus", "aac", or "flac"
 
 Example OpenAI TTS configuration:
 
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 export CLAUDE_HOOKS_TTS_PROVIDER="openai"
-export CLAUDE_HOOKS_OPENAI_TTS_VOICE="nova"
-export CLAUDE_HOOKS_OPENAI_TTS_MODEL="tts-1-hd"
-export CLAUDE_HOOKS_OPENAI_TTS_SPEED="0.9"
+export CLAUDE_HOOKS_OPENAI_VOICE="nova"
+export CLAUDE_HOOKS_OPENAI_MODEL="tts-1-hd"
+export CLAUDE_HOOKS_OPENAI_SPEED="0.9"
+export CLAUDE_HOOKS_OPENAI_FORMAT="mp3"
 ```
 
 Or add to your `.claude/hooks/stop.config.json`:
@@ -667,12 +669,25 @@ For high-quality ElevenLabs text-to-speech with advanced voice synthesis, set th
 
 - `ELEVENLABS_API_KEY` - Your ElevenLabs API key (required)
 - `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "elevenlabs" to enable ElevenLabs TTS
+- `CLAUDE_HOOKS_ELEVENLABS_VOICE_ID` - Voice ID to use (get from ElevenLabs Voice Lab)
+- `CLAUDE_HOOKS_ELEVENLABS_MODEL_ID` - Model selection:
+  - `eleven_multilingual_v2` (default) - Supports multiple languages with high quality
+  - `eleven_flash_v2_5` - Faster generation, lower latency
+  - `eleven_monolingual_v1` - English-only, optimized for English
+- `CLAUDE_HOOKS_ELEVENLABS_OUTPUT_FORMAT` - Audio format (default: "mp3_44100_128")
+- `CLAUDE_HOOKS_ELEVENLABS_STABILITY` - Voice stability 0-1 (default: 0.5)
+- `CLAUDE_HOOKS_ELEVENLABS_SIMILARITY_BOOST` - Voice similarity 0-1 (default: 0.75)
+- `CLAUDE_HOOKS_ELEVENLABS_SPEED` - Speech speed 0.5-2.0 (default: 1.0)
+- `CLAUDE_HOOKS_ELEVENLABS_ENABLE_LOGGING` - Enable API logging (default: true)
 
 Example ElevenLabs configuration with environment variables:
 
 ```bash
 export ELEVENLABS_API_KEY="your-api-key-here"
 export CLAUDE_HOOKS_TTS_PROVIDER="elevenlabs"
+export CLAUDE_HOOKS_ELEVENLABS_VOICE_ID="21m00Tcm4TlvDq8ikWAM"
+export CLAUDE_HOOKS_ELEVENLABS_MODEL_ID="eleven_multilingual_v2"
+export CLAUDE_HOOKS_ELEVENLABS_SPEED="1.0"
 ```
 
 Or add to your `.claude/hooks/stop.config.json`:

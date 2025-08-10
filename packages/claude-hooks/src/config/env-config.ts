@@ -173,6 +173,13 @@ export const DEFAULT_ENV_MAPPINGS: EnvVarMapping[] = [
     configPath: 'tts.elevenlabs.apiKey',
     type: 'string',
   },
+  // Legacy support for old naming convention (processed first, lower priority)
+  {
+    envVar: 'CLAUDE_HOOKS_ELEVENLABS_TTS_VOICE',
+    configPath: 'tts.elevenlabs.voiceId',
+    type: 'string',
+  },
+  // New naming convention (processed last, higher priority - will override legacy if both set)
   {
     envVar: 'CLAUDE_HOOKS_ELEVENLABS_VOICE_ID',
     configPath: 'tts.elevenlabs.voiceId',
