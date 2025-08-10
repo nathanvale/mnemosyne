@@ -18,21 +18,26 @@ type ProviderConstructor = new (config: TTSProviderConfig) => TTSProvider
  * Factory configuration
  */
 export interface FactoryConfig {
-  provider: 'openai' | 'macos' | 'auto'
-  fallbackProvider?: 'macos' | 'none'
+  provider: 'openai' | 'macos' | 'elevenlabs' | 'auto'
+  fallbackProvider?: 'openai' | 'macos' | 'elevenlabs' | 'none'
   openai?: TTSProviderConfig
   macos?: TTSProviderConfig
+  elevenlabs?: TTSProviderConfig
   [key: string]: unknown
 }
 
 /**
  * Provider with fallback wrapper
  */
-class FallbackProvider implements TTSProvider {
+export class FallbackProvider implements TTSProvider {
+  private debug: boolean
+
   constructor(
     private primaryProvider: TTSProvider,
     private fallbackProvider: TTSProvider | null,
-  ) {}
+  ) {
+    this.debug = process.env['CLAUDE_HOOKS_DEBUG'] === 'true'
+  }
 
   async speak(
     text: string,
@@ -43,19 +48,29 @@ class FallbackProvider implements TTSProvider {
       if (result.success) {
         return result
       }
+      // Primary returned unsuccessful result, try fallback
+      if (this.debug) {
+        console.error(
+          `[FallbackTTSProvider] Primary provider (${this.primaryProvider.getProviderInfo().name}) returned error: ${result.error}`,
+        )
+      }
     } catch (primaryError) {
       // Log primary provider error for debugging
-      console.error(
-        `[FallbackTTSProvider] Primary provider (${this.primaryProvider.getProviderInfo().name}) failed:`,
-        primaryError,
-      )
+      if (this.debug) {
+        console.error(
+          `[FallbackTTSProvider] Primary provider (${this.primaryProvider.getProviderInfo().name}) failed:`,
+          primaryError,
+        )
+      }
+    }
 
-      // Primary failed, try fallback
-      if (this.fallbackProvider) {
-        try {
-          return await this.fallbackProvider.speak(text, options)
-        } catch (fallbackError) {
-          // Log fallback provider error for debugging
+    // Primary failed, try fallback
+    if (this.fallbackProvider) {
+      try {
+        return await this.fallbackProvider.speak(text, options)
+      } catch (fallbackError) {
+        // Log fallback provider error for debugging
+        if (this.debug) {
           console.error(
             `[FallbackTTSProvider] Fallback provider (${this.fallbackProvider.getProviderInfo().name}) also failed:`,
             fallbackError,
@@ -208,9 +223,31 @@ export class TTSProviderFactory {
    * Detect best available provider
    */
   static async detectBestProvider(config: FactoryConfig): Promise<TTSProvider> {
-    // Priority order: OpenAI (if API key), macOS (if available)
+    // Priority order: ElevenLabs (if API key), OpenAI (if API key), macOS (if available)
 
-    // Try OpenAI first if API key is available (in config or environment)
+    // Try ElevenLabs first if API key is available
+    const hasElevenKey =
+      (config.elevenlabs as { apiKey?: string } | undefined)?.apiKey ||
+      process.env['ELEVENLABS_API_KEY']
+    if (hasElevenKey) {
+      const elProvider = this.providers.get('elevenlabs')
+      if (elProvider) {
+        const provider = new elProvider(config.elevenlabs || {})
+        if (await provider.isAvailable()) {
+          if (config.fallbackProvider && config.fallbackProvider !== 'none') {
+            const fallbackConfig: FactoryConfig = {
+              ...config,
+              provider: config.fallbackProvider,
+            }
+            const fallback = this.create(fallbackConfig)
+            return new FallbackProvider(provider, fallback)
+          }
+          return provider
+        }
+      }
+    }
+
+    // Try OpenAI if API key is available (in config or environment)
     const hasOpenAIKey = config.openai?.apiKey || process.env['OPENAI_API_KEY']
     if (hasOpenAIKey) {
       const openaiProvider = this.providers.get('openai')

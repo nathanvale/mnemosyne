@@ -78,7 +78,7 @@ describe('AudioCache', () => {
       const config = cache.getConfiguration()
 
       expect(config.maxSizeBytes).toBe(100 * 1024 * 1024) // 100MB
-      expect(config.maxAgeMs).toBe(7 * 24 * 60 * 60 * 1000) // 7 days
+      expect(config.maxAgeMs).toBe(30 * 24 * 60 * 60 * 1000) // 30 days
       expect(config.maxEntries).toBe(1000)
       expect(config.enabled).toBe(true)
       expect(config.cacheDir).toBeDefined()
@@ -115,7 +115,13 @@ describe('AudioCache', () => {
       }
 
       cache = new AudioCache(config)
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const result = await cache.get(key)
 
       expect(result).toBeNull()
@@ -129,24 +135,56 @@ describe('AudioCache', () => {
     })
 
     it('should generate consistent keys for same parameters', async () => {
-      const key1 = await cache.generateKey('Hello world', 'tts-1', 'alloy', 1.0)
-      const key2 = await cache.generateKey('Hello world', 'tts-1', 'alloy', 1.0)
+      const key1 = await cache.generateKey(
+        'openai',
+        'Hello world',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
+      const key2 = await cache.generateKey(
+        'openai',
+        'Hello world',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       expect(key1).toBe(key2)
       expect(key1).toMatch(/^[a-f0-9]{64}$/) // SHA-256 hex
     })
 
     it('should generate different keys for different parameters', async () => {
-      const key1 = await cache.generateKey('Hello world', 'tts-1', 'alloy', 1.0)
+      const key1 = await cache.generateKey(
+        'openai',
+        'Hello world',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const key2 = await cache.generateKey(
+        'openai',
         'Hello world',
         'tts-1-hd',
         'alloy',
         1.0,
       )
-      const key3 = await cache.generateKey('Hello world', 'tts-1', 'nova', 1.0)
-      const key4 = await cache.generateKey('Hello world', 'tts-1', 'alloy', 1.5)
+      const key3 = await cache.generateKey(
+        'openai',
+        'Hello world',
+        'tts-1',
+        'nova',
+        1.0,
+      )
+      const key4 = await cache.generateKey(
+        'openai',
+        'Hello world',
+        'tts-1',
+        'alloy',
+        1.5,
+      )
       const key5 = await cache.generateKey(
+        'openai',
         'Different text',
         'tts-1',
         'alloy',
@@ -161,7 +199,7 @@ describe('AudioCache', () => {
 
     it('should handle special characters and unicode in text', async () => {
       const text = 'Hello "world"! 🎵 Test éñglish 中文'
-      const key = await cache.generateKey(text, 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey('openai', text, 'tts-1', 'alloy', 1.0)
 
       expect(key).toMatch(/^[a-f0-9]{64}$/)
       expect(key).toBeDefined()
@@ -173,18 +211,21 @@ describe('AudioCache', () => {
 
       // Test case-insensitive matching
       const key1 = await cache.generateKey(
+        'openai',
         'Task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key2 = await cache.generateKey(
+        'openai',
         'task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key3 = await cache.generateKey(
+        'openai',
         'TASK COMPLETED',
         'tts-1',
         'nova',
@@ -196,18 +237,21 @@ describe('AudioCache', () => {
 
       // Test priority prefix stripping
       const key4 = await cache.generateKey(
+        'openai',
         'medium priority: task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key5 = await cache.generateKey(
+        'openai',
         'high priority: task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key6 = await cache.generateKey(
+        'openai',
         'low priority: Task Completed',
         'tts-1',
         'nova',
@@ -220,12 +264,14 @@ describe('AudioCache', () => {
 
       // Test whitespace normalization
       const key7 = await cache.generateKey(
+        'openai',
         '  task completed  ',
         'tts-1',
         'nova',
         1.0,
       )
       const key8 = await cache.generateKey(
+        'openai',
         'task  completed',
         'tts-1',
         'nova',
@@ -234,6 +280,37 @@ describe('AudioCache', () => {
 
       expect(key1).toBe(key7)
       expect(key1).toBe(key8)
+    })
+
+    it('should isolate cache keys between different providers', async () => {
+      // Test that the same text with same parameters but different providers
+      // generates different cache keys
+      const text = 'Hello world'
+      const model = 'tts-1'
+      const voice = 'alloy'
+      const speed = 1.0
+
+      const openaiKey = await cache.generateKey(
+        'openai',
+        text,
+        model,
+        voice,
+        speed,
+      )
+      const elevenlabsKey = await cache.generateKey(
+        'elevenlabs',
+        text,
+        model,
+        voice,
+        speed,
+      )
+
+      // Keys should be different for different providers
+      expect(openaiKey).not.toBe(elevenlabsKey)
+
+      // Both should still be valid SHA-256 hashes
+      expect(openaiKey).toMatch(/^[a-f0-9]{64}$/)
+      expect(elevenlabsKey).toMatch(/^[a-f0-9]{64}$/)
     })
 
     it('should respect normalization configuration', async () => {
@@ -249,12 +326,14 @@ describe('AudioCache', () => {
 
       // Test case-sensitive keys (should be different)
       const key1 = await legacyCache.generateKey(
+        'openai',
         'Task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key2 = await legacyCache.generateKey(
+        'openai',
         'task completed',
         'tts-1',
         'nova',
@@ -265,12 +344,14 @@ describe('AudioCache', () => {
 
       // Test priority prefixes not stripped (should be different)
       const key3 = await legacyCache.generateKey(
+        'openai',
         'task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key4 = await legacyCache.generateKey(
+        'openai',
         'medium priority: task completed',
         'tts-1',
         'nova',
@@ -281,12 +362,14 @@ describe('AudioCache', () => {
 
       // Test whitespace not normalized (should be different)
       const key5 = await legacyCache.generateKey(
+        'openai',
         'task completed',
         'tts-1',
         'nova',
         1.0,
       )
       const key6 = await legacyCache.generateKey(
+        'openai',
         '  task completed  ',
         'tts-1',
         'nova',
@@ -303,7 +386,13 @@ describe('AudioCache', () => {
     })
 
     it('should store and retrieve audio data', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData = Buffer.from('mock audio data')
 
       // First, test storing
@@ -354,7 +443,13 @@ describe('AudioCache', () => {
     })
 
     it('should return null for non-existent entries', async () => {
-      const key = await cache.generateKey('nonexistent', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'nonexistent',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       mockStat.mockRejectedValue(new Error('File not found'))
 
@@ -364,7 +459,13 @@ describe('AudioCache', () => {
     })
 
     it('should handle corrupted entry files gracefully', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       mockStat.mockResolvedValueOnce({
         mtime: new Date(),
@@ -387,7 +488,13 @@ describe('AudioCache', () => {
     })
 
     it('should expire old entries', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       // Mock file that is older than maxAge
       const oldDate = new Date(Date.now() - 2000) // 2 seconds ago
@@ -402,7 +509,13 @@ describe('AudioCache', () => {
     })
 
     it('should return fresh entries', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData = Buffer.from('mock audio data')
 
       // Mock fresh file
@@ -441,7 +554,13 @@ describe('AudioCache', () => {
     })
 
     it('should track cache size', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData = Buffer.from('x'.repeat(500)) // 500 bytes
 
       await cache.set(key, audioData, { provider: 'openai', voice: 'alloy' })
@@ -467,12 +586,24 @@ describe('AudioCache', () => {
 
     it('should enforce maximum entries limit', async () => {
       // Add first entry
-      const key1 = await cache.generateKey('test1', 'tts-1', 'alloy', 1.0)
+      const key1 = await cache.generateKey(
+        'openai',
+        'test1',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData1 = Buffer.from('audio1')
       await cache.set(key1, audioData1, { provider: 'openai', voice: 'alloy' })
 
       // Add second entry
-      const key2 = await cache.generateKey('test2', 'tts-1', 'alloy', 1.0)
+      const key2 = await cache.generateKey(
+        'openai',
+        'test2',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData2 = Buffer.from('audio2')
       await cache.set(key2, audioData2, { provider: 'openai', voice: 'alloy' })
 
@@ -539,7 +670,13 @@ describe('AudioCache', () => {
     })
 
     it('should track hit rate', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       // Miss
       mockStat.mockRejectedValueOnce(new Error('Not found'))
@@ -577,7 +714,13 @@ describe('AudioCache', () => {
     })
 
     it('should handle file system errors during set', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
       const audioData = Buffer.from('audio')
 
       mockWriteFile.mockRejectedValue(new Error('Disk full'))
@@ -589,7 +732,13 @@ describe('AudioCache', () => {
     })
 
     it('should handle file system errors during get', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       mockStat.mockResolvedValue({ mtime: new Date(), size: 100 } as MockStats)
       mockReadFile.mockRejectedValue(new Error('Read error'))
@@ -612,7 +761,13 @@ describe('AudioCache', () => {
     })
 
     it('should validate cache entry structure', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       mockStat.mockResolvedValueOnce({
         mtime: new Date(),
@@ -631,7 +786,13 @@ describe('AudioCache', () => {
     })
 
     it('should handle missing audio files', async () => {
-      const key = await cache.generateKey('test', 'tts-1', 'alloy', 1.0)
+      const key = await cache.generateKey(
+        'openai',
+        'test',
+        'tts-1',
+        'alloy',
+        1.0,
+      )
 
       // Entry file exists
       mockStat.mockResolvedValueOnce({

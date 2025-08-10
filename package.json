@@ -41,7 +41,8 @@
     "check": "turbo format:check lint type-check && turbo test -- --run",
     "check:packages": "pnpm --filter \"@studio/*\" run check",
     "workspace:info": "pnpm list --depth=0",
-    "workspace:outdated": "pnpm outdated --recursive"
+    "workspace:outdated": "pnpm outdated --recursive",
+    "wallaby:status": "tsx packages/dev-tools/src/bin/wallaby-status.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
@@ -59,13 +60,13 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.1",
-    "@studio/eslint-config": "workspace:*",
-    "@studio/prettier-config": "workspace:*",
     "@storybook/addon-a11y": "^9.0.15",
     "@storybook/addon-docs": "^9.0.15",
     "@storybook/addon-vitest": "^9.0.15",
     "@storybook/nextjs-vite": "^9.0.15",
     "@storybook/react": "^9.0.15",
+    "@studio/eslint-config": "workspace:*",
+    "@studio/prettier-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -79,6 +80,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "@vitest/browser": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
+    "@wallabyjs/cli": "^1.0.8",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.30.0",
     "eslint-config-next": "15.3.4",

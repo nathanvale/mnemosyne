@@ -23,10 +23,20 @@
       "format": "mp3"
     },
     "macos": {
-      "voice": "Alex",
+      "voice": "Samantha",
       "rate": 200,
       "volume": 0.8,
       "enabled": true
+    },
+    "elevenlabs": {
+      "apiKey": "${ELEVENLABS_API_KEY}",
+      "voiceId": "pNInz6obpgDQGcFmaJgB",
+      "modelId": "eleven_multilingual_v2",
+      "outputFormat": "mp3_44100_128",
+      "stability": 0.6,
+      "similarityBoost": 0.8,
+      "speed": 1.1,
+      "enableLogging": true
     }
   }
 }

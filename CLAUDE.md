@@ -19,10 +19,34 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 
 ### Testing
 
+**🔴 CRITICAL: ALWAYS USE WALLABY.JS FIRST - NO EXCEPTIONS 🔴**
+
+**Wallaby.js Detection Rules:**
+
+1. **ALWAYS try Wallaby first** - Use `mcp__wallaby__wallaby_failingTests` or any MCP Wallaby tool
+2. **5-second rule** - If the tool hangs for more than 5 seconds, Wallaby is NOT running
+3. **Immediate user alert** - After 5 seconds, tell the user: "Wallaby.js is not running. Please start it in VS Code using 'Wallaby.js: Start' command"
+4. **NEVER skip to Vitest** - Always give the user the chance to start Wallaby first
+
+**Wallaby.js Setup Requirements:**
+
+- **VS Code Extension Required**: Wallaby.js must be started through VS Code (not programmatically)
+- **Start Command**: Use VS Code command palette: `Wallaby.js: Start`
+- **Check Status**: Run `pnpm wallaby:status` to verify Wallaby is running
+- **License**: Wallaby.js is a paid product requiring a valid license
+
+**Primary Testing Workflow:**
+
+1. **ALWAYS check Wallaby.js first** using `mcp__wallaby__wallaby_failingTests`
+2. **Wait exactly 5 seconds** - If no response, Wallaby is OFF
+3. **Alert the user immediately**: "Wallaby.js is not running. Please start it in VS Code (Cmd+Shift+P → 'Wallaby.js: Start'). I'll wait for you to turn it on."
+4. **Only use Vitest as fallback** if explicitly told to proceed without Wallaby.js
+
+**Test Commands (use only as fallback):**
+
 - `pnpm test` - Run Vitest unit tests across all packages
 - `pnpm test:ci` - Run tests in CI mode (no watch)
 - `pnpm test:storybook` - Run Storybook component tests
-- Use Wallaby.js for live test feedback and debugging
 
 ### Package-Specific Commands
 
@@ -32,8 +56,15 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 
 ### Single Test Running
 
+**With Wallaby.js (preferred):**
+
+- Use `mcp__wallaby__wallaby_allTestsForFile` to get test results
+- Use `mcp__wallaby__wallaby_runtimeValues` for debugging
+- Use `mcp__wallaby__wallaby_testById` for specific test details
+
+**With Vitest (fallback only):**
+
 - `pnpm test -- --run --reporter=verbose <test-file>` - Run specific test file
-- Use Wallaby.js tools for individual test execution and runtime values
 
 ### Data Management
 
@@ -124,6 +155,7 @@ mnemosyne/
 - **@studio/mocks** - MSW handlers for API mocking in development/tests
 - **@studio/test-config** - Shared Vitest configuration and test utilities
 - **@studio/shared** - Shared TypeScript configurations for all packages
+- **@studio/dev-tools** - Development tools including Wallaby.js manager for programmatic control
 
 ### Key Directories
 
@@ -156,12 +188,192 @@ mnemosyne/
 
 ### Testing Setup
 
-- **Vitest** with jsdom environment for unit tests
+**🔴 PRIMARY TOOL: Wallaby.js for ALL test-driven development and debugging 🔴**
+
+- **Wallaby.js** - **ALWAYS USE FIRST** for live test feedback, TDD, and fixing failing tests
+- **Vitest** - Fallback option only when Wallaby.js is unavailable
 - **React Testing Library** for component testing
 - **Playwright** for browser testing in Storybook
 - **MSW** for API mocking in development and tests (via @studio/mocks)
-- **Wallaby.js** for live test feedback and debugging
 - **Distributed testing**: Each package has its own test suite
+
+### Wallaby.js Configuration
+
+Wallaby.js provides continuous test execution with live feedback in your editor. This monorepo has been configured to work seamlessly with Wallaby.js in an ES modules environment.
+
+#### Key Configuration Points
+
+**Configuration File**: `wallaby.cjs` in the root directory
+
+- Uses CommonJS format (`.cjs`) as required by Wallaby
+- Sets environment variables at module load time to ensure test mode is detected early
+- Configures autoDetect mode for Vitest compatibility
+
+#### Environment Variable Setup
+
+**Critical**: Environment variables must be set at multiple points for proper test mode detection:
+
+1. **At module load time** (top of wallaby.cjs):
+
+   ```javascript
+   process.env.NODE_ENV = 'test'
+   process.env.VITEST = 'true'
+   process.env.WALLABY_WORKER = 'true'
+   ```
+
+2. **In env.params.env** (for spawned processes):
+
+   ```javascript
+   env: {
+     params: {
+       env: 'NODE_ENV=test;VITEST=true;WALLABY_WORKER=true'
+     }
+   }
+   ```
+
+3. **In setup function** (for reinforcement):
+   ```javascript
+   setup: function (wallaby) {
+     process.env.NODE_ENV = 'test'
+     // Load .env.example for test-safe values
+   }
+   ```
+
+#### Test Exclusions
+
+Certain tests need to be excluded from Wallaby.js due to incompatibilities:
+
+- **Performance tests**: Memory-intensive benchmarks that can cause timeouts
+- **CLI tests**: Tests using `import.meta.url` which conflicts with Wallaby's transpilation
+- **Integration tests**: Tests that spawn processes with specific directory requirements
+
+Example exclusion pattern:
+
+```javascript
+tests: {
+  override: (testPatterns) => [
+    ...testPatterns,
+    '!**/performance-benchmarks.test.ts',
+    '!**/cli-env-loading.test.ts',
+    '!**/bin/**/*.test.ts',
+    '!**/integration/**/stop-integration.test.ts',
+  ]
+}
+```
+
+#### Handling Environment Differences
+
+Tests should be written to work in both Wallaby.js and regular Vitest:
+
+```typescript
+// Detect Wallaby environment
+const isWallaby = process.env.WALLABY_WORKER === 'true'
+
+if (isWallaby) {
+  // Wallaby-specific expectations
+  expect(process.env.WALLABY_WORKER).toBe('true')
+} else {
+  // Regular Vitest expectations
+  expect(process.env.NODE_ENV).toBe('test')
+}
+```
+
+#### Common Issues and Solutions
+
+1. **NODE_ENV not set to 'test'**:
+   - Wallaby may override NODE_ENV to 'development'
+   - Solution: Set NODE_ENV at multiple points and make tests environment-aware
+
+2. **Module mocking issues**:
+   - Wallaby has different module resolution than Vitest
+   - Solution: Use dynamic imports and check for Wallaby environment
+
+3. **File system path issues**:
+   - `import.meta.url` behaves differently in Wallaby
+   - Solution: Exclude affected tests or use alternative path resolution
+
+4. **Memory/timeout issues**:
+   - Wallaby workers have resource constraints
+   - Solution: Exclude performance-intensive tests
+
+#### Wallaby.js MCP Tools
+
+Use these MCP tools for debugging and test analysis:
+
+- `mcp__wallaby__wallaby_failingTests` - Get all failing tests with details
+- `mcp__wallaby__wallaby_allTestsForFile` - Get all tests for a specific file
+- `mcp__wallaby__wallaby_runtimeValues` - Inspect runtime values at specific code locations
+- `mcp__wallaby__wallaby_coveredLinesForFile` - Check code coverage for files
+- `mcp__wallaby__wallaby_testById` - Get specific test details by ID
+
+#### Best Practices
+
+**🔴 TESTING WORKFLOW - ALWAYS FOLLOW THIS ORDER: 🔴**
+
+1. **FIRST: Check Wallaby.js** - Use `mcp__wallaby__wallaby_failingTests` to see test status
+2. **If Wallaby.js not responding** - Ask user: "Wallaby.js server appears to be off. Should I wait while you turn it on, or proceed with Vitest?"
+3. **Only use Vitest if explicitly approved** - Never automatically fall back to Vitest
+
+**Additional Best Practices:**
+
+- **Environment compatibility**: Ensure tests pass in both Wallaby.js and regular Vitest
+- **Use environment detection**: Make tests aware of which runner is active
+- **Document exclusions**: Clearly comment why tests are excluded from Wallaby
+- **Load test environment files**: Use .env.example for safe test values
+- **Monitor worker resources**: Keep console output minimal to avoid memory issues
+
+#### Programmatic Wallaby Control
+
+The `@studio/dev-tools` package provides a Wallaby manager for programmatic control of the Wallaby.js server, allowing you to start/stop Wallaby without needing VS Code commands.
+
+**Available Commands:**
+
+```bash
+# Start Wallaby.js server (detached process)
+pnpm wallaby:start
+
+# Stop running Wallaby.js server
+pnpm wallaby:stop
+
+# Check Wallaby.js server status
+pnpm wallaby:status
+
+# View recent logs (last 50 lines)
+pnpm wallaby:status --logs
+
+# Clear Wallaby logs
+pnpm wallaby:status --clear-logs
+```
+
+**Programmatic API:**
+
+```typescript
+import { WallabyManager } from '@studio/dev-tools'
+
+// Start Wallaby server
+const status = await WallabyManager.startWallaby({
+  configFile: 'wallaby.cjs',
+  projectPath: process.cwd(),
+  debug: false,
+})
+
+// Check if running
+const isRunning = await WallabyManager.isWallabyRunning()
+
+// Get detailed status
+const status = await WallabyManager.getWallabyStatus()
+
+// Stop server
+await WallabyManager.stopWallaby()
+```
+
+**Benefits:**
+
+- Start Wallaby from terminal without opening VS Code
+- Integrate Wallaby into automated workflows
+- Check server status programmatically
+- Manage Wallaby in CI/CD environments
+- Detached process continues running after parent exits
 
 ### Message Processing
 
@@ -597,6 +809,25 @@ This command:
 - Use `import * as name` for namespace imports if needed
 
 ## Development Patterns
+
+### Test-Driven Development (TDD)
+
+**🔴 MANDATORY: USE WALLABY.JS FOR ALL TDD 🔴**
+
+**TDD Workflow:**
+
+1. **ALWAYS start with Wallaby.js** - Check `mcp__wallaby__wallaby_failingTests` before writing any code
+2. **Write failing test first** - Use Wallaby.js to see the test fail in real-time
+3. **Write minimal code to pass** - Watch Wallaby.js update as you code
+4. **Refactor with confidence** - Wallaby.js shows instant feedback on changes
+5. **If Wallaby.js is off** - Ask: "Wallaby.js server appears to be off. Should I wait while you turn it on, or proceed with Vitest?"
+
+**Debugging Workflow:**
+
+- **First**: Use `mcp__wallaby__wallaby_runtimeValues` to inspect values without adding console.log
+- **Second**: Use `mcp__wallaby__wallaby_coveredLinesForFile` to verify test coverage
+- **Third**: Use `mcp__wallaby__wallaby_testById` for specific test debugging
+- **Only if Wallaby unavailable**: Fall back to Vitest with explicit permission
 
 ### Import Patterns
 

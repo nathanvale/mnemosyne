@@ -84,7 +84,7 @@ export class AudioCache {
     // Set default configuration
     this.config = {
       maxSizeBytes: config.maxSizeBytes ?? 100 * 1024 * 1024, // 100MB
-      maxAgeMs: config.maxAgeMs ?? 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAgeMs: config.maxAgeMs ?? 30 * 24 * 60 * 60 * 1000, // 30 days
       maxEntries: config.maxEntries ?? 1000,
       enabled: config.enabled ?? true,
       cacheDir: config.cacheDir ?? join(tmpdir(), 'claude-hooks-audio-cache'),
@@ -129,6 +129,7 @@ export class AudioCache {
    * Generate cache key from TTS parameters
    */
   async generateKey(
+    provider: string,
     text: string,
     model: string,
     voice: string,
@@ -137,7 +138,8 @@ export class AudioCache {
     // Normalize text based on configuration
     const normalizedText = this.normalizeText(text)
 
-    const input = `${normalizedText}|${model}|${voice}|${speed}`
+    // Include provider in the cache key to prevent collisions between providers
+    const input = `${provider}|${normalizedText}|${model}|${voice}|${speed}`
     const hash = createHash('sha256')
     hash.update(input, 'utf8')
     return hash.digest('hex')

@@ -46,12 +46,16 @@ export class OpenAIProvider extends BaseTTSProvider {
   private readonly maxRetries = 3
   private readonly retryDelay = 1000 // Start with 1 second delay
   private cache: AudioCache
+  private debug: boolean
 
   constructor(config: OpenAIConfig = {}) {
     super(config)
 
     // Get API key from config or environment
     const apiKey = config.apiKey || process.env['OPENAI_API_KEY'] || ''
+
+    // Set debug flag from environment
+    this.debug = process.env['CLAUDE_HOOKS_DEBUG'] === 'true'
 
     // Set defaults
     this.openaiConfig = {
@@ -81,29 +85,37 @@ export class OpenAIProvider extends BaseTTSProvider {
     options?: { detached?: boolean },
   ): Promise<SpeakResult> {
     const detached = options?.detached ?? false
-    console.error(
-      '[OpenAI TTS] speak() called with text:',
-      `${text.substring(0, 50)}...`,
-    )
+    if (this.debug) {
+      console.error(
+        '[OpenAI TTS] speak() called with text:',
+        `${text.substring(0, 50)}...`,
+      )
+    }
 
     // Validate text
     const cleanText = this.validateText(text)
     if (!cleanText) {
-      console.error('[OpenAI TTS] Empty text, returning error')
+      if (this.debug) {
+        console.error('[OpenAI TTS] Empty text, returning error')
+      }
       return this.createErrorResult('Empty text')
     }
 
     // Check if client is available
     if (!this.client) {
-      console.error(
-        '[OpenAI TTS] No OpenAI client (API key missing), returning error',
-      )
+      if (this.debug) {
+        console.error(
+          '[OpenAI TTS] No OpenAI client (API key missing), returning error',
+        )
+      }
       return this.createErrorResult('OpenAI API key not configured')
     }
 
-    console.error(
-      '[OpenAI TTS] Client available, proceeding with TTS generation',
-    )
+    if (this.debug) {
+      console.error(
+        '[OpenAI TTS] Client available, proceeding with TTS generation',
+      )
+    }
     // Apply rate limiting
     await this.applyRateLimit()
 
@@ -119,24 +131,29 @@ export class OpenAIProvider extends BaseTTSProvider {
       const inputText =
         text.length > 4096 ? `${text.substring(0, 4093)}...` : text
 
-      // Generate cache key
+      // Generate cache key with provider name to prevent collisions
       const cacheKey = await this.cache.generateKey(
+        'openai',
         inputText,
         this.openaiConfig.model,
         this.openaiConfig.voice,
         this.openaiConfig.speed,
       )
 
-      console.error(
-        `[OpenAI TTS] Cache key for "${inputText.substring(0, 30)}...": ${cacheKey.substring(0, 16)}...`,
-      )
+      if (this.debug) {
+        console.error(
+          `[OpenAI TTS] Cache key for "${inputText.substring(0, 30)}...": ${cacheKey.substring(0, 16)}...`,
+        )
+      }
 
       // Check cache first
       const cachedEntry = await this.cache.get(cacheKey)
       if (cachedEntry) {
-        console.error(
-          `[OpenAI TTS] Cache HIT! Using cached audio (${cachedEntry.data.length} bytes)`,
-        )
+        if (this.debug) {
+          console.error(
+            `[OpenAI TTS] Cache HIT! Using cached audio (${cachedEntry.data.length} bytes)`,
+          )
+        }
         // Use cached audio
         await this.playCachedAudio(cachedEntry.data, detached)
 
@@ -160,9 +177,11 @@ export class OpenAIProvider extends BaseTTSProvider {
       // Convert response to buffer
       const buffer = Buffer.from(await response.arrayBuffer())
 
-      console.error(
-        `[OpenAI TTS] Caching new audio (${buffer.length} bytes) for: "${inputText.substring(0, 30)}..."`,
-      )
+      if (this.debug) {
+        console.error(
+          `[OpenAI TTS] Caching new audio (${buffer.length} bytes) for: "${inputText.substring(0, 30)}..."`,
+        )
+      }
 
       // Cache the result
       await this.cache.set(cacheKey, buffer, {
@@ -369,9 +388,11 @@ export class OpenAIProvider extends BaseTTSProvider {
       const filepath = join(this.tempDir, filename)
       await writeFile(filepath, audioData)
 
-      console.error(
-        `[OpenAI TTS] Playing cached audio from: ${filepath}, size: ${audioData.length} bytes`,
-      )
+      if (this.debug) {
+        console.error(
+          `[OpenAI TTS] Playing cached audio from: ${filepath}, size: ${audioData.length} bytes`,
+        )
+      }
 
       // Play the audio file
       await this.playAudio(filepath, detached)
@@ -382,7 +403,9 @@ export class OpenAIProvider extends BaseTTSProvider {
       }
     } catch (error) {
       // Log the error for debugging
-      console.error('[OpenAI TTS] Error playing cached audio:', error)
+      if (this.debug) {
+        console.error('[OpenAI TTS] Error playing cached audio:', error)
+      }
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
     }
@@ -438,9 +461,11 @@ export class OpenAIProvider extends BaseTTSProvider {
           ]
         }
 
-        console.error(
-          `[OpenAI TTS] Playing audio (detached) with ${cmd}: ${filepath}`,
-        )
+        if (this.debug) {
+          console.error(
+            `[OpenAI TTS] Playing audio (detached) with ${cmd}: ${filepath}`,
+          )
+        }
 
         const child = spawn(cmd, args, {
           detached: true,
@@ -455,7 +480,9 @@ export class OpenAIProvider extends BaseTTSProvider {
         if (platform === 'darwin') {
           // macOS
           command = `afplay "${filepath}"`
-          console.error(`[OpenAI TTS] Playing audio with afplay: ${filepath}`)
+          if (this.debug) {
+            console.error(`[OpenAI TTS] Playing audio with afplay: ${filepath}`)
+          }
         } else if (platform === 'win32') {
           // Windows - properly escape the filepath for PowerShell
           const escapedPath = filepath
@@ -465,9 +492,11 @@ export class OpenAIProvider extends BaseTTSProvider {
             .replace(/\$/g, '`$') // Escape dollar signs
 
           command = `powershell -NoProfile -Command "(New-Object Media.SoundPlayer '${escapedPath}').PlaySync()"`
-          console.error(
-            `[OpenAI TTS] Playing audio with PowerShell: ${filepath}`,
-          )
+          if (this.debug) {
+            console.error(
+              `[OpenAI TTS] Playing audio with PowerShell: ${filepath}`,
+            )
+          }
         } else {
           // Linux - try multiple players with proper error reporting
           command = `
@@ -482,13 +511,17 @@ export class OpenAIProvider extends BaseTTSProvider {
               exit 1
             fi
           `.trim()
-          console.error(`[OpenAI TTS] Playing audio on Linux: ${filepath}`)
+          if (this.debug) {
+            console.error(`[OpenAI TTS] Playing audio on Linux: ${filepath}`)
+          }
         }
 
         await execAsync(command)
       }
     } catch (error) {
-      console.error('[OpenAI TTS] Error in playAudio:', error)
+      if (this.debug) {
+        console.error('[OpenAI TTS] Error in playAudio:', error)
+      }
       // Playback failed, but TTS generation succeeded
       // Don't fail the whole operation
     }

@@ -6,7 +6,7 @@ Claude Code hooks for task completion notifications, quality checks, and TTS int
 
 This package provides Claude Code hook implementations:
 
-- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with OpenAI TTS support
+- **Stop Hook**: Plays completion sounds when Claude finishes tasks, with OpenAI and ElevenLabs TTS support
 - **Notification Hook**: Plays attention sounds when Claude needs user input
 - **Quality Check Hook**: Runs TypeScript, ESLint, and Prettier checks on code changes
 - **Subagent Stop Hook**: Tracks and notifies when Claude subagents complete their work
@@ -18,6 +18,7 @@ This package provides Claude Code hook implementations:
 - 🔧 **Configurable**: Environment variables and JSON configuration support
 - 🎵 **Cross-Platform Audio**: macOS, Windows, Linux support
 - 🗣️ **OpenAI TTS Integration**: High-quality text-to-speech with voice options
+- 🎙️ **ElevenLabs TTS Integration**: Premium voice synthesis with ultra-realistic voices
 - 🍎 **macOS Speech**: Native macOS speech synthesis support
 - 📄 **Event Logging**: JSON-based logging with rotation and transcript processing
 - ⏰ **Smart Scheduling**: Quiet hours and cooldown periods for notifications
@@ -163,7 +164,7 @@ pnpm install
 cat > .claude/hooks/notification.config.json << 'EOF'
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false,
     "cooldownPeriod": 3000,
@@ -216,7 +217,7 @@ EOF
 cat > .claude/hooks/subagent-stop.config.json << 'EOF'
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false
   }
@@ -295,7 +296,7 @@ Plays attention sounds when Claude needs user input.
 ```json
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false,
     "cooldownPeriod": 3000,
@@ -311,7 +312,7 @@ Plays attention sounds when Claude needs user input.
 
 **Properties:**
 
-- `notify` - Enable sound notifications
+- `notifySound` - Enable sound notifications
 - `speak` - Enable speech synthesis (macOS only)
 - `debug` - Enable debug logging
 - `cooldownPeriod` - Cooldown between notifications (ms)
@@ -353,6 +354,7 @@ Plays completion sounds when Claude finishes tasks.
 
 - Task completion sounds (success/error)
 - OpenAI TTS with voice selection
+- ElevenLabs TTS with premium voices
 - macOS speech synthesis fallback
 - Chat transcript logging
 - Platform-specific sound selection
@@ -367,7 +369,7 @@ Tracks when Claude's Task tool subagents complete their work.
 ```json
 {
   "settings": {
-    "notify": true,
+    "notifySound": true,
     "speak": false,
     "debug": false
   }
@@ -376,7 +378,7 @@ Tracks when Claude's Task tool subagents complete their work.
 
 **Properties:**
 
-- `notify` - Enable notification sounds
+- `notifySound` - Enable notification sounds
 - `speak` - Enable speech synthesis (macOS only)
 - `debug` - Enable debug logging
 
@@ -585,7 +587,7 @@ Environment variables can override any JSON configuration setting. Use the forma
 
 ### Notification Hook
 
-- `CLAUDE_HOOKS_NOTIFICATION_NOTIFY` - Enable sound notifications
+- `CLAUDE_HOOKS_NOTIFY_SOUND` - Enable sound notifications
 - `CLAUDE_HOOKS_NOTIFICATION_SPEAK` - Enable speech notifications (macOS only)
 - `CLAUDE_HOOKS_NOTIFICATION_COOLDOWN_PERIOD` - Cooldown between notifications (ms)
 - `CLAUDE_HOOKS_NOTIFICATION_ALLOW_URGENT_OVERRIDE` - Allow urgent notifications during cooldown
@@ -616,24 +618,24 @@ For OpenAI text-to-speech integration, set the following environment variables:
 
 - `OPENAI_API_KEY` - Your OpenAI API key (required)
 - `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "openai" to enable OpenAI TTS
-- `CLAUDE_HOOKS_TTS_VOICE` - Voice selection:
+- `CLAUDE_HOOKS_OPENAI_TTS_VOICE` - Voice selection:
   - `alloy` (default) - Balanced, neutral voice
   - `echo` - Clear, professional voice
   - `fable` - Warm, storytelling voice
   - `onyx` - Deep, authoritative voice
   - `nova` - Bright, energetic voice
   - `shimmer` - Soft, friendly voice
-- `CLAUDE_HOOKS_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
-- `CLAUDE_HOOKS_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
+- `CLAUDE_HOOKS_OPENAI_TTS_MODEL` - Model: "tts-1" (default, faster) or "tts-1-hd" (higher quality)
+- `CLAUDE_HOOKS_OPENAI_TTS_SPEED` - Speech speed from 0.25 to 4.0 (default: 1.0)
 
 Example OpenAI TTS configuration:
 
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 export CLAUDE_HOOKS_TTS_PROVIDER="openai"
-export CLAUDE_HOOKS_TTS_VOICE="nova"
-export CLAUDE_HOOKS_TTS_MODEL="tts-1-hd"
-export CLAUDE_HOOKS_TTS_SPEED="0.9"
+export CLAUDE_HOOKS_OPENAI_TTS_VOICE="nova"
+export CLAUDE_HOOKS_OPENAI_TTS_MODEL="tts-1-hd"
+export CLAUDE_HOOKS_OPENAI_TTS_SPEED="0.9"
 ```
 
 Or add to your `.claude/hooks/stop.config.json`:
@@ -659,6 +661,77 @@ Or add to your `.claude/hooks/stop.config.json`:
 
 **Voice Selection:** See `examples/stop-openai-voices.json` for a comprehensive example with all available voices, descriptions, and recommended use cases for different scenarios.
 
+### ElevenLabs TTS Configuration
+
+For high-quality ElevenLabs text-to-speech with advanced voice synthesis, set the following environment variables:
+
+- `ELEVENLABS_API_KEY` - Your ElevenLabs API key (required)
+- `CLAUDE_HOOKS_TTS_PROVIDER` - Set to "elevenlabs" to enable ElevenLabs TTS
+
+Example ElevenLabs configuration with environment variables:
+
+```bash
+export ELEVENLABS_API_KEY="your-api-key-here"
+export CLAUDE_HOOKS_TTS_PROVIDER="elevenlabs"
+```
+
+Or add to your `.claude/hooks/stop.config.json`:
+
+```json
+{
+  "settings": {
+    "speak": true,
+    "tts": {
+      "provider": "elevenlabs",
+      "elevenlabs": {
+        "apiKey": "${ELEVENLABS_API_KEY}",
+        "voiceId": "21m00Tcm4TlvDq8ikWAM",
+        "modelId": "eleven_multilingual_v2",
+        "outputFormat": "mp3_44100_128",
+        "stability": 0.5,
+        "similarityBoost": 0.75,
+        "speed": 1.0,
+        "enableLogging": true
+      },
+      "fallbackProvider": "macos"
+    }
+  }
+}
+```
+
+**ElevenLabs Configuration Parameters:**
+
+- `voiceId` (required) - The ID of the voice to use. Get available voices from your ElevenLabs account
+- `modelId` - Language model to use:
+  - `eleven_multilingual_v2` (default) - Supports multiple languages with high quality
+  - `eleven_flash_v2_5` - Faster generation, lower latency
+  - `eleven_monolingual_v1` - English-only, optimized for English
+- `outputFormat` - Audio output format:
+  - `mp3_44100_128` (default) - Standard MP3 format
+  - `mp3_44100_192` - Higher quality MP3
+  - `mp3_22050_32` - Lower quality, smaller file size
+  - `pcm_16000` - Raw PCM for processing
+  - `opus_48000_128` - Opus codec for streaming
+- `stability` (0-1) - Voice stability, default 0.5. Lower = more variation, higher = more consistent
+- `similarityBoost` (0-1) - Voice similarity enhancement, default 0.75
+- `speed` (0.5-2.0) - Speech speed multiplier, default 1.0
+- `enableLogging` - Enable/disable request logging (default: true)
+
+**Popular ElevenLabs Voice IDs:**
+
+- `21m00Tcm4TlvDq8ikWAM` - Rachel (American, female)
+- `AZnzlk1XvdvUeBnXmlld` - Domi (American, female)
+- `EXAVITQu4vr4xnSDxMaL` - Bella (American, female, young)
+- `ErXwobaYiN019PkySvjV` - Antoni (American, male)
+- `VR6AewLTigWG4xSOukaG` - Arnold (American, male)
+- `pNInz6obpgDQGcFmaJgB` - Adam (American, male, deep)
+- `yoZ06aMxZJJ28mfd3POQ` - Sam (American, male, young)
+- `onwK4e9ZLuTAKqWW03F9` - Daniel (British, male)
+
+**Note:** Get your full list of available voices (including custom cloned voices) by visiting your [ElevenLabs Voice Lab](https://elevenlabs.io/voice-lab) or using the API.
+
+**Complete Example:** See `examples/stop-elevenlabs.json` for a full configuration example with all parameters and fallback settings.
+
 ## CLI Arguments
 
 The hooks support command-line flags that override both JSON and environment configuration:
@@ -681,6 +754,175 @@ The hooks support command-line flags that override both JSON and environment con
 
 - `--notify` - Enable notification sounds
 - `--speak` - Enable speech synthesis (macOS only)
+
+## Audio Cache
+
+The hooks include an intelligent audio caching system that improves performance and reduces API costs by caching generated TTS audio files.
+
+### Overview
+
+The audio cache stores generated TTS audio locally to avoid redundant API calls when the same text is spoken multiple times. This is particularly useful for:
+
+- Repeated notifications and alerts
+- Common completion messages
+- Frequently used voice prompts
+- Testing and development
+
+### Configuration
+
+The cache can be configured using environment variables:
+
+- `CLAUDE_HOOKS_AUDIO_CACHE_ENABLED` - Enable/disable caching (default: true)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_SIZE_MB` - Maximum cache size in MB (default: 100)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_AGE_DAYS` - Maximum age of cached entries in days (default: 30)
+- `CLAUDE_HOOKS_AUDIO_CACHE_MAX_ENTRIES` - Maximum number of cached entries (default: 1000)
+
+Example configuration:
+
+```bash
+export CLAUDE_HOOKS_AUDIO_CACHE_ENABLED=true
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_SIZE_MB=200
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_AGE_DAYS=60
+export CLAUDE_HOOKS_AUDIO_CACHE_MAX_ENTRIES=2000
+```
+
+### Cache Location
+
+By default, cached audio files are stored in:
+
+- **macOS/Linux**: `$TMPDIR/claude-hooks-audio-cache`
+- **Windows**: `%TEMP%\claude-hooks-audio-cache`
+
+### Cache Management CLI Tools
+
+The package includes CLI tools for managing the audio cache:
+
+#### View Cache Statistics
+
+```bash
+claude-hooks-cache-stats
+```
+
+Shows:
+
+- Total cache size
+- Number of entries
+- Hit rate
+- Oldest and newest entries
+
+#### Explore and Manage Cache
+
+```bash
+claude-hooks-cache-explorer
+```
+
+Interactive tool to:
+
+- Browse cached entries
+- Play cached audio files
+- Delete specific entries
+- Clear entire cache
+
+For JSON output (useful for scripting):
+
+```bash
+claude-hooks-cache-stats --json
+```
+
+### Cache Behavior
+
+- **Key Generation**: Cache keys are generated from the text content, provider, voice, and other settings
+- **Text Normalization**: Text is normalized (case-insensitive, whitespace normalized) to improve cache hits
+- **Expiration**: Entries older than the configured max age are automatically removed
+- **Size Limits**: When cache exceeds size limits, oldest entries are evicted (LRU)
+- **Hit Rate**: Cache tracks hit rate to help monitor effectiveness
+
+### Disabling Cache
+
+To disable caching temporarily:
+
+```bash
+export CLAUDE_HOOKS_AUDIO_CACHE_ENABLED=false
+```
+
+Or permanently in your config:
+
+```json
+{
+  "audioCache": {
+    "enabled": false
+  }
+}
+```
+
+## Troubleshooting
+
+### ElevenLabs TTS Issues
+
+**"Invalid API key" error:**
+
+- Verify your API key is correct and active
+- Check your ElevenLabs account status and quota
+- Ensure the environment variable `ELEVENLABS_API_KEY` is set correctly
+
+**"voiceId is required" error:**
+
+- You must specify a `voiceId` in your configuration
+- Get valid voice IDs from your ElevenLabs Voice Lab
+- Use one of the popular voice IDs listed in the documentation
+
+**"Rate limit exceeded" error:**
+
+- ElevenLabs has rate limits based on your subscription tier
+- The provider implements automatic retry with exponential backoff
+- Consider upgrading your ElevenLabs plan for higher limits
+
+**Audio not playing:**
+
+- Check system audio permissions
+- Verify audio output device is working
+- Test with a simpler provider (e.g., macOS) to isolate the issue
+- Check the generated audio files in the temp directory
+
+**Slow response times:**
+
+- Use `eleven_flash_v2_5` model for lower latency
+- Consider using a lower quality output format for faster generation
+- Enable caching to avoid regenerating the same text
+
+### OpenAI TTS Issues
+
+**"Invalid API key" error:**
+
+- Verify your OpenAI API key has TTS permissions
+- Check your OpenAI account credits and limits
+
+**Audio playback issues on Windows:**
+
+- Ensure PowerShell execution policy allows scripts
+- Try running with administrator privileges
+- Check Windows audio service is running
+
+### General Troubleshooting
+
+**Hook not triggering:**
+
+- Verify the hook is configured in `.claude/settings.local.json`
+- Check the config file exists in `.claude/hooks/`
+- Enable debug mode with `--debug` flag to see detailed logs
+- Ensure the command is executable and in PATH
+
+**Permission denied errors:**
+
+- Check file permissions in `.claude/hooks/` directory
+- Ensure the hook scripts have execute permissions
+- On macOS/Linux: `chmod +x` the command if needed
+
+**Configuration not loading:**
+
+- Verify JSON syntax in config files
+- Check for typos in configuration keys
+- Use debug mode to see which config is being loaded
 
 ## Testing
 

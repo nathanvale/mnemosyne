@@ -55,6 +55,24 @@ describe('TTS Provider Configuration', () => {
       })
     })
 
+    it('should accept valid fallback providers including openai', () => {
+      const validFallbackConfigs = [
+        { provider: 'elevenlabs', fallbackProvider: 'openai' },
+        { provider: 'elevenlabs', fallbackProvider: 'macos' },
+        { provider: 'openai', fallbackProvider: 'elevenlabs' },
+        { provider: 'openai', fallbackProvider: 'none' },
+      ]
+
+      validFallbackConfigs.forEach((config) => {
+        const validFallbacks = ['openai', 'macos', 'elevenlabs', 'none']
+        const isValid =
+          !config.fallbackProvider ||
+          (typeof config.fallbackProvider === 'string' &&
+            validFallbacks.includes(config.fallbackProvider))
+        expect(isValid).toBe(true)
+      })
+    })
+
     it('should reject invalid fallback providers', () => {
       const invalidFallbackConfigs = [
         { provider: 'openai', fallbackProvider: 'openai' }, // circular
@@ -63,11 +81,12 @@ describe('TTS Provider Configuration', () => {
       ]
 
       invalidFallbackConfigs.forEach((config) => {
-        const validFallbacks = ['macos', 'none']
+        const validFallbacks = ['openai', 'macos', 'elevenlabs', 'none']
         const isValid =
           !config.fallbackProvider ||
           (typeof config.fallbackProvider === 'string' &&
-            validFallbacks.includes(config.fallbackProvider))
+            validFallbacks.includes(config.fallbackProvider) &&
+            config.fallbackProvider !== config.provider) // prevent circular
         expect(isValid).toBe(false)
       })
     })
@@ -603,15 +622,19 @@ describe('TTS Provider Configuration', () => {
       const errors: string[] = []
 
       // Validate provider
-      const validProviders = ['openai', 'macos', 'auto']
+      const validProviders = ['openai', 'macos', 'elevenlabs', 'auto']
       if (!validProviders.includes(invalidTTSConfig.tts.provider)) {
-        errors.push('tts.provider must be one of: openai, macos, auto')
+        errors.push(
+          'tts.provider must be one of: openai, macos, elevenlabs, auto',
+        )
       }
 
       // Validate fallback
-      const validFallbacks = ['macos', 'none']
+      const validFallbacks = ['macos', 'elevenlabs', 'none']
       if (!validFallbacks.includes(invalidTTSConfig.tts.fallbackProvider)) {
-        errors.push('tts.fallbackProvider must be one of: macos, none')
+        errors.push(
+          'tts.fallbackProvider must be one of: macos, elevenlabs, none',
+        )
       }
 
       // Validate OpenAI config
@@ -661,10 +684,10 @@ describe('TTS Provider Configuration', () => {
 
       expect(errors.length).toBeGreaterThan(0)
       expect(errors).toContain(
-        'tts.provider must be one of: openai, macos, auto',
+        'tts.provider must be one of: openai, macos, elevenlabs, auto',
       )
       expect(errors).toContain(
-        'tts.fallbackProvider must be one of: macos, none',
+        'tts.fallbackProvider must be one of: macos, elevenlabs, none',
       )
       expect(errors).toContain('tts.openai.apiKey must be a string')
       expect(errors).toContain(

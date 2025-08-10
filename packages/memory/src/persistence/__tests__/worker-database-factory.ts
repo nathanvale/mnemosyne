@@ -1046,18 +1046,37 @@ export class WorkerDatabaseFactory {
     tableName: string,
   ): Promise<void> {
     try {
-      // Use Prisma.$executeRawUnsafe for dynamic table names
-      await prisma.$executeRawUnsafe(`DELETE FROM "${tableName}"`)
+      // First check if table exists using SQLite's sqlite_master table
+      const tableExists = await prisma.$queryRaw<Array<{ count: number }>>`
+        SELECT COUNT(*) as count 
+        FROM sqlite_master 
+        WHERE type='table' AND name=${tableName}
+      `
+
+      // Only delete if table exists
+      if (tableExists[0]?.count > 0) {
+        await prisma.$executeRawUnsafe(`DELETE FROM "${tableName}"`)
+      }
     } catch (error: unknown) {
-      // Ignore "table does not exist" errors, but log others
-      const prismaError = error as { code?: string; message?: string }
-      if (
-        prismaError?.code !== 'P2021' &&
-        !prismaError?.message?.includes('does not exist')
-      ) {
-        if (!process.env.WALLABY_QUIET) {
-          console.warn(`Error deleting from table ${tableName}:`, error)
-        }
+      // Handle any remaining errors (connection issues, etc.)
+      const prismaError = error as {
+        code?: string
+        message?: string
+        meta?: { message?: string }
+      }
+
+      // P2010 is the error code for SQL errors including "no such table"
+      // P2021 is for table not found in schema
+      // Also check the meta.message for SQLite-specific errors
+      const isTableNotFound =
+        (prismaError?.code === 'P2010' &&
+          prismaError?.meta?.message?.includes('no such table')) ||
+        prismaError?.code === 'P2021' ||
+        prismaError?.message?.includes('no such table') ||
+        prismaError?.message?.includes('does not exist')
+
+      if (!isTableNotFound && !process.env.WALLABY_QUIET) {
+        console.warn(`Error deleting from table ${tableName}:`, error)
       }
     }
   }

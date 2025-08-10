@@ -10,12 +10,21 @@
 - **Tailwind CSS v4** - Utility-first styling
 - **Radix UI** - Accessible component primitives
 
-### Backend & Data
+### Backend & Data (Current SQLite → Future Convex)
+
+**Current (Phase 1-2):**
 
 - **Prisma ORM** - Type-safe database access
 - **SQLite** - Lightweight database for MVP
 - **SHA-256** - Content hashing for deduplication
 - **Node.js 20** - JavaScript runtime
+
+**Future (Phase 2+ Migration):**
+
+- **Convex** - Real-time backend-as-a-service with TypeScript integration
+- **Clerk** - Multi-tenant authentication and user management
+- **TypeScript end-to-end** - Full type safety from database to UI
+- **Real-time subscriptions** - Live collaborative features
 
 ### Build & Development
 
@@ -77,10 +86,19 @@ packages/
 
 ### Key Design Decisions
 
+**Current Architecture:**
+
 - Content-based deduplication via SHA-256
-- Relational design for complex queries
-- SQLite for MVP simplicity
-- Prepared for PostgreSQL migration
+- Complex relational design (54 tables) for emotional intelligence
+- SQLite for MVP simplicity and rapid development
+- Sophisticated TypeScript interfaces (1,184 lines of emotional context types)
+
+**Future Convex Architecture:**
+
+- Maintain content-based deduplication patterns
+- Convex document-based schema for emotional intelligence data
+- Real-time collaborative features built-in
+- TypeScript end-to-end with automatic type generation
 
 ## Development Tools
 
@@ -169,25 +187,49 @@ packages/
 - Rate limiting
 - Audit logging
 
-## Scalability Path
+## Migration & Scalability Path
 
-### Near-term (MVP)
+### Current State (Phase 1-2)
 
-- SQLite for simplicity
-- Single Next.js instance
-- Local file storage
-- Basic caching
+- **SQLite** with 54 sophisticated tables
+- **Prisma ORM** with complex relational queries
+- **Single Next.js instance** for MVP
+- **Local development** with hot reload
 
-### Production (Phase 4)
+### Convex Migration (Phase 2-5)
 
-- PostgreSQL database
-- Redis caching layer
-- CDN for static assets
-- Horizontal scaling
+**Phase 2: Strategy & Planning**
 
-### Enterprise (Phase 5)
+- Convex schema design for emotional intelligence data
+- Migration scripts for 54 tables → Convex documents
+- TypeScript integration testing
+- Clerk authentication setup
 
-- Multi-region deployment
-- Event-driven architecture
-- Microservices split
-- Advanced monitoring
+**Phase 3: Core Migration**
+
+- Database migration with zero downtime
+- Preserve 1,184 TypeScript interface definitions
+- Maintain all mood scoring and clustering logic
+- MCP endpoint migration to Convex functions
+
+**Phase 4: Real-time Features**
+
+- Collaborative memory validation
+- Live psychological clustering
+- Real-time mood analysis
+- Interactive relationship timelines
+
+**Phase 5: Production Deployment**
+
+- Multi-tenant Convex deployment
+- Clerk-based user isolation
+- Performance optimization for 10K+ memories
+- Enterprise-grade monitoring
+
+### Post-Migration Benefits
+
+- **Real-time collaboration** - Multiple users validate memories simultaneously
+- **TypeScript excellence** - End-to-end type safety with automatic generation
+- **AI-first architecture** - Built-in support for complex emotional intelligence queries
+- **Multi-app platform** - Support for Next.js apps, mobile, CLI tools, SDKs
+- **Simplified deployment** - No database management or scaling concerns

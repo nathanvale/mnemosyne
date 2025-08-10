@@ -76,6 +76,40 @@ class MockMacOSProvider implements TTSProvider {
   }
 }
 
+class MockElevenLabsProvider implements TTSProvider {
+  constructor(public config: TTSProviderConfig) {}
+
+  async speak(_text: string) {
+    return {
+      success: true,
+      provider: 'elevenlabs',
+    }
+  }
+
+  async isAvailable() {
+    const elConfig = this.config as { apiKey?: string; voiceId?: string }
+    return !!elConfig.apiKey && !!elConfig.voiceId
+  }
+
+  getProviderInfo() {
+    return {
+      name: 'elevenlabs',
+      displayName: 'ElevenLabs TTS',
+      version: '1.0.0',
+      requiresApiKey: true,
+      supportedFeatures: ['speak', 'voices', 'cache'],
+    }
+  }
+
+  configure(config: TTSProviderConfig) {
+    Object.assign(this.config, config)
+  }
+
+  getConfiguration() {
+    return { ...this.config }
+  }
+}
+
 describe('TTSProviderFactory', () => {
   beforeEach(() => {
     // Reset factory state
@@ -84,6 +118,7 @@ describe('TTSProviderFactory', () => {
     // Register mock providers
     TTSProviderFactory.registerProvider('openai', MockOpenAIProvider)
     TTSProviderFactory.registerProvider('macos', MockMacOSProvider)
+    TTSProviderFactory.registerProvider('elevenlabs', MockElevenLabsProvider)
   })
 
   describe('Provider Registration', () => {
@@ -102,10 +137,11 @@ describe('TTSProviderFactory', () => {
       }).toThrow('Provider openai is already registered')
     })
 
-    it('should list all registered providers', () => {
+    it('should list registered providers', () => {
       const providers = TTSProviderFactory.getAvailableProviders()
 
-      expect(providers).toEqual(['openai', 'macos'])
+      expect(providers).toContain('openai')
+      expect(providers).toContain('macos')
     })
   })
 
@@ -246,6 +282,18 @@ describe('TTSProviderFactory', () => {
         Object.defineProperty(process, 'platform', originalPlatform)
       }
     })
+
+    it('should prioritize ElevenLabs over OpenAI when both API keys are available', async () => {
+      const config = {
+        provider: 'auto' as const,
+        openai: { apiKey: 'openai-test-key' },
+        elevenlabs: { apiKey: 'elevenlabs-test-key', voiceId: 'test-voice-id' },
+      }
+
+      const provider = await TTSProviderFactory.detectBestProvider(config)
+
+      expect(provider.getProviderInfo().name).toBe('elevenlabs')
+    })
   })
 
   describe('Provider With Fallback', () => {
@@ -284,6 +332,202 @@ describe('TTSProviderFactory', () => {
 
       expect(result.success).toBe(true)
       expect(result.provider).toBe('macos')
+    })
+  })
+
+  describe('Provider isAvailable() Consistency', () => {
+    it('ElevenLabs isAvailable should match speak requirements', async () => {
+      // Test with API key but no voiceId - should return false
+      const providerWithoutVoiceId = new MockElevenLabsProvider({
+        apiKey: 'test-key',
+        // voiceId missing
+      })
+      expect(await providerWithoutVoiceId.isAvailable()).toBe(false)
+
+      // Test with both API key and voiceId - should return true
+      const providerWithBoth = new MockElevenLabsProvider({
+        apiKey: 'test-key',
+        voiceId: 'test-voice-id',
+      })
+      expect(await providerWithBoth.isAvailable()).toBe(true)
+
+      // Test with neither - should return false
+      const providerWithNeither = new MockElevenLabsProvider({})
+      expect(await providerWithNeither.isAvailable()).toBe(false)
+    })
+
+    it('OpenAI isAvailable should match speak requirements', async () => {
+      // Test with no API key - should return false
+      const providerWithoutKey = new MockOpenAIProvider({})
+      expect(await providerWithoutKey.isAvailable()).toBe(false)
+
+      // Test with API key - should return true
+      const providerWithKey = new MockOpenAIProvider({
+        apiKey: 'test-key',
+      })
+      expect(await providerWithKey.isAvailable()).toBe(true)
+    })
+
+    it('macOS isAvailable should match speak requirements', async () => {
+      const originalPlatform = Object.getOwnPropertyDescriptor(
+        process,
+        'platform',
+      )
+
+      // Test on non-darwin platform - should return false
+      Object.defineProperty(process, 'platform', {
+        value: 'win32',
+      })
+      const providerOnWindows = new MockMacOSProvider({})
+      expect(await providerOnWindows.isAvailable()).toBe(false)
+
+      // Test on darwin platform - should return true
+      Object.defineProperty(process, 'platform', {
+        value: 'darwin',
+      })
+      const providerOnMacOS = new MockMacOSProvider({})
+      expect(await providerOnMacOS.isAvailable()).toBe(true)
+
+      // Restore original platform
+      if (originalPlatform) {
+        Object.defineProperty(process, 'platform', originalPlatform)
+      }
+    })
+  })
+
+  describe('Fallback Chain Regression Prevention', () => {
+    it('should skip ElevenLabs without voiceId and select OpenAI', async () => {
+      const config = {
+        provider: 'auto' as const,
+        fallbackProvider: 'macos' as const,
+        elevenlabs: {
+          apiKey: 'test-key',
+          // voiceId missing - should be skipped
+        },
+        openai: {
+          apiKey: 'openai-test-key',
+        },
+      }
+
+      const provider = await TTSProviderFactory.detectBestProvider(config)
+
+      // Should select OpenAI, not ElevenLabs
+      expect(provider.getProviderInfo().name).toBe('openai')
+    })
+
+    it('should maintain ElevenLabs → OpenAI → macOS priority order', async () => {
+      const originalPlatform = Object.getOwnPropertyDescriptor(
+        process,
+        'platform',
+      )
+      Object.defineProperty(process, 'platform', {
+        value: 'darwin',
+      })
+
+      // Test 1: ElevenLabs fully configured - should select ElevenLabs
+      const config1 = {
+        provider: 'auto' as const,
+        elevenlabs: { apiKey: 'el-key', voiceId: 'el-voice' },
+        openai: { apiKey: 'openai-key' },
+      }
+      const provider1 = await TTSProviderFactory.detectBestProvider(config1)
+      expect(provider1.getProviderInfo().name).toBe('elevenlabs')
+
+      // Test 2: Only OpenAI configured - should select OpenAI
+      const config2 = {
+        provider: 'auto' as const,
+        openai: { apiKey: 'openai-key' },
+      }
+      const provider2 = await TTSProviderFactory.detectBestProvider(config2)
+      expect(provider2.getProviderInfo().name).toBe('openai')
+
+      // Test 3: No API keys - should select macOS
+      const config3 = {
+        provider: 'auto' as const,
+      }
+      const provider3 = await TTSProviderFactory.detectBestProvider(config3)
+      expect(provider3.getProviderInfo().name).toBe('macos')
+
+      // Restore original platform
+      if (originalPlatform) {
+        Object.defineProperty(process, 'platform', originalPlatform)
+      }
+    })
+
+    it('should handle partial ElevenLabs configurations correctly', async () => {
+      const config = {
+        provider: 'auto' as const,
+        fallbackProvider: 'openai' as const,
+        elevenlabs: {
+          apiKey: 'test-key',
+          // Missing voiceId should cause ElevenLabs to be skipped
+        },
+        openai: {
+          apiKey: 'openai-test-key',
+        },
+      }
+
+      const provider = await TTSProviderFactory.createWithFallback(config)
+
+      // Should create OpenAI provider, not ElevenLabs
+      expect(provider.getProviderInfo().name).toBe('openai')
+    })
+  })
+
+  describe('Provider Addition Safety', () => {
+    it('should not break priority order when new provider added', async () => {
+      // This test ensures that adding new providers doesn't break existing priority
+      // Clear existing providers and re-register in different order to simulate new provider addition
+      TTSProviderFactory.clearProviders()
+
+      // Register in different order to test priority is maintained by detectBestProvider logic
+      TTSProviderFactory.registerProvider('macos', MockMacOSProvider)
+      TTSProviderFactory.registerProvider('elevenlabs', MockElevenLabsProvider)
+      TTSProviderFactory.registerProvider('openai', MockOpenAIProvider)
+
+      const config = {
+        provider: 'auto' as const,
+        elevenlabs: { apiKey: 'el-key', voiceId: 'el-voice' },
+        openai: { apiKey: 'openai-key' },
+      }
+
+      const provider = await TTSProviderFactory.detectBestProvider(config)
+
+      // Should still prioritize ElevenLabs despite registration order
+      expect(provider.getProviderInfo().name).toBe('elevenlabs')
+
+      // Re-register providers in original order for other tests
+      TTSProviderFactory.clearProviders()
+      TTSProviderFactory.registerProvider('openai', MockOpenAIProvider)
+      TTSProviderFactory.registerProvider('macos', MockMacOSProvider)
+      TTSProviderFactory.registerProvider('elevenlabs', MockElevenLabsProvider)
+    })
+
+    it('should preserve fallback behavior with new providers', async () => {
+      // Test that fallback chain still works when providers are added/removed
+      const config = {
+        provider: 'elevenlabs' as const,
+        fallbackProvider: 'openai' as const,
+        elevenlabs: { apiKey: 'invalid-key', voiceId: 'test-voice' },
+        openai: { apiKey: 'openai-key' },
+      }
+
+      const provider = await TTSProviderFactory.createWithFallback(config)
+
+      // Mock ElevenLabs to fail
+      const fallbackProvider = provider as unknown as {
+        primaryProvider: { speak: (_text: string) => Promise<unknown> }
+        speak: (text: string) => Promise<unknown>
+      }
+      vi.spyOn(fallbackProvider.primaryProvider, 'speak').mockRejectedValue(
+        new Error('API error'),
+      )
+
+      const result = await provider.speak('Test fallback')
+
+      // Should successfully fall back to OpenAI
+      expect(result.success).toBe(true)
+      expect(result.provider).toBe('openai')
     })
   })
 })

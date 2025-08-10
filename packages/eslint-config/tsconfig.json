@@ -1,0 +1,10 @@
+{
+  "extends": "../typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowJs": true
+  },
+  "include": [],
+  "files": []
+}

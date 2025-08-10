@@ -18,6 +18,10 @@ vi.mock('../../audio/platform.js', () => ({
 }))
 vi.mock('../../speech/providers/provider-factory.js', () => ({
   TTSProviderFactory: {
+    registerProvider: vi.fn(),
+    clearProviders: vi.fn(),
+    getAvailableProviders: vi.fn().mockReturnValue(['mock']),
+    create: vi.fn(),
     createWithFallback: vi.fn().mockResolvedValue({
       speak: vi.fn().mockResolvedValue(undefined),
       getProviderInfo: vi
@@ -25,6 +29,7 @@ vi.mock('../../speech/providers/provider-factory.js', () => ({
         .mockReturnValue({ displayName: 'Mock Provider' }),
       isAvailable: vi.fn().mockResolvedValue(true),
     }),
+    detectBestProvider: vi.fn(),
   },
 }))
 
@@ -90,18 +95,24 @@ describe('StopHook', () => {
     it('should play success sound on successful completion', async () => {
       const { AudioPlayer } = await import('../../audio/audio-player.js')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
-      vi.mocked(AudioPlayer).mockImplementation(() => ({
-        playSound: mockPlaySound,
-        getSystemSounds: vi.fn().mockReturnValue({
-          success: '/System/Library/Sounds/Glass.aiff',
-          error: '/System/Library/Sounds/Sosumi.aiff',
-          notification: '/System/Library/Sounds/Ping.aiff',
-        }),
-      }))
+      vi.mocked(AudioPlayer).mockImplementation(
+        () =>
+          ({
+            playSound: mockPlaySound,
+            getSystemSounds: vi.fn().mockReturnValue({
+              success: '/System/Library/Sounds/Glass.aiff',
+              error: '/System/Library/Sounds/Sosumi.aiff',
+              notification: '/System/Library/Sounds/Ping.aiff',
+            }),
+            playMacOS: vi.fn(),
+            playWindows: vi.fn(),
+            playLinux: vi.fn(),
+            checkCommand: vi.fn(),
+          }) as any,
+      )
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: {
           duration: 1234,
           task: 'Test task',
@@ -134,18 +145,24 @@ describe('StopHook', () => {
     it('should play error sound on failed completion', async () => {
       const { AudioPlayer } = await import('../../audio/audio-player.js')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
-      vi.mocked(AudioPlayer).mockImplementation(() => ({
-        playSound: mockPlaySound,
-        getSystemSounds: vi.fn().mockReturnValue({
-          success: '/System/Library/Sounds/Glass.aiff',
-          error: '/System/Library/Sounds/Sosumi.aiff',
-          notification: '/System/Library/Sounds/Ping.aiff',
-        }),
-      }))
+      vi.mocked(AudioPlayer).mockImplementation(
+        () =>
+          ({
+            playSound: mockPlaySound,
+            getSystemSounds: vi.fn().mockReturnValue({
+              success: '/System/Library/Sounds/Glass.aiff',
+              error: '/System/Library/Sounds/Sosumi.aiff',
+              notification: '/System/Library/Sounds/Ping.aiff',
+            }),
+            playMacOS: vi.fn(),
+            playWindows: vi.fn(),
+            playLinux: vi.fn(),
+            checkCommand: vi.fn(),
+          }) as any,
+      )
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: {
           duration: 5678,
           task: 'Failed task',
@@ -178,7 +195,6 @@ describe('StopHook', () => {
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         transcript_path: '/tmp/test-transcript.txt',
         data: {
           duration: 1234,
@@ -206,7 +222,6 @@ describe('StopHook', () => {
     it('should handle missing transcript path gracefully', async () => {
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: {
           success: true,
         },
@@ -237,7 +252,6 @@ describe('StopHook', () => {
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         transcript_path: '/tmp/nonexistent.txt',
         data: {
           success: true,
@@ -268,7 +282,6 @@ describe('StopHook', () => {
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         transcript_path: '/tmp/empty.txt',
         data: {
           success: true,
@@ -297,7 +310,6 @@ describe('StopHook', () => {
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: {
           duration: 5000,
           success: true,
@@ -333,14 +345,21 @@ describe('StopHook', () => {
 
       const { AudioPlayer } = await import('../../audio/audio-player.js')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
-      vi.mocked(AudioPlayer).mockImplementation(() => ({
-        playSound: mockPlaySound,
-        getSystemSounds: vi.fn().mockReturnValue({
-          success: 'C:\\Windows\\Media\\chimes.wav',
-          error: 'C:\\Windows\\Media\\chord.wav',
-          notification: 'C:\\Windows\\Media\\notify.wav',
-        }),
-      }))
+      vi.mocked(AudioPlayer).mockImplementation(
+        () =>
+          ({
+            playSound: mockPlaySound,
+            getSystemSounds: vi.fn().mockReturnValue({
+              success: 'C:\\Windows\\Media\\chimes.wav',
+              error: 'C:\\Windows\\Media\\chord.wav',
+              notification: 'C:\\Windows\\Media\\notify.wav',
+            }),
+            playMacOS: vi.fn(),
+            playWindows: vi.fn(),
+            playLinux: vi.fn(),
+            checkCommand: vi.fn(),
+          }) as any,
+      )
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
@@ -373,7 +392,6 @@ describe('StopHook', () => {
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: { success: true },
       }
 
@@ -399,16 +417,22 @@ describe('StopHook', () => {
     it('should handle audio playback failures', async () => {
       const { AudioPlayer } = await import('../../audio/audio-player.js')
       const mockPlaySound = vi.fn().mockResolvedValue(false)
-      vi.mocked(AudioPlayer).mockImplementation(() => ({
-        playSound: mockPlaySound,
-        getSystemSounds: vi.fn().mockReturnValue({
-          success: '/System/Library/Sounds/Glass.aiff',
-        }),
-      }))
+      vi.mocked(AudioPlayer).mockImplementation(
+        () =>
+          ({
+            playSound: mockPlaySound,
+            getSystemSounds: vi.fn().mockReturnValue({
+              success: '/System/Library/Sounds/Glass.aiff',
+            }),
+            playMacOS: vi.fn(),
+            playWindows: vi.fn(),
+            playLinux: vi.fn(),
+            checkCommand: vi.fn(),
+          }) as any,
+      )
 
       const event: ClaudeStopEvent = {
         type: 'Stop',
-        timestamp: new Date().toISOString(),
         data: { success: true },
       }
 

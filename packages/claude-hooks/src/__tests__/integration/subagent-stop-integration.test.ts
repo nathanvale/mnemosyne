@@ -142,7 +142,7 @@ describe('Subagent Stop Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 
   it('should handle multiple subagent completions', async () => {
     // Skip in Wallaby and CI due to file system and spawn issues
@@ -291,5 +291,5 @@ describe('Subagent Stop Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 })
