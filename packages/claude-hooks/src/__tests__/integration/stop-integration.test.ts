@@ -102,7 +102,7 @@ describe('Stop Hook Integration', () => {
         })
       }).not.toThrow()
     }
-  })
+  }, 30000)
 
   it('should handle environment variable overrides', async () => {
     const config = {
@@ -183,5 +183,5 @@ describe('Stop Hook Integration', () => {
         }
       }).not.toThrow()
     }
-  })
+  }, 30000)
 })

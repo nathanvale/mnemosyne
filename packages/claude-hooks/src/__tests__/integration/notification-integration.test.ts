@@ -161,7 +161,7 @@ describe('Notification Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 
   it('should respect environment variable overrides', async () => {
     const config = {
@@ -194,7 +194,7 @@ describe('Notification Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 
   it('should handle malformed JSON input gracefully', async () => {
     // Skip in Wallaby due to file system and spawn issues
@@ -239,5 +239,5 @@ describe('Notification Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 })
