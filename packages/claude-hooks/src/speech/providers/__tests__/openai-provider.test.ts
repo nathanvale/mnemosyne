@@ -7,10 +7,11 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { OpenAIConfig } from '../openai-provider.js'
 
 // Use vi.hoisted to ensure mocks are available when modules are imported
-const { mockCreate, mockExec } = vi.hoisted(() => {
+const { mockCreate, mockExec, mockExecFile } = vi.hoisted(() => {
   return {
     mockCreate: vi.fn(),
     mockExec: vi.fn(),
+    mockExecFile: vi.fn(),
   }
 })
 
@@ -43,9 +44,9 @@ vi.mock('node:fs/promises', () => ({
 
 // Mock child_process for audio playback
 vi.mock('node:child_process', () => ({
-  default: { exec: mockExec, execFile: vi.fn(), spawn: vi.fn() },
+  default: { exec: mockExec, execFile: mockExecFile, spawn: vi.fn() },
   exec: mockExec,
-  execFile: vi.fn(),
+  execFile: mockExecFile,
   spawn: vi.fn(() => ({ unref: vi.fn() })),
 }))
 
@@ -70,6 +71,18 @@ describe('OpenAIProvider', () => {
         callback(null, '', '')
       }
       return {} as ReturnType<typeof import('node:child_process').exec>
+    })
+
+    // Default mock for execFile (successful playback)
+    mockExecFile.mockImplementation((_cmd, _args, callback) => {
+      // Handle both callback and promisified versions
+      if (typeof callback === 'function') {
+        callback(null, '', '')
+      } else if (typeof _args === 'function') {
+        // If args is actually the callback (2-arg version)
+        _args(null, '', '')
+      }
+      return {} as ReturnType<typeof import('node:child_process').execFile>
     })
   })
 
@@ -454,15 +467,18 @@ describe('OpenAIProvider', () => {
       const result = await provider.speak('Test')
 
       expect(result.success).toBe(true)
-      expect(mockExec).toHaveBeenCalled()
+      // Should use execFile instead of exec for security
+      expect(mockExecFile).toHaveBeenCalled()
     })
 
     it('should handle playback failure gracefully', async () => {
-      mockExec.mockImplementation((_cmd, callback) => {
+      mockExecFile.mockImplementation((_cmd, _args, callback) => {
         if (typeof callback === 'function') {
           callback(new Error('Playback failed'), '', '')
+        } else if (typeof _args === 'function') {
+          _args(new Error('Playback failed'), '', '')
         }
-        return {} as ReturnType<typeof import('node:child_process').exec>
+        return {} as ReturnType<typeof import('node:child_process').execFile>
       })
 
       const config: OpenAIConfig = {
