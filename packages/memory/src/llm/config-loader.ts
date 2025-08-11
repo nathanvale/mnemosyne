@@ -143,7 +143,8 @@ export class LLMConfigLoader {
     config: LLMProviderConfig,
     providerName: string,
   ): IndividualProviderConfig | undefined {
-    return config.providers[providerName]
+    const normalizedName = this.normalizeProviderName(providerName)
+    return config.providers[normalizedName]
   }
 
   /**
@@ -198,7 +199,7 @@ export class LLMConfigLoader {
    * Normalize provider name to lowercase
    */
   private static normalizeProviderName(name: string): string {
-    return name.toLowerCase()
+    return name.trim().toLowerCase()
   }
 
   /**
@@ -207,10 +208,14 @@ export class LLMConfigLoader {
   private static normalizeFallbackProvider(
     value: string | undefined,
   ): string | undefined {
-    if (!value || value.toLowerCase() === 'none') {
+    if (!value) {
       return undefined
     }
-    return value.toLowerCase()
+    const normalized = value.trim().toLowerCase()
+    if (!normalized || normalized === 'none') {
+      return undefined
+    }
+    return normalized
   }
 
   /**
