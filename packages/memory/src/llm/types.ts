@@ -121,3 +121,27 @@ export interface StreamEvent {
   error?: string
   metadata?: Record<string, unknown>
 }
+
+/**
+ * Individual provider configuration
+ */
+export interface IndividualProviderConfig {
+  name: string
+  apiKey: string
+  model?: string
+  baseURL?: string
+  organizationId?: string
+}
+
+/**
+ * Complete LLM provider configuration
+ */
+export interface LLMProviderConfig {
+  primaryProvider: string
+  fallbackProvider?: string
+  dailyBudgetUSD: number
+  maxRetries: number
+  circuitBreakerThreshold: number
+  circuitBreakerProbes: number
+  providers: Record<string, IndividualProviderConfig>
+}
