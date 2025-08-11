@@ -6,7 +6,7 @@ Claude Hooks supports three TTS providers, each with different strengths and use
 
 ## Provider Comparison Matrix
 
-| Feature               | macOS System           | OpenAI TTS       | ElevenLabs             |
+| Feature               | macOS TTS              | OpenAI TTS       | ElevenLabs             |
 | --------------------- | ---------------------- | ---------------- | ---------------------- |
 | **Cost**              | Free                   | $15/1M chars     | $5-$330/month          |
 | **Latency**           | ~50ms                  | ~800ms           | ~1200ms                |
@@ -22,7 +22,7 @@ Claude Hooks supports three TTS providers, each with different strengths and use
 
 ## When to Choose Each Provider
 
-### 🍎 macOS System TTS
+### 🍎 macOS TTS
 
 **Best for:**
 
@@ -95,7 +95,7 @@ For an application generating **100,000 characters per month**:
 ### Latency Comparison
 
 ```
-macOS System: Text → Audio → Playback
+macOS TTS: Text → Audio → Playback
               [~20ms] [~30ms]
 
 OpenAI TTS:   Text → API → Download → Playback
