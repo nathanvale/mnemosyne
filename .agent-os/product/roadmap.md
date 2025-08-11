@@ -6,41 +6,41 @@ The following features have been implemented and shipped:
 
 ### Foundation & Infrastructure
 
-- [x] **Turborepo Monorepo Setup** - High-performance build system with intelligent caching ([spec](@.agent-os/specs/2025-08-08-turborepo-monorepo-setup/spec.md))
-- [x] **Next.js 15 Application** - Modern React framework with App Router ([spec](@.agent-os/specs/2025-08-08-nextjs-15-application/spec.md))
-- [x] **Prisma Database Schema** - SQLite with Messages, Links, Assets tables ([spec](@.agent-os/specs/2025-08-08-prisma-database-schema/spec.md))
-- [x] **Package Architecture** - 15+ specialized @studio/\* packages ([spec](@.agent-os/specs/2025-08-08-package-architecture/spec.md))
-- [x] **Automatic Environment Loading** - Zero-config .env loading for all Node/tsx scripts ([spec](@.agent-os/specs/2025-01-09-automatic-env-loading/spec.md))
+- [x] **Turborepo Monorepo Setup** - High-performance build system with intelligent caching ([spec](../specs/2025-08-08-turborepo-monorepo-setup/spec.md))
+- [x] **Next.js 15 Application** - Modern React framework with App Router ([spec](../specs/2025-08-08-nextjs-15-application/spec.md))
+- [x] **Prisma Database Schema** - SQLite with Messages, Links, Assets tables ([spec](../specs/2025-08-08-prisma-database-schema/spec.md))
+- [x] **Package Architecture** - 15+ specialized @studio/\* packages ([spec](../specs/2025-08-08-package-architecture/spec.md))
+- [x] **Automatic Environment Loading** - Zero-config .env loading for all Node/tsx scripts ([spec](../specs/2025-01-09-automatic-env-loading/spec.md))
 
 ### Data Processing
 
-- [x] **CSV Message Import** - Robust import with error handling and progress tracking ([spec](@.agent-os/specs/2025-08-08-csv-message-import-system/spec.md))
-- [x] **Content Deduplication** - SHA-256 hashing eliminates ~40% duplicates ([spec](@.agent-os/specs/2025-08-08-content-deduplication-engine/spec.md))
-- [x] **URL Extraction** - Automatic link parsing from message content ([spec](@.agent-os/specs/2025-08-08-url-extraction-parser/spec.md))
-- [x] **Batch Processing** - Efficient handling of large message datasets ([spec](@.agent-os/specs/2025-08-08-batch-processing-framework/spec.md))
+- [x] **CSV Message Import** - Robust import with error handling and progress tracking ([spec](../specs/2025-08-08-csv-message-import-system/spec.md))
+- [x] **Content Deduplication** - SHA-256 hashing eliminates ~40% duplicates ([spec](../specs/2025-08-08-content-deduplication-engine/spec.md))
+- [x] **URL Extraction** - Automatic link parsing from message content ([spec](../specs/2025-08-08-url-extraction-parser/spec.md))
+- [x] **Batch Processing** - Efficient handling of large message datasets ([spec](../specs/2025-08-08-batch-processing-framework/spec.md))
 
 ### Developer Experience
 
-- [x] **Dual Logging System** - Unified API for Node.js (Pino) and browser environments ([spec](@.agent-os/specs/2025-08-08-dual-logging-system/spec.md))
-- [x] **Component Library** - @studio/ui with Storybook integration ([spec](@.agent-os/specs/2025-08-08-component-library-storybook/spec.md))
-- [x] **Testing Infrastructure** - Vitest, React Testing Library, MSW, Wallaby.js ([test fixes spec](@.agent-os/specs/2025-08-02-test-suite-fixes/spec.md), [isolation spec](@.agent-os/specs/2025-08-03-test-suite-transaction-isolation/spec.md))
+- [x] **Dual Logging System** - Unified API for Node.js (Pino) and browser environments ([spec](../specs/2025-08-08-dual-logging-system/spec.md))
+- [x] **Component Library** - @studio/ui with Storybook integration ([spec](../specs/2025-08-08-component-library-storybook/spec.md))
+- [x] **Testing Infrastructure** - Vitest, React Testing Library, MSW, Wallaby.js ([test fixes spec](../specs/2025-08-02-test-suite-fixes/spec.md), [isolation spec](../specs/2025-08-03-test-suite-transaction-isolation/spec.md))
 - [x] **Documentation Site** - Docusaurus with comprehensive guides
 
 ### Infrastructure & Tooling Enhancements
 
-- [x] **Claude Hooks Enhancement** - Cross-platform audio and event logging ([spec](@.agent-os/specs/2025-08-05-claude-hooks-enhancement/spec.md))
-- [x] **TypeScript Configuration Improvements** - Centralized config packages and build optimization ([spec](@.agent-os/specs/2025-08-05-quality-check-typescript-config/spec.md))
-- [x] **OpenAI TTS Integration** - Text-to-speech capabilities with environment variable support ([spec](@.agent-os/specs/2025-08-06-openai-tts-integration/spec.md))
-- [x] **Turborepo Build Optimization** - Enhanced caching and test performance ([spec](@.agent-os/specs/2025-08-07-turborepo-build-test-optimization/spec.md))
-- [x] **NPM Package Distribution** - Package publishing and distribution workflow ([spec](@.agent-os/specs/2025-08-07-npm-package-distribution/spec.md))
-- [ ] **ElevenLabs TTS Integration** - High-quality text-to-speech with multiple voices and streaming support ([spec](@.agent-os/specs/2025-08-08-elevenlabs-tts-integration/spec.md))
+- [x] **Claude Hooks Enhancement** - Cross-platform audio and event logging ([spec](../specs/2025-08-05-claude-hooks-enhancement/spec.md))
+- [x] **TypeScript Configuration Improvements** - Centralized config packages and build optimization ([spec](../specs/2025-08-05-quality-check-typescript-config/spec.md))
+- [x] **OpenAI TTS Integration** - Text-to-speech capabilities with environment variable support ([spec](../specs/2025-08-06-openai-tts-integration/spec.md))
+- [x] **Turborepo Build Optimization** - Enhanced caching and test performance ([spec](../specs/2025-08-07-turborepo-build-test-optimization/spec.md))
+- [x] **NPM Package Distribution** - Package publishing and distribution workflow ([spec](../specs/2025-08-07-npm-package-distribution/spec.md))
+- [ ] **ElevenLabs TTS Integration** - High-quality text-to-speech with multiple voices and streaming support ([spec](../specs/2025-08-08-elevenlabs-tts-integration/spec.md))
 
 ### Phase 2 Foundation
 
-- [x] **Core Schema Package** - TypeScript definitions for emotional intelligence ([spec](@.agent-os/specs/2025-08-08-memory-schema-definition/spec.md))
-- [x] **Memory Processing Core** - Enhanced Claude processing with mood scoring ([spec](@.agent-os/specs/2025-08-08-memory-processing-engine/spec.md))
-- [x] **Smart Validation System** - Auto-confirmation with confidence thresholds ([spec](@.agent-os/specs/2025-08-08-smart-validation-system/spec.md))
-- [x] **MCP Foundation Layer** - Agent integration preparation ([spec](@.agent-os/specs/2025-08-08-mcp-foundation-layer/spec.md))
+- [x] **Core Schema Package** - TypeScript definitions for emotional intelligence ([spec](../specs/2025-08-08-memory-schema-definition/spec.md))
+- [x] **Memory Processing Core** - Enhanced Claude processing with mood scoring ([spec](../specs/2025-08-08-memory-processing-engine/spec.md))
+- [x] **Smart Validation System** - Auto-confirmation with confidence thresholds ([spec](../specs/2025-08-08-smart-validation-system/spec.md))
+- [x] **MCP Foundation Layer** - Agent integration preparation ([spec](../specs/2025-08-08-mcp-foundation-layer/spec.md))
 - [x] **Emotional Processing Engine** - Delta-triggered extraction (Issue #84)
 
 ## Phase 1: Current Development 🔄
@@ -50,21 +50,100 @@ The following features have been implemented and shipped:
 
 ### Recently Completed ✅
 
-- [x] **Mood Scoring Algorithm** - Sophisticated 5-dimensional analysis with delta detection ([spec](@.agent-os/specs/2025-01-22-mood-scoring-algorithm/spec.md), [enhanced spec](@.agent-os/specs/2025-08-08-enhanced-mood-scoring-algorithm/spec.md))
-- [x] **Tone-Tagged Clustering** - Psychological feature extraction across emotional dimensions ([spec](@.agent-os/specs/2025-08-04-tone-memory-clustering/spec.md))
-- [x] **Auto-Confirmation Logic** - >0.75 auto-approve, 0.50-0.75 review with confidence thresholds ([spec](@.agent-os/specs/2025-08-08-auto-confirmation-thresholds/spec.md))
+- [x] **Mood Scoring Algorithm** - Sophisticated 5-dimensional analysis with delta detection ([spec](../specs/2025-01-22-mood-scoring-algorithm/spec.md), [enhanced spec](../specs/2025-08-08-enhanced-mood-scoring-algorithm/spec.md))
+- [x] **Tone-Tagged Clustering** - Psychological feature extraction across emotional dimensions ([spec](../specs/2025-08-04-tone-memory-clustering/spec.md))
+- [x] **Auto-Confirmation Logic** - >0.75 auto-approve, 0.50-0.75 review with confidence thresholds ([spec](../specs/2025-08-08-auto-confirmation-thresholds/spec.md))
 - [x] **Emotional Significance Weighting** - Priority manager with salience-based validation
 
 ### Active Development
 
 - [ ] **Claude Pro Integration** - Emotionally weighted prompts with mood context
 
+### Phase 1 Critical Hardening (Claude Pro Spec Caveats) 🚨
+
+These items were identified as CRITICAL caveats in the Claude Pro integration spec readiness review. They MUST be tracked explicitly before declaring production readiness for memory extraction via Claude.
+
+#### Budget & Cost Controls
+
+- [ ] Multi-process/shared-state budget tracking (Redis or durable store) replacing in-process counters (atomic INCR & Lua guard for (spent + est) > budget)
+- [ ] Budget enforcement feature flag for staged rollout (shadow mode → enforce mode)
+- [ ] Cost anomaly detection (daily spend deviation > 2σ emits alert + log with context)
+- [ ] Metric: memory_llm_budget_atomic_failures_total (detect race/write contention)
+
+#### Provider Reliability & Health
+
+- [ ] Background provider health monitor (interval probes → cached health status)
+- [ ] Health-based routing: skip providers marked unhealthy for 2 consecutive probe windows
+- [ ] Warm-up / preflight capability negotiation at process start (logs capability matrix)
+- [ ] Circuit breaker tuning playbook (document thresholds & re-evaluation cadence)
+
+#### Request Prioritization & Rate Management
+
+- [ ] Priority queue: tiers (critical > user > batch) with starvation prevention
+- [ ] Predictive rate limit projection integrated with queue admission (reject/park when >90% projected)
+- [ ] Metric: memory_llm_queue_wait_ms_summary (by priority)
+- [ ] Backpressure signal export (process event + log + metric)
+
+#### Schema & Evolution Strategy
+
+- [ ] Versioned memory extraction schema negotiation (client advertises supported versions)
+- [ ] Migration runbook (preflight validation, dry-run hash diff, rollback steps)
+- [ ] Contract tests locking canonical confidence merge & hash normalization behaviors
+
+#### Token & Context Optimization
+
+- [ ] Salience pruning stage 2: aggressive low-signal collapse (measured token delta)
+- [ ] Semantic compression (optional summarization pass with quality score gate)
+- [ ] Context reuse cache (hash → previously generated mood context block)
+- [ ] Token budget attribution metric: memory_llm_context_component_tokens (labels: salience|mood|system|prompt)
+
+#### Streaming & JSON Robustness
+
+- [ ] Streaming assembly fuzz tests (random chunk splits, injected corruption events)
+- [ ] JSON repair corpus coverage ≥95% (add failure distribution report)
+- [ ] Metric: memory_llm_stream_repair_attempts_total & \_failures_total
+
+#### Confidence & Dedup Invariants
+
+- [ ] Invariant test: mergeConfidence monotonic lower-bound (result ≥ min(x,y))
+- [ ] Rounding determinism test suite (fixtures across boundary cases)
+- [ ] Hash normalization regression snapshot (fixtures of tricky unicode / punctuation cases)
+
+#### Logging & Observability Enforcement
+
+- [ ] Lint/test guard rejecting deprecated log fields (ts, budgetUtilizationPct, additional)
+- [ ] Log schema contract test (golden sample structured log JSON)
+- [ ] Metric consistency audit (every emitted metric present in manifest & spec)
+
+#### Security & Privacy
+
+- [ ] PII redaction verification tests (inject seeded PII tokens → assert redaction)
+- [ ] Secret propagation audit (no provider keys in logs or error surfaces)
+
+#### Runbooks & Rollout
+
+- [ ] Feature flag matrix (budget_enforcement, provider_health_gate, priority_queue, token_compression)
+- [ ] Staged rollout plan (dev → canary 5% → 25% → 100% with rollback triggers)
+- [ ] On-call runbook (symptom → diagnostic steps → metrics to inspect → mitigations)
+
+#### Performance & SLO Validation
+
+- [ ] Latency segmentation: provider_call, parsing, total (operation=total authoritative)
+- [ ] p95 latency guard test (fails CI if > configured threshold in controlled harness)
+- [ ] Budget path hot benchmarks (target <2% total latency overhead)
+
+#### Documentation
+
+- [ ] Architecture decision record: pairwise confidence merge canonicalization
+- [ ] Hash algorithm ADR (no fuzzy match V1 scope, future extension points)
+- [ ] Health monitoring & routing ADR
+
 ### Deliverables
 
-- [x] **Sophisticated Database Schema** - 54 tables with complex emotional relationships ([spec](@.agent-os/specs/2025-08-08-sophisticated-database-schema/spec.md))
-- [x] **Advanced TypeScript Types** - 1,184 lines of emotional intelligence interfaces ([spec](@.agent-os/specs/2025-08-08-advanced-typescript-interfaces/spec.md))
-- [x] **Mood Context Token Generation** - Comprehensive MCP endpoints implemented ([spec](@.agent-os/specs/2025-08-08-mood-context-token-generation/spec.md))
-- [x] **Relational Timeline Construction** - Emotional event tracking with delta patterns ([spec](@.agent-os/specs/2025-08-08-relational-timeline-construction/spec.md))
+- [x] **Sophisticated Database Schema** - 54 tables with complex emotional relationships ([spec](../specs/2025-08-08-sophisticated-database-schema/spec.md))
+- [x] **Advanced TypeScript Types** - 1,184 lines of emotional intelligence interfaces ([spec](../specs/2025-08-08-advanced-typescript-interfaces/spec.md))
+- [x] **Mood Context Token Generation** - Comprehensive MCP endpoints implemented ([spec](../specs/2025-08-08-mood-context-token-generation/spec.md))
+- [x] **Relational Timeline Construction** - Emotional event tracking with delta patterns ([spec](../specs/2025-08-08-relational-timeline-construction/spec.md))
 - [ ] **Claude Pro Integration** - Final piece for memory extraction completion
 - [ ] Extract 50-100 high-quality emotional memories (depends on Claude integration)
 
@@ -80,6 +159,8 @@ The following features have been implemented and shipped:
 - [ ] **Migration Strategy Design** - Plan phased transition with zero downtime
 - [ ] **Proof of Concept** - Test critical emotional intelligence features on Convex
 - [ ] **Performance Benchmarking** - Compare SQLite vs Convex for complex queries
+- [ ] Incorporate versioned schema negotiation layer (ties into Phase 1 evolution tasks)
+- [ ] Evaluate shared budget atomicity primitives native to Convex
 
 ### Technical Deliverables
 
@@ -87,6 +168,8 @@ The following features have been implemented and shipped:
 - [ ] Migration scripts for existing memories and relationships
 - [ ] TypeScript integration with Convex's end-to-end typing
 - [ ] Clerk authentication integration strategy
+- [ ] Convex-resident budget tracker replacing Redis (if selected)
+- [ ] Cross-environment consistency tests (hash & confidence merge) running against Convex data
 
 ## Phase 3: Core Platform Migration 🚀
 
@@ -100,6 +183,8 @@ The following features have been implemented and shipped:
 - [ ] **Sophisticated Logic Migration** - Move mood scoring and clustering algorithms
 - [ ] **TypeScript Interface Preservation** - Maintain 1,184 lines of emotional context types
 - [ ] **MCP Endpoint Migration** - Transfer agent integration APIs to Convex
+- [ ] Priority queue & health monitor refactor for distributed execution
+- [ ] Token optimization layer (semantic compression & caching) enabled cluster-wide
 
 ### Quality Assurance
 
@@ -107,6 +192,8 @@ The following features have been implemented and shipped:
 - [ ] **Performance Testing** - Maintain sub-2 second query response
 - [ ] **Feature Parity Testing** - All existing functionality works on Convex
 - [ ] **User Experience Validation** - Seamless transition for existing workflows
+- [ ] Distributed budget accuracy test (no >0.5% overspend variance across nodes)
+- [ ] Streaming robustness soak (24h continuous random chunk tests, zero fatal repairs)
 
 ## Phase 4: Real-time Features 🌟
 
