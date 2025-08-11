@@ -28,7 +28,7 @@ if (result.success) {
 
 ### Provider-Specific Usage
 
-#### macOS System TTS
+#### macOS TTS
 
 ```typescript
 import { MacOSProvider } from '@studio/claude-hooks/speech'

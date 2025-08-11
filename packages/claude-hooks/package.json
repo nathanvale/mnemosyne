@@ -26,8 +26,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "bin": {
     "claude-hooks-stop": "./dist/bin/claude-hooks-stop.js",
     "claude-hooks-notification": "./dist/bin/claude-hooks-notification.js",

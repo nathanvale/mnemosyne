@@ -21,6 +21,28 @@ interface VoiceListOptions {
 
 const logger = createLogger('Voice Discovery', false)
 
+// Gender name lists for macOS voice classification (hoisted for performance)
+const MALE_VOICE_NAMES = [
+  'Alex',
+  'Daniel',
+  'Diego',
+  'Fred',
+  'Jorge',
+  'Juan',
+  'Oliver',
+  'Tom',
+]
+
+const FEMALE_VOICE_NAMES = [
+  'Allison',
+  'Ava',
+  'Kate',
+  'Samantha',
+  'Susan',
+  'Victoria',
+  'Zoe',
+]
+
 /**
  * Get voices from macOS system using `say -v ?`
  */
@@ -42,29 +64,9 @@ async function getMacOSVoices(): Promise<Voice[]> {
         const [, name, locale, description] = match
 
         // Determine gender from common voice names (heuristic)
-        const maleNames = [
-          'Alex',
-          'Daniel',
-          'Diego',
-          'Fred',
-          'Jorge',
-          'Juan',
-          'Oliver',
-          'Tom',
-        ]
-        const femaleNames = [
-          'Allison',
-          'Ava',
-          'Kate',
-          'Samantha',
-          'Susan',
-          'Victoria',
-          'Zoe',
-        ]
-
         let gender: 'male' | 'female' | 'neutral' = 'neutral'
-        if (maleNames.includes(name)) gender = 'male'
-        else if (femaleNames.includes(name)) gender = 'female'
+        if (MALE_VOICE_NAMES.includes(name)) gender = 'male'
+        else if (FEMALE_VOICE_NAMES.includes(name)) gender = 'female'
 
         voices.push({
           id: name,
@@ -87,8 +89,13 @@ async function getMacOSVoices(): Promise<Voice[]> {
  * Get voices from OpenAI (static list)
  */
 async function getOpenAIVoices(): Promise<Voice[]> {
-  const provider = new OpenAIProvider({})
-  return await provider.getVoices()
+  try {
+    const provider = new OpenAIProvider({})
+    return await provider.getVoices()
+  } catch (error) {
+    logger.warning(`Failed to get OpenAI voices: ${error}`)
+    return []
+  }
 }
 
 /**
@@ -220,7 +227,7 @@ async function previewVoice(
 /**
  * Main function to list voices
  */
-export async function main(): Promise<void> {
+export async function main(): Promise<number> {
   const args = process.argv.slice(2)
 
   const options: VoiceListOptions = {
@@ -278,17 +285,17 @@ ENVIRONMENT VARIABLES:
   OPENAI_API_KEY           OpenAI API key
   ELEVENLABS_API_KEY       ElevenLabs API key
         `)
-        process.exit(0)
+        return 0
 
       default:
         if (arg.startsWith('--preview:')) {
           const [, providerAndVoice] = arg.split(':')
           const [provider, voiceId] = providerAndVoice.split('/')
           await previewVoice(provider, voiceId, options.apiKey)
-          process.exit(0)
+          return 0
         }
         logger.error(`Unknown option: ${arg}`)
-        process.exit(1)
+        return 1
     }
   }
 
@@ -349,4 +356,6 @@ ENVIRONMENT VARIABLES:
   logger.success(
     `✅ Voice discovery complete! Found ${totalVoices} total voices.`,
   )
+
+  return 0
 }
