@@ -1,544 +1,227 @@
 # API Specification
 
+_Glossary Reference_: See [../glossary.md](../glossary.md) for canonical term definitions (providers, processor, schema, taxonomy).
+
 This is the API specification for the spec detailed in @.agent-os/specs/2025-01-08-claude-pro-integration/spec.md
 
 > Created: 2025-01-08  
-> Version: 1.0.0
+> Version: 1.2.0 (reconciled 2025-08-11) – adds Persistence Adapter API & metrics alignment
 
-## Claude Client API
+Reconciliation Alignment: Reflects canonical naming (`LLMProvider`, `LLMProviderFactory`, `ExtractionLLMProcessor`, plural `memories` schema). Deprecated Claude-specific class names retained here only for migration notes.
 
-### ClaudeClient Class
+## Provider Implementations (Illustrative APIs)
+
+### ClaudeProvider (formerly ClaudeClient)
 
 ```typescript
-/**
- * Wrapper around Anthropic SDK for Claude API access
- */
-export class ClaudeClient {
+export class ClaudeProvider implements LLMProvider {
   constructor(config: ClaudeConfig)
-
-  /**
-   * Validate API key and connection
-   */
-  async validateConnection(): Promise<boolean>
-
-  /**
-   * Send a message to Claude API
-   */
-  async sendMessage(params: MessageParams): Promise<Anthropic.Message>
-
-  /**
-   * Stream a message response from Claude
-   */
-  async streamMessage(params: MessageParams): Promise<MessageStream>
-
-  /**
-   * Get current usage statistics
-   */
-  getUsageStats(): UsageStats
-
-  /**
-   * Reset usage statistics
-   */
-  resetUsageStats(): void
+  async send(request: LLMRequest): Promise<LLMResponse>
+  async stream?(
+    request: LLMRequest,
+    handlers: StreamHandlers,
+  ): Promise<LLMResponse>
+  async countTokens(text: string): Promise<number>
+  getCapabilities(): ProviderCapabilities
+  estimateCost(usage: TokenUsage): number
+  async validateConfig(): Promise<boolean>
 }
+```
 
-interface ClaudeConfig {
-  apiKey: string
-  maxRetries?: number // Default: 3
-  timeout?: number // Default: 60000ms
-  model?: string // Default: 'claude-3-sonnet-20240229'
-  maxTokens?: number // Default: 2000
-  temperature?: number // Default: 0.7
-  logLevel?: 'debug' | 'info' | 'warn' | 'error'
-}
+### OpenAIProvider
 
-interface MessageParams {
-  messages: Array<{
-    role: 'user' | 'assistant'
-    content: string
-  }>
-  maxTokens?: number
-  temperature?: number
-  stream?: boolean
-  metadata?: Record<string, unknown>
-}
-
-interface UsageStats {
-  totalRequests: number
-  successfulRequests: number
-  failedRequests: number
-  totalInputTokens: number
-  totalOutputTokens: number
-  estimatedCost: number
-  lastRequestAt?: Date
+```typescript
+export class OpenAIProvider implements LLMProvider {
+  /* same shape as ClaudeProvider */
 }
 ```
 
 ## Prompt Builder API
 
-### EnhancedPromptBuilder Class
+### PromptBuilder (formerly EnhancedPromptBuilder)
 
 ```typescript
-/**
- * Builds mood-aware prompts for Claude API
- */
-export class EnhancedPromptBuilder {
+export class PromptBuilder {
   constructor(config?: PromptBuilderConfig)
-
-  /**
-   * Build a mood-aware prompt from conversation data
-   */
   buildMoodAwarePrompt(
     messages: ConversationMessage[],
     moodScores: MoodScore[],
     moodDeltas?: MoodDelta[],
   ): string
-
-  /**
-   * Build a system prompt with emotional context
-   */
   buildSystemPrompt(context: EmotionalContext): string
-
-  /**
-   * Build extraction instructions
-   */
-  buildExtractionInstructions(requirements: ExtractionRequirements): string
-
-  /**
-   * Optimize prompt for token usage
-   */
+  buildExtractionInstructions(req: ExtractionRequirements): string
   optimizePrompt(prompt: string, maxTokens: number): string
-
-  /**
-   * Get prompt statistics
-   */
   getPromptStats(prompt: string): PromptStats
 }
-
-interface PromptBuilderConfig {
-  templateVersion?: string
-  includeExamples?: boolean
-  compressionLevel?: 'none' | 'light' | 'aggressive'
-  customTemplates?: Map<string, string>
-}
-
-interface ExtractionRequirements {
-  outputFormat: 'json' | 'markdown' | 'structured'
-  includeConfidence: boolean
-  includeReasoning: boolean
-  focusAreas?: string[]
-  excludeAreas?: string[]
-}
-
-interface PromptStats {
-  estimatedTokens: number
-  compressionRatio: number
-  moodContextSize: number
-  messageCount: number
-  complexity: 'low' | 'medium' | 'high'
-}
 ```
+
+Interfaces unchanged except naming adjustments.
 
 ## Rate Limiter API
 
-### RateLimiter Class
+(Interface unchanged; ensure deterministic jitter injection for tests.)
+
+## Extraction Processor API
+
+### ExtractionLLMProcessor (formerly EnhancedClaudeProcessor)
 
 ```typescript
-/**
- * Manages API rate limiting and request queuing
- */
-export class RateLimiter {
-  constructor(config: RateLimitConfig)
-
-  /**
-   * Execute a request with rate limiting
-   */
-  async execute<T>(request: () => Promise<T>): Promise<T>
-
-  /**
-   * Execute with custom retry strategy
-   */
-  async executeWithRetry<T>(
-    request: () => Promise<T>,
-    retryOptions?: RetryOptions,
-  ): Promise<T>
-
-  /**
-   * Check if rate limit allows request
-   */
-  canExecute(): boolean
-
-  /**
-   * Get current rate limit status
-   */
-  getStatus(): RateLimitStatus
-
-  /**
-   * Update rate limits from response headers
-   */
-  updateFromHeaders(headers: Record<string, string>): void
-
-  /**
-   * Reset rate limiter state
-   */
-  reset(): void
-}
-
-interface RateLimitConfig {
-  maxRequestsPerMinute: number // Default: 50
-  maxTokensPerMinute: number // Default: 40000
-  maxConcurrent: number // Default: 3
-  queueTimeout?: number // Default: 30000ms
-  enableAutoThrottle?: boolean // Default: true
-}
-
-interface RetryOptions {
-  maxRetries?: number
-  initialDelayMs?: number
-  maxDelayMs?: number
-  backoffMultiplier?: number
-  retryableErrors?: string[]
-}
-
-interface RateLimitStatus {
-  requestsRemaining: number
-  tokensRemaining: number
-  resetAt: Date
-  queueLength: number
-  isThrottled: boolean
-  currentDelay: number
-}
-```
-
-## Enhanced Processor API
-
-### EnhancedClaudeProcessor Class
-
-```typescript
-/**
- * Main orchestrator for Claude-based memory extraction
- */
-export class EnhancedClaudeProcessor {
+export class ExtractionLLMProcessor {
   constructor(config: ProcessorConfig)
-
-  /**
-   * Process a batch of messages with mood scoring
-   */
-  async processMessageBatch(messages: Message[]): Promise<ExtractedMemory[]>
-
-  /**
-   * Process with custom extraction parameters
-   */
-  async processWithParams(
+  processMessageBatch(messages: Message[]): Promise<ExtractedMemory[]>
+  processWithParams(
     messages: Message[],
     params: ProcessingParams,
   ): Promise<ExtractedMemory[]>
-
-  /**
-   * Filter messages by emotional salience
-   */
   filterByEmotionalSalience(
     messages: Message[],
     deltas: MoodDelta[],
     threshold?: number,
   ): Message[]
-
-  /**
-   * Estimate processing cost
-   */
   estimateCost(messages: Message[]): CostEstimate
-
-  /**
-   * Get processing statistics
-   */
   getStats(): ProcessingStats
-}
-
-interface ProcessorConfig {
-  database: PrismaClient
-  claudeClient?: ClaudeClient
-  promptBuilder?: EnhancedPromptBuilder
-  rateLimiter?: RateLimiter
-  moodScorer?: MoodScorer
-  deltaDetector?: DeltaDetector
-  logger?: Logger
-}
-
-interface ProcessingParams {
-  mode: 'quality' | 'speed' | 'balanced'
-  significanceThreshold?: number
-  includeRawResponse?: boolean
-  mockMode?: boolean
-  customPromptTemplate?: string
-}
-
-interface CostEstimate {
-  estimatedTokens: number
-  estimatedCost: number
-  estimatedTime: number
-  confidence: number
-}
-
-interface ProcessingStats {
-  totalProcessed: number
-  successfulExtractions: number
-  failedExtractions: number
-  averageConfidence: number
-  totalCost: number
-  processingTime: number
 }
 ```
 
 ## Response Parser API
 
-### ClaudeResponseParser Class
+### MemoryLLMResponseParser (formerly ClaudeResponseParser)
+
+Plural schema support: expects `memories: MemoryItem[]`.
 
 ```typescript
-/**
- * Parses and validates Claude API responses
- */
-export class ClaudeResponseParser {
+export class MemoryLLMResponseParser {
   constructor(config?: ParserConfig)
-
-  /**
-   * Parse memory response from Claude
-   */
   parseMemoryResponse(
-    response: string | Anthropic.Message,
+    raw: string | ProviderRawResponse,
     moodScores: MoodScore[],
     moodDeltas: MoodDelta[],
   ): ExtractedMemory[]
-
-  /**
-   * Parse streaming response chunks
-   */
-  parseStreamChunk(chunk: MessageStreamEvent): Partial<ExtractedMemory>
-
-  /**
-   * Validate response against schema
-   */
-  validateResponse(response: unknown): ValidationResult<ExtractedMemory>
-
-  /**
-   * Extract confidence from response
-   */
-  extractConfidence(response: unknown): number
-
-  /**
-   * Handle parsing errors
-   */
-  handleParsingError(error: Error, response: unknown): ExtractedMemory | null
-}
-
-interface ParserConfig {
-  strictMode?: boolean
-  fallbackOnError?: boolean
-  customValidators?: Validator[]
-  schemaVersion?: string
-}
-
-interface ValidationResult<T> {
-  valid: boolean
-  data?: T
-  errors?: ValidationError[]
-  warnings?: string[]
-}
-
-interface ValidationError {
-  path: string
-  message: string
-  value?: unknown
+  parseStreamChunk(chunk: StreamChunk): Partial<StreamAssemblyState>
+  validateResponse(response: unknown): ValidationResult<ExtractedMemory[]>
+  extractConfidence(memory: unknown): number
+  handleParsingError(error: Error, response: unknown): ExtractedMemory[] | null
 }
 ```
 
 ## Error Handler API
 
-### ClaudeErrorHandler Class
+### LLMErrorHandler (formerly ClaudeErrorHandler)
+
+Updated taxonomy: `rate_limit | timeout | authentication | invalid_request | parsing | budget_exceeded | policy | transient | unknown`.
 
 ```typescript
-/**
- * Handles errors from Claude API interactions
- */
-export class ClaudeErrorHandler {
-  constructor(config?: ErrorHandlerConfig)
-
-  /**
-   * Handle processing error with recovery
-   */
-  async handleProcessingError(
-    error: Error,
-    context: ProcessingContext,
-  ): Promise<RecoveryResult>
-
-  /**
-   * Classify error type
-   */
-  classifyError(error: Error): ErrorType
-
-  /**
-   * Get recovery strategy for error
-   */
-  getRecoveryStrategy(errorType: ErrorType): RecoveryStrategy
-
-  /**
-   * Log error with context
-   */
-  logError(error: Error, context: ProcessingContext): void
-
-  /**
-   * Check if error is retryable
-   */
-  isRetryable(error: Error): boolean
-}
-
-interface ErrorHandlerConfig {
-  maxRetries?: number
-  enableFallback?: boolean
-  logLevel?: 'debug' | 'info' | 'warn' | 'error'
-  customStrategies?: Map<ErrorType, RecoveryStrategy>
-}
-
-interface ProcessingContext {
-  messages: Message[]
-  attempt: number
-  startTime: Date
-  lastError?: Error
-  metadata?: Record<string, unknown>
-}
-
-interface RecoveryResult {
-  success: boolean
-  result?: ExtractedMemory[]
-  error?: Error
-  strategy: string
-  attempts: number
-}
-
 enum ErrorType {
-  RATE_LIMIT = 'rate_limit',
-  AUTHENTICATION = 'authentication',
-  INVALID_REQUEST = 'invalid_request',
-  TIMEOUT = 'timeout',
-  PARSING = 'parsing',
-  NETWORK = 'network',
-  UNKNOWN = 'unknown',
+  /* as above */
 }
-
-type RecoveryStrategy = (
-  error: Error,
-  context: ProcessingContext,
-) => Promise<RecoveryResult>
 ```
 
-## Configuration API
+## Configuration Loader
 
-### ConfigurationManager Class
+### LLMConfigLoader (replaces ConfigurationManager)
+
+Loads unified env vars (`MEMORY_LLM_*`).
 
 ```typescript
-/**
- * Manages Claude integration configuration
- */
-export class ConfigurationManager {
-  constructor(config?: ConfigOptions)
-
-  /**
-   * Load configuration from environment
-   */
-  loadFromEnv(): ClaudeConfig
-
-  /**
-   * Validate configuration
-   */
-  validateConfig(config: ClaudeConfig): ValidationResult<ClaudeConfig>
-
-  /**
-   * Get current configuration
-   */
-  getConfig(): ClaudeConfig
-
-  /**
-   * Update configuration
-   */
-  updateConfig(updates: Partial<ClaudeConfig>): void
-
-  /**
-   * Reset to defaults
-   */
-  resetToDefaults(): void
-}
-
-interface ConfigOptions {
-  envPrefix?: string // Default: 'ANTHROPIC_'
-  configFile?: string
-  defaults?: Partial<ClaudeConfig>
+export class LLMConfigLoader {
+  load(): LLMConfig
+  validate(config: LLMConfig): ValidationResult<LLMConfig>
+  get(): LLMConfig
 }
 ```
 
 ## Cost Estimator API
 
-### CostEstimator Class
+(Interface unchanged; ensure it sources pricing exclusively from catalog file.)
+
+## Persistence Adapter API
+
+Provides transactional, idempotent batch upsert with duplicate detection and confidence harmonic mean merging.
 
 ```typescript
-/**
- * Estimates and tracks API usage costs
- */
-export class CostEstimator {
-  constructor(pricing?: PricingModel)
-
-  /**
-   * Estimate cost for messages
-   */
-  estimateMessageCost(messages: Message[], model?: string): CostBreakdown
-
-  /**
-   * Track actual usage
-   */
-  trackUsage(usage: TokenUsage): void
-
-  /**
-   * Get usage report
-   */
-  getUsageReport(period?: 'hour' | 'day' | 'week' | 'month'): UsageReport
-
-  /**
-   * Check if within budget
-   */
-  isWithinBudget(budget: number): boolean
-
-  /**
-   * Get remaining budget
-   */
-  getRemainingBudget(budget: number): number
+export interface PersistenceAdapterConfig {
+  maxBatchSize?: number // safety cap
+  enableDedup?: boolean // default true
+  dedupSimilarityThreshold?: number // 0–1 semantic similarity threshold
 }
 
-interface PricingModel {
-  inputTokenPrice: number // Per 1K tokens
-  outputTokenPrice: number // Per 1K tokens
-  model: string
+export interface PersistenceContext {
+  conversationId: string
+  runId: string
+  timestamp: string // ISO 8601
+  provider: string
 }
 
-interface CostBreakdown {
-  inputTokens: number
-  outputTokens: number
-  inputCost: number
-  outputCost: number
-  totalCost: number
+export interface PersistResultItem {
+  id: string
+  operation: 'inserted' | 'updated' | 'skipped_duplicate'
+  previousConfidence?: number
+  newConfidence?: number
+  mergedConfidence?: number
+  duplicateOf?: string
 }
 
-interface TokenUsage {
-  inputTokens: number
-  outputTokens: number
-  model: string
-  timestamp: Date
+export interface BatchPersistResult {
+  success: boolean
+  transactionId: string
+  items: PersistResultItem[]
+  rolledBack?: boolean
+  error?: Error
+  latencyMs: number
 }
 
-interface UsageReport {
-  period: string
-  totalRequests: number
-  totalInputTokens: number
-  totalOutputTokens: number
-  totalCost: number
-  averageCostPerRequest: number
-  peakUsageTime?: Date
+export interface PersistenceAdapter {
+  persistBatch(
+    memories: ExtractedMemory[],
+    context: PersistenceContext,
+  ): Promise<BatchPersistResult>
+  computeMemorySignature(memory: ExtractedMemory): string
+  findPotentialDuplicates(
+    signatures: string[],
+  ): Promise<Record<string, string | null>>
+  mergeConfidence(previous: number, incoming: number): number // harmonic mean
 }
 ```
+
+Operational Requirements:
+
+- All-or-nothing: any failure yields rollback and metrics status=rolled_back (not partial success).
+- Idempotent: identical repeat batch (same signatures) produces only skipped_duplicate operations.
+- Dedup: must not update if semantic duplicate below threshold; mark skipped_duplicate.
+- Confidence merging: harmonic mean h = 2ab/(a+b) when updating; guard divide-by-zero.
+- Must return structured result instead of throwing on business-rule conflicts.
+- Structured logging: include transactionId, counts of each operation.
+- Metrics (labels: provider where applicable):
+  - persist_batches_total (status=success|rolled_back|failed)
+  - persist_memories_total (result=inserted|updated|skipped_duplicate)
+  - dedup_candidates_total (action=merged|discarded)
+  - confidence_merges_total (path=initial|upsert)
+  - persist_latency_ms_summary (operation=persist)
+
+Failure Handling:
+
+- Transport / DB connectivity: attempt single retry if safe (no partial commit) then rollback.
+- Integrity conflict concurrent update: classify as skipped_duplicate if content unchanged, else proceed with merge.
+
+Security & PII:
+
+- Memory content already redacted upstream; adapter never reintroduces PII.
+- Signatures must exclude transient fields (timestamps) to ensure stability.
+
+## Migration Notes
+
+- Deprecated names (`ClaudeClient`, `EnhancedPromptBuilder`, `EnhancedClaudeProcessor`, `ClaudeResponseParser`, `ClaudeErrorHandler`, `ConfigurationManager`) must not appear in new code.
+- Adapters provide backward compatibility for singular `memory` schema responses.
+
+## Non-Goals Clarification
+
+- No function calling / tool invocation layer in this phase.
+- No UI streaming; streaming exists solely for internal latency reduction & progressive assembly.
+
+## Testing Focus
+
+- Parser pluralization acceptance
+- Error taxonomy classification mapping
+- Deterministic retry backoff (injected jitter)
+- Fallback decision tree (primary failure eligible errors only)
+- Persistence transactional behavior & idempotent repeat

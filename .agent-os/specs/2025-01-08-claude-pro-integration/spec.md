@@ -1,12 +1,15 @@
 # Spec Requirements Document
 
-> Spec: Claude Pro Integration - Emotionally Weighted Prompts
+> Spec: LLM Integration with Provider Abstraction - Emotionally Weighted Memory Extraction
 > Created: 2025-01-08
+> Updated: 2025-08-11
 > Status: Planning
 
 ## Overview
 
-Implement a comprehensive Claude API integration for the @studio/memory package that leverages existing mood scoring and delta detection capabilities to create emotionally intelligent memory extraction. This integration will use the Anthropic TypeScript SDK to send mood-aware prompts to Claude, enabling sophisticated analysis of emotional context and relationship dynamics in conversations.
+Implement a provider-agnostic LLM integration for the @studio/memory package that leverages existing mood scoring and delta detection capabilities to create emotionally intelligent memory extraction. This integration uses a flexible provider abstraction layer allowing selection between different LLM providers (Claude or OpenAI), with comprehensive cost management, rate limiting, and robust response parsing to ensure reliable memory extraction with high emotional fidelity.
+
+Reconciliation Note (2025-08-11): Canonical naming, metrics/SLO targets, schema plurality (memories[]), pricing source-of-truth, error taxonomy, and budget semantics are unified here. Sub-specs must align; divergent terms are deprecated.
 
 ## User Stories
 
@@ -24,8 +27,6 @@ As a developer, I want to configure Claude API integration with my existing mood
 6. System generates mood-aware prompts with emotional context
 7. Claude processes prompts and returns structured memory data
 8. System parses responses into ExtractedMemory format with confidence scores
-
-### Story 2: System Administrator Monitors API Usage
 
 As a system administrator, I want to monitor Claude API usage and costs, so that I can stay within budget and optimize processing efficiency.
 
@@ -53,37 +54,59 @@ As a QA engineer, I want to test the Claude integration with various emotional s
 
 ## Spec Scope
 
-1. **Claude Client Module** - Anthropic SDK initialization, authentication, and configuration
-2. **Enhanced Prompt Builder** - Mood-aware prompt generation with emotional context integration
-3. **Rate Limiter** - API usage management with exponential backoff and queue management
-4. **Enhanced Claude Processor** - Integration layer connecting mood scoring to Claude API
-5. **Response Parser** - Claude response parsing and validation against memory schema
-6. **Error Handler** - Comprehensive error handling with retry logic and graceful degradation
-7. **Configuration Manager** - Environment variables and runtime configuration
-8. **Cost Estimator** - API usage cost calculation and budget tracking
+1. **Provider Abstraction Layer** - LLMProvider interface for provider-agnostic operations
+2. **Claude Provider** - Anthropic SDK implementation with streaming support
+3. **OpenAI Provider** - Alternative provider implementation for flexibility
+4. **Provider Factory** - Runtime provider selection based on configuration
+5. **Enhanced Prompt Builder** - Provider-neutral mood-aware prompt generation
+6. **Rate Limiter** - Token bucket with sliding window for selected provider
+7. **Response Parser** - Multi-pass JSON repair pipeline with Zod validation
+8. **Cost & Budget Manager** - Pricing catalog, usage tracking, budget enforcement
+9. **Error Handler** - Provider-specific error handling with retry strategies
+10. **Enhanced LLM Processor** - Orchestrator integrating emotional analysis with LLM extraction
+11. **Observability Module** - Comprehensive metrics and structured logging
+12. **Persistence Integration** (Reconciled 2025-08-11) – Transactional write / upsert of extracted memories via existing @studio/db layer, including:
+
+- Deduplication & id generation alignment with existing hashing/content rules
+- Plural `memories[]` schema adaptation to DB records (batch transactional integrity)
+- Confidence harmonic merge & cluster participation counter initialization
+- Budget / cost attribution fields (optional future extension)
+- Clear abstraction boundary: Extraction layer produces `ExtractedMemory[]`; Persistence adapter handles storage & returns persisted identifiers
 
 ## Out of Scope
 
 - UI components for memory review (handled by @studio/validation)
-- Database persistence layer (handled by @studio/db)
 - User authentication and authorization
 - Real-time streaming UI updates
 - Custom Claude model fine-tuning
 - Multi-language support (English only for MVP)
 
-## Expected Deliverable
-
-1. **Functional Claude Integration** - Working API connection with authentication
-2. **Mood-Aware Processing** - Prompts enriched with emotional context and mood scores
-3. **Rate Limit Management** - Robust handling of API limits with automatic retry
-4. **High-Quality Memory Extraction** - >70% confidence in extracted memories
-5. **Comprehensive Test Suite** - >80% code coverage with unit and integration tests
-6. **Documentation** - API usage guide, configuration reference, and prompt engineering best practices
-7. **Cost Optimization** - Efficient token usage with batch processing and caching
-
 ## Spec Documentation
 
 - Tasks: @.agent-os/specs/2025-01-08-claude-pro-integration/tasks.md
 - Technical Specification: @.agent-os/specs/2025-01-08-claude-pro-integration/sub-specs/technical-spec.md
+- Provider Abstraction: @.agent-os/specs/2025-01-08-claude-pro-integration/sub-specs/provider-abstraction.md
 - API Specification: @.agent-os/specs/2025-01-08-claude-pro-integration/sub-specs/api-spec.md
 - Tests Specification: @.agent-os/specs/2025-01-08-claude-pro-integration/sub-specs/tests.md
+
+---
+
+## Spec Reconciliation Addendum (2025-08-11)
+
+1. Canonical Naming: `LLMProvider`, `LLMProviderFactory`, `ExtractionLLMProcessor`, `MemoryLLMResponseSchema`.
+2. Response Schema: `memories: MemoryItem[]` plural; legacy singular requires adapter.
+3. Metrics Prefix `memory_llm_`: `requests_total`, `tokens_total{type=input|output}`, `cost_usd_total`, `latency_ms_summary`, `retries_total`, `circuit_state`, `budget_utilization_percent`.
+4. Budget Reset: UTC midnight fixed window; atomic aggregation; no sliding window.
+5. Error Taxonomy: `rate_limit | timeout | authentication | invalid_request | parsing | budget_exceeded | policy | transient | unknown`.
+6. Retry Policy: base 500ms exponential ×2 capped 8000ms + jitter ±200ms; attempt caps: rate_limit/timeout/transient=3; parsing corrective=1; others=0 (unless fallback eligible).
+7. Coverage Targets: Overall >80%; provider & parser ≥85% (lines & branches).
+8. Pricing Source-of-Truth: `packages/memory/src/llm/pricing-catalog.json`; no embedded rate literals in provider code.
+9. Token Counting: Claude via SDK; OpenAI via tiktoken or heuristic `ceil(chars/4)`; reconcile with actual usage; variance <5%.
+10. Deterministic Tests: Inject `Clock` & `JitterProvider` abstractions to remove flake.
+11. Redaction Mandatory: Redaction → Mood Scoring → Delta Detection → Salience → Prompt Build.
+12. Streaming Assembly: Incremental buffer with structural balance checks before validation.
+13. Confidence Merge: Normalize [0,1]; harmonic mean; log precision 4 decimals.
+14. Schema Adapters: `schema-adapters/` directory with forward/backward adaptation tests.
+15. Latency SLO Scope: Provider round-trip + parsing only (excludes mood scoring & DB persistence).
+
+Changes after this date require a new dated addendum.
