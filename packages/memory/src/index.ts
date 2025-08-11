@@ -34,6 +34,9 @@ export * from './significance/prioritizer'
 // Persistence layer
 export * from './persistence'
 
+// LLM Provider Abstraction Layer
+export * from './llm'
+
 // TODO: Memory organization and clustering - implement in future PRs
 // export * from './organization/clusterer'
 // export * from './organization/query-builder'
