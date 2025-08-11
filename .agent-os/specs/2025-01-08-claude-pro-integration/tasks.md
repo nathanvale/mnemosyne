@@ -9,15 +9,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks (Parser before processor; added redaction & adapters)
 
-- [ ] 0. Provider Abstraction Layer
-  - [ ] 0.1 Tests for LLMProvider interface & factory
-  - [ ] 0.2 llm-provider.interface.ts (LLMProvider + capabilities)
-  - [ ] 0.3 llm-provider-factory.ts (LLMProviderFactory)
-  - [ ] 0.4 Shared request/response/stream types
-  - [ ] 0.5 Capability registry definition
-  - [ ] 0.6 Initial pricing catalog & type
-  - [ ] 0.7 Provider config schema (zod)
-  - [ ] 0.8 All tests green
+- [x] 0. Provider Abstraction Layer
+  - [x] 0.1 Tests for LLMProvider interface & factory
+  - [x] 0.2 llm-provider.interface.ts (LLMProvider + capabilities)
+  - [x] 0.3 llm-provider-factory.ts (LLMProviderFactory)
+  - [x] 0.4 Shared request/response/stream types
+  - [x] 0.5 Capability registry definition
+  - [x] 0.6 Initial pricing catalog & type
+  - [x] 0.7 Provider config schema (zod)
+  - [x] 0.8 All tests green
 
 - [ ] 1. Environment Setup & SDK Installation
   - [ ] 1.1 Config loader tests (env overrides, defaults)
