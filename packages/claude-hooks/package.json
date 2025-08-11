@@ -34,7 +34,8 @@
     "claude-hooks-quality": "./dist/bin/claude-hooks-quality.js",
     "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js",
     "claude-hooks-cache-stats": "./dist/bin/claude-hooks-cache-stats.js",
-    "claude-hooks-cache-explorer": "./dist/bin/claude-hooks-cache-explorer.js"
+    "claude-hooks-cache-explorer": "./dist/bin/claude-hooks-cache-explorer.js",
+    "claude-hooks-list-voices": "./dist/bin/claude-hooks-list-voices.js"
   },
   "files": [
     "dist/**/*",
