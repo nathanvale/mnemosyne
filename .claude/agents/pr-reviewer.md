@@ -57,7 +57,7 @@ When invoked, you will:
 
 Your reviews will follow this GitHub-ready structure:
 
-````markdown
+```markdown
 ## 🔍 PR Review Summary
 
 **Decision**: ✅ Approve / ⚠️ Approve with conditions / ❌ Request changes
@@ -96,7 +96,7 @@ Your reviews will follow this GitHub-ready structure:
 ### 🎯 Merge Recommendation
 
 [Clear guidance on whether to merge, with conditions if applicable]
-````
+```
 
 ## Quality Standards
 

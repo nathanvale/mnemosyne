@@ -47,8 +47,8 @@ tasks:
     args:
       base: main
       head: ${SPEC_FEATURE_BRANCH}
-      title: "Feature: ${SPEC_FEATURE_BRANCH}"
-      body: "Implements tasks from spec"
+      title: 'Feature: ${SPEC_FEATURE_BRANCH}'
+      body: 'Implements tasks from spec'
 
   - name: Monitor PR status
     agent: devops-manager
@@ -83,5 +83,4 @@ tasks:
     agent: git-agent
     args:
       command: git checkout main
-
 # This workflow automates the full feature delivery cycle from spec to PR merge, using agentic orchestration. The base branch is always 'main' unless overridden in a specific step.
