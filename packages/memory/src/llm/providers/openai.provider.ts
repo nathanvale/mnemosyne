@@ -74,37 +74,32 @@ export class OpenAIProvider implements LLMProvider {
    * Send a non-streaming request to OpenAI
    */
   async send(request: LLMRequest): Promise<LLMResponse> {
-    try {
-      // Convert messages to OpenAI format
-      const openAIMessages: ChatCompletionMessageParam[] = request.messages.map(
-        (msg) => ({
-          role: msg.role as 'system' | 'user' | 'assistant',
-          content: msg.content,
-        }),
-      )
+    // Convert messages to OpenAI format
+    const openAIMessages: ChatCompletionMessageParam[] = request.messages.map(
+      (msg) => ({
+        role: msg.role as 'system' | 'user' | 'assistant',
+        content: msg.content,
+      }),
+    )
 
-      // Build request parameters
-      const requestParams: Parameters<
-        typeof this.client.chat.completions.create
-      >[0] = {
-        model: this.model,
-        messages: openAIMessages,
-        temperature: request.temperature,
-        max_tokens: request.maxTokens || 4096,
-        stop: request.stopSequences,
-        stream: false as const,
-      }
-
-      // Create the completion
-      const response = (await this.client.chat.completions.create(
-        requestParams,
-      )) as ChatCompletion
-
-      return this.formatResponse(response)
-    } catch (error) {
-      // Re-throw error with proper typing for error handling layer
-      throw error
+    // Build request parameters
+    const requestParams: Parameters<
+      typeof this.client.chat.completions.create
+    >[0] = {
+      model: this.model,
+      messages: openAIMessages,
+      temperature: request.temperature,
+      max_tokens: request.maxTokens || 4096,
+      stop: request.stopSequences,
+      stream: false as const,
     }
+
+    // Create the completion
+    const response = (await this.client.chat.completions.create(
+      requestParams,
+    )) as ChatCompletion
+
+    return this.formatResponse(response)
   }
 
   /**
@@ -203,6 +198,11 @@ export class OpenAIProvider implements LLMProvider {
    * OpenAI doesn't provide a public token counting API
    */
   async countTokens(text: string): Promise<number> {
+    // Handle empty text
+    if (!text || text.length === 0) {
+      return 0
+    }
+
     // Rough estimation: ~4 characters per token for English text
     // This is a simplified approximation
     return Math.ceil(text.length / 4)

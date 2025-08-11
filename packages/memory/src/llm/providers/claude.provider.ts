@@ -59,32 +59,27 @@ export class ClaudeProvider implements LLMProvider {
    * Send a non-streaming request to Claude
    */
   async send(request: LLMRequest): Promise<LLMResponse> {
-    try {
-      // Extract system message if present
-      const systemMessage = request.messages.find((m) => m.role === 'system')
-      const userMessages = request.messages.filter((m) => m.role !== 'system')
+    // Extract system message if present
+    const systemMessage = request.messages.find((m) => m.role === 'system')
+    const userMessages = request.messages.filter((m) => m.role !== 'system')
 
-      // Convert messages to Claude format
-      const claudeMessages: MessageParam[] = userMessages.map((msg) => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      }))
+    // Convert messages to Claude format
+    const claudeMessages: MessageParam[] = userMessages.map((msg) => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+    }))
 
-      // Create the message
-      const response = await this.client.messages.create({
-        model: this.model,
-        messages: claudeMessages,
-        system: systemMessage?.content,
-        temperature: request.temperature,
-        max_tokens: request.maxTokens || 4096,
-        stop_sequences: request.stopSequences,
-      })
+    // Create the message
+    const response = await this.client.messages.create({
+      model: this.model,
+      messages: claudeMessages,
+      system: systemMessage?.content,
+      temperature: request.temperature,
+      max_tokens: request.maxTokens || 4096,
+      stop_sequences: request.stopSequences,
+    })
 
-      return this.formatResponse(response)
-    } catch (error) {
-      // Re-throw error with proper typing for error handling layer
-      throw error
-    }
+    return this.formatResponse(response)
   }
 
   /**
@@ -139,15 +134,11 @@ export class ClaudeProvider implements LLMProvider {
    * Count tokens in text using Claude's tokenizer
    */
   async countTokens(text: string): Promise<number> {
-    try {
-      const result = await this.client.beta.messages.countTokens({
-        model: this.model,
-        messages: [{ role: 'user', content: text }],
-      })
-      return result.input_tokens
-    } catch (error) {
-      throw error
-    }
+    const result = await this.client.beta.messages.countTokens({
+      model: this.model,
+      messages: [{ role: 'user', content: text }],
+    })
+    return result.input_tokens
   }
 
   /**
