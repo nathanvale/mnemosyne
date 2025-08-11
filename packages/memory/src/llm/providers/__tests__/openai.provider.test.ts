@@ -278,9 +278,9 @@ describe('OpenAIProvider', () => {
       await expect(provider.send(request)).rejects.toThrow('API Error')
     })
 
-    it('should handle JSON mode when requested', async () => {
+    it('should handle metadata in request', async () => {
       const mockResponse = {
-        id: 'chatcmpl-json',
+        id: 'chatcmpl-metadata',
         object: 'chat.completion',
         created: 1234567890,
         model: 'gpt-4-turbo',
@@ -289,7 +289,7 @@ describe('OpenAIProvider', () => {
             index: 0,
             message: {
               role: 'assistant',
-              content: '{"result": "test"}',
+              content: 'Response with metadata',
             },
             finish_reason: 'stop',
           },
@@ -304,18 +304,24 @@ describe('OpenAIProvider', () => {
       mockOpenAIClient.chat.completions.create.mockResolvedValue(mockResponse)
 
       const request: LLMRequest = {
-        messages: [{ role: 'user', content: 'Return JSON' }],
-        responseFormat: { type: 'json_object' },
+        messages: [{ role: 'user', content: 'Test with metadata' }],
+        metadata: { requestId: 'test-123', source: 'test' },
       }
 
-      await provider.send(request)
+      const response = await provider.send(request)
 
-      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalledWith({
+      expect(response).toEqual({
+        content: 'Response with metadata',
+        usage: {
+          inputTokens: 100,
+          outputTokens: 50,
+          totalTokens: 150,
+        },
         model: 'gpt-4-turbo',
-        messages: [{ role: 'user', content: 'Return JSON' }],
-        response_format: { type: 'json_object' },
-        max_tokens: 4096,
-        stream: false,
+        finishReason: 'stop',
+        metadata: {
+          messageId: 'chatcmpl-metadata',
+        },
       })
     })
   })

@@ -95,16 +95,6 @@ export class OpenAIProvider implements LLMProvider {
         stream: false as const,
       }
 
-      // Add response format if specified
-      if ('responseFormat' in request) {
-        const format = (
-          request as LLMRequest & { responseFormat?: { type: string } }
-        ).responseFormat
-        if (format?.type === 'json_object') {
-          requestParams.response_format = { type: 'json_object' as const }
-        }
-      }
-
       // Create the completion
       const response = (await this.client.chat.completions.create(
         requestParams,
@@ -143,16 +133,6 @@ export class OpenAIProvider implements LLMProvider {
         max_tokens: request.maxTokens || 4096,
         stop: request.stopSequences,
         stream: true as const,
-      }
-
-      // Add response format if specified
-      if ('responseFormat' in request) {
-        const format = (
-          request as LLMRequest & { responseFormat?: { type: string } }
-        ).responseFormat
-        if (format?.type === 'json_object') {
-          requestParams.response_format = { type: 'json_object' as const }
-        }
       }
 
       // Create streaming completion - cast to proper stream type
