@@ -19,13 +19,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 0.7 Provider config schema (zod)
   - [x] 0.8 All tests green
 
-- [ ] 1. Environment Setup & SDK Installation
-  - [ ] 1.1 Config loader tests (env overrides, defaults)
-  - [ ] 1.2 Install @anthropic-ai/sdk openai tiktoken
-  - [ ] 1.3 Update .env.example (MEMORY*LLM*\*)
-  - [ ] 1.4 LLMConfigLoader implementation
-  - [ ] 1.5 Validation + error messaging
-  - [ ] 1.6 All tests green
+- [x] 1. Environment Setup & SDK Installation ✅
+  - [x] 1.1 Config loader tests (env overrides, defaults)
+  - [x] 1.2 Install @anthropic-ai/sdk openai tiktoken
+  - [x] 1.3 Update .env.example (MEMORY*LLM*\*)
+  - [x] 1.4 LLMConfigLoader implementation
+  - [x] 1.5 Validation + error messaging
+  - [x] 1.6 All tests green
 
 - [ ] 2. Provider Implementations
   - [ ] 2.1 ClaudeProvider tests (send/stream, errors)
