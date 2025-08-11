@@ -1,0 +1,87 @@
+# Agentic Feature Flow - End-to-End PR Automation Workflow
+
+parameters:
+  spec_doc: .claude/specs/my-task.md
+
+# The base branch defaults to 'main' unless explicitly specified elsewhere.
+tasks:
+  - name: Checkout main branch
+    agent: git-agent
+    args:
+      command: git checkout main
+
+  - name: Read spec doc and extract to-do list and feature branch
+    agent: spec-reader
+    args:
+      spec_path: ${spec_doc}
+
+  - name: Create feature branch
+    agent: git-agent
+    args:
+      branch: ${SPEC_FEATURE_BRANCH}
+      operation: checkout
+
+  - name: Execute to-do tasks
+    agent: task-executor
+    args:
+      todo_list: ${SPEC_TODO_LIST}
+      feature_branch: ${SPEC_FEATURE_BRANCH}
+
+  - name: Format code
+    agent: shell-agent
+    args:
+      command: pnpm format
+
+  - name: Lint code
+    agent: shell-agent
+    args:
+      command: pnpm lint
+
+  - name: Run tests
+    agent: shell-agent
+    args:
+      command: pnpm test
+
+  - name: Create PR
+    agent: pr-creator
+    args:
+      base: main
+      head: ${SPEC_FEATURE_BRANCH}
+      title: "Feature: ${SPEC_FEATURE_BRANCH}"
+      body: "Implements tasks from spec"
+
+  - name: Monitor PR status
+    agent: devops-manager
+    args:
+      pr_number: created_by_previous_step
+
+  - name: Fix problems if PR fails
+    agent: pr-fixer
+    condition: pr_status == "failed"
+    args:
+      pr_number: created_by_previous_step
+
+  - name: Re-run checks after fix
+    agent: devops-manager
+    condition: pr_status == "fixed"
+    args:
+      pr_number: created_by_previous_step
+
+  - name: Merge PR if green
+    agent: pr-merger
+    condition: pr_status == "green"
+    args:
+      pr_number: created_by_previous_step
+
+  - name: Delete feature branch
+    agent: git-agent
+    args:
+      branch: ${SPEC_FEATURE_BRANCH}
+      operation: delete
+
+  - name: Checkout main branch
+    agent: git-agent
+    args:
+      command: git checkout main
+
+# This workflow automates the full feature delivery cycle from spec to PR merge, using agentic orchestration. The base branch is always 'main' unless overridden in a specific step.

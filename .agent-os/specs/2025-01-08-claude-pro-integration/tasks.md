@@ -27,15 +27,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.5 Validation + error messaging
   - [x] 1.6 All tests green
 
-- [ ] 2. Provider Implementations
-  - [ ] 2.1 ClaudeProvider tests (send/stream, errors)
-  - [ ] 2.2 claude.provider.ts
-  - [ ] 2.3 OpenAIProvider tests
-  - [ ] 2.4 openai.provider.ts
-  - [ ] 2.5 Streaming event normalization (all chunk types)
-  - [ ] 2.6 Usage statistics tracking
-  - [ ] 2.7 Provider-specific error mapping parity
-  - [ ] 2.8 All tests green
+- [x] 2. Provider Implementations
+  - [x] 2.1 ClaudeProvider tests (send/stream, errors)
+  - [x] 2.2 claude.provider.ts
+  - [x] 2.3 OpenAIProvider tests
+  - [x] 2.4 openai.provider.ts
+  - [x] 2.5 Streaming event normalization (all chunk types)
+  - [x] 2.6 Usage statistics tracking
+  - [x] 2.7 Provider-specific error mapping parity
+  - [x] 2.8 All tests green
 
 - [ ] 3. Redaction Module
   - [ ] 3.1 Redactor interface + implementation (categories)
