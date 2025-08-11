@@ -1,4 +1,5 @@
 ---
+# Policy: This agent only selects and operates on the next incomplete top-level task (and its subtasks) from the provided tasks.md. Do not batch or process multiple tasks at once.
 name: spec-reader
 description: Reads all spec .md files, summarizes tasks, and checks progress before picking up work (AgentOS-aware)
 model: sonnet
@@ -33,9 +34,11 @@ When invoked, you will:
 
 1. Read all `.md` files in the spec directory (recursively) to gather full context
 2. Check task progress and status by reading the `tasks.md` file in the spec directory
-3. Detect if a task is already started, in progress, or completed by inspecting `tasks.md`
-4. Summarize available, in-progress, and completed tasks for the user
-5. Output a summary before picking up any new work
+3. If no task is provided, determine which top-level task (and its subtasks) is currently in progress by inspecting `tasks.md`, and operate on that. Otherwise, select the next incomplete top-level task (and its subtasks) for each run. Do not batch or process multiple tasks at once.
+4. Pass the selected or in-progress task (and its subtasks) to downstream agents for execution, ensuring only one task is operated on per run.
+5. Detect if a task is already started, in progress, or completed by inspecting `tasks.md`
+6. Summarize available, in-progress, and completed tasks for the user
+7. Output a summary before picking up any new work
 
 ## Operating Principles
 
