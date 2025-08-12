@@ -6,10 +6,32 @@
  * Provides data needed for expert PR analysis
  */
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 
 import { GitHubPRContext } from '../types/github.js'
+
+/**
+ * Validate repository name format
+ */
+function validateRepoName(repo: string): void {
+  if (!/^[a-zA-Z0-9\-_.]+\/[a-zA-Z0-9\-_.]+$/.test(repo)) {
+    throw new Error(
+      `Invalid repository format: ${repo}. Expected format: owner/repo`,
+    )
+  }
+}
+
+/**
+ * Validate PR number
+ */
+function validatePRNumber(prNumber: number): void {
+  if (!Number.isInteger(prNumber) || prNumber <= 0) {
+    throw new Error(
+      `Invalid PR number: ${prNumber}. Must be a positive integer`,
+    )
+  }
+}
 
 /**
  * GitHub data fetcher configuration
@@ -186,7 +208,10 @@ export class GitHubDataFetcher {
    * Fetch pull request details
    */
   private async fetchPullRequest(prNumber: number, repo: string) {
-    const command = `gh pr view ${prNumber} --repo ${repo} --json ${[
+    validatePRNumber(prNumber)
+    validateRepoName(repo)
+
+    const jsonFields = [
       'id',
       'number',
       'title',
@@ -217,9 +242,13 @@ export class GitHubDataFetcher {
       'comments',
       'reviewDecision',
       'isDraft',
-    ].join(',')}`
+    ].join(',')
 
-    const result = execSync(command, { encoding: 'utf-8' })
+    const result = execFileSync(
+      'gh',
+      ['pr', 'view', prNumber.toString(), '--repo', repo, '--json', jsonFields],
+      { encoding: 'utf-8' },
+    )
     const prData = JSON.parse(result) as GitHubPRDataAPI
 
     // Transform GitHub API response to our schema format
@@ -289,18 +318,27 @@ export class GitHubDataFetcher {
    * Fetch file changes for the PR
    */
   private async fetchFileChanges(prNumber: number, repo: string) {
-    const command = `gh pr diff ${prNumber} --repo ${repo} --name-only`
-    const fileList = execSync(command, { encoding: 'utf-8' })
+    validatePRNumber(prNumber)
+    validateRepoName(repo)
+
+    const fileList = execFileSync(
+      'gh',
+      ['pr', 'diff', prNumber.toString(), '--repo', repo, '--name-only'],
+      { encoding: 'utf-8' },
+    )
       .split('\n')
-      .filter((file) => file.trim())
+      .filter((file: string) => file.trim())
 
     // Get detailed file information
     const files = []
     for (const filename of fileList) {
       try {
         // Get file diff stats
-        const statsCommand = `gh pr diff ${prNumber} --repo ${repo} -- ${JSON.stringify(filename)}`
-        const diffOutput = execSync(statsCommand, { encoding: 'utf-8' })
+        const diffOutput = execFileSync(
+          'gh',
+          ['pr', 'diff', prNumber.toString(), '--repo', repo, '--', filename],
+          { encoding: 'utf-8' },
+        )
 
         const additions = this.countDiffLines(diffOutput, '+')
         const deletions = this.countDiffLines(diffOutput, '-')
@@ -341,8 +379,14 @@ export class GitHubDataFetcher {
    * Fetch commits for the PR
    */
   private async fetchCommits(prNumber: number, repo: string) {
-    const command = `gh pr view ${prNumber} --repo ${repo} --json commits`
-    const result = execSync(command, { encoding: 'utf-8' })
+    validatePRNumber(prNumber)
+    validateRepoName(repo)
+
+    const result = execFileSync(
+      'gh',
+      ['pr', 'view', prNumber.toString(), '--repo', repo, '--json', 'commits'],
+      { encoding: 'utf-8' },
+    )
     const data = JSON.parse(result) as { commits?: GitHubCommitAPI[] }
 
     return (data.commits || []).map((commit: GitHubCommitAPI) => ({
@@ -376,8 +420,22 @@ export class GitHubDataFetcher {
    */
   private async fetchCheckRuns(prNumber: number, repo: string) {
     try {
-      const command = `gh pr checks ${prNumber} --repo ${repo} --json state,name,startedAt,completedAt,link`
-      const result = execSync(command, { encoding: 'utf-8' })
+      validatePRNumber(prNumber)
+      validateRepoName(repo)
+
+      const result = execFileSync(
+        'gh',
+        [
+          'pr',
+          'checks',
+          prNumber.toString(),
+          '--repo',
+          repo,
+          '--json',
+          'state,name,startedAt,completedAt,link',
+        ],
+        { encoding: 'utf-8' },
+      )
       const checks = JSON.parse(result) as GitHubCheckAPI[]
 
       return checks.map((check: GitHubCheckAPI, index: number) => ({
@@ -407,9 +465,14 @@ export class GitHubDataFetcher {
    */
   private async fetchSecurityAlerts(repo: string) {
     try {
+      validateRepoName(repo)
+
       // Note: This requires special permissions and may not be available
-      const command = `gh api repos/${repo}/security-advisories --paginate`
-      const result = execSync(command, { encoding: 'utf-8' })
+      const result = execFileSync(
+        'gh',
+        ['api', `repos/${repo}/security-advisories`, '--paginate'],
+        { encoding: 'utf-8' },
+      )
       const alerts = JSON.parse(result)
 
       return alerts.map((alert: Record<string, unknown>) => ({

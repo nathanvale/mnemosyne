@@ -1,7 +1,6 @@
 import type {
   ValidatedFinding,
   ExpertFinding,
-  SecurityAuditResults,
   PRMetrics,
   AnalysisDecision,
   RiskLevel,
@@ -14,7 +13,6 @@ import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
 
 import { getThresholds } from '../config/severity-thresholds.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
-import { SecurityAnalyzer } from './security-analyzer.js'
 
 /**
  * Expert validation categories for comprehensive code review
@@ -88,25 +86,20 @@ interface FileContext {
  */
 export class ExpertValidator {
   /**
-   * Comprehensive expert validation of PR using multi-phase checklists
+   * Comprehensive expert validation of PR focusing on performance, maintainability, and architecture
+   * Note: Security analysis delegated to Claude's /security-review for superior results
    */
   static async validatePR(
     githubContext: GitHubPRContext,
     codeRabbitAnalysis?: CodeRabbitAnalysis,
   ): Promise<ExpertValidationResults> {
-    // Phase 1: Security audit using SecurityAnalyzer
-    const securityAudit = SecurityAnalyzer.analyzeSecurityFindings(
-      githubContext,
-      codeRabbitAnalysis,
-    )
-
-    // Phase 2: Collect quantitative metrics
+    // Phase 1: Collect quantitative metrics
     const metrics = PRMetricsCollector.collectMetrics(
       githubContext,
       codeRabbitAnalysis,
     )
 
-    // Phase 3: Expert validation of CodeRabbit findings
+    // Phase 2: Expert validation of CodeRabbit findings (non-security)
     const validatedFindings = this.validateCodeRabbitFindings(
       codeRabbitAnalysis?.findings || [],
       githubContext,
@@ -120,10 +113,9 @@ export class ExpertValidator {
 
     // Phase 6: Final decision and recommendations
     const { overallDecision, confidence, blockingIssues } =
-      this.calculateOverallDecision(securityAudit, metrics, validatedFindings)
+      this.calculateOverallDecision(metrics, validatedFindings)
 
     const recommendations = this.generateExpertRecommendations(
-      securityAudit,
       metrics,
       blockingIssues,
     )
@@ -293,7 +285,6 @@ export class ExpertValidator {
    * Calculate overall decision based on expert validation
    */
   private static calculateOverallDecision(
-    securityAudit: SecurityAuditResults,
     metrics: PRMetrics,
     validatedFindings: ValidatedFinding[],
   ): {
@@ -306,31 +297,8 @@ export class ExpertValidator {
     // Use configurable thresholds
     const thresholds = getThresholds('default')
 
-    // Block for critical security vulnerabilities
-    const realSecurityVulnerabilities = securityAudit.findings.filter(
-      (f) =>
-        f.severity === 'critical' &&
-        (f.cweId ||
-          f.cvssScore ||
-          f.source === 'github-security-advisory' ||
-          // Also include high-confidence security findings from CodeRabbit
-          (f.source === 'coderabbit' &&
-            (f.confidence === 'very_high' || f.confidence === 'high'))),
-    )
-
-    if (
-      realSecurityVulnerabilities.length >=
-      thresholds.securityBlock.criticalVulnerabilities
-    ) {
-      blockingIssues.push({
-        id: 'critical-security-vulnerabilities',
-        title: `${realSecurityVulnerabilities.length} Critical Security Vulnerabilities`,
-        severity: 'critical',
-        mustFixBeforeMerge: true,
-        reasoning:
-          'Confirmed security vulnerabilities with CVE/CWE identifiers must be resolved',
-      })
-    }
+    // Note: Security analysis now delegated to Claude's /security-review
+    // This method focuses on non-security validation and CodeRabbit findings
 
     // Block for high-confidence critical findings (not just security)
     const criticalFindings = validatedFindings.filter(
@@ -387,7 +355,6 @@ export class ExpertValidator {
       overallDecision = 'security_block'
       confidence = 95
     } else if (
-      securityAudit.highCount > thresholds.requestChanges.highSeverityCount ||
       metrics.securityDebtScore <
         thresholds.requestChanges.securityDebtScoreMin ||
       validatedFindings.filter((f) => f.validated && f.severity === 'high')
@@ -396,8 +363,6 @@ export class ExpertValidator {
       overallDecision = 'request_changes'
       confidence = 85
     } else if (
-      securityAudit.mediumCount >
-        thresholds.conditionalApproval.mediumSeverityCount ||
       metrics.securityDebtScore <
         thresholds.conditionalApproval.securityDebtScoreMin ||
       validatedFindings.filter((f) => f.validated && f.severity === 'medium')
@@ -417,7 +382,6 @@ export class ExpertValidator {
    * Generate expert recommendations based on validation results
    */
   private static generateExpertRecommendations(
-    securityAudit: SecurityAuditResults,
     metrics: PRMetrics,
     blockingIssues: ExpertValidationResults['blockingIssues'],
   ): ExpertValidationResults['recommendations'] {
@@ -435,8 +399,7 @@ export class ExpertValidator {
       })
     }
 
-    // Security recommendations
-    immediate.push(...securityAudit.recommendations)
+    // Note: Security recommendations now provided by Claude's /security-review
 
     // Metrics-based recommendations
     if (metrics.complexityScore > 7) {

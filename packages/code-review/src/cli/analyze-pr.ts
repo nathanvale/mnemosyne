@@ -4,11 +4,33 @@
  * Analyzes a GitHub PR and generates a comprehensive code review using the @studio/code-review package
  */
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 
 import type { CodeRabbitFinding } from '../types/coderabbit.js'
+
+/**
+ * Validate repository name format
+ */
+function validateRepoName(repo: string): void {
+  if (!/^[a-zA-Z0-9\-_.]+\/[a-zA-Z0-9\-_.]+$/.test(repo)) {
+    throw new Error(
+      `Invalid repository format: ${repo}. Expected format: owner/repo`,
+    )
+  }
+}
+
+/**
+ * Validate PR number
+ */
+function validatePRNumber(prNumber: number): void {
+  if (!Number.isInteger(prNumber) || prNumber <= 0) {
+    throw new Error(
+      `Invalid PR number: ${prNumber}. Must be a positive integer`,
+    )
+  }
+}
 
 /**
  * Extract AI prompt from CodeRabbit description
@@ -93,13 +115,29 @@ interface PRAnalysis {
 
 async function fetchPRData(repo: string, prNumber: string) {
   try {
+    const prNum = parseInt(prNumber, 10)
+    validatePRNumber(prNum)
+    validateRepoName(repo)
+
     // Fetch PR metadata
-    const prDataCmd = `gh pr view ${prNumber} --repo ${repo} --json title,body,author,state,files,additions,deletions,commits`
-    const prData = JSON.parse(execSync(prDataCmd, { encoding: 'utf-8' }))
+    const prData = JSON.parse(
+      execFileSync(
+        'gh',
+        [
+          'pr',
+          'view',
+          prNumber,
+          '--repo',
+          repo,
+          '--json',
+          'title,body,author,state,files,additions,deletions,commits',
+        ],
+        { encoding: 'utf-8' },
+      ),
+    )
 
     // Fetch PR diff
-    const diffCmd = `gh pr diff ${prNumber} --repo ${repo}`
-    const diff = execSync(diffCmd, {
+    const diff = execFileSync('gh', ['pr', 'diff', prNumber, '--repo', repo], {
       encoding: 'utf-8',
       maxBuffer: 10 * 1024 * 1024,
     })

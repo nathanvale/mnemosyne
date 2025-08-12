@@ -4,6 +4,7 @@ import type {
   ArchitecturalInsight,
 } from '../analysis/context-analyzer.js'
 import type { ExpertValidationResults } from '../analysis/expert-validator.js'
+import type { CombinedSecurityData } from '../analysis/security-data-integrator.js'
 import type {
   PRAnalysisResult,
   SecurityAuditResults,
@@ -98,12 +99,13 @@ export interface FindingSummary {
  */
 export class ReportGenerator {
   /**
-   * Generate comprehensive PR analysis report
+   * Generate comprehensive PR analysis report with Claude security integration
    */
   static generateReport(
     analysisResult: PRAnalysisResult,
     expertValidation: ExpertValidationResults,
     contextAnalysis: ContextAnalysisResults,
+    combinedSecurityData?: CombinedSecurityData,
     options: ReportOptions = {
       format: 'markdown',
       includeMetrics: true,
@@ -148,18 +150,32 @@ export class ReportGenerator {
       })
     }
 
-    // Generate security analysis
-    sections.push({
-      id: 'security-analysis',
-      title: 'Security Analysis',
-      emoji: '🛡️',
-      priority: 3,
-      required: true,
-      content: this.formatSecurityAnalysis(
-        analysisResult.securityAudit,
-        options.format,
-      ),
-    })
+    // Generate security analysis - use Claude's analysis if available
+    if (combinedSecurityData) {
+      sections.push({
+        id: 'security-analysis',
+        title: 'Security Analysis (Claude Enhanced)',
+        emoji: '🛡️',
+        priority: 3,
+        required: true,
+        content: this.formatClaudeSecurityAnalysis(
+          combinedSecurityData,
+          options.format,
+        ),
+      })
+    } else {
+      sections.push({
+        id: 'security-analysis',
+        title: 'Security Analysis',
+        emoji: '🛡️',
+        priority: 3,
+        required: true,
+        content: this.formatSecurityAnalysis(
+          analysisResult.securityAudit,
+          options.format,
+        ),
+      })
+    }
 
     // Generate detailed findings
     const detailedFindings = this.generateDetailedFindings(
@@ -255,7 +271,7 @@ export class ReportGenerator {
     const riskLevel = analysisResult.riskLevel
     const confidenceScore = analysisResult.confidenceScore
 
-    // Key findings from expert validation
+    // Key findings from expert validation and Claude security analysis
     const keyFindings = [
       `${analysisResult.securityAudit.totalFindings} security findings identified`,
       `${expertValidation.validatedFindings.length} CodeRabbit findings validated`,
@@ -491,7 +507,63 @@ ${summary.architecturalConcerns.map((concern) => `- ${concern}`).join('\n')}
   }
 
   /**
-   * Format security analysis
+   * Format Claude-enhanced security analysis
+   */
+  private static formatClaudeSecurityAnalysis(
+    combinedData: CombinedSecurityData,
+    format: ReportOptions['format'],
+  ): string {
+    if (format === 'markdown' || format === 'github_comment') {
+      const { claudeAnalysis, overallAssessment } = combinedData
+
+      return `
+## 🛡️ Security Analysis (Claude Enhanced)
+
+**Overall Risk:** ${this.formatRiskLevel(overallAssessment.riskLevel)} | **Total Findings:** ${overallAssessment.totalFindings}
+**Claude Confidence:** ${claudeAnalysis.confidence}% | **Must Fix Before Merge:** ${overallAssessment.mustFixBeforeMerge ? '🚨 YES' : '✅ NO'}
+
+### Claude Security Findings
+| Severity | Count | Status |
+|----------|-------|--------|
+| Critical | ${claudeAnalysis.vulnerabilityCount.critical} | ${claudeAnalysis.vulnerabilityCount.critical > 0 ? '🚨 Immediate action required' : '✅ None'} |
+| High | ${claudeAnalysis.vulnerabilityCount.high} | ${claudeAnalysis.vulnerabilityCount.high > 0 ? '⚠️ Review recommended' : '✅ None'} |
+| Medium | ${claudeAnalysis.vulnerabilityCount.medium} | ${claudeAnalysis.vulnerabilityCount.medium > 0 ? '📋 Address when possible' : '✅ None'} |
+| Low | ${claudeAnalysis.vulnerabilityCount.low} | ${claudeAnalysis.vulnerabilityCount.low > 0 ? '💡 Informational' : '✅ None'} |
+
+### Data Sources Combined
+- **Claude pr-review-synthesizer:** ${claudeAnalysis.findings.length} findings
+- **CodeRabbit Security Insights:** ${combinedData.codeRabbitSecurityFindings.length} findings
+- **GitHub Security Alerts:** ${combinedData.githubSecurityAlerts.length} alerts
+
+### Claude Security Recommendations
+${overallAssessment.recommendations.map((rec) => `- ${rec}`).join('\n')}
+
+### Individual Claude Findings
+${
+  claudeAnalysis.findings.length > 0
+    ? claudeAnalysis.findings
+        .map(
+          (finding) => `
+**${finding.title}** (${finding.severity})
+- **File:** ${finding.location?.file || 'N/A'}${finding.location?.line ? `:${finding.location.line}` : ''}
+- **Category:** ${finding.category}
+- **Confidence:** ${finding.confidence}
+- **Description:** ${finding.description}
+${finding.remediation ? `- **Remediation:** ${finding.remediation}` : ''}
+${finding.cweId ? `- **CWE ID:** ${finding.cweId}` : ''}
+${finding.cvssScore ? `- **CVSS Score:** ${finding.cvssScore}` : ''}`,
+        )
+        .join('\n')
+    : 'No specific security findings from Claude analysis.'
+}
+`.trim()
+    }
+
+    return JSON.stringify(combinedData, null, 2)
+  }
+
+  /**
+   * Format legacy security analysis (fallback)
    */
   private static formatSecurityAnalysis(
     securityAudit: SecurityAuditResults,

@@ -1,0 +1,119 @@
+{
+  "pullRequest": {
+    "id": 999,
+    "number": 999,
+    "title": "Add security vulnerability test file",
+    "body": "This PR adds a test file with intentional security vulnerabilities to test our security analysis integration.",
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "user": {
+      "id": 12345,
+      "login": "test-user",
+      "avatar_url": "https://github.com/test-user.png",
+      "html_url": "https://github.com/test-user",
+      "type": "User"
+    },
+    "assignees": [],
+    "requested_reviewers": [],
+    "labels": [
+      {
+        "id": 1,
+        "name": "security-test",
+        "color": "red",
+        "description": "Security vulnerability test"
+      }
+    ],
+    "base": {
+      "ref": "main",
+      "sha": "abc123",
+      "repo": {
+        "id": 123456,
+        "name": "mnemosyne",
+        "full_name": "nathanvale/mnemosyne",
+        "private": false,
+        "html_url": "https://github.com/nathanvale/mnemosyne",
+        "default_branch": "main",
+        "language": "TypeScript",
+        "languages_url": "https://api.github.com/repos/nathanvale/mnemosyne/languages"
+      }
+    },
+    "head": {
+      "ref": "security-test-branch",
+      "sha": "def456",
+      "repo": {
+        "id": 123456,
+        "name": "mnemosyne",
+        "full_name": "nathanvale/mnemosyne",
+        "private": false,
+        "html_url": "https://github.com/nathanvale/mnemosyne",
+        "default_branch": "main",
+        "language": "TypeScript",
+        "languages_url": "https://api.github.com/repos/nathanvale/mnemosyne/languages"
+      }
+    },
+    "html_url": "https://github.com/nathanvale/mnemosyne/pull/999",
+    "diff_url": "https://github.com/nathanvale/mnemosyne/pull/999.diff",
+    "patch_url": "https://github.com/nathanvale/mnemosyne/pull/999.patch",
+    "commits_url": "https://api.github.com/repos/nathanvale/mnemosyne/pulls/999/commits",
+    "comments_url": "https://api.github.com/repos/nathanvale/mnemosyne/issues/999/comments",
+    "created_at": "2024-12-19T10:00:00Z",
+    "updated_at": "2024-12-19T10:00:00Z",
+    "closed_at": null,
+    "merged_at": null,
+    "merge_commit_sha": null,
+    "additions": 100,
+    "deletions": 0,
+    "changed_files": 1,
+    "commits": 1,
+    "comments": 0,
+    "review_comments": 0,
+    "maintainer_can_modify": true,
+    "draft": false
+  },
+  "files": [
+    {
+      "sha": "file123",
+      "filename": "packages/code-review/test-security-vulnerabilities.ts",
+      "status": "added",
+      "additions": 100,
+      "deletions": 0,
+      "changes": 100,
+      "blob_url": "https://github.com/nathanvale/mnemosyne/blob/def456/packages/code-review/test-security-vulnerabilities.ts",
+      "raw_url": "https://github.com/nathanvale/mnemosyne/raw/def456/packages/code-review/test-security-vulnerabilities.ts",
+      "contents_url": "https://api.github.com/repos/nathanvale/mnemosyne/contents/packages/code-review/test-security-vulnerabilities.ts",
+      "patch": "@@ -0,0 +1,100 @@\n+/**\n+ * Test file with intentional security vulnerabilities\n+ * This file is designed to test our security analysis integration\n+ * DO NOT USE THIS CODE IN PRODUCTION\n+ */\n+\n+import { execSync } from 'child_process'\n+import crypto from 'crypto'\n+\n+// 1. Command Injection Vulnerability (CWE-78)\n+export function executeUserCommand(userInput: string) {\n+  // VULNERABLE: Direct user input in shell command\n+  return execSync(`ls -la ${userInput}`).toString()\n+}\n+\n+// 2. SQL Injection Vulnerability (CWE-89)\n+export function getUserById(userId: string) {\n+  // VULNERABLE: Direct string concatenation in SQL\n+  const query = `SELECT * FROM users WHERE id = '${userId}'`\n+  return query // In real code, this would be executed\n+}\n+\n+// 3. XSS Vulnerability (CWE-79)\n+export function displayMessage(message: string) {\n+  // VULNERABLE: Unescaped user input in HTML\n+  document.getElementById('content')!.innerHTML = `<div>${message}</div>`\n+}\n+\n+// 4. Hardcoded Secrets (CWE-798)\n+const API_KEY = 'sk-1234567890abcdef1234567890abcdef'\n+const DB_PASSWORD = 'admin123'\n+const JWT_SECRET = 'supersecretkey'\n+\n+// Use the secrets to prevent unused variable errors\n+export function getApiKey() {\n+  return API_KEY\n+}\n+\n+export function getJwtSecret() {\n+  return JWT_SECRET\n+}\n+\n+// 5. Insecure Random Number Generation (CWE-330)\n+export function generateSessionId() {\n+  // VULNERABLE: Using Math.random() for security purposes\n+  return Math.random().toString(36).substring(7)\n+}\n+\n+// 6. Path Traversal Vulnerability (CWE-22)\n+export async function readFile(filename: string) {\n+  // VULNERABLE: No path validation\n+  const fs = await import('fs')\n+  return fs.readFileSync(`./uploads/${filename}`, 'utf8')\n+}\n+\n+// 7. Weak Cryptography (CWE-327)\n+export function hashPassword(password: string) {\n+  // VULNERABLE: Using MD5 for password hashing\n+  return crypto.createHash('md5').update(password).digest('hex')\n+}\n+\n+// 8. Missing Authentication (CWE-306)\n+export function deleteUser(userId: string) {\n+  // VULNERABLE: No authentication check\n+  return `DELETE FROM users WHERE id = '${userId}'`\n+}\n+\n+// 9. Information Disclosure (CWE-209)\n+export function login(username: string, password: string) {\n+  try {\n+    // Simulate login logic\n+    if (username === 'admin' && password === DB_PASSWORD) {\n+      return { success: true, token: generateSessionId() }\n+    }\n+    throw new Error(`Login failed for user: ${username}`)\n+  } catch (error) {\n+    // VULNERABLE: Exposing internal error details\n+    throw new Error(`Database connection failed: ${error}`)\n+  }\n+}\n+\n+// 10. CSRF Vulnerability (CWE-352)\n+export function transferMoney(\n+  fromAccount: string,\n+  toAccount: string,\n+  amount: number,\n+) {\n+  // VULNERABLE: No CSRF token validation\n+  return `Transfer $${amount} from ${fromAccount} to ${toAccount}`\n+}\n+\n+// 11. Deserialization Vulnerability (CWE-502)\n+export function processUserData(serializedData: string) {\n+  // VULNERABLE: Deserializing untrusted data\n+  return JSON.parse(serializedData)\n+}\n+\n+// 12. Race Condition (CWE-362)\n+let userBalance = 1000\n+\n+export function withdraw(amount: number) {\n+  // VULNERABLE: Race condition - check and use not atomic\n+  if (userBalance >= amount) {\n+    // Simulate some processing time\n+    setTimeout(() => {\n+      userBalance -= amount\n+    }, 100)\n+    return true\n+  }\n+  return false\n+}"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "def456",
+      "message": "Add security vulnerability test file",
+      "author": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "date": "2024-12-19T10:00:00Z"
+      },
+      "committer": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "date": "2024-12-19T10:00:00Z"
+      },
+      "tree": {
+        "sha": "tree123"
+      },
+      "url": "https://api.github.com/repos/nathanvale/mnemosyne/commits/def456",
+      "comment_count": 0
+    }
+  ],
+  "checkRuns": [],
+  "securityAlerts": [],
+  "metadata": {
+    "fetchedAt": "2024-12-19T10:30:00Z",
+    "totalLinesChanged": 100,
+    "affectedComponents": ["code-review"],
+    "testCoverageImpact": 0,
+    "complexityScore": 12
+  }
+}

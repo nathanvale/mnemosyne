@@ -180,115 +180,15 @@ export class SecurityAnalyzer {
   }
 
   /**
-   * Pattern-based security analysis for common vulnerabilities
+   * Placeholder for pattern-based security analysis
+   * Note: Pattern-based security analysis has been removed in favor of Claude's superior security review
+   * This method is kept for API compatibility but returns empty findings
    */
   private static performPatternAnalysis(
-    files: GitHubFileChange[],
+    _files: GitHubFileChange[],
   ): SecurityFinding[] {
-    const findings: SecurityFinding[] = []
-
-    files.forEach((file) => {
-      if (!file.patch) return
-
-      // SQL Injection patterns
-      const sqlInjectionPatterns = [
-        /query\s*=\s*["'].*\+.*[^"';]/gi, // String concatenation in SQL
-        /execute\s*\(\s*["'].*\+.*[^"';]/gi, // Direct execution with concatenation
-        /["']SELECT.*\+.*[^"';]/gi, // Direct SELECT with concatenation
-        /["']INSERT.*\+.*[^"';]/gi, // Direct INSERT with concatenation
-        /["']UPDATE.*\+.*[^"';]/gi, // Direct UPDATE with concatenation
-        /["']DELETE.*\+.*[^"';]/gi, // Direct DELETE with concatenation
-        /\$\{.*\}.*sql/gi, // Template literal in SQL context
-      ]
-
-      sqlInjectionPatterns.forEach((pattern, index) => {
-        if (file.patch && pattern.test(file.patch)) {
-          findings.push({
-            id: `pattern-sql-injection-${file.filename}-${index}`,
-            title: 'Potential SQL Injection Vulnerability',
-            description:
-              'Direct string concatenation in SQL query detected. Use parameterized queries.',
-            severity: 'high',
-            confidence: 'medium',
-            file: file.filename || 'unknown',
-            line: this.extractLineNumber(file.patch || '', pattern),
-            owaspCategory: 'A03_injection',
-            sansCategory: 'CWE-89',
-            cweCategory: 'CWE-89',
-            cweId: 'CWE-89',
-            exploitability: 'high',
-            impact: 'high',
-            remediation:
-              'Use parameterized queries or prepared statements instead of string concatenation.',
-            source: 'pattern-analysis',
-          })
-        }
-      })
-
-      // XSS patterns
-      const xssPatterns = [
-        /innerHTML\s*=\s*.*\+/gi, // innerHTML with concatenation
-        /dangerouslySetInnerHTML/gi, // React dangerous HTML
-        /document\.write\s*\(/gi, // Direct document.write
-      ]
-
-      xssPatterns.forEach((pattern, index) => {
-        if (file.patch && pattern.test(file.patch)) {
-          findings.push({
-            id: `pattern-xss-${file.filename}-${index}`,
-            title: 'Potential Cross-Site Scripting (XSS) Vulnerability',
-            description:
-              'Unsafe HTML rendering detected. Sanitize user input before rendering.',
-            severity: 'high',
-            confidence: 'medium',
-            file: file.filename || 'unknown',
-            line: this.extractLineNumber(file.patch || '', pattern),
-            owaspCategory: 'A03_injection',
-            sansCategory: 'CWE-79',
-            cweCategory: 'CWE-79',
-            cweId: 'CWE-79',
-            exploitability: 'high',
-            impact: 'medium',
-            remediation: 'Use proper HTML escaping or sanitization libraries.',
-            source: 'pattern-analysis',
-          })
-        }
-      })
-
-      // Hardcoded secrets patterns
-      const secretPatterns = [
-        /password\s*=\s*["'][^"']{8,}["']/gi,
-        /api_key\s*=\s*["'][^"']{16,}["']/gi,
-        /secret\s*=\s*["'][^"']{12,}["']/gi,
-        /token\s*=\s*["'][^"']{20,}["']/gi,
-      ]
-
-      secretPatterns.forEach((pattern, index) => {
-        if (file.patch && pattern.test(file.patch)) {
-          findings.push({
-            id: `pattern-hardcoded-secret-${file.filename}-${index}`,
-            title: 'Hardcoded Secret Detected',
-            description:
-              'Potential hardcoded secret or credential found in source code.',
-            severity: 'critical',
-            confidence: 'medium',
-            file: file.filename || 'unknown',
-            line: this.extractLineNumber(file.patch || '', pattern),
-            owaspCategory: 'A07_identification_authentication_failures',
-            sansCategory: 'CWE-798',
-            cweCategory: 'CWE-798',
-            cweId: 'CWE-798',
-            exploitability: 'critical',
-            impact: 'critical',
-            remediation:
-              'Move secrets to environment variables or secure configuration management.',
-            source: 'pattern-analysis',
-          })
-        }
-      })
-    })
-
-    return findings
+    // Pattern-based security analysis removed - delegated to Claude's /security-review
+    return []
   }
 
   /**

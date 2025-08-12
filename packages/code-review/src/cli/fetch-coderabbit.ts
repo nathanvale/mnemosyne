@@ -4,10 +4,32 @@
  * Fetches CodeRabbit comments from a GitHub PR and extracts structured data
  */
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { parseArgs } from 'node:util'
 
 import { CodeRabbitFinding } from '../types/coderabbit.js'
+
+/**
+ * Validate repository name format
+ */
+function validateRepoName(repo: string): void {
+  if (!/^[a-zA-Z0-9\-_.]+\/[a-zA-Z0-9\-_.]+$/.test(repo)) {
+    throw new Error(
+      `Invalid repository format: ${repo}. Expected format: owner/repo`,
+    )
+  }
+}
+
+/**
+ * Validate PR number
+ */
+function validatePRNumber(prNumber: number): void {
+  if (!Number.isInteger(prNumber) || prNumber <= 0) {
+    throw new Error(
+      `Invalid PR number: ${prNumber}. Must be a positive integer`,
+    )
+  }
+}
 
 interface CodeRabbitComment {
   id: number
@@ -296,19 +318,31 @@ Example:
     process.exit(0)
   }
 
-  const prNumber = values['pr-number'] || values.pr
+  const prNumberStr = values['pr-number'] || values.pr
   const repo = values.repo || values.repository
 
-  if (!prNumber || !repo) {
+  if (!prNumberStr || !repo) {
     console.error('Error: --pr-number and --repo are required')
     console.error('Run with --help for usage information')
     process.exit(1)
   }
 
+  const prNumber = parseInt(prNumberStr as string, 10)
+
   try {
+    validatePRNumber(prNumber)
+    validateRepoName(repo as string)
+
     // Fetch issue comments (summaries/walkthroughs) using gh CLI
-    const issueCommentsCmd = `gh api repos/${repo}/issues/${prNumber}/comments --paginate`
-    const issueOutput = execSync(issueCommentsCmd, { encoding: 'utf-8' })
+    const issueOutput = execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/issues/${prNumber.toString()}/comments`,
+        '--paginate',
+      ],
+      { encoding: 'utf-8' },
+    )
     const issueComments = JSON.parse(issueOutput) as CodeRabbitComment[]
 
     // Filter for CodeRabbit issue comments
@@ -321,8 +355,15 @@ Example:
     // Fetch PR review comments (line-by-line feedback) using gh CLI
     let coderabbitReviewComments: PRReviewComment[] = []
     try {
-      const reviewCommentsCmd = `gh api repos/${repo}/pulls/${prNumber}/comments --paginate`
-      const reviewOutput = execSync(reviewCommentsCmd, { encoding: 'utf-8' })
+      const reviewOutput = execFileSync(
+        'gh',
+        [
+          'api',
+          `repos/${repo}/pulls/${prNumber.toString()}/comments`,
+          '--paginate',
+        ],
+        { encoding: 'utf-8' },
+      )
       const reviewComments = JSON.parse(reviewOutput) as PRReviewComment[]
 
       // Filter for CodeRabbit review comments
@@ -337,8 +378,8 @@ Example:
 
     // Parse CodeRabbit data
     const result: ParsedCodeRabbitData = {
-      prNumber: parseInt(prNumber),
-      repository: repo,
+      prNumber,
+      repository: repo as string,
       fetchedAt: new Date().toISOString(),
       hasCodeRabbitReview:
         coderabbitIssueComments.length > 0 ||
@@ -392,8 +433,8 @@ Example:
     console.error('Error fetching CodeRabbit data:', error)
     // Output empty result on error
     const emptyResult: ParsedCodeRabbitData = {
-      prNumber: parseInt(prNumber),
-      repository: repo,
+      prNumber,
+      repository: repo as string,
       fetchedAt: new Date().toISOString(),
       hasCodeRabbitReview: false,
       issueComments: [],

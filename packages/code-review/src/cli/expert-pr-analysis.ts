@@ -13,7 +13,7 @@ import type { GitHubPRContext } from '../types/github.js'
 
 import { ContextAnalyzer } from '../analysis/context-analyzer.js'
 import { ExpertValidator } from '../analysis/expert-validator.js'
-import { SecurityAnalyzer } from '../analysis/security-analyzer.js'
+import { SecurityDataIntegrator } from '../analysis/security-data-integrator.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
 import { ReportGenerator } from '../reporting/report-generator.js'
 
@@ -95,12 +95,65 @@ export class ExpertPRAnalysis {
     try {
       console.error(`🔍 Starting expert analysis (ID: ${analysisId})`)
 
-      // Phase 1: Multi-framework security analysis using SecurityAnalyzer
-      console.error('📊 Running OWASP/SANS/CWE security analysis...')
-      const securityAudit = SecurityAnalyzer.analyzeSecurityFindings(
-        githubContext,
-        codeRabbitAnalysis,
+      // Phase 1: Claude-enhanced security analysis using SecurityDataIntegrator
+      console.error(
+        '🛡️ Running Claude security analysis with pr-review-synthesizer...',
       )
+      const combinedSecurityData =
+        await SecurityDataIntegrator.combineSecurityData(
+          githubContext,
+          codeRabbitAnalysis,
+        )
+
+      // Create legacy SecurityAuditResults for compatibility
+      const securityAudit = {
+        riskLevel: combinedSecurityData.overallAssessment.riskLevel,
+        totalFindings: combinedSecurityData.overallAssessment.totalFindings,
+        criticalCount:
+          combinedSecurityData.claudeAnalysis.vulnerabilityCount.critical,
+        highCount: combinedSecurityData.claudeAnalysis.vulnerabilityCount.high,
+        mediumCount:
+          combinedSecurityData.claudeAnalysis.vulnerabilityCount.medium,
+        lowCount: combinedSecurityData.claudeAnalysis.vulnerabilityCount.low,
+        findings: combinedSecurityData.claudeAnalysis.findings.map(
+          (finding) => ({
+            id: finding.id,
+            title: finding.title,
+            description: finding.description,
+            severity: finding.severity,
+            confidence:
+              finding.confidence === 'very_high' ? 'high' : finding.confidence,
+            file: finding.location?.file || 'unknown',
+            line: finding.location?.line || 0,
+            remediation:
+              finding.remediation || 'No specific remediation provided',
+            source: 'pattern-analysis' as const, // Map Claude source to expected enum
+            owaspCategory: undefined,
+            sansCategory: undefined,
+            cweCategory: undefined,
+            cweId: finding.cweId,
+            cvssScore: finding.cvssScore,
+            exploitability: undefined,
+            impact: undefined,
+          }),
+        ),
+        owaspCoverage: {
+          coveragePercentage: 0,
+          categoriesFound: 0,
+          totalCategories: 10,
+        },
+        sansCoverage: {
+          coveragePercentage: 0,
+          categoriesFound: 0,
+          totalCategories: 25,
+        },
+        cweCoverage: {
+          coveragePercentage: 0,
+          categoriesFound: 0,
+          totalCategories: 100,
+        },
+        recommendations: combinedSecurityData.overallAssessment.recommendations,
+      }
 
       // Phase 2: Expert validation with confidence scoring
       console.error('🎯 Running expert validation with confidence scoring...')
@@ -190,6 +243,7 @@ export class ExpertPRAnalysis {
         analysisResult,
         expertValidation,
         contextAnalysis,
+        combinedSecurityData, // Use Claude's security analysis
         reportOptions,
       )
 
