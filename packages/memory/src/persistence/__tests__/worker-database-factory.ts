@@ -249,7 +249,24 @@ export class WorkerDatabaseFactory {
 
     // Return existing instance if already created for this worker
     if (this.instances.has(workerId)) {
-      return this.instances.get(workerId)!
+      const existingInstance = this.instances.get(workerId)!
+      // In CI, verify tables exist before returning cached instance
+      if (isCI) {
+        try {
+          // Quick check that tables exist
+          await existingInstance.$queryRaw`SELECT 1 FROM "Memory" LIMIT 1`
+        } catch {
+          // Tables don't exist, recreate database
+          console.log(
+            `  ⚠️ Tables missing for worker ${workerId}, recreating database`,
+          )
+          this.instances.delete(workerId)
+          // Continue with creation below
+        }
+      }
+      if (this.instances.has(workerId)) {
+        return this.instances.get(workerId)!
+      }
     }
 
     // Create worker-specific database file path in a temp directory
