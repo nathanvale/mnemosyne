@@ -3,6 +3,11 @@
  */
 
 /**
+ * Supported LLM provider types
+ */
+export type ProviderType = 'claude' | 'openai'
+
+/**
  * Message role in conversation
  */
 export type MessageRole = 'system' | 'user' | 'assistant'
