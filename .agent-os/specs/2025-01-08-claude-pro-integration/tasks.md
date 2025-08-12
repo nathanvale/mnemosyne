@@ -37,11 +37,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.7 Provider-specific error mapping parity
   - [x] 2.8 All tests green
 
-- [ ] 3. Redaction Module
-  - [ ] 3.1 Redactor interface + implementation (categories)
-  - [ ] 3.2 Redaction tests (counts, placeholder safety)
+- [x] 3. Redaction Module
+  - [x] 3.1 Redactor interface + implementation (categories)
+  - [x] 3.2 Redaction tests (counts, placeholder safety)
   - [ ] 3.3 Integration point before mood scoring
-  - [ ] 3.4 All tests green
+  - [ ] 3.4 All tests green ⚠️ Tests failing - regex patterns need refinement
 
 - [ ] 4. Prompt Builder System
   - [ ] 4.1 Prompt template tests (mood, deltas, truncation)
