@@ -42,7 +42,12 @@
     "check:packages": "pnpm --filter \"@studio/*\" run check",
     "workspace:info": "pnpm list --depth=0",
     "workspace:outdated": "pnpm outdated --recursive",
-    "wallaby:status": "tsx packages/dev-tools/src/bin/wallaby-status.ts"
+    "wallaby:status": "tsx packages/dev-tools/src/bin/wallaby-status.ts",
+    "review:pr": "pnpm --filter @studio/code-review review:pr",
+    "review:fetch-coderabbit": "pnpm --filter @studio/code-review review:fetch-coderabbit",
+    "review:analyze": "pnpm --filter @studio/code-review review:analyze",
+    "review:report": "pnpm --filter @studio/code-review review:report",
+    "review:help": "pnpm --filter @studio/code-review review:help"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",

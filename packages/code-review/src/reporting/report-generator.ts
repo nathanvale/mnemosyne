@@ -366,7 +366,17 @@ export class ReportGenerator {
         if (finding.falsePositive) {
           findings.falsePositives.push(summary)
         } else {
-          findings[finding.severity].push(summary)
+          // Only push to arrays that exist in DetailedFindings interface
+          const severityKey = finding.severity as keyof Pick<
+            DetailedFindings,
+            'critical' | 'high' | 'medium' | 'low'
+          >
+          if (severityKey in findings && Array.isArray(findings[severityKey])) {
+            findings[severityKey].push(summary)
+          } else {
+            // Fallback: treat unknown severities as low
+            findings.low.push(summary)
+          }
         }
       })
 

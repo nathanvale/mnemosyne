@@ -2,8 +2,22 @@ import type { PRMetrics } from '../types/analysis.js'
 import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
 import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
 
-import { CodeRabbitParser } from '../parsers/coderabbit-parser.js'
 import { GitHubParser } from '../parsers/github-parser.js'
+
+/**
+ * Union type for CodeRabbit data - can be either the full analysis or parsed data from fetcher
+ */
+type CodeRabbitInput =
+  | CodeRabbitAnalysis
+  | {
+      findings?: Array<{
+        severity?: string
+        category?: string
+        confidence?: string
+      }>
+      processingMetrics?: { analysisTimeMs?: number }
+      coverage?: { coveragePercentage?: number }
+    }
 
 /**
  * Collects quantitative metrics for PR analysis
@@ -14,7 +28,7 @@ export class PRMetricsCollector {
    */
   static collectMetrics(
     githubContext: GitHubPRContext,
-    codeRabbitAnalysis?: CodeRabbitAnalysis,
+    codeRabbitAnalysis?: CodeRabbitInput,
   ): PRMetrics {
     const { pullRequest, files, commits } = githubContext
 
@@ -110,7 +124,7 @@ export class PRMetricsCollector {
    * Calculate security-related metrics
    */
   private static calculateSecurityMetrics(
-    codeRabbitAnalysis?: CodeRabbitAnalysis,
+    codeRabbitAnalysis?: CodeRabbitInput,
     githubContext?: GitHubPRContext,
   ): {
     issuesFound: number
@@ -121,13 +135,20 @@ export class PRMetricsCollector {
     let criticalCount = 0
     let debtScore = 100 // Start with perfect score
 
-    if (codeRabbitAnalysis) {
-      const securityFindings = CodeRabbitParser.extractSecurityFindings(
-        codeRabbitAnalysis.findings,
+    if (codeRabbitAnalysis && codeRabbitAnalysis.findings) {
+      const findings = codeRabbitAnalysis.findings
+
+      // Count security-related findings
+      const securityFindings = findings.filter(
+        (f: { category?: string; severity?: string }) =>
+          f.category === 'security' ||
+          (f.severity === 'critical' && !f.category),
       )
       issuesFound = securityFindings.length
-      criticalCount = securityFindings.filter(
-        (f) => f.severity === 'critical',
+
+      // Count critical findings
+      criticalCount = findings.filter(
+        (f: { severity?: string }) => f.severity === 'critical',
       ).length
 
       // Calculate debt score based on security issues
@@ -244,7 +265,7 @@ export class PRMetricsCollector {
    * Calculate analysis metrics
    */
   private static calculateAnalysisMetrics(
-    codeRabbitAnalysis?: CodeRabbitAnalysis,
+    codeRabbitAnalysis?: CodeRabbitInput,
   ): {
     timeMs: number
     confidenceScore: number
@@ -258,14 +279,37 @@ export class PRMetricsCollector {
       }
     }
 
-    const confidenceStats = CodeRabbitParser.calculateConfidenceStats(
-      codeRabbitAnalysis.findings,
-    )
+    // Calculate confidence stats from available data
+    let averageConfidence = 0
+    if (codeRabbitAnalysis.findings && codeRabbitAnalysis.findings.length > 0) {
+      // Map confidence strings to numbers (1-5 scale)
+      const confidenceMap: Record<string, number> = {
+        very_low: 1,
+        low: 2,
+        medium: 3,
+        high: 4,
+        very_high: 5,
+      }
+
+      const confidenceValues = codeRabbitAnalysis.findings
+        .map((f: { confidence?: string }) =>
+          f.confidence ? confidenceMap[f.confidence] || 3 : 3,
+        )
+        .filter((v: number) => v > 0)
+
+      averageConfidence =
+        confidenceValues.length > 0
+          ? confidenceValues.reduce(
+              (sum: number, val: number) => sum + val,
+              0,
+            ) / confidenceValues.length
+          : 3.5 // Default medium confidence
+    }
 
     return {
-      timeMs: codeRabbitAnalysis.processingMetrics.analysisTimeMs,
-      confidenceScore: Math.round(confidenceStats.averageConfidence * 20), // Convert 1-5 scale to 0-100
-      coveragePercentage: codeRabbitAnalysis.coverage.coveragePercentage,
+      timeMs: codeRabbitAnalysis.processingMetrics?.analysisTimeMs ?? 0,
+      confidenceScore: Math.round(averageConfidence * 20), // Convert 1-5 scale to 0-100
+      coveragePercentage: codeRabbitAnalysis.coverage?.coveragePercentage ?? 0,
     }
   }
 

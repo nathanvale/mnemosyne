@@ -13,7 +13,16 @@
     "test": "vitest",
     "lint": "eslint src --max-warnings 0",
     "format:check": "prettier --check src",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "review:fetch-coderabbit": "tsx src/cli/fetch-coderabbit.ts",
+    "review:fetch-github": "tsx src/cli/fetch-github-data.ts",
+    "review:analyze": "tsx src/cli/analyze-pr.ts",
+    "review:report": "tsx src/cli/generate-report.ts",
+    "review:expert": "tsx src/cli/expert-pr-analysis.ts",
+    "review:unified": "tsx src/cli/unified-analysis.ts",
+    "review:agent": "tsx src/agent/pr-reviewer-agent.ts",
+    "review:pr": "tsx src/cli/review-pr-complete.ts",
+    "review:help": "echo 'Available commands:\\n  pnpm review:pr --help (complete workflow)\\n  pnpm review:agent --help (PR reviewer agent)\\n  pnpm review:unified --help (unified analysis)\\n  pnpm review:expert --help (expert analysis)\\n  pnpm review:fetch-github --help (GitHub data)\\n  pnpm review:fetch-coderabbit --help\\n  pnpm review:analyze --help\\n  pnpm review:report --help'"
   },
   "dependencies": {
     "zod": "^3.25.74"
