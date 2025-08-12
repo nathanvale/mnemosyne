@@ -43,27 +43,27 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.3 Integration point before mood scoring
   - [x] 3.4 All tests green
 
-- [ ] 4. Prompt Builder System
+- [x] 4. Prompt Builder System
   - [x] 4.1 Prompt template tests (mood, deltas, truncation)
-  - [ ] 4.2 prompt-builder.ts
-  - [ ] 4.3 Mood + delta + salience injection
-  - [ ] 4.4 System + extraction instruction blocks
-  - [ ] 4.5 JSON schema injection (versioned)
-  - [ ] 4.6 Token optimization (salience pruning)
-  - [ ] 4.7 Prompt statistics output
-  - [ ] 4.8 All tests green
+  - [x] 4.2 prompt-builder.ts
+  - [x] 4.3 Mood + delta + salience injection
+  - [x] 4.4 System + extraction instruction blocks
+  - [x] 4.5 JSON schema injection (versioned)
+  - [x] 4.6 Token optimization (salience pruning)
+  - [x] 4.7 Prompt statistics output
+  - [x] 4.8 All tests green
 
-- [ ] 5. Response Parser Implementation
-  - [ ] 5.1 Parser tests (valid/malformed/repair/fallback)
-  - [ ] 5.2 response-parser.ts
-  - [ ] 5.3 Streaming assembly & boundary detection
-  - [ ] 5.4 Schema validation (MemoryLLMResponseSchema plural)
-  - [ ] 5.5 Streaming parser state machine tests
-  - [ ] 5.6 Corrective retry prompt logic
-  - [ ] 5.7 Confidence extraction & normalization
-  - [ ] 5.8 Fallback heuristics if unrecoverable
-  - [ ] 5.9 Adapter support for legacy singular schema
-  - [ ] 5.10 All tests green
+- [x] 5. Response Parser Implementation
+  - [x] 5.1 Parser tests (valid/malformed/repair/fallback)
+  - [x] 5.2 response-parser.ts
+  - [x] 5.3 Streaming assembly & boundary detection
+  - [x] 5.4 Schema validation (MemoryLLMResponseSchema plural)
+  - [x] 5.5 Streaming parser state machine tests
+  - [x] 5.6 Corrective retry prompt logic
+  - [x] 5.7 Confidence extraction & normalization
+  - [x] 5.8 Fallback heuristics if unrecoverable
+  - [x] 5.9 Adapter support for legacy singular schema
+  - [x] 5.10 All tests green
 
 - [ ] 6. Rate Limiting & Queue Management
   - [ ] 6.1 Rate limiter unit tests (burst/window)
