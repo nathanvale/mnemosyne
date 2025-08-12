@@ -15,6 +15,7 @@
       "@studio/mcp": ["./packages/mcp/src"],
       "@studio/validation": ["./packages/validation/src"],
       "@studio/claude-hooks": ["./packages/claude-hooks/src"],
+      "@studio/code-review": ["./packages/code-review/src"],
       "@studio/eslint-config": ["./packages/eslint-config/src"],
       "@studio/typescript-config": ["./packages/typescript-config/src"],
       "@studio/prettier-config": ["./packages/prettier-config"]
@@ -29,6 +30,7 @@
 
     // Level 1: Core schema (no internal deps)
     { "path": "./packages/schema" },
+    { "path": "./packages/code-review" },
 
     // Level 2: Basic services (depend on schema)
     { "path": "./packages/db" },
