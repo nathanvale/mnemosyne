@@ -44,7 +44,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.4 All tests green
 
 - [ ] 4. Prompt Builder System
-  - [ ] 4.1 Prompt template tests (mood, deltas, truncation)
+  - [x] 4.1 Prompt template tests (mood, deltas, truncation)
   - [ ] 4.2 prompt-builder.ts
   - [ ] 4.3 Mood + delta + salience injection
   - [ ] 4.4 System + extraction instruction blocks

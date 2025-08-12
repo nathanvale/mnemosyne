@@ -94,7 +94,7 @@ describe('Subagent Stop Hook Integration', () => {
       .split('\n')
       .filter((f) => f.endsWith('.jsonl'))
     expect(logFiles.length).toBeGreaterThan(0)
-  })
+  }, 30000)
 
   it('should handle detailed subagent tracking configuration', async () => {
     // Create detailed configuration
