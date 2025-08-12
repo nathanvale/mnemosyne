@@ -72,27 +72,50 @@ function parseReviewComment(
   let title = ''
   let description = body
 
-  // Parse emoji indicators
+  // Parse emoji indicators with more accurate severity mapping
   if (body.includes('🛠️') || body.includes('_🛠️ Refactor suggestion_')) {
-    severity = 'medium'
+    severity = 'low' // Refactoring is usually low priority
     category = 'maintainability'
     title = 'Refactor suggestion'
   } else if (body.includes('⚠️') || body.includes('_⚠️ Potential issue_')) {
-    severity = 'high'
+    severity = 'medium' // Potential issues are usually medium, not high
     category = 'bug_risk'
     title = 'Potential issue'
   } else if (body.includes('🔒') || body.includes('Security')) {
-    severity = 'critical'
-    category = 'security'
-    title = 'Security concern'
+    // Check if it's actually about dependencies/versions
+    if (body.match(/dependency|version|package\.json|npm|yarn|pnpm/i)) {
+      severity = 'low' // Dependency updates are low priority
+      category = 'maintainability'
+      title = 'Dependency update'
+    } else if (
+      body.match(/CVE-|CWE-|vulnerability|exploit|injection|XSS|CSRF/i)
+    ) {
+      // Only mark as critical if it mentions specific vulnerabilities
+      severity = 'critical'
+      category = 'security'
+      title = 'Security vulnerability'
+    } else {
+      severity = 'medium' // Most security suggestions are medium, not high
+      category = 'security'
+      title = 'Security concern'
+    }
   } else if (body.includes('⚡') || body.includes('Performance')) {
-    severity = 'high'
+    severity = 'medium' // Performance issues are rarely high priority
     category = 'performance'
     title = 'Performance issue'
   } else if (body.includes('📝') || body.includes('Documentation')) {
     severity = 'low'
     category = 'documentation'
     title = 'Documentation improvement'
+  } else if (body.includes('💡') || body.includes('Suggestion')) {
+    severity = 'low' // General suggestions are low priority
+    category = 'best_practices'
+    title = 'Improvement suggestion'
+  } else {
+    // Default to low severity for unrecognized patterns
+    severity = 'low'
+    category = 'best_practices'
+    title = 'Code review comment'
   }
 
   // Extract the actual suggestion/issue description

@@ -12,6 +12,7 @@ import type {
 } from '../types/coderabbit.js'
 import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
 
+import { getThresholds } from '../config/severity-thresholds.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
 import { SecurityAnalyzer } from './security-analyzer.js'
 
@@ -293,46 +294,74 @@ export class ExpertValidator {
   } {
     const blockingIssues: ExpertValidationResults['blockingIssues'] = []
 
-    // Critical security issues
-    if (securityAudit.criticalCount > 0) {
+    // Use configurable thresholds
+    const thresholds = getThresholds('default')
+
+    // Only block for REAL security vulnerabilities with CVEs or exploitable patterns
+    const realSecurityVulnerabilities = securityAudit.findings.filter(
+      (f) =>
+        f.severity === 'critical' &&
+        (f.cweId || f.cvssScore || f.source === 'github-security-advisory'),
+    )
+
+    if (
+      realSecurityVulnerabilities.length >=
+      thresholds.securityBlock.criticalVulnerabilities
+    ) {
       blockingIssues.push({
         id: 'critical-security-vulnerabilities',
-        title: `${securityAudit.criticalCount} Critical Security Vulnerabilities`,
+        title: `${realSecurityVulnerabilities.length} Critical Security Vulnerabilities`,
         severity: 'critical',
         mustFixBeforeMerge: true,
         reasoning:
-          'Critical security vulnerabilities must be resolved before merge',
+          'Confirmed security vulnerabilities with CVE/CWE identifiers must be resolved',
       })
     }
 
-    // Critical validated findings
-    const criticalValidatedFindings = validatedFindings.filter(
-      (f) => f.validated && f.severity === 'critical',
+    // Only block for validated findings that are actual security risks
+    const criticalSecurityFindings = validatedFindings.filter(
+      (f) =>
+        f.validated &&
+        f.severity === 'critical' &&
+        f.confidence > thresholds.securityBlock.highConfidenceThreshold && // Use configurable threshold
+        f.original.category === 'security', // Check original finding's category
     )
-    if (criticalValidatedFindings.length > 0) {
+
+    if (criticalSecurityFindings.length > 0) {
       blockingIssues.push({
         id: 'critical-validated-findings',
-        title: `${criticalValidatedFindings.length} Critical Validated Issues`,
+        title: `${criticalSecurityFindings.length} High-Confidence Security Issues`,
         severity: 'critical',
         mustFixBeforeMerge: true,
         reasoning:
-          'Expert-validated critical issues require immediate attention',
+          'High-confidence security vulnerabilities require immediate attention',
       })
     }
 
-    // Decision logic
+    // More reasonable decision logic using configurable thresholds
     let overallDecision: AnalysisDecision
     let confidence: number
 
     if (blockingIssues.length > 0) {
+      // Only security_block for real vulnerabilities
       overallDecision = 'security_block'
       confidence = 95
-    } else if (securityAudit.highCount > 3 || metrics.securityDebtScore < 70) {
+    } else if (
+      securityAudit.highCount > thresholds.requestChanges.highSeverityCount ||
+      metrics.securityDebtScore <
+        thresholds.requestChanges.securityDebtScoreMin ||
+      validatedFindings.filter((f) => f.validated && f.severity === 'high')
+        .length > thresholds.requestChanges.validatedHighSeverityCount
+    ) {
       overallDecision = 'request_changes'
       confidence = 85
     } else if (
-      securityAudit.mediumCount > 0 ||
-      metrics.securityDebtScore < 90
+      securityAudit.mediumCount >
+        thresholds.conditionalApproval.mediumSeverityCount ||
+      metrics.securityDebtScore <
+        thresholds.conditionalApproval.securityDebtScoreMin ||
+      validatedFindings.filter((f) => f.validated && f.severity === 'medium')
+        .length > thresholds.conditionalApproval.validatedMediumSeverityCount
     ) {
       overallDecision = 'conditional_approval'
       confidence = 75
