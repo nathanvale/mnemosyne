@@ -1,3 +1,3 @@
-import { library } from '@studio/eslint-config'
+import { libraryConfig } from '@studio/eslint-config/library'
 
-export default [...library]
+export default [...libraryConfig]
