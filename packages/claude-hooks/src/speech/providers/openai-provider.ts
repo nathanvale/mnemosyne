@@ -54,10 +54,10 @@ export class OpenAIProvider extends BaseTTSProvider {
   private tempDir: string
   private lastRequestTime = 0
   private readonly minRequestInterval = 1000 // 1 second between requests (default)
-  private currentRateLimitDelay = 1000 // Adaptive rate limit delay
+  private currentRateLimitDelay = process.env.CI ? 500 : 1000 // Adaptive rate limit delay
   private retryCount = 0
   private readonly maxRetries = 3
-  private readonly retryDelay = 1000 // Start with 1 second delay
+  private readonly retryDelay = process.env.CI ? 500 : 1000 // Faster retries in CI
   private cache: AudioCache
   private debug: boolean
   private logger = createLogger('OpenAI TTS', false)
