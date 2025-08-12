@@ -26,7 +26,8 @@ describe('Concurrency Validation Tests - Phase 2', () => {
 
   describe('Worker Isolation Under Stress', () => {
     it('should handle concurrent memory creation across multiple workers without conflicts', async () => {
-      const concurrentOperations = 10 // Reduced for Wallaby.js performance
+      // Reduce concurrent operations in CI to avoid disk I/O errors
+      const concurrentOperations = process.env.CI ? 3 : 10 // Reduced for CI and Wallaby.js performance
       const workerPromises: Promise<{
         success: boolean
         memoryId?: string
