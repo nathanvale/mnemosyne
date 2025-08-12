@@ -75,10 +75,18 @@ describe('Validation Result Storage - Task 6.5', () => {
   })
 
   afterEach(async () => {
-    // Clean up test data
-    await prisma.validationResult.deleteMany()
-    await prisma.memory.deleteMany()
-    // Cleanup handled by WorkerDatabaseFactory
+    // Clean up test data using raw SQL to handle missing tables gracefully
+    try {
+      await prisma.$executeRaw`DELETE FROM "ValidationResult"`
+    } catch {
+      // Table might not exist, which is fine for cleanup
+    }
+    try {
+      await prisma.$executeRaw`DELETE FROM "Memory"`
+    } catch {
+      // Table might not exist, which is fine for cleanup
+    }
+    // Additional cleanup handled by WorkerDatabaseFactory
   })
 
   describe('Validation Result Storage with Accuracy Monitoring', () => {
