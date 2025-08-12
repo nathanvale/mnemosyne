@@ -108,7 +108,8 @@ export class ContentRedactor implements IContentRedactor {
     /\bsk-[a-zA-Z0-9_-]{20,}|\bsk-ant-api\d{2}-[a-zA-Z0-9]{32}\b/g
   private readonly jwtPattern =
     /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
-  private readonly personNamePattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b/g
+  private readonly personNamePattern =
+    /\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2}\b/g
 
   /**
    * Create a new ContentRedactor instance
@@ -183,7 +184,7 @@ export class ContentRedactor implements IContentRedactor {
       this.personNamePattern,
       (match) => {
         // Skip common words that might be capitalized
-        const commonWords = [
+        const commonWords = new Set([
           'The',
           'This',
           'That',
@@ -214,30 +215,37 @@ export class ContentRedactor implements IContentRedactor {
           'App',
           'Test',
           'Example',
-          'Hi',
-          'Hello',
-          'Thanks',
-          'Contact',
-          'Dr',
-          'Mr',
-          'Ms',
-          'Mrs',
-          'Prof',
-          'Dr.',
-          'Mr.',
-          'Ms.',
-          'Mrs.',
-          'Prof.',
-        ]
+          'System',
+          'Service',
+          'Account',
+          'Email',
+          'Phone',
+          'Message',
+          'Text',
+          'Date',
+          'Time',
+          'Number',
+          'Code',
+          'Name',
+        ])
         const words = match.trim().split(/\s+/)
 
-        // Only skip single words if they're in the common words list
-        if (words.length === 1 && commonWords.includes(words[0])) {
+        // Don't redact single words that are common words
+        if (words.length === 1 && commonWords.has(words[0])) {
           return match
         }
 
-        // For multi-word matches, don't redact if it starts with a common word
-        if (words.length > 1 && commonWords.includes(words[0])) {
+        // If multi-word match starts with common word, only redact the name part
+        if (words.length > 1 && commonWords.has(words[0])) {
+          const namePart = words.slice(1).join(' ')
+          // Only redact if the remaining part looks like a name (capitalized)
+          if (
+            namePart &&
+            /^[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*$/.test(namePart)
+          ) {
+            counts.person_name++
+            return `${words[0]} <PII:PERSON_NAME>`
+          }
           return match
         }
 

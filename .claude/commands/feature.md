@@ -17,7 +17,8 @@ test errors attempt to fix them by first using the wallabyjs mcp server. If it
 is unavailable or returning no errors use vitest to fix them and run `pnpm
 format` followed by `pnpm check` again.
 
-Repeat this until all checks pass, then use the pr-creator sub-agent to create a pull request using gh CLI with the feature branch.
+**DO NOT** stop this process if these quality checks are still failing. Repeat this process until all checks pass, then use the pr-creator sub-agent to create a pull
+request using gh CLI with the feature branch.
 
 Immediately delegate to the devops-manager sub-agent to monitor PR status with 60-second polling intervals.
 
