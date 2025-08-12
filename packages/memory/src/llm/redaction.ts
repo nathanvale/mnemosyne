@@ -105,11 +105,10 @@ export class ContentRedactor implements IContentRedactor {
   private readonly uuidPattern =
     /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
   private readonly apiKeyPattern =
-    /\bsk-[a-zA-Z0-9]{40,52}\b|\bsk-ant-api\d{2}-[a-zA-Z0-9]{32}\b/g
+    /\bsk-[a-zA-Z0-9_-]{20,}|\bsk-ant-api\d{2}-[a-zA-Z0-9]{32}\b/g
   private readonly jwtPattern =
     /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
-  private readonly personNamePattern =
-    /\b[A-Z][a-z]{1,15}\b(?:\s+[A-Z][a-z]{1,15}\b){0,2}/g
+  private readonly personNamePattern = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b/g
 
   /**
    * Create a new ContentRedactor instance
@@ -215,6 +214,10 @@ export class ContentRedactor implements IContentRedactor {
           'App',
           'Test',
           'Example',
+          'Hi',
+          'Hello',
+          'Thanks',
+          'Contact',
           'Dr',
           'Mr',
           'Ms',
@@ -228,13 +231,13 @@ export class ContentRedactor implements IContentRedactor {
         ]
         const words = match.trim().split(/\s+/)
 
-        // Don't redact single common words
+        // Only skip single words if they're in the common words list
         if (words.length === 1 && commonWords.includes(words[0])) {
           return match
         }
 
-        // Don't redact if it starts with a common word
-        if (commonWords.includes(words[0])) {
+        // For multi-word matches, don't redact if it starts with a common word
+        if (words.length > 1 && commonWords.includes(words[0])) {
           return match
         }
 
