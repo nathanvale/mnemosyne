@@ -63,21 +63,22 @@ export class WorkerDatabaseFactory {
       (process.env.TEST_VERBOSE && !process.env.WALLABY_QUIET) || isCI
 
     if (shouldLog) {
-      console.log('🔍 Worker ID Detection (CI:', isCI, '):')
-      console.log('  VITEST_WORKER_ID:', process.env.VITEST_WORKER_ID)
-      console.log('  VITEST_POOL_ID:', process.env.VITEST_POOL_ID)
-      console.log('  WALLABY_WORKER_ID:', process.env.WALLABY_WORKER_ID)
-      console.log('  JEST_WORKER_ID:', process.env.JEST_WORKER_ID)
-      console.log('  process.pid:', process.pid)
-      console.log('  NODE_ENV:', process.env.NODE_ENV)
-      console.log('  CI:', process.env.CI)
+      // Use console.error in test files (it's allowed by ESLint)
+      console.error('🔍 Worker ID Detection (CI:', isCI, '):')
+      console.error('  VITEST_WORKER_ID:', process.env.VITEST_WORKER_ID)
+      console.error('  VITEST_POOL_ID:', process.env.VITEST_POOL_ID)
+      console.error('  WALLABY_WORKER_ID:', process.env.WALLABY_WORKER_ID)
+      console.error('  JEST_WORKER_ID:', process.env.JEST_WORKER_ID)
+      console.error('  process.pid:', process.pid)
+      console.error('  NODE_ENV:', process.env.NODE_ENV)
+      console.error('  CI:', process.env.CI)
 
       // Show all VITEST environment variables for debugging
       const vitestEnvVars = Object.keys(process.env).filter((key) =>
         key.startsWith('VITEST'),
       )
       if (vitestEnvVars.length > 0) {
-        console.log(
+        console.error(
           '  All VITEST env vars:',
           vitestEnvVars.map((key) => `${key}=${process.env[key]}`),
         )
@@ -87,28 +88,29 @@ export class WorkerDatabaseFactory {
     // Vitest worker ID (works with both threads and forks pool)
     if (process.env.VITEST_WORKER_ID) {
       this.workerId = process.env.VITEST_WORKER_ID
-      if (shouldLog) console.log('  ✓ Using VITEST_WORKER_ID:', this.workerId)
+      if (shouldLog) console.error('  ✓ Using VITEST_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
     // Vitest fork pool ID (CI environment with forks pool)
     if (process.env.VITEST_POOL_ID) {
       this.workerId = process.env.VITEST_POOL_ID
-      if (shouldLog) console.log('  ✓ Using VITEST_POOL_ID:', this.workerId)
+      if (shouldLog) console.error('  ✓ Using VITEST_POOL_ID:', this.workerId)
       return this.workerId
     }
 
     // Wallaby.js worker ID
     if (process.env.WALLABY_WORKER_ID) {
       this.workerId = process.env.WALLABY_WORKER_ID
-      if (shouldLog) console.log('  ✓ Using WALLABY_WORKER_ID:', this.workerId)
+      if (shouldLog)
+        console.error('  ✓ Using WALLABY_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
     // Jest worker ID (if needed)
     if (process.env.JEST_WORKER_ID) {
       this.workerId = process.env.JEST_WORKER_ID
-      if (shouldLog) console.log('  ✓ Using JEST_WORKER_ID:', this.workerId)
+      if (shouldLog) console.error('  ✓ Using JEST_WORKER_ID:', this.workerId)
       return this.workerId
     }
 
@@ -118,7 +120,7 @@ export class WorkerDatabaseFactory {
       // In CI, add a timestamp to ensure uniqueness across runs
       this.workerId = `ci-${process.pid}-${Date.now()}`
       if (shouldLog) {
-        console.log(
+        console.error(
           '  ⚠️ CI fallback to process.pid + timestamp as worker ID:',
           this.workerId,
         )
@@ -126,7 +128,10 @@ export class WorkerDatabaseFactory {
     } else {
       this.workerId = process.pid.toString()
       if (shouldLog) {
-        console.log('  ⚠️ Fallback to process.pid as worker ID:', this.workerId)
+        console.error(
+          '  ⚠️ Fallback to process.pid as worker ID:',
+          this.workerId,
+        )
       }
     }
     return this.workerId
@@ -229,19 +234,19 @@ export class WorkerDatabaseFactory {
     const isCI = process.env.CI === 'true'
 
     if (isCI) {
-      console.log('🚀 Creating worker Prisma client in CI environment')
+      console.error('🚀 Creating worker Prisma client in CI environment')
     }
 
     // Check if running in Wallaby.js - use simpler approach to avoid disk I/O errors
     if (process.env.WALLABY_WORKER === 'true') {
-      if (isCI) console.log('  → Using Wallaby client in CI')
+      if (isCI) console.error('  → Using Wallaby client in CI')
       return this.createWallabyPrismaClient()
     }
 
     const workerId = this.getWorkerId()
 
     if (isCI) {
-      console.log(`  → Creating client for worker ${workerId} in CI`)
+      console.error(`  → Creating client for worker ${workerId} in CI`)
     }
 
     // Register cleanup handlers on first use
@@ -255,11 +260,16 @@ export class WorkerDatabaseFactory {
         try {
           // Quick check that tables exist
           await existingInstance.$queryRaw`SELECT 1 FROM "Memory" LIMIT 1`
-        } catch {
+        } catch (error) {
           // Tables don't exist, recreate database
-          console.log(
-            `  ⚠️ Tables missing for worker ${workerId}, recreating database`,
+          console.error(
+            `  ⚠️ Tables missing for worker ${workerId}, recreating database. Error: ${error}`,
           )
+          try {
+            await existingInstance.$disconnect()
+          } catch {
+            // Ignore disconnect errors
+          }
           this.instances.delete(workerId)
           // Continue with creation below
         }
@@ -372,7 +382,7 @@ export class WorkerDatabaseFactory {
     const isCI = process.env.CI === 'true'
 
     if (isCI) {
-      console.log(
+      console.error(
         `🔧 Starting database migration for worker ${workerId} in CI environment`,
       )
     }
@@ -392,7 +402,7 @@ export class WorkerDatabaseFactory {
       await prisma.$queryRaw`PRAGMA foreign_keys = ON`
 
       if (isCI) {
-        console.log(
+        console.error(
           `  ✓ SQLite PRAGMA settings configured for worker ${workerId}`,
         )
       }
@@ -457,7 +467,7 @@ export class WorkerDatabaseFactory {
       `
 
       if (isCI) {
-        console.log(`  ✓ Memory table created for worker ${workerId}`)
+        console.error(`  ✓ Memory table created for worker ${workerId}`)
       }
 
       await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "Memory_contentHash_key" ON "Memory"("contentHash")`
@@ -471,15 +481,15 @@ export class WorkerDatabaseFactory {
       await this.createMoodScoringTables(prisma)
 
       if (isCI) {
-        console.log(`  ✓ Mood scoring tables created for worker ${workerId}`)
+        console.error(`  ✓ Mood scoring tables created for worker ${workerId}`)
       }
 
       // Create clustering tables for tone-tagged memory clustering
       await this.createClusteringTables(prisma)
 
       if (isCI) {
-        console.log(`  ✓ Clustering tables created for worker ${workerId}`)
-        console.log(
+        console.error(`  ✓ Clustering tables created for worker ${workerId}`)
+        console.error(
           `🎉 Database migration completed successfully for worker ${workerId}`,
         )
       }
@@ -998,7 +1008,7 @@ export class WorkerDatabaseFactory {
       }
 
       if (testDbFiles.length > 0 && !process.env.WALLABY_QUIET) {
-        console.log(`Cleaned up ${testDbFiles.length} test database files`)
+        console.error(`Cleaned up ${testDbFiles.length} test database files`)
       }
     } catch (error) {
       if (!process.env.WALLABY_QUIET) {
@@ -1012,6 +1022,8 @@ export class WorkerDatabaseFactory {
    * Preserves the schema but removes all data for test isolation
    */
   static async cleanWorkerData(prisma: PrismaClient): Promise<void> {
+    const isCI = process.env.CI === 'true'
+
     try {
       // Clean up all tables in dependency order (children first, then parents)
       // This order respects foreign key constraints
@@ -1047,6 +1059,27 @@ export class WorkerDatabaseFactory {
       await this.safeDeleteFromTable(prisma, 'Asset')
       await this.safeDeleteFromTable(prisma, 'Link')
       await this.safeDeleteFromTable(prisma, 'Message')
+
+      // In CI environment, ensure tables exist after cleanup
+      // This is necessary because sometimes tables get dropped instead of just cleaned
+      if (isCI) {
+        // Check if Memory table exists
+        const tableExists = await prisma.$queryRaw<Array<{ count: number }>>`
+          SELECT COUNT(*) as count 
+          FROM sqlite_master 
+          WHERE type='table' AND name='Memory'
+        `
+
+        // If Memory table doesn't exist, recreate the schema
+        if (tableExists[0]?.count === 0) {
+          if (isCI) {
+            console.error(
+              '⚠️ Memory table missing after cleanup in CI, recreating schema...',
+            )
+          }
+          await this.migrateWorkerDatabase(prisma)
+        }
+      }
     } catch (error) {
       if (!process.env.WALLABY_QUIET) {
         console.warn(`Error cleaning worker data:`, error)
