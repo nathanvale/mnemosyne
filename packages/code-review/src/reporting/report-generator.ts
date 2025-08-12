@@ -110,8 +110,8 @@ export class ReportGenerator {
       includeTechnicalDetails: true,
       includeRecommendations: true,
       includeArchitecturalInsights: true,
-      maxFindingsDisplayed: 20,
-      confidenceThreshold: 70,
+      maxFindingsDisplayed: 50, // Show more findings by default
+      confidenceThreshold: 50, // Lower threshold to be more inclusive
     },
   ): string {
     const sections: ReportSection[] = []
@@ -331,7 +331,7 @@ export class ReportGenerator {
     analysisResult: PRAnalysisResult,
     expertValidation: ExpertValidationResults,
     maxFindings: number,
-    confidenceThreshold: number,
+    _confidenceThreshold: number,
   ): DetailedFindings {
     const findings: DetailedFindings = {
       critical: [],
@@ -342,10 +342,24 @@ export class ReportGenerator {
       expertFindings: [],
     }
 
-    // Process validated findings
-    expertValidation.validatedFindings
-      .filter((f) => f.confidence >= confidenceThreshold)
-      .slice(0, maxFindings)
+    // Process validated findings - be more inclusive
+    // Sort by severity and confidence to prioritize important findings
+    const sortedFindings = expertValidation.validatedFindings
+      .filter((f) => f.validated && !f.falsePositive) // Only exclude invalidated/false positives
+      .sort((a, b) => {
+        // Priority: critical > high > medium > low
+        const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+        const severityDiff =
+          (severityOrder[b.severity as keyof typeof severityOrder] || 0) -
+          (severityOrder[a.severity as keyof typeof severityOrder] || 0)
+        if (severityDiff !== 0) return severityDiff
+        // Then sort by confidence
+        return b.confidence - a.confidence
+      })
+
+    // Take more findings if they exist, but respect maxFindings
+    sortedFindings
+      .slice(0, Math.max(maxFindings, 50)) // Show at least 50 findings if available
       .forEach((finding) => {
         const summary: FindingSummary = {
           id: finding.original.id,
@@ -541,8 +555,12 @@ ${securityAudit.recommendations.map((rec) => `- ${rec}`).join('\n')}
       // Medium findings
       if (findings.medium.length > 0) {
         content += '### 📋 Medium Priority Issues\n'
-        findings.medium.forEach((finding) => {
-          content += this.formatFindingDetail(finding, '📋')
+        // Show first 10 medium findings expanded, rest collapsed
+        findings.medium.slice(0, 10).forEach((finding) => {
+          content += this.formatFindingDetail(finding, '📋', false)
+        })
+        findings.medium.slice(10).forEach((finding) => {
+          content += this.formatFindingDetail(finding, '📋', true)
         })
       }
 
@@ -554,12 +572,30 @@ ${securityAudit.recommendations.map((rec) => `- ${rec}`).join('\n')}
         })
       }
 
-      // False positives
+      // Low priority findings - show collapsed by default
+      if (findings.low.length > 0) {
+        content += `### 💡 Low Priority Issues (${findings.low.length} total)\n`
+        // Show first 5 low findings, rest hidden
+        findings.low.slice(0, 5).forEach((finding) => {
+          content += this.formatFindingDetail(finding, '💡', true)
+        })
+        if (findings.low.length > 5) {
+          content += `\n<details>\n<summary>➕ Show ${findings.low.length - 5} more low priority issues</summary>\n\n`
+          findings.low.slice(5).forEach((finding) => {
+            content += this.formatFindingDetail(finding, '💡', true)
+          })
+          content += '\n</details>\n\n'
+        }
+      }
+
+      // False positives - show count but collapsed
       if (findings.falsePositives.length > 0) {
-        content += '### ✅ Dismissed (False Positives)\n'
+        content += `### ✅ Dismissed (${findings.falsePositives.length} False Positives)\n`
+        content += '<details>\n<summary>View dismissed findings</summary>\n\n'
         findings.falsePositives.forEach((finding) => {
           content += this.formatFindingDetail(finding, '✅', true)
         })
+        content += '\n</details>\n\n'
       }
 
       return content.trim()

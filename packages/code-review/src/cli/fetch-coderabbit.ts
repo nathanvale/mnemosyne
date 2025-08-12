@@ -72,15 +72,22 @@ function parseReviewComment(
   let title = ''
   let description = body
 
-  // Parse emoji indicators with more accurate severity mapping
+  // Parse emoji indicators - preserve CodeRabbit's original intent more faithfully
   if (body.includes('🛠️') || body.includes('_🛠️ Refactor suggestion_')) {
     severity = 'low' // Refactoring is usually low priority
     category = 'maintainability'
     title = 'Refactor suggestion'
   } else if (body.includes('⚠️') || body.includes('_⚠️ Potential issue_')) {
-    severity = 'medium' // Potential issues are usually medium, not high
-    category = 'bug_risk'
-    title = 'Potential issue'
+    // Keep potential issues at medium/high based on content
+    if (body.match(/incorrect|broken|fail|error|missing|undefined|null/i)) {
+      severity = 'high' // Issues that could cause failures
+      category = 'bug_risk'
+      title = 'Potential bug'
+    } else {
+      severity = 'medium' // Other potential issues
+      category = 'bug_risk'
+      title = 'Potential issue'
+    }
   } else if (body.includes('🔒') || body.includes('Security')) {
     // Check if it's actually about dependencies/versions
     if (body.match(/dependency|version|package\.json|npm|yarn|pnpm/i)) {
@@ -94,13 +101,17 @@ function parseReviewComment(
       severity = 'critical'
       category = 'security'
       title = 'Security vulnerability'
+    } else if (body.match(/password|auth|token|secret|credential/i)) {
+      severity = 'high' // Auth-related issues are high priority
+      category = 'security'
+      title = 'Security issue'
     } else {
-      severity = 'medium' // Most security suggestions are medium, not high
+      severity = 'medium' // Other security suggestions
       category = 'security'
       title = 'Security concern'
     }
   } else if (body.includes('⚡') || body.includes('Performance')) {
-    severity = 'medium' // Performance issues are rarely high priority
+    severity = 'medium' // Performance issues deserve attention
     category = 'performance'
     title = 'Performance issue'
   } else if (body.includes('📝') || body.includes('Documentation')) {
@@ -108,12 +119,19 @@ function parseReviewComment(
     category = 'documentation'
     title = 'Documentation improvement'
   } else if (body.includes('💡') || body.includes('Suggestion')) {
-    severity = 'low' // General suggestions are low priority
-    category = 'best_practices'
-    title = 'Improvement suggestion'
+    // Check if it's a verification or important suggestion
+    if (body.includes('Verification agent') || body.includes('verify')) {
+      severity = 'medium' // Verification suggestions are important
+      category = 'testing'
+      title = 'Verification needed'
+    } else {
+      severity = 'low' // General suggestions are low priority
+      category = 'best_practices'
+      title = 'Improvement suggestion'
+    }
   } else {
-    // Default to low severity for unrecognized patterns
-    severity = 'low'
+    // Default to medium for unrecognized patterns (be conservative)
+    severity = 'medium'
     category = 'best_practices'
     title = 'Code review comment'
   }

@@ -185,19 +185,25 @@ export class ExpertValidator {
     // Severity assessment with business context
     let adjustedSeverity = finding.severity as RiskLevel
     let businessImpact: 'critical' | 'high' | 'medium' | 'low' = 'medium'
-    let isFalsePositive = false
+    const isFalsePositive = false
     let reasoning = `Expert validation: ${finding.title}. `
 
-    // Adjust for test files
+    // Adjust for test files - but don't dismiss them entirely
     if (fileContext.isTestFile) {
-      if (adjustedSeverity === 'critical') adjustedSeverity = 'high'
-      else if (adjustedSeverity === 'high') adjustedSeverity = 'medium'
-      businessImpact = 'low'
-
-      if (finding.category === 'security') {
-        isFalsePositive = true
-        reasoning += 'Security finding in test file likely false positive. '
+      // Only slightly reduce severity for test files, not dramatically
+      if (adjustedSeverity === 'critical' && finding.category !== 'security') {
+        adjustedSeverity = 'high'
+        businessImpact = 'medium'
+      } else if (adjustedSeverity === 'high' && finding.category === 'style') {
+        adjustedSeverity = 'medium'
+        businessImpact = 'low'
+      } else {
+        // Keep original severity for most cases
+        businessImpact = finding.severity === 'critical' ? 'high' : 'medium'
       }
+
+      // Don't automatically mark as false positive - let the finding stand
+      reasoning += 'Finding in test file - still relevant for code quality. '
     }
 
     // Fix complexity estimation
@@ -216,13 +222,16 @@ export class ExpertValidator {
       fixEstimateHours = 4
     }
 
-    // Calculate confidence
-    let confidence = 70
+    // Calculate confidence - be more trusting of CodeRabbit's findings
+    let confidence = 75 // Start higher
     if (finding.confidence === 'very_high') confidence += 20
-    else if (finding.confidence === 'high') confidence += 10
-    else if (finding.confidence === 'low') confidence -= 15
+    else if (finding.confidence === 'high') confidence += 15
+    else if (finding.confidence === 'low') confidence -= 10
 
-    if (fileContext.isTestFile) confidence -= 10
+    // Only slightly reduce confidence for test files
+    if (fileContext.isTestFile && finding.category === 'style') {
+      confidence -= 5 // Minor reduction only for style issues in tests
+    }
 
     reasoning += `Severity adjusted to ${adjustedSeverity} based on business context. `
     reasoning += `Fix complexity: ${fixComplexity}.`
@@ -297,11 +306,16 @@ export class ExpertValidator {
     // Use configurable thresholds
     const thresholds = getThresholds('default')
 
-    // Only block for REAL security vulnerabilities with CVEs or exploitable patterns
+    // Block for critical security vulnerabilities
     const realSecurityVulnerabilities = securityAudit.findings.filter(
       (f) =>
         f.severity === 'critical' &&
-        (f.cweId || f.cvssScore || f.source === 'github-security-advisory'),
+        (f.cweId ||
+          f.cvssScore ||
+          f.source === 'github-security-advisory' ||
+          // Also include high-confidence security findings from CodeRabbit
+          (f.source === 'coderabbit' &&
+            (f.confidence === 'very_high' || f.confidence === 'high'))),
     )
 
     if (
@@ -318,23 +332,49 @@ export class ExpertValidator {
       })
     }
 
-    // Only block for validated findings that are actual security risks
-    const criticalSecurityFindings = validatedFindings.filter(
+    // Block for high-confidence critical findings (not just security)
+    const criticalFindings = validatedFindings.filter(
       (f) =>
         f.validated &&
         f.severity === 'critical' &&
-        f.confidence > thresholds.securityBlock.highConfidenceThreshold && // Use configurable threshold
-        f.original.category === 'security', // Check original finding's category
+        f.confidence > thresholds.securityBlock.highConfidenceThreshold &&
+        // Include security and high-risk bug findings
+        (f.original.category === 'security' ||
+          f.original.category === 'bug_risk' ||
+          // Include any finding that mentions breaking functionality
+          f.original.description?.match(
+            /broken|fail|error|crash|undefined|null reference/i,
+          )),
     )
 
-    if (criticalSecurityFindings.length > 0) {
+    if (criticalFindings.length > 0) {
       blockingIssues.push({
         id: 'critical-validated-findings',
-        title: `${criticalSecurityFindings.length} High-Confidence Security Issues`,
+        title: `${criticalFindings.length} Critical Issues Found`,
         severity: 'critical',
         mustFixBeforeMerge: true,
         reasoning:
-          'High-confidence security vulnerabilities require immediate attention',
+          'Critical issues that could break functionality or introduce security risks',
+      })
+    }
+
+    // Also create warnings for high-severity findings
+    const highSeverityFindings = validatedFindings.filter(
+      (f) =>
+        f.validated &&
+        f.severity === 'high' &&
+        f.confidence > 70 && // Lower threshold for warnings
+        !f.falsePositive,
+    )
+
+    if (highSeverityFindings.length >= 3) {
+      blockingIssues.push({
+        id: 'high-severity-accumulation',
+        title: `${highSeverityFindings.length} High-Severity Issues`,
+        severity: 'high',
+        mustFixBeforeMerge: false, // Warning, not blocking
+        reasoning:
+          'Multiple high-severity issues indicate the PR needs more work',
       })
     }
 
