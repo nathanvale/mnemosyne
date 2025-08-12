@@ -37,7 +37,7 @@ When invoked, you will:
 3. Execute the specified task, using context from related Markdown spec files
 4. Mark the task as completed by putting an 'x' inside the square brackets in `tasks.md`, or mark as not completed by removing the 'x'
 5. Provide status feedback to the user after each operation
-6. Output a summary of actions taken and next steps
+6. Output a summary of actions taken and next steps on each task and subtask completion
 
 ## Operating Principles
 

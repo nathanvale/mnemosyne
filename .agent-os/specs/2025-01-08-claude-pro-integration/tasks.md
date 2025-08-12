@@ -65,16 +65,16 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 5.9 Adapter support for legacy singular schema
   - [x] 5.10 All tests green
 
-- [ ] 6. Rate Limiting & Queue Management
-  - [ ] 6.1 Rate limiter unit tests (burst/window)
-  - [ ] 6.2 rate-limiter.ts (token + request tracking)
-  - [ ] 6.3 Predictive queue projection logic
-  - [ ] 6.4 Queue overflow policy implementation
-  - [ ] 6.5 Exponential backoff implementation (injectable jitter)
-  - [ ] 6.6 Header parsing (Anthropic) + synthetic metrics (OpenAI)
-  - [ ] 6.7 Concurrency & fairness (FIFO) tests
-  - [ ] 6.8 Circuit breaker integration hooks
-  - [ ] 6.9 All tests green
+- [x] 6. Rate Limiting & Queue Management
+  - [x] 6.1 Rate limiter unit tests (burst/window)
+  - [x] 6.2 rate-limiter.ts (token + request tracking)
+  - [x] 6.3 Predictive queue projection logic
+  - [x] 6.4 Queue overflow policy implementation
+  - [x] 6.5 Exponential backoff implementation (injectable jitter)
+  - [x] 6.6 Header parsing (Anthropic) + synthetic metrics (OpenAI)
+  - [x] 6.7 Concurrency & fairness (FIFO) tests
+  - [x] 6.8 Circuit breaker integration hooks
+  - [x] 6.9 All tests green
 
 - [ ] 7. ExtractionLLMProcessor
   - [ ] 7.1 Processor tests (happy path + skip + fallback)

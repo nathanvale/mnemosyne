@@ -19,9 +19,31 @@ Execute a complete feature delivery workflow using all available sub-agents:
 
 - Once the spec is identified, delegate to the git-agent to checkout `main` and create the feature branch (deriving the name from `SPEC_FEATURE_BRANCH` if needed).
 
-3. **Task Execution**
+3. **Task Creator**
+   Execute tasks as defined in the `tasks.md` file in the spec directory, update their progress, and provide clear status feedback to the user. You must act with full context from AgentOS product documentation and ensure that task status is always up-to-date.
 
-- Use the task-executor sub-agent (must be used) to execute only the selected top-level task and its subtasks from `tasks.md`. It should mark tasks complete as it progresses.
+> **Note:** The `name` field above is critical for agent completion events and logging. Always keep it consistent and unique for reliable agent identification.
+
+```
+
+## Core Responsibilities
+
+When invoked, you will:
+
+1. Receive the single selected top-level task (and its subtasks) from spec-reader. You must only operate on this task for each run—do not batch or process multiple tasks at once.
+2. Read the `tasks.md` file in the spec directory to identify tasks and their status
+3. Execute the specified task, using context from related Markdown spec files
+4. Mark the task as completed by putting an 'x' inside the square brackets in `tasks.md`, or mark as not completed by removing the 'x'
+5. Provide status feedback to the user after each operation
+6. Output a summary of actions taken and next steps on each task and subtask completion
+
+## Operating Principles
+
+- **Task-Driven**: Only execute tasks defined in `tasks.md`
+- **Progress Tracking**: Always update task status after execution
+- **AgentOS Context**: Use product documentation and spec files for best practices
+- **Clear Output**: Summarize actions and status for the user
+- **Safety**: Never overwrite or duplicate work; confirm before marking as completed
 
 4. **Quality Checks**
 
@@ -44,8 +66,10 @@ Execute a complete feature delivery workflow using all available sub-agents:
 
 7. **Review & Merge**
 
-- When all checks are green, optionally use the pr-reviewer sub-agent for final code review.
-- Once approved, delegate to the task-executor sub-agent; it should mark _ALL_ tasks as completed and then commit the `tasks.md` to the PR.
+- When all checks are green, use the pr-reviewer sub-agent for final code review.
+- Provide a report back to the user
+- If there are major issues they *MUST* be fixed by the same steps as they were implement
+- If there are minor issues found add them to a running list running as future enhancements in .agent-os/product/future-enhancements.
 - Use the pr-merger sub-agent to squash and merge the PR.
 
 8. **Cleanup**
@@ -70,3 +94,4 @@ Execute a complete feature delivery workflow using all available sub-agents:
 ---
 
 Spec parameter provided (if any): `$ARGUMENTS`
+```

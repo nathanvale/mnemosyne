@@ -334,91 +334,107 @@ describe('OpenAIProvider', () => {
       expect(result.error).toContain('API key')
     })
 
-    it('should retry on 429 rate limit error', async () => {
-      const config: OpenAIConfig = {
-        apiKey: 'test-key',
-      }
+    it(
+      'should retry on 429 rate limit error',
+      async () => {
+        const config: OpenAIConfig = {
+          apiKey: 'test-key',
+        }
 
-      // Fail first 2 times with rate limit, succeed on 3rd
-      mockCreate
-        .mockRejectedValueOnce({
-          status: 429,
-          message: 'Too Many Requests',
-        })
-        .mockRejectedValueOnce({
-          status: 429,
-          message: 'Too Many Requests',
-        })
-        .mockResolvedValueOnce({
-          arrayBuffer: async () => new ArrayBuffer(2),
-        })
+        // Fail first 2 times with rate limit, succeed on 3rd
+        mockCreate
+          .mockRejectedValueOnce({
+            status: 429,
+            message: 'Too Many Requests',
+          })
+          .mockRejectedValueOnce({
+            status: 429,
+            message: 'Too Many Requests',
+          })
+          .mockResolvedValueOnce({
+            arrayBuffer: async () => new ArrayBuffer(2),
+          })
 
-      provider = new OpenAIProvider(config)
-      const result = await provider.speak('Test')
+        provider = new OpenAIProvider(config)
+        const result = await provider.speak('Test')
 
-      expect(result.success).toBe(true)
-      expect(mockCreate).toHaveBeenCalledTimes(3)
-    }, 10000) // Increase timeout for retry tests
+        expect(result.success).toBe(true)
+        expect(mockCreate).toHaveBeenCalledTimes(3)
+      },
+      process.env.CI ? 5000 : 10000,
+    ) // Reduced timeout for CI environment
 
-    it('should retry on 500 server error', async () => {
-      const config: OpenAIConfig = {
-        apiKey: 'test-key',
-      }
+    it(
+      'should retry on 500 server error',
+      async () => {
+        const config: OpenAIConfig = {
+          apiKey: 'test-key',
+        }
 
-      // Fail first time, succeed on retry
-      mockCreate
-        .mockRejectedValueOnce({
-          status: 500,
-          message: 'Internal Server Error',
-        })
-        .mockResolvedValueOnce({
-          arrayBuffer: async () => new ArrayBuffer(2),
-        })
+        // Fail first time, succeed on retry
+        mockCreate
+          .mockRejectedValueOnce({
+            status: 500,
+            message: 'Internal Server Error',
+          })
+          .mockResolvedValueOnce({
+            arrayBuffer: async () => new ArrayBuffer(2),
+          })
 
-      provider = new OpenAIProvider(config)
-      const result = await provider.speak('Test')
+        provider = new OpenAIProvider(config)
+        const result = await provider.speak('Test')
 
-      expect(result.success).toBe(true)
-      expect(mockCreate).toHaveBeenCalledTimes(2)
-    }, 10000)
+        expect(result.success).toBe(true)
+        expect(mockCreate).toHaveBeenCalledTimes(2)
+      },
+      process.env.CI ? 5000 : 10000,
+    )
 
-    it('should fail after max retries', async () => {
-      const config: OpenAIConfig = {
-        apiKey: 'test-key',
-      }
+    it(
+      'should fail after max retries',
+      async () => {
+        const config: OpenAIConfig = {
+          apiKey: 'test-key',
+        }
 
-      // Always fail with retryable error
-      mockCreate.mockRejectedValue({
-        status: 503,
-        message: 'Service Unavailable',
-      })
-
-      provider = new OpenAIProvider(config)
-      const result = await provider.speak('Test')
-
-      expect(result.success).toBe(false)
-      expect(result.error).toContain('Server error')
-      expect(mockCreate).toHaveBeenCalledTimes(4) // 1 initial + 3 retries
-    }, 15000)
-
-    it('should handle network timeout with retry', async () => {
-      const config: OpenAIConfig = {
-        apiKey: 'test-key',
-      }
-
-      // Fail with timeout once, then succeed
-      mockCreate
-        .mockRejectedValueOnce(new Error('ETIMEDOUT'))
-        .mockResolvedValueOnce({
-          arrayBuffer: async () => new ArrayBuffer(2),
+        // Always fail with retryable error
+        mockCreate.mockRejectedValue({
+          status: 503,
+          message: 'Service Unavailable',
         })
 
-      provider = new OpenAIProvider(config)
-      const result = await provider.speak('Test')
+        provider = new OpenAIProvider(config)
+        const result = await provider.speak('Test')
 
-      expect(result.success).toBe(true)
-      expect(mockCreate).toHaveBeenCalledTimes(2)
-    }, 10000)
+        expect(result.success).toBe(false)
+        expect(result.error).toContain('Server error')
+        expect(mockCreate).toHaveBeenCalledTimes(4) // 1 initial + 3 retries
+      },
+      process.env.CI ? 8000 : 15000,
+    )
+
+    it(
+      'should handle network timeout with retry',
+      async () => {
+        const config: OpenAIConfig = {
+          apiKey: 'test-key',
+        }
+
+        // Fail with timeout once, then succeed
+        mockCreate
+          .mockRejectedValueOnce(new Error('ETIMEDOUT'))
+          .mockResolvedValueOnce({
+            arrayBuffer: async () => new ArrayBuffer(2),
+          })
+
+        provider = new OpenAIProvider(config)
+        const result = await provider.speak('Test')
+
+        expect(result.success).toBe(true)
+        expect(mockCreate).toHaveBeenCalledTimes(2)
+      },
+      process.env.CI ? 5000 : 10000,
+    )
   })
 
   describe('Provider Availability', () => {

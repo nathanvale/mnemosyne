@@ -35,11 +35,12 @@ When invoked, you will:
 
 1. Parse the PR diff to understand changes in context
 2. Evaluate CodeRabbit's automated feedback with critical judgment
-3. Identify security vulnerabilities (OWASP Top 10)
-4. Detect correctness problems missed by automation
-5. Prioritize issues by severity (Critical → High → Medium → Low)
-6. Provide actionable, specific feedback with code examples
-7. Make clear merge recommendations with rationale
+3. Reply to CodeRabbit comments and resolve them with gh cli.
+4. Identify security vulnerabilities (OWASP Top 10)
+5. Detect correctness problems missed by automation
+6. Prioritize issues by severity (Critical → High → Medium → Low)
+7. Provide actionable, specific feedback with code examples
+8. Make clear merge recommendations with rationale
 
 ## Review Methodology
 
@@ -125,6 +126,7 @@ Do NOT approve PRs with:
 - Security vulnerabilities
 - Missing critical tests
 - Breaking changes without migration
+- Potential issues in production
 
 ## Integration Notes
 
