@@ -88,6 +88,7 @@ interface CLIOptions {
   'coderabbit-file'?: string
   'include-diff'?: boolean
   output?: string
+  outfile?: string
   help?: boolean
 }
 
@@ -476,6 +477,7 @@ async function main() {
       'coderabbit-file': { type: 'string' },
       'include-diff': { type: 'boolean', default: false },
       output: { type: 'string' },
+      outfile: { type: 'string' },
       help: { type: 'boolean' },
     },
   }) as { values: CLIOptions }
@@ -486,17 +488,25 @@ async function main() {
 Usage: npx tsx analyze-pr.ts --pr-number <number> --repo <owner/repo> [options]
 
 Analyzes a GitHub PR and generates a comprehensive code review.
+Follows Node.js CLI best practices with optional file output.
 
 Options:
   --pr-number, --pr        PR number to analyze
   --repo, --repository     GitHub repository in format owner/repo
   --coderabbit-file        Path to CodeRabbit findings JSON file
   --include-diff           Include full diff in analysis output
-  --output                 Output file (defaults to stdout)
+  --output, --outfile      Save analysis to specified file (optional)
   --help                   Show this help message
 
-Example:
-  npx tsx analyze-pr.ts --pr 139 --repo nathanvale/mnemosyne --coderabbit-file coderabbit.json
+Output:
+  • Always outputs JSON to stdout for processing by tools like Claude Code
+  • Optionally saves to file when --output or --outfile is specified
+  • Progress messages go to stderr (non-interfering)
+
+Examples:
+  npx tsx analyze-pr.ts --pr 139 --repo nathanvale/mnemosyne
+  npx tsx analyze-pr.ts --pr 139 --repo nathanvale/mnemosyne --output analysis.json
+  npx tsx analyze-pr.ts --pr 139 --repo nathanvale/mnemosyne --coderabbit-file findings.json --outfile results.json
 `)
     process.exit(0)
   }
@@ -532,6 +542,9 @@ Example:
     // Perform analysis
     const analysis = analyzePR(metadata, diff, coderabbitFindings)
 
+    // Determine output file path if specified
+    const outputFile = values.output || values.outfile
+
     // Prepare output
     const output = {
       pullRequest: {
@@ -544,21 +557,29 @@ Example:
       analysis,
       timestamp: new Date().toISOString(),
       diff: values['include-diff'] ? diff : undefined,
+      meta: {
+        ...(outputFile && { outputFile }),
+      },
     }
 
     // Output results
     const jsonOutput = JSON.stringify(output, null, 2)
-    if (values.output) {
+
+    // Optional file output (Node.js CLI best practices)
+    if (outputFile) {
       const fs = await import('node:fs')
-      fs.writeFileSync(values.output, jsonOutput)
-      console.error(`Analysis written to ${values.output}`)
-      console.error(
-        `Analyzed PR #${prNumber}: ${analysis.findings.length} findings, risk level: ${analysis.summary.riskLevel}`,
-      )
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(jsonOutput)
+      fs.writeFileSync(outputFile, jsonOutput)
+      console.error(`✓ Analysis written to ${outputFile}`)
     }
+
+    // Analysis summary
+    console.error(
+      `✓ Analyzed PR #${prNumber}: ${analysis.findings.length} findings, risk level: ${analysis.summary.riskLevel}`,
+    )
+
+    // Always output JSON to stdout for processing
+    // eslint-disable-next-line no-console
+    console.log(jsonOutput)
   } catch (error) {
     console.error('Error analyzing PR:', error)
     process.exit(1)

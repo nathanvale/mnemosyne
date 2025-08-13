@@ -60,6 +60,7 @@ pnpm review:fetch-coderabbit --pr <number> --repo <owner/repo> [--output <file>]
 ### 2. analyze-pr
 
 Performs comprehensive PR analysis including security checks and CodeRabbit findings integration.
+Follows Node.js CLI best practices with optional file output.
 
 ```bash
 pnpm review:analyze --pr <number> --repo <owner/repo> [--coderabbit-file <file>] [--output <file>]
@@ -71,8 +72,15 @@ pnpm review:analyze --pr <number> --repo <owner/repo> [--coderabbit-file <file>]
 - `--repo, --repository`: GitHub repository in format `owner/repo`
 - `--coderabbit-file`: Path to CodeRabbit findings JSON file
 - `--include-diff`: Include full diff in analysis output
-- `--output`: Output file path (defaults to stdout)
+- `--output, --outfile`: Save analysis to specified file (optional)
 - `--help`: Show help message
+
+**Output Behavior:**
+
+- Always outputs JSON to stdout for processing by tools like Claude Code
+- Optionally saves to file when `--output` or `--outfile` is specified
+- Progress messages go to stderr (non-interfering)
+- JSON response includes `meta.outputFile` when file output is used
 
 **Analysis includes:**
 
@@ -110,14 +118,17 @@ PR=138 REPO=nathanvale/mnemosyne pnpm review:pr
 ### Step-by-Step Review
 
 ```bash
-# Step 1: Fetch CodeRabbit comments
+# Step 1: Fetch CodeRabbit comments (with optional file output)
 pnpm review:fetch-coderabbit --pr 138 --repo nathanvale/mnemosyne --output /tmp/coderabbit-138.json
 
-# Step 2: Analyze the PR with CodeRabbit data
+# Step 2: Analyze the PR with CodeRabbit data (JSON to stdout + optional file)
 pnpm review:analyze --pr 138 --repo nathanvale/mnemosyne --coderabbit-file /tmp/coderabbit-138.json --output /tmp/analysis-138.json
 
 # Step 3: Generate a formatted report
 pnpm review:report --analysis-file /tmp/analysis-138.json --github-ready
+
+# Alternative: Just get JSON output without saving files
+pnpm review:analyze --pr 138 --repo nathanvale/mnemosyne > analysis.json
 ```
 
 ### Direct Usage from Monorepo Root
@@ -206,6 +217,25 @@ jobs:
           pnpm --filter @studio/code-review review:pr
 ```
 
+### With Claude Code
+
+The CLI tools follow Node.js best practices and are optimized for Claude Code integration:
+
+```bash
+# Claude Code can run commands and get clean JSON from stdout
+pnpm --filter @studio/code-review review:analyze --pr 139 --repo owner/repo
+
+# With optional logging when persistence is needed
+pnpm --filter @studio/code-review review:analyze --pr 139 --repo owner/repo --output analysis.json
+```
+
+**Claude Code Benefits:**
+
+- Clean JSON output to stdout for parsing
+- Progress messages to stderr (non-interfering)
+- Optional file persistence with `--output` flag
+- JSON response includes `meta.outputFile` when files are created
+
 ### With PR Reviewer Agent
 
 The package is designed to work with the PR reviewer agent located at `.claude/agents/pr-reviewer.md`. The agent uses these tools to:
@@ -257,6 +287,7 @@ pnpm build
 - The tools use GitHub API via `gh` CLI
 - Check your rate limit: `gh api rate_limit`
 - Consider using `--output` to cache results between steps
+- Use stdout redirection if you don't need persistent files: `pnpm review:analyze ... > temp.json`
 
 ### "Command not found: tsx"
 
