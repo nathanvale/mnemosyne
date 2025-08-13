@@ -21,8 +21,9 @@
     "review:expert": "tsx src/cli/expert-pr-analysis.ts",
     "review:unified": "tsx src/cli/unified-analysis.ts",
     "review:agent": "tsx src/agent/pr-reviewer-agent.ts",
+    "review:agent-wrapper": "tsx src/cli/agent-wrapper.ts",
     "review:pr": "tsx src/cli/review-pr-complete.ts",
-    "review:help": "echo 'Available commands:\\n  pnpm review:pr --help (complete workflow)\\n  pnpm review:agent --help (PR reviewer agent)\\n  pnpm review:unified --help (unified analysis)\\n  pnpm review:expert --help (expert analysis)\\n  pnpm review:fetch-github --help (GitHub data)\\n  pnpm review:fetch-coderabbit --help\\n  pnpm review:analyze --help\\n  pnpm review:report --help'"
+    "review:help": "echo 'Available commands:\\n  pnpm review:pr --help (complete workflow)\\n  pnpm review:agent --help (PR reviewer agent)\\n  pnpm review:agent-wrapper --help (agent wrapper with logging)\\n  pnpm review:unified --help (unified analysis)\\n  pnpm review:expert --help (expert analysis)\\n  pnpm review:fetch-github --help (GitHub data)\\n  pnpm review:fetch-coderabbit --help\\n  pnpm review:analyze --help\\n  pnpm review:report --help'"
   },
   "dependencies": {
     "zod": "^3.25.74"
