@@ -14,6 +14,19 @@ export enum IssuePriority {
 }
 
 /**
+ * File context for prioritization
+ */
+export interface FileContext {
+  isCore: boolean // Is it in core business logic?
+  isUserFacing: boolean // Does it affect UI/API?
+  isSecurityRelated: boolean
+  isTest: boolean // Is it a test file?
+  hasTests: boolean // Are there tests covering this?
+  changeSize: number // Larger changes = higher risk
+  filePath: string
+}
+
+/**
  * Categorized issue for review reporting
  */
 export interface PrioritizedIssue {
@@ -21,6 +34,10 @@ export interface PrioritizedIssue {
   priority: IssuePriority
   rationale: string
   estimatedEffort?: 'trivial' | 'small' | 'medium' | 'large'
+  severityScore: number // Technical impact score (0-100)
+  priorityScore: number // Business urgency score (0-100)
+  confidenceAdjustment: number // Confidence multiplier (0.0-1.0)
+  finalScore: number // Combined weighted score
 }
 
 /**
@@ -37,6 +54,8 @@ export interface PrioritizationResult {
     suggestionCount: number
     mustFixBeforeMerge: boolean
     recommendedAction: 'approve' | 'conditional_approval' | 'request_changes'
+    averageConfidence: number
+    algorithmVersion: string
   }
 }
 
@@ -44,6 +63,40 @@ export interface PrioritizationResult {
  * Service for prioritizing CodeRabbit findings based on severity, category, and context
  */
 export class IssuePrioritizer {
+  private static readonly ALGORITHM_VERSION = '2.0.0' // Two-dimensional scoring
+
+  // Severity scores (technical impact)
+  private static readonly SEVERITY_SCORES: Record<CodeRabbitSeverity, number> =
+    {
+      critical: 100,
+      high: 80,
+      medium: 50,
+      low: 30,
+      info: 10,
+    }
+
+  // Category weights for priority scoring
+  private static readonly CATEGORY_WEIGHTS: Record<CodeRabbitCategory, number> =
+    {
+      security: 1.5,
+      bug_risk: 1.3,
+      performance: 1.1,
+      maintainability: 0.9,
+      style: 0.7,
+      documentation: 0.6,
+      best_practices: 0.8,
+      accessibility: 1.0,
+      testing: 1.2,
+    }
+
+  // Confidence multipliers
+  private static readonly CONFIDENCE_MULTIPLIERS = {
+    very_high: 1.0,
+    high: 0.9,
+    medium: 0.7,
+    low: 0.5,
+    very_low: 0.3,
+  }
   private static readonly BLOCKING_COMBINATIONS: Array<{
     severity?: CodeRabbitSeverity[]
     category?: CodeRabbitCategory[]
@@ -59,6 +112,54 @@ export class IssuePrioritizer {
     {
       severity: ['high', 'medium'],
       keywords: ['package.json', 'exports', 'runtime error', 'production'],
+    },
+    // Data loss or corruption risks
+    {
+      severity: ['high', 'medium'],
+      keywords: ['data loss', 'data corruption', 'database integrity'],
+    },
+    // Authentication and authorization failures
+    {
+      category: ['security'],
+      keywords: [
+        'authentication bypass',
+        'authorization failure',
+        'privilege escalation',
+      ],
+    },
+    // Memory leaks and performance degradation that affects production
+    {
+      severity: ['high'],
+      category: ['performance'],
+      keywords: ['memory leak', 'infinite loop', 'stack overflow'],
+    },
+    // Breaking API changes
+    {
+      severity: ['high', 'medium'],
+      keywords: [
+        'breaking change',
+        'api compatibility',
+        'backward compatibility',
+      ],
+    },
+    // Critical dependency vulnerabilities
+    {
+      keywords: [
+        'critical vulnerability',
+        'zero-day',
+        'CVE',
+        'security advisory',
+      ],
+    },
+    // Deployment and build failures
+    {
+      severity: ['high', 'medium'],
+      keywords: [
+        'build failure',
+        'deployment error',
+        'compilation error',
+        'syntax error',
+      ],
     },
   ]
 
@@ -90,13 +191,15 @@ export class IssuePrioritizer {
    */
   static prioritizeFindings(
     findings: CodeRabbitFinding[],
+    fileContexts?: Map<string, FileContext>,
   ): PrioritizationResult {
     const blocking: PrioritizedIssue[] = []
     const important: PrioritizedIssue[] = []
     const suggestions: PrioritizedIssue[] = []
 
     for (const finding of findings) {
-      const prioritized = this.prioritizeSingleFinding(finding)
+      const fileContext = fileContexts?.get(finding.location.file)
+      const prioritized = this.prioritizeSingleFinding(finding, fileContext)
 
       switch (prioritized.priority) {
         case IssuePriority.Blocking:
@@ -111,10 +214,13 @@ export class IssuePrioritizer {
       }
     }
 
-    // Sort within each category by severity and confidence
-    blocking.sort(this.compareFindings)
-    important.sort(this.compareFindings)
-    suggestions.sort(this.compareFindings)
+    // Sort within each category by final score
+    const sortByFinalScore = (a: PrioritizedIssue, b: PrioritizedIssue) =>
+      b.finalScore - a.finalScore
+
+    blocking.sort(sortByFinalScore)
+    important.sort(sortByFinalScore)
+    suggestions.sort(sortByFinalScore)
 
     const mustFixBeforeMerge = blocking.length > 0
     const hasImportantIssues = important.length > 0
@@ -131,6 +237,16 @@ export class IssuePrioritizer {
       recommendedAction = 'approve'
     }
 
+    // Calculate average confidence
+    const allIssues = [...blocking, ...important, ...suggestions]
+    const averageConfidence =
+      allIssues.length > 0
+        ? allIssues.reduce(
+            (sum, issue) => sum + issue.confidenceAdjustment,
+            0,
+          ) / allIssues.length
+        : 0
+
     return {
       blocking,
       important,
@@ -142,43 +258,130 @@ export class IssuePrioritizer {
         suggestionCount: suggestions.length,
         mustFixBeforeMerge,
         recommendedAction,
+        averageConfidence,
+        algorithmVersion: this.ALGORITHM_VERSION,
       },
     }
   }
 
   /**
-   * Prioritize a single finding
+   * Prioritize a single finding with two-dimensional scoring
    */
   private static prioritizeSingleFinding(
     finding: CodeRabbitFinding,
+    fileContext?: FileContext,
   ): PrioritizedIssue {
-    // Check if it's a blocking issue
-    if (this.matchesCriteria(finding, this.BLOCKING_COMBINATIONS)) {
-      return {
-        finding,
-        priority: IssuePriority.Blocking,
-        rationale: this.getBlockingRationale(finding),
-        estimatedEffort: this.estimateEffort(finding),
-      }
+    // Calculate base scores
+    const severityScore = this.calculateSeverityScore(finding)
+    const priorityScore = this.calculatePriorityScore(finding, fileContext)
+    const confidenceAdjustment = this.CONFIDENCE_MULTIPLIERS[finding.confidence]
+
+    // Calculate final weighted score
+    const finalScore =
+      (severityScore * 0.6 + priorityScore * 0.4) * confidenceAdjustment
+
+    // Determine priority based on final score and patterns
+    let priority: IssuePriority
+    let rationale: string
+
+    // Check blocking patterns first (override score-based decision)
+    if (
+      this.matchesCriteria(finding, this.BLOCKING_COMBINATIONS) ||
+      finalScore >= 85
+    ) {
+      priority = IssuePriority.Blocking
+      rationale = this.getBlockingRationale(finding)
+    } else if (
+      this.matchesCriteria(finding, this.IMPORTANT_COMBINATIONS) ||
+      finalScore >= 60
+    ) {
+      priority = IssuePriority.Important
+      rationale = this.getImportantRationale(finding)
+    } else {
+      priority = IssuePriority.Suggestion
+      rationale = 'Nice-to-have improvement for code quality'
     }
 
-    // Check if it's an important issue
-    if (this.matchesCriteria(finding, this.IMPORTANT_COMBINATIONS)) {
-      return {
-        finding,
-        priority: IssuePriority.Important,
-        rationale: this.getImportantRationale(finding),
-        estimatedEffort: this.estimateEffort(finding),
-      }
-    }
-
-    // Everything else is a suggestion
     return {
       finding,
-      priority: IssuePriority.Suggestion,
-      rationale: 'Nice-to-have improvement for code quality',
+      priority,
+      rationale,
       estimatedEffort: this.estimateEffort(finding),
+      severityScore,
+      priorityScore,
+      confidenceAdjustment,
+      finalScore,
     }
+  }
+
+  /**
+   * Calculate severity score (technical impact)
+   */
+  private static calculateSeverityScore(finding: CodeRabbitFinding): number {
+    let score = this.SEVERITY_SCORES[finding.severity]
+
+    // Boost score for specific technical impacts
+    if (finding.description.toLowerCase().includes('runtime error')) {
+      score = Math.min(100, score * 1.3)
+    }
+    if (finding.description.toLowerCase().includes('data loss')) {
+      score = Math.min(100, score * 1.2)
+    }
+    if (finding.description.toLowerCase().includes('crash')) {
+      score = Math.min(100, score * 1.2)
+    }
+
+    return score
+  }
+
+  /**
+   * Calculate priority score (business urgency)
+   */
+  private static calculatePriorityScore(
+    finding: CodeRabbitFinding,
+    fileContext?: FileContext,
+  ): number {
+    let score = 50 // Base priority
+
+    // Apply category weight
+    const categoryWeight = this.CATEGORY_WEIGHTS[finding.category] || 1.0
+    score = score * categoryWeight
+
+    // Apply file context modifiers if available
+    if (fileContext) {
+      if (fileContext.isCore) score *= 1.3
+      if (fileContext.isUserFacing) score *= 1.2
+      if (fileContext.isSecurityRelated) score *= 1.5
+      if (fileContext.isTest) score *= 0.5 // Lower priority for test files
+      if (!fileContext.hasTests) score *= 1.1 // Higher priority if no tests
+
+      // Adjust based on change size
+      if (fileContext.changeSize > 500) score *= 1.2 // Large changes = higher risk
+    }
+
+    // Check for critical keywords that increase priority
+    const criticalKeywords = [
+      'production',
+      'security',
+      'authentication',
+      'authorization',
+      'payment',
+      'user data',
+      'privacy',
+      'compliance',
+    ]
+
+    const description = finding.description.toLowerCase()
+    const title = finding.title.toLowerCase()
+
+    for (const keyword of criticalKeywords) {
+      if (description.includes(keyword) || title.includes(keyword)) {
+        score *= 1.2
+        break
+      }
+    }
+
+    return Math.min(100, score) // Cap at 100
   }
 
   /**

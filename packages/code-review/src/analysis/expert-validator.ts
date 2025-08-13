@@ -10,10 +10,12 @@ import type {
   CodeRabbitFinding,
 } from '../types/coderabbit.js'
 import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
+import type { FileContext } from './issue-prioritizer.js'
 
 import { getThresholds } from '../config/severity-thresholds.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
 import { CodeRabbitParser } from '../parsers/coderabbit-parser.js'
+import { FileContextAnalyzer } from './file-context-analyzer.js'
 
 /**
  * Expert validation categories for comprehensive code review
@@ -70,16 +72,6 @@ export interface ExpertValidationResults {
     shortTerm: string[]
     longTerm: string[]
   }
-}
-
-/**
- * File context analysis result
- */
-interface FileContext {
-  fileType?: string
-  isTestFile: boolean
-  isConfigFile: boolean
-  changeSize: number
 }
 
 /**
@@ -185,8 +177,8 @@ export class ExpertValidator {
     const isFalsePositive = false
     let reasoning = `Expert validation: ${finding.title}. `
 
-    // Adjust for test files - but don't dismiss them entirely
-    if (fileContext.isTestFile) {
+    // Adjust severity based on file context
+    if (fileContext.isTest) {
       // Only slightly reduce severity for test files, not dramatically
       if (adjustedSeverity === 'critical' && finding.category !== 'security') {
         adjustedSeverity = 'high'
@@ -198,9 +190,21 @@ export class ExpertValidator {
         // Keep original severity for most cases
         businessImpact = finding.severity === 'critical' ? 'high' : 'medium'
       }
-
-      // Don't automatically mark as false positive - let the finding stand
       reasoning += 'Finding in test file - still relevant for code quality. '
+    } else if (fileContext.isCore) {
+      // Increase severity for core business logic
+      if (adjustedSeverity === 'medium') {
+        adjustedSeverity = 'high'
+        businessImpact = 'high'
+      }
+      reasoning += 'Core business logic file - increased priority. '
+    } else if (fileContext.isSecurityRelated) {
+      // Always high priority for security-related files
+      if (adjustedSeverity === 'low' || adjustedSeverity === 'medium') {
+        adjustedSeverity = 'high'
+        businessImpact = 'high'
+      }
+      reasoning += 'Security-related file - elevated priority. '
     }
 
     // Fix complexity estimation
@@ -225,15 +229,17 @@ export class ExpertValidator {
     else if (finding.confidence === 'high') confidence += 15
     else if (finding.confidence === 'low') confidence -= 10
 
-    // Only slightly reduce confidence for test files
-    if (fileContext.isTestFile && finding.category === 'style') {
+    // Adjust confidence based on file context
+    if (fileContext.isTest && finding.category === 'style') {
       confidence -= 5 // Minor reduction only for style issues in tests
+    } else if (fileContext.isCore || fileContext.isSecurityRelated) {
+      confidence += 10 // Increase confidence for critical files
     }
 
     reasoning += `Severity adjusted to ${adjustedSeverity} based on business context. `
     reasoning += `Fix complexity: ${fixComplexity}.`
 
-    const enhancedContext = `File type: ${fileContext.fileType || 'unknown'}, Change size: ${fileContext.changeSize} lines`
+    const enhancedContext = `File: ${fileContext.filePath}, Core: ${fileContext.isCore}, Security: ${fileContext.isSecurityRelated}, User-facing: ${fileContext.isUserFacing}, Change size: ${fileContext.changeSize} lines`
 
     return {
       isValid: !isFalsePositive,
@@ -256,16 +262,19 @@ export class ExpertValidator {
     files: GitHubFileChange[],
   ): FileContext {
     const file = files.find((f) => f.filename === finding.location.file)
-    return {
-      fileType: file?.filename.split('.').pop(),
-      isTestFile: Boolean(
-        file?.filename.includes('.test.') || file?.filename.includes('.spec.'),
-      ),
-      isConfigFile: Boolean(
-        file?.filename.includes('config') || file?.filename.includes('.json'),
-      ),
-      changeSize: file ? file.additions + file.deletions : 0,
+    if (!file) {
+      // Return a minimal context if file not found
+      return {
+        filePath: finding.location.file,
+        isCore: false,
+        isUserFacing: false,
+        isSecurityRelated: false,
+        isTest: false,
+        hasTests: false,
+        changeSize: 0,
+      }
     }
+    return FileContextAnalyzer.analyzeFile(file)
   }
 
   /**
