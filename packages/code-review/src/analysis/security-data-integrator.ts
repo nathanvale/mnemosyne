@@ -77,6 +77,101 @@ function initializeTaskFunction(): TaskFunction {
 const Task: TaskFunction = initializeTaskFunction()
 
 /**
+ * Task execution context for logging
+ */
+interface TaskExecutionContext {
+  prNumber?: number
+  repository?: string
+  analysisId?: string
+  source?: 'claude-sub-agent' | 'coderabbit' | 'github' | 'expert-analysis'
+}
+
+/**
+ * Enhanced Task execution with automatic log capture
+ * Solves the agent isolation issue by intercepting all Task tool responses
+ */
+async function executeTaskWithLogging(
+  taskOptions: {
+    subagent_type: string
+    description: string
+    prompt: string
+  },
+  context: TaskExecutionContext = {},
+): Promise<string> {
+  console.warn(
+    `🤖 Executing ${taskOptions.subagent_type} with automatic log capture...`,
+  )
+  console.warn(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
+
+  try {
+    // Execute the Task tool
+    const result = await Task(taskOptions)
+
+    // Ensure we have a string response
+    const response =
+      typeof result === 'string' ? result : JSON.stringify(result)
+
+    console.warn(
+      `✅ ${taskOptions.subagent_type} response received (${response.length} characters)`,
+    )
+
+    // Automatically save the response with enhanced metadata
+    const analysisId =
+      context.analysisId ||
+      `auto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    try {
+      const logPath = await LogManager.saveSubAgentResponse(
+        response,
+        taskOptions.prompt,
+        {
+          timestamp: new Date().toISOString(),
+          prNumber: context.prNumber,
+          repository: context.repository,
+          analysisId,
+          source: context.source || 'claude-sub-agent',
+          format: 'json',
+        },
+      )
+
+      console.warn(
+        `📁 Response automatically saved to: ${logPath.replace(process.cwd(), '.')}`,
+      )
+      console.warn(`🔍 Analysis ID: ${analysisId}`)
+    } catch (logError) {
+      console.error('❌ Failed to save sub-agent response to logs:', logError)
+      // Continue even if logging fails - don't block the analysis
+    }
+
+    return response
+  } catch (error) {
+    console.error(`❌ Error executing ${taskOptions.subagent_type}:`, error)
+
+    // Log the error attempt as well
+    const errorResponse = JSON.stringify({
+      error: String(error),
+      taskType: taskOptions.subagent_type,
+      timestamp: new Date().toISOString(),
+    })
+
+    try {
+      await LogManager.saveSubAgentResponse(errorResponse, taskOptions.prompt, {
+        timestamp: new Date().toISOString(),
+        prNumber: context.prNumber,
+        repository: context.repository,
+        analysisId: `error-${Date.now()}`,
+        source: 'claude-sub-agent',
+        format: 'json',
+      })
+    } catch (logError) {
+      console.warn('Failed to log error response:', logError)
+    }
+
+    throw error
+  }
+}
+
+/**
  * GitHub security alert structure
  */
 interface GitHubSecurityAlert {
@@ -294,38 +389,28 @@ Please start by running the \`/security-review\` command on the provided code ch
     prompt: string,
     githubContext?: GitHubPRContext,
   ): Promise<string> {
-    console.warn('Launching Claude pr-review-synthesizer sub-agent...')
-    console.warn('Prompt length:', prompt.length)
+    console.warn('🚀 Launching Claude pr-review-synthesizer sub-agent...')
 
     try {
-      // Use the Task tool to launch Claude's pr-review-synthesizer sub-agent
-      const result = await Task({
-        subagent_type: 'pr-review-synthesizer',
-        description: 'Security review analysis',
-        prompt,
-      })
-
-      console.warn('Sub-agent response received:', typeof result)
-
-      // The Task tool returns the sub-agent's analysis as a string
-      const response =
-        typeof result === 'string' ? result : JSON.stringify(result)
-
-      // Save the sub-agent response for debugging
-      try {
-        await LogManager.saveSubAgentResponse(response, prompt, {
+      // Use the enhanced Task executor with automatic log capture
+      const response = await executeTaskWithLogging(
+        {
+          subagent_type: 'pr-review-synthesizer',
+          description: 'Security review analysis',
+          prompt,
+        },
+        {
           prNumber: githubContext?.pullRequest?.number,
           repository: githubContext?.pullRequest?.base?.repo?.full_name,
-          analysisId: `claude-${Date.now()}`,
-        })
-      } catch (logError) {
-        console.warn('Failed to save sub-agent response to logs:', logError)
-        // Continue even if logging fails
-      }
+          analysisId: `claude-security-${Date.now()}`,
+          source: 'claude-sub-agent',
+        },
+      )
 
+      console.warn('✅ Security sub-agent analysis completed successfully')
       return response
     } catch (error) {
-      console.error('Error launching security sub-agent:', error)
+      console.error('❌ Error in security sub-agent analysis:', error)
 
       // Return error state analysis
       return JSON.stringify({
