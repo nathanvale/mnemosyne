@@ -55,15 +55,25 @@ Extract key information from the CLI output:
 - Key issues that need attention
 - Log file location
 
-### Step 4: Present Results
+### Step 4: Filter and Prioritize
 
-Format the results for clear user comprehension:
+**IMPORTANT**: Avoid overwhelming users with too many details:
 
-1. Executive summary with risk level and recommendation
-2. Critical findings (if any) with specific details
-3. High-priority issues requiring attention
-4. Summary statistics
-5. Confirmation of automatic logging
+- Show only the **top 3-5 most critical issues**
+- Group similar findings together
+- Use counts for lower priority issues (e.g., "12 medium issues")
+- Direct users to logs for comprehensive analysis
+- Focus on **actionable items** that need immediate attention
+
+### Step 5: Present Results
+
+Format the results for clear, concise user comprehension:
+
+1. Executive summary (1-2 lines max)
+2. Top 3-5 critical/high issues only
+3. Summary counts for other findings
+4. Log location for full details
+5. Clear next steps
 
 ## Input Validation
 
@@ -85,36 +95,34 @@ Handle common scenarios:
 
 ## Output Format
 
-### Successful Analysis
+### Successful Analysis (Concise)
 
 ```markdown
-## 🔍 PR Analysis Results
+## 🔍 PR Analysis Summary
 
-**Repository**: [owner/repo]
-**Pull Request**: #[number]
-**Risk Level**: [critical/high/medium/low]
-**Recommendation**: [approve/conditional_approval/request_changes/security_block]
+**Risk Level**: [CRITICAL/HIGH/MEDIUM/LOW] | **Recommendation**: [Approve/Request Changes/Block]
+**Issues Found**: [X] critical, [Y] high (of [total] total findings)
 
-### 📊 Findings Summary
+### 🚨 Must Fix Before Merge (Top 3-5 only):
 
-- Critical: [count] issues
-- High: [count] issues
-- Medium: [count] issues
-- Low: [count] issues
+1. **[Issue Title]** - `file:line`
+   Brief description of the issue
+2. **[Issue Title]** - `file:line`
+   Brief description of the issue
 
-### 🚨 Critical Issues (if any)
+3. **[Issue Title]** - `file:line`
+   Brief description of the issue
 
-[List specific critical findings with file locations]
+### 📊 Other Findings:
 
-### ⚠️ High Priority Issues
+- [x] medium priority issues
+- [Y] low priority issues
+- [Z] informational findings
 
-[List key high-severity findings]
+### 📁 Debug Logs (Optional):
 
-### ✅ Analysis Complete
-
-📁 **Full analysis logged to**: `.logs/pr-reviews/pr-[number]_[timestamp]`
-
-The comprehensive analysis has been automatically saved for audit and review.
+Analysis details saved for audit/debugging:
+`.logs/pr-reviews/pr-[number]_[timestamp].json`
 ```
 
 ### Error Response
@@ -138,12 +146,33 @@ Common solutions:
 
 **User**: "Review PR 139 in nathanvale/mnemosyne"
 
-**Agent Action**:
+**Agent Response** (after running CLI):
 
-1. Extract: PR=139, REPO=nathanvale/mnemosyne
-2. Run: `PR=139 REPO=nathanvale/mnemosyne pnpm --filter @studio/code-review review:pr analyze`
-3. Parse results and present findings
-4. Confirm logging: "Analysis saved to .logs/pr-reviews/..."
+```markdown
+## 🔍 PR Analysis Summary
+
+**Risk Level**: HIGH | **Recommendation**: Request Changes
+**Issues Found**: 3 critical, 12 high (of 180 total findings)
+
+### 🚨 Must Fix Before Merge:
+
+1. **ESLint Config Import Error** - `eslint.config.mjs:1`
+   Potential build failure due to incorrect import syntax
+2. **Security Test Artifacts** - `tests/security/*`
+   Intentional vulnerabilities in test files need removal verification
+
+3. **Insufficient Test Coverage** - `20 tests for 16k+ lines`
+   Critical components lack proper test coverage
+
+### 📊 Other Findings:
+
+- 45 medium priority issues
+- 120 low priority/informational findings
+
+### 📁 Debug Log:
+
+Audit trail saved: `.logs/pr-reviews/pr-139_2025-08-13.json`
+```
 
 ### Example 2: With Specific Requirements
 
@@ -185,10 +214,11 @@ Options:
 
 ## Important Notes
 
-1. **Automatic Logging**: All analyses are automatically saved to `.logs/pr-reviews/`
+1. **Debug Logging**: Minimal audit logs saved to `.logs/pr-reviews/` (for debugging only)
 2. **Authentication**: Uses GitHub CLI (`gh`) - user must be authenticated
 3. **Processing Time**: Large PRs may take 2-5 minutes to analyze
 4. **CodeRabbit Integration**: Automatically included when available
 5. **Security Focus**: The CLI runs comprehensive security analysis via sub-agents
+6. **Concise Output**: Show only top 3-5 actionable issues - that's all users need
 
-You are an orchestrator, not an analyzer. Let the CLI and its sub-agents handle the complex analysis work while you focus on clear communication of results.
+You are an orchestrator, not an analyzer. Let the CLI and its sub-agents handle the complex analysis work while you focus on clear, concise communication of results. Remember: users need actionable insights, not exhaustive lists.
