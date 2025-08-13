@@ -301,26 +301,47 @@ export class WorkerDatabaseFactory {
           : ['error'],
     })
 
-    try {
-      // Connect to the database
-      await prisma.$connect()
+    // In CI, add retry logic for database connection
+    const maxRetries = isCI ? 3 : 1
+    let lastError: unknown = null
 
-      // Run migrations to set up the schema for this worker's database
-      await this.migrateWorkerDatabase(prisma)
-
-      // Cache the instance for this worker
-      this.instances.set(workerId, prisma)
-
-      return prisma
-    } catch (error) {
-      // If connection fails, ensure we don't cache a broken instance
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        await prisma.$disconnect()
-      } catch {
-        // Ignore disconnect errors if connection never succeeded
+        // Connect to the database
+        await prisma.$connect()
+
+        // Run migrations to set up the schema for this worker's database
+        await this.migrateWorkerDatabase(prisma)
+
+        // Cache the instance for this worker
+        this.instances.set(workerId, prisma)
+
+        return prisma
+      } catch (error) {
+        lastError = error
+        if (isCI && attempt < maxRetries) {
+          console.error(
+            `  ⚠️ Database connection attempt ${attempt} failed, retrying...`,
+          )
+          // Wait a bit before retrying
+          await new Promise((resolve) => setTimeout(resolve, 100 * attempt))
+          // Try to disconnect if partially connected
+          try {
+            await prisma.$disconnect()
+          } catch {
+            // Ignore disconnect errors
+          }
+        }
       }
-      throw error
     }
+
+    // All retries failed
+    try {
+      await prisma.$disconnect()
+    } catch {
+      // Ignore disconnect errors if connection never succeeded
+    }
+    throw lastError
   }
 
   /**

@@ -20,7 +20,8 @@ export default defineConfig({
           pool: 'forks',
           poolOptions: {
             forks: {
-              maxForks: 2, // Use 2 workers in CI (GitHub Actions has 4 vCPUs)
+              maxForks: 1, // Use single worker in CI to avoid SQLite locking issues
+              singleFork: true, // Force sequential execution in CI
             },
           },
         }
