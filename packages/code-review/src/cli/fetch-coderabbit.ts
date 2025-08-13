@@ -341,7 +341,10 @@ Example:
         `repos/${repo}/issues/${prNumber.toString()}/comments`,
         '--paginate',
       ],
-      { encoding: 'utf-8' },
+      {
+        encoding: 'utf-8',
+        maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large PRs with many comments
+      },
     )
     const issueComments = JSON.parse(issueOutput) as CodeRabbitComment[]
 
@@ -362,7 +365,10 @@ Example:
           `repos/${repo}/pulls/${prNumber.toString()}/comments`,
           '--paginate',
         ],
-        { encoding: 'utf-8' },
+        {
+          encoding: 'utf-8',
+          maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large PRs with many comments
+        },
       )
       const reviewComments = JSON.parse(reviewOutput) as PRReviewComment[]
 

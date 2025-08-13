@@ -3,6 +3,7 @@
  * Saves reports to .logs directory for debugging and audit purposes
  */
 
+import { existsSync, readFileSync } from 'fs'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
@@ -30,9 +31,35 @@ export class LogManager {
 
   /**
    * Get the project root directory (where .logs should be created)
+   * This method traverses up the directory tree to find the monorepo root
+   * by looking for the root package.json with name "mnemosyne"
    */
   private static getProjectRoot(): string {
-    // Go up from src/utils to packages/code-review, then to monorepo root
+    // Start from current working directory or __dirname
+    let currentDir = process.cwd()
+
+    // Traverse up to find monorepo root (has package.json with name "mnemosyne")
+    while (currentDir !== path.dirname(currentDir)) {
+      const packageJsonPath = path.join(currentDir, 'package.json')
+
+      if (existsSync(packageJsonPath)) {
+        try {
+          const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+          if (packageJson.name === 'mnemosyne') {
+            // Found the monorepo root
+            return currentDir
+          }
+        } catch {
+          // Not a valid package.json, continue searching
+        }
+      }
+
+      // Move up one directory
+      currentDir = path.dirname(currentDir)
+    }
+
+    // Fallback: if we can't find the monorepo root, use the old logic
+    // This ensures backward compatibility but should rarely be hit
     const packageRoot = path.resolve(__dirname, '..', '..')
     const monorepoRoot = path.resolve(packageRoot, '..', '..')
     return monorepoRoot
