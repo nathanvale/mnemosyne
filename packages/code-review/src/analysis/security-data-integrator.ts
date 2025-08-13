@@ -8,6 +8,8 @@
 import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
 import type { GitHubPRContext } from '../types/github.js'
 
+import { LogManager } from '../utils/log-manager.js'
+
 // Define Task interface for type safety
 interface TaskFunction {
   (options: {
@@ -187,7 +189,10 @@ Please start by running the \`/security-review\` command on the provided code ch
 `
 
       // Launch Claude's pr-review-synthesizer sub-agent via Task tool
-      const subAgentResult = await this.launchSecuritySubAgent(subAgentPrompt)
+      const subAgentResult = await this.launchSecuritySubAgent(
+        subAgentPrompt,
+        githubContext,
+      )
 
       // Parse and structure the sub-agent's response
       const parsedAnalysis = this.parseSubAgentResponse(subAgentResult)
@@ -248,7 +253,10 @@ Please start by running the \`/security-review\` command on the provided code ch
   /**
    * Launch Claude's pr-review-synthesizer sub-agent via Task tool
    */
-  private static async launchSecuritySubAgent(prompt: string): Promise<string> {
+  private static async launchSecuritySubAgent(
+    prompt: string,
+    githubContext?: GitHubPRContext,
+  ): Promise<string> {
     console.warn('Launching Claude pr-review-synthesizer sub-agent...')
     console.warn('Prompt length:', prompt.length)
 
@@ -263,7 +271,22 @@ Please start by running the \`/security-review\` command on the provided code ch
       console.warn('Sub-agent response received:', typeof result)
 
       // The Task tool returns the sub-agent's analysis as a string
-      return typeof result === 'string' ? result : JSON.stringify(result)
+      const response =
+        typeof result === 'string' ? result : JSON.stringify(result)
+
+      // Save the sub-agent response for debugging
+      try {
+        await LogManager.saveSubAgentResponse(response, prompt, {
+          prNumber: githubContext?.pullRequest?.number,
+          repository: githubContext?.pullRequest?.base?.repo?.full_name,
+          analysisId: `claude-${Date.now()}`,
+        })
+      } catch (logError) {
+        console.warn('Failed to save sub-agent response to logs:', logError)
+        // Continue even if logging fails
+      }
+
+      return response
     } catch (error) {
       console.error('Error launching security sub-agent:', error)
 

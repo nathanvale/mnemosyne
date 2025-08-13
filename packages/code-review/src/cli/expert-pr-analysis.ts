@@ -16,6 +16,7 @@ import { ExpertValidator } from '../analysis/expert-validator.js'
 import { SecurityDataIntegrator } from '../analysis/security-data-integrator.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
 import { ReportGenerator } from '../reporting/report-generator.js'
+import { LogManager } from '../utils/log-manager.js'
 
 /**
  * Expert analysis configuration
@@ -246,6 +247,21 @@ export class ExpertPRAnalysis {
         combinedSecurityData, // Use Claude's security analysis
         reportOptions,
       )
+
+      // Save the expert analysis report to logs
+      try {
+        await LogManager.savePRAnalysisReport(report, {
+          timestamp: analysisResult.analysisTimestamp,
+          prNumber: githubContext.pullRequest.number,
+          repository: githubContext.pullRequest.base.repo.full_name,
+          analysisId,
+          source: 'expert-analysis',
+          format: this.config.outputFormat === 'json' ? 'json' : 'markdown',
+        })
+      } catch (logError) {
+        console.warn('Failed to save analysis report to logs:', logError)
+        // Continue even if logging fails
+      }
 
       console.error('✅ Expert analysis completed successfully')
 
