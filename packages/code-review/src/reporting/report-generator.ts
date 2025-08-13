@@ -4,6 +4,7 @@ import type {
   ArchitecturalInsight,
 } from '../analysis/context-analyzer.js'
 import type { ExpertValidationResults } from '../analysis/expert-validator.js'
+import type { PrioritizedIssue } from '../analysis/issue-prioritizer.js'
 import type { CombinedSecurityData } from '../analysis/security-data-integrator.js'
 import type {
   PRAnalysisResult,
@@ -147,6 +148,21 @@ export class ReportGenerator {
         priority: 2,
         required: false,
         content: this.formatTechnicalSummary(technicalSummary, options.format),
+      })
+    }
+
+    // Generate prioritized issues section (CodeRabbit findings)
+    if (analysisResult.prioritizedIssues) {
+      sections.push({
+        id: 'prioritized-issues',
+        title: 'Prioritized Issues from CodeRabbit',
+        emoji: '🎯',
+        priority: 3,
+        required: true,
+        content: this.formatPrioritizedIssues(
+          analysisResult.prioritizedIssues,
+          options.format,
+        ),
       })
     }
 
@@ -504,6 +520,81 @@ ${summary.architecturalConcerns.map((concern) => `- ${concern}`).join('\n')}
     }
 
     return JSON.stringify(summary, null, 2)
+  }
+
+  /**
+   * Format prioritized issues from CodeRabbit
+   */
+  private static formatPrioritizedIssues(
+    prioritizedIssues: {
+      blocking: PrioritizedIssue[]
+      important: PrioritizedIssue[]
+      suggestions: PrioritizedIssue[]
+    },
+    format: ReportOptions['format'],
+  ): string {
+    if (format === 'markdown' || format === 'github_comment') {
+      const sections: string[] = []
+
+      // Blocking issues
+      if (prioritizedIssues.blocking.length > 0) {
+        sections.push(`### 🚨 Blocking Issues (Must Fix Before Merge)
+        
+${prioritizedIssues.blocking
+  .map(
+    (issue, idx) => `
+**${idx + 1}. ${issue.finding.title}**
+- **Severity:** ${issue.finding.severity.toUpperCase()}
+- **Category:** ${issue.finding.category}
+- **Location:** ${issue.finding.location.file}:${issue.finding.location.startLine}
+- **Rationale:** ${issue.rationale}
+- **Description:** ${issue.finding.description}
+${issue.finding.suggestedFix ? `- **Fix Available:** ✅ ${issue.finding.suggestedFix.description}` : ''}
+`,
+  )
+  .join('\n')}`)
+      }
+
+      // Important issues
+      if (prioritizedIssues.important.length > 0) {
+        sections.push(`### ⚠️ Important Issues (Should Fix)
+        
+${prioritizedIssues.important
+  .map(
+    (issue, idx) => `
+**${idx + 1}. ${issue.finding.title}**
+- **Severity:** ${issue.finding.severity}
+- **Category:** ${issue.finding.category}
+- **Location:** ${issue.finding.location.file}:${issue.finding.location.startLine}
+- **Rationale:** ${issue.rationale}
+`,
+  )
+  .join('\n')}`)
+      }
+
+      // Suggestions
+      if (prioritizedIssues.suggestions.length > 0) {
+        sections.push(`### 💡 Suggestions (Nice to Have)
+        
+**${prioritizedIssues.suggestions.length} suggestion(s)** for code quality improvements.`)
+      }
+
+      // Summary
+      const totalIssues =
+        prioritizedIssues.blocking.length +
+        prioritizedIssues.important.length +
+        prioritizedIssues.suggestions.length
+
+      return `## 🎯 Prioritized CodeRabbit Issues
+
+**Total Issues:** ${totalIssues}
+**Blocking:** ${prioritizedIssues.blocking.length} | **Important:** ${prioritizedIssues.important.length} | **Suggestions:** ${prioritizedIssues.suggestions.length}
+
+${sections.join('\n\n')}
+`
+    }
+
+    return JSON.stringify(prioritizedIssues, null, 2)
   }
 
   /**

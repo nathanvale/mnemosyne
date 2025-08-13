@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import type { PrioritizedIssue } from '../analysis/issue-prioritizer.js'
 import type { CodeRabbitFinding, CodeRabbitAnalysis } from './coderabbit.js'
 import type { GitHubPRContext } from './github.js'
 
@@ -241,6 +242,15 @@ export const PRAnalysisResult = z.object({
   // Context data
   githubContext: z.custom<GitHubPRContext>(),
   codeRabbitAnalysis: z.custom<CodeRabbitAnalysis>().optional(),
+
+  // Prioritized issues from CodeRabbit
+  prioritizedIssues: z
+    .object({
+      blocking: z.array(z.custom<PrioritizedIssue>()),
+      important: z.array(z.custom<PrioritizedIssue>()),
+      suggestions: z.array(z.custom<PrioritizedIssue>()),
+    })
+    .optional(),
 
   // Expert analysis
   validatedFindings: z.array(ValidatedFinding),

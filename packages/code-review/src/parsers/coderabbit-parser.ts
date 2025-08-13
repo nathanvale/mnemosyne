@@ -1,4 +1,8 @@
 import {
+  IssuePrioritizer,
+  type PrioritizationResult,
+} from '../analysis/issue-prioritizer.js'
+import {
   CodeRabbitAPIResponse,
   CodeRabbitAnalysis,
   CodeRabbitFinding,
@@ -175,5 +179,23 @@ export class CodeRabbitParser {
       byCategory,
       securityCount: this.extractSecurityFindings(findings).length,
     }
+  }
+
+  /**
+   * Prioritize findings based on severity, category, and impact
+   * This method maps CodeRabbit findings to blocking/important/suggestion categories
+   */
+  static prioritizeFindings(
+    findings: CodeRabbitFinding[],
+  ): PrioritizationResult {
+    return IssuePrioritizer.prioritizeFindings(findings)
+  }
+
+  /**
+   * Generate a prioritization report for findings
+   */
+  static generatePrioritizationReport(findings: CodeRabbitFinding[]): string {
+    const prioritization = this.prioritizeFindings(findings)
+    return IssuePrioritizer.generatePrioritizationReport(prioritization)
   }
 }

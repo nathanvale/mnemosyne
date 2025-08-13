@@ -13,6 +13,7 @@ import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
 
 import { getThresholds } from '../config/severity-thresholds.js'
 import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
+import { CodeRabbitParser } from '../parsers/coderabbit-parser.js'
 
 /**
  * Expert validation categories for comprehensive code review
@@ -113,7 +114,11 @@ export class ExpertValidator {
 
     // Phase 6: Final decision and recommendations
     const { overallDecision, confidence, blockingIssues } =
-      this.calculateOverallDecision(metrics, validatedFindings)
+      this.calculateOverallDecision(
+        metrics,
+        validatedFindings,
+        codeRabbitAnalysis?.findings,
+      )
 
     const recommendations = this.generateExpertRecommendations(
       metrics,
@@ -287,6 +292,7 @@ export class ExpertValidator {
   private static calculateOverallDecision(
     metrics: PRMetrics,
     validatedFindings: ValidatedFinding[],
+    codeRabbitFindings?: CodeRabbitFinding[],
   ): {
     overallDecision: AnalysisDecision
     confidence: number
@@ -297,10 +303,47 @@ export class ExpertValidator {
     // Use configurable thresholds
     const thresholds = getThresholds('default')
 
+    // CRITICAL: Use CodeRabbitParser to properly prioritize ALL findings
+    // This ensures we catch important functional issues, not just security
+    if (codeRabbitFindings && codeRabbitFindings.length > 0) {
+      const prioritizedIssues =
+        CodeRabbitParser.prioritizeFindings(codeRabbitFindings)
+
+      // Add blocking issues from CodeRabbit prioritization
+      if (prioritizedIssues.blocking.length > 0) {
+        prioritizedIssues.blocking.forEach((issue) => {
+          blockingIssues.push({
+            id: `coderabbit-blocking-${issue.finding.id}`,
+            title: issue.finding.title,
+            severity:
+              issue.finding.severity === 'critical'
+                ? 'critical'
+                : issue.finding.severity === 'high'
+                  ? 'high'
+                  : 'medium',
+            mustFixBeforeMerge: true,
+            reasoning: issue.rationale,
+          })
+        })
+      }
+
+      // Add important issues as warnings (not blocking but should be fixed)
+      if (prioritizedIssues.important.length > 0) {
+        blockingIssues.push({
+          id: 'coderabbit-important-issues',
+          title: `${prioritizedIssues.important.length} Important Issues to Address`,
+          severity: 'medium',
+          mustFixBeforeMerge: false,
+          reasoning:
+            'Important issues that should be fixed before merge for code quality',
+        })
+      }
+    }
+
     // Note: Security analysis now delegated to Claude's /security-review
     // This method focuses on non-security validation and CodeRabbit findings
 
-    // Block for high-confidence critical findings (not just security)
+    // Also check validated findings for critical security issues
     const criticalFindings = validatedFindings.filter(
       (f) =>
         f.validated &&
@@ -318,7 +361,7 @@ export class ExpertValidator {
     if (criticalFindings.length > 0) {
       blockingIssues.push({
         id: 'critical-validated-findings',
-        title: `${criticalFindings.length} Critical Issues Found`,
+        title: `${criticalFindings.length} Critical Security/Bug Issues Found`,
         severity: 'critical',
         mustFixBeforeMerge: true,
         reasoning:
@@ -326,34 +369,34 @@ export class ExpertValidator {
       })
     }
 
-    // Also create warnings for high-severity findings
-    const highSeverityFindings = validatedFindings.filter(
-      (f) =>
-        f.validated &&
-        f.severity === 'high' &&
-        f.confidence > 70 && // Lower threshold for warnings
-        !f.falsePositive,
+    // Determine if we have actual blocking issues that must be fixed
+    const hasBlockingIssues = blockingIssues.some(
+      (issue) => issue.mustFixBeforeMerge,
+    )
+    const hasImportantIssues = blockingIssues.some(
+      (issue) => !issue.mustFixBeforeMerge,
     )
 
-    if (highSeverityFindings.length >= 3) {
-      blockingIssues.push({
-        id: 'high-severity-accumulation',
-        title: `${highSeverityFindings.length} High-Severity Issues`,
-        severity: 'high',
-        mustFixBeforeMerge: false, // Warning, not blocking
-        reasoning:
-          'Multiple high-severity issues indicate the PR needs more work',
-      })
-    }
-
-    // More reasonable decision logic using configurable thresholds
+    // More reasonable decision logic based on prioritized issues
     let overallDecision: AnalysisDecision
     let confidence: number
 
-    if (blockingIssues.length > 0) {
-      // Only security_block for real vulnerabilities
-      overallDecision = 'security_block'
+    if (hasBlockingIssues) {
+      // Check if it's security-related for security_block, otherwise request_changes
+      const hasSecurityBlocking = blockingIssues.some(
+        (issue) =>
+          issue.severity === 'critical' &&
+          (issue.id.includes('security') ||
+            issue.reasoning.includes('security')),
+      )
+      overallDecision = hasSecurityBlocking
+        ? 'security_block'
+        : 'request_changes'
       confidence = 95
+    } else if (hasImportantIssues) {
+      // Important issues present but not blocking
+      overallDecision = 'conditional_approval'
+      confidence = 85
     } else if (
       metrics.securityDebtScore <
         thresholds.requestChanges.securityDebtScoreMin ||
