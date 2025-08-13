@@ -36,8 +36,45 @@ const mockTask: TaskFunction = async (_options) => {
   })
 }
 
-// Use the mock Task function (in Claude Code environment, this would be replaced)
-const Task: TaskFunction = mockTask
+/**
+ * Dynamic Task tool detection and initialization
+ * Checks if Task tool is available in the current environment (Claude Code vs CLI)
+ */
+function initializeTaskFunction(): TaskFunction {
+  try {
+    // Check if we're in Claude Code environment with Task tool available
+    // The Task tool is available as a global in Claude Code environment
+    const globalScope = globalThis as unknown as { Task?: TaskFunction }
+
+    // Try to access Task from global scope (Claude Code environment)
+    if (typeof globalScope.Task === 'function') {
+      console.warn(
+        '✅ Real Task tool detected - using pr-review-synthesizer agent',
+      )
+      return globalScope.Task
+    }
+
+    // Check if Task is available through other means
+    // This is a fallback detection method for different environments
+    try {
+      // Use dynamic import or other detection methods if needed
+      // For now, we'll rely on the global scope check above
+    } catch {
+      // Ignore errors from additional detection attempts
+    }
+
+    // Fallback to mock for CLI environments
+    console.warn('⚠️ Task tool not available - using mock fallback')
+    return mockTask
+  } catch (error) {
+    // If there's any error in detection, safely fall back to mock
+    console.warn('⚠️ Task tool detection failed - using mock fallback:', error)
+    return mockTask
+  }
+}
+
+// Initialize Task function with dynamic detection
+const Task: TaskFunction = initializeTaskFunction()
 
 /**
  * GitHub security alert structure
