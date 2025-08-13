@@ -9,6 +9,11 @@
 import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 
+import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
+import type { GitHubPRContext } from '../types/github.js'
+
+import { ExpertPRAnalysis } from './expert-pr-analysis.js'
+
 /**
  * Analysis orchestrator configuration
  */
@@ -73,6 +78,8 @@ export interface AnalysisSummary {
     securityScore: number
     testCoverageDelta: number
   }
+  logPath?: string
+  fullReport?: string
 }
 
 /**
@@ -82,6 +89,8 @@ export interface AnalysisSummary {
 export class UnifiedAnalysisOrchestrator {
   private config: UnifiedAnalysisConfig
   private tempFiles: string[] = []
+  private logPath?: string
+  private fullReport?: string
 
   constructor(config: Partial<UnifiedAnalysisConfig> = {}) {
     this.config = {
@@ -241,30 +250,54 @@ export class UnifiedAnalysisOrchestrator {
   ): Promise<string> {
     const outputFile = `pr-${this.config.prNumber}-analysis-result.json`
 
-    const command = [
-      'pnpm --filter @studio/code-review review:expert',
-      githubDataFile,
-      codeRabbitDataFile ? `--coderabbit-file ${codeRabbitDataFile}` : '',
-      '--confidence-threshold',
-      this.config.confidenceThreshold.toString(),
-      '--max-findings',
-      this.config.maxFindings.toString(),
-      '--output-format',
-      this.config.outputFormat,
-    ]
-      .filter(Boolean)
-      .join(' ')
+    this.log(`🔄 Running expert analysis...`)
 
-    this.log(`🔄 Running: ${command}`)
+    // Load the GitHub context and CodeRabbit analysis
+    const githubContext: GitHubPRContext = JSON.parse(
+      readFileSync(githubDataFile, 'utf-8'),
+    )
 
-    // Capture both stdout and stderr
-    const result = execSync(command, { encoding: 'utf-8' })
+    let codeRabbitAnalysis: CodeRabbitAnalysis | undefined
+    if (codeRabbitDataFile && existsSync(codeRabbitDataFile)) {
+      codeRabbitAnalysis = JSON.parse(readFileSync(codeRabbitDataFile, 'utf-8'))
+    }
+
+    // Create and run the expert analysis directly
+    const expertAnalysis = new ExpertPRAnalysis({
+      confidenceThreshold: this.config.confidenceThreshold,
+      maxFindings: this.config.maxFindings,
+      outputFormat: this.config.outputFormat,
+      includeMetrics: true,
+      enableOWASP: true,
+      enableSANS: true,
+      enableCWE: true,
+      enableExpertFindings: true,
+    })
+
+    const result = await expertAnalysis.analyzeComprehensive(
+      githubContext,
+      codeRabbitAnalysis,
+    )
 
     // Save the analysis result to a file for summary generation
-    writeFileSync(outputFile, result)
+    writeFileSync(outputFile, JSON.stringify(result, null, 2))
     this.tempFiles.push(outputFile)
 
+    // Store the log path if available
+    if (result.metadata?.log_path) {
+      this.logPath = result.metadata.log_path
+    }
+
+    // Store the full report content
+    if (result.content && result.content[0] && result.content[0].text) {
+      this.fullReport = result.content[0].text
+    }
+
     this.log(`✅ Expert analysis completed, result saved to: ${outputFile}`)
+    if (this.logPath) {
+      this.log(`📁 Analysis logs saved to: ${this.logPath}`)
+    }
+
     return outputFile
   }
 
@@ -336,6 +369,8 @@ export class UnifiedAnalysisOrchestrator {
           testCoverageDelta: metadata.metrics.test_coverage_delta || 0,
         },
       }),
+      ...(this.logPath && { logPath: this.logPath }),
+      ...(this.fullReport && { fullReport: this.fullReport }),
     }
   }
 

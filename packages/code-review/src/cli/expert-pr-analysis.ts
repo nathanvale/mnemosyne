@@ -61,6 +61,7 @@ interface StructuredResponse {
       security_score: number
       test_coverage_delta: number
     }
+    log_path?: string
   }
 }
 
@@ -249,8 +250,9 @@ export class ExpertPRAnalysis {
       )
 
       // Save the expert analysis report to logs
+      let logPath: string | undefined
       try {
-        await LogManager.savePRAnalysisReport(report, {
+        logPath = await LogManager.savePRAnalysisReport(report, {
           timestamp: analysisResult.analysisTimestamp,
           prNumber: githubContext.pullRequest.number,
           repository: githubContext.pullRequest.base.repo.full_name,
@@ -298,6 +300,7 @@ export class ExpertPRAnalysis {
               test_coverage_delta: metrics.testCoverageDelta,
             },
           }),
+          ...(logPath && { log_path: logPath }),
         },
       }
     } catch (error) {
