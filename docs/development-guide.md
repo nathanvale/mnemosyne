@@ -1,4 +1,4 @@
-# CLAUDE_DEVELOPMENT.md
+# Development Guide
 
 > **Prompt Cache Directive**: This content is cacheable for development workflows
 > Cache Control: `{"type": "ephemeral"}`

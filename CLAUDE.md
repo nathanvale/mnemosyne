@@ -1,210 +1,258 @@
 # CLAUDE.md
 
 > **Prompt Cache Directive**: Core project context - cacheable for all development workflows
-> Cache Control: `{"type": "ephemeral"}`
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
+> Performance Optimization: High-priority content optimized for token efficiency
 
-This file provides essential guidance to Claude Code (claude.ai/code) when working with this repository. For detailed workflows, see the specialized instruction modules.
+This file provides essential guidance to Claude Code (claude.ai/code) when working with this repository. Structured for maximum performance and team collaboration through intelligent caching and modular architecture.
+
+## 🔧 Tool Configuration & Permissions
+
+### MCP Servers
+
+- **Wallaby.js** - Primary testing integration via mcp**wallaby**\*
+- **Context7** - Documentation access via mcp**context7**\*
+- **Tavily** - Web search capabilities via mcp**tavily-mcp**\*
+- **Firecrawl** - Web scraping via mcp**mcp-server-firecrawl**\*
+
+### Allowed Tools Policy
+
+Use `/permissions` command to manage tool allowlist. Critical tools:
+
+- Wallaby.js tools (priority 1 - never disable)
+- File system tools (Read, Edit, Write, Glob, LS)
+- Git operations (Bash for git commands)
+- Build tools (Bash for pnpm/turbo commands)
 
 ## Project Overview
 
 Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides message management and logging capabilities. It imports, stores, and analyzes messages with a comprehensive dual logging system spanning Node.js and browser environments.
 
-## Commands
+## ⚡ Commands (High-Priority Cache)
 
-### Development
+> **Cache Directive**: Most-accessed content - cache aggressively
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
 
-- `pnpm dev` - Start development server (Next.js app)
-- `pnpm build` - Build all packages and applications via Turbo
-- `pnpm type-check` - TypeScript type checking across all packages
-- `pnpm lint` - ESLint with import sorting across all packages
-- `pnpm format` - Prettier formatting across all packages
-- `pnpm check` - Comprehensive quality check (format, lint, type-check, test) across all packages
+### 🎯 Essential Commands (80% usage)
 
-### Testing
+- `pnpm check` - **Most important** - Quality check (format, lint, type-check, test)
+- `pnpm dev` - Start development server
+- `pnpm build` - Build all packages via Turbo
+- `pnpm db:reset` - Reset database
 
-**🔴 CRITICAL: ALWAYS USE WALLABY.JS FIRST - NO EXCEPTIONS 🔴**
+### 🧪 Testing Workflow - MANDATORY WALLABY.JS FIRST
 
-**Quick Testing Rules:**
+**Protocol (NEVER deviate):**
 
-1. **ALWAYS try Wallaby first** - Use `mcp__wallaby__wallaby_failingTests`
-2. **5-second rule** - If no response, Wallaby is OFF
-3. **Alert user immediately** - "Wallaby.js is not running. Please start it in VS Code"
-4. **NEVER skip to Vitest** - Always give user chance to start Wallaby first
+1. **ALWAYS** try Wallaby first: `mcp__wallaby__wallaby_failingTests`
+2. **5-second timeout** - If no response, Wallaby is OFF
+3. **Alert immediately**: "Wallaby.js is not running. Please start it in VS Code"
+4. **NEVER skip to Vitest** - Always give user chance to start Wallaby
 
-**For comprehensive testing guidance**: @CLAUDE_TESTING.md
+### 📚 Extended Documentation
 
-**Fallback Commands:**
+- **Complete commands**: @docs/commands-reference.md
+- **Testing workflows**: @docs/testing-guide.md
+- **Build troubleshooting**: @docs/turborepo-guide.md
 
-- `pnpm test` - Run Vitest unit tests (fallback only)
-- `pnpm test:ci` - Run tests in CI mode (fallback only)
+## 🏗️ Architecture (Core Context)
 
-### Package-Specific Commands
+> **Cache Directive**: Architectural decisions - stable content
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
 
-- `pnpm --filter @studio/logger test` - Run tests for specific package
-- `pnpm --filter @studio/ui build` - Build specific package
-- `pnpm --filter "@studio/*" build` - Build all @studio packages
+### 🔧 Tech Stack (Decision Log)
 
-### Data Management
+- **Turborepo** - Monorepo + intelligent caching (performance-first)
+- **Next.js 15** - App Router + React 19 (modern patterns)
+- **Prisma ORM** - SQLite + schema management (@studio/db)
+- **TypeScript** - Strict mode + project references (quality-first)
+- **Tailwind CSS** - Utility-first styling
+- **pnpm** - Fast package manager + workspaces
 
-- `pnpm db:reset` - Reset Prisma database via @studio/db package
-- `pnpm import:messages` - Import messages from CSV files via @studio/scripts
+### ⚠️ ES Modules Architecture (CRITICAL)
 
-### Documentation
+**🔴 This is a PURE ES modules monorepo** - all packages use `"type": "module"`
 
-- `pnpm --filter @studio/docs dev` - Start Docusaurus documentation site (port 3001)
-- `pnpm --filter @studio/docs build` - Build documentation site for production
-- `pnpm --filter @studio/docs deploy` - Deploy to GitHub Pages
+**Non-negotiable rules:**
 
-### Storybook
-
-- `pnpm storybook` - Start Storybook development server
-- `pnpm build-storybook` - Build Storybook for production
-
-### Turborepo Features
-
-- `pnpm turbo build --filter="@studio/app..."` - Build app and dependencies
-- `pnpm turbo test --filter="@studio/*"` - Run tests on all studio packages
-- `pnpm clean` - Clean all build artifacts via Turbo
-
-## Architecture
-
-### Core Technologies
-
-- **Turborepo** - Monorepo build system with intelligent caching
-- **Next.js 15** with App Router and React 19
-- **Prisma ORM** with SQLite database (in @studio/db package)
-- **TypeScript** with strict configuration and project references
-- **Tailwind CSS** for styling
-- **pnpm** as package manager with workspaces
-
-### ES Modules Architecture
-
-**This is a pure ES modules monorepo** - all packages use `"type": "module"` with modern import/export syntax.
-
-**Key Points:**
-
-- **Root package.json**: `"type": "module"` enforces ES modules throughout
-- **All packages**: Every package.json contains `"type": "module"`
-- **Import syntax**: Only `import`/`export` statements - no `require()` or `module.exports`
-- **File extensions**: `.mjs` for config files, `.ts`/`.tsx` for source code
+- **Root enforces**: `"type": "module"` in all package.json files
+- **Import syntax**: ONLY `import`/`export` - NO `require()` or `module.exports`
+- **File extensions**: `.mjs` for configs, `.ts`/`.tsx` for source
 - **Module resolution**: `"moduleResolution": "bundler"` strategy
+- **Troubleshooting**: See @docs/development-guide.md for ES modules patterns
 
-### Monorepo Structure
+### 📁 Package Structure (Quick Reference)
 
-```
-mnemosyne/
-├── apps/
-│   ├── studio/                    # Next.js 15 application
-│   └── docs/                      # Docusaurus documentation site
-├── packages/
-│   ├── db/                        # Prisma database client and schema
-│   ├── logger/                    # Dual logging system (Node.js + browser)
-│   ├── ui/                        # React components with Storybook
-│   ├── scripts/                   # CLI utilities and data processing
-│   ├── mocks/                     # MSW API mocking
-│   ├── test-config/               # Shared testing configuration
-│   ├── dev-tools/                 # Development tools including Wallaby.js manager
-│   └── shared/                    # Shared TypeScript configurations
-├── docs/                          # Source documentation (markdown files)
-├── turbo.json                     # Turborepo pipeline configuration
-└── pnpm-workspace.yaml            # Workspace definitions
-```
+**Apps:**
 
-### Package Architecture
+- `apps/studio/` - Next.js 15 application (main app)
+- `apps/docs/` - Docusaurus documentation
 
-- **@studio/db** - Database package with Prisma client and schema
-- **@studio/logger** - Comprehensive logging system for Node.js and browser
-- **@studio/ui** - React component library with Storybook stories
-- **@studio/scripts** - CLI utilities for data processing and imports
-- **@studio/mocks** - MSW handlers for API mocking in development/tests
-- **@studio/test-config** - Shared Vitest configuration and test utilities
-- **@studio/dev-tools** - Development tools including Wallaby.js manager
+**Key Packages:**
 
-### Database Schema
+- `@studio/db` - Prisma client + schema (SQLite, SHA-256 hashing)
+- `@studio/logger` - Dual logging (Node.js + browser)
+- `@studio/ui` - React components + Storybook
+- `@studio/test-config` - Vitest shared config
+- `@studio/dev-tools` - Wallaby.js manager
 
-- **Messages** table with content hash for deduplication
-- **Links** and **Assets** tables with foreign key relationships
-- Uses SHA-256 content hashing to prevent duplicate message imports
-- Located in `packages/db/` with custom output to `packages/db/generated/`
+**Database Notes:**
 
-## Configuration Notes
-
-### Prisma Client
-
-- **Package location**: `packages/db/`
-- **Output location**: `packages/db/generated/`
-- **Import path**: `@studio/db`
+- Messages table uses content hash for deduplication
+- Custom output: `packages/db/generated/`
 - Always run `pnpm --filter @studio/db build` after schema changes
-- Database reset available via `pnpm db:reset`
 
-### CI/CD
+## 🛡️ TypeScript Standards (Non-Negotiable)
 
-- GitHub Actions with parallel jobs for lint, type-check, test, and build
-- Documentation auto-deployment to GitHub Pages on main branch changes
-- Turbo-powered builds with intelligent caching
-- Pre-commit hooks with Husky for staged file linting and formatting
+> **Cache Directive**: Quality standards - stable rules
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
 
-## Context Loading Rules
+### 🔴 ZERO-TOLERANCE RULES
 
-Based on your current task, load additional specialized instruction modules:
+- **NEVER `any`** → Use `unknown` or specific types
+- **NEVER `@ts-ignore`** → Fix the actual type issue
+- **NEVER `@ts-nocheck`** → All files must type-check
+- **Explicit return types** → Required for all functions
 
-### **For Testing Work**
+### 📦 Import/Export Patterns
 
-Load @CLAUDE_TESTING.md - Contains:
+- **ES modules**: Use `.js` extensions in import paths
+- **Type imports**: `import type { User } from '@studio/db'`
+- **Import order**: external deps → @studio/\* → relative imports
+- **Prefer named exports** over default exports
 
-- Detailed Wallaby.js setup and configuration
-- Test database architecture and debugging
-- TDD workflow and best practices
-- Common testing issues and solutions
+### 🚨 Error Handling Protocol
 
-### **For Package Setup or Monorepo Issues**
+- **NEVER silent catch** → Log or re-throw always
+- **Unknown catches**: `catch (error: unknown)`
+- **Type validation**: Check error types before accessing properties
 
-Load @CLAUDE_TURBOREPO.md - Contains:
+**Full TypeScript guide**: @docs/development-guide.md
 
-- Turborepo best practices and package setup
-- Script standardization requirements
-- Common gotchas and troubleshooting guide
-- Configuration package management
+## ⚙️ Configuration Quick Notes
 
-### **For Development Patterns**
+**Prisma:** `packages/db/` → `@studio/db` (run `pnpm --filter @studio/db build` after changes)
+**CI/CD:** GitHub Actions + Turbo caching + Husky pre-commit hooks
+**Database:** SQLite + content hashing + `pnpm db:reset` available
 
-Load @CLAUDE_DEVELOPMENT.md - Contains:
+## 🧠 Intelligent Context Loading (Performance-Optimized)
 
-- Import patterns and ES modules best practices
-- Development workflow guidelines
-- Code quality standards and conventions
-- Git workflow and commit message guidelines
+> **Cache Directive**: Context loading logic - critical for performance
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
 
-## Token Limit Handling
+### 🎯 Context Loading Strategy
 
-If approaching context limits, prioritize sections in this order:
+**Task Detection → Selective Loading → Cache Optimization**
 
-1. **Commands** (always include)
-2. **Architecture overview** (always include)
-3. **Current task-specific module only** (load relevant @CLAUDE\_\*.md)
-4. Skip verbose troubleshooting unless actively debugging
+**Trigger Keywords → Load Module:**
 
-## Quick Reference
+#### 🧪 Testing Keywords
 
-### Most Common Tasks
+`test`, `failing`, `wallaby`, `vitest`, `coverage`, `mock`
+**→ Load:** @docs/testing-guide.md
 
-- **Testing**: Always use Wallaby.js first - see @CLAUDE_TESTING.md
-- **Building**: `pnpm check` for full validation
-- **New packages**: Follow template in @CLAUDE_TURBOREPO.md
-- **Import issues**: ES modules patterns in @CLAUDE_DEVELOPMENT.md
-- **Database issues**: Test database guide in @CLAUDE_TESTING.md
+- Wallaby.js setup + debugging
+- Test database architecture
+- TDD workflows + common issues
 
-### Essential Workflows
+#### 📦 Package/Build Keywords
 
-- **TDD**: Wallaby.js → write failing test → minimal code → refactor
-- **Package creation**: Use 5 required scripts template
-- **Git commits**: Present-tense verb, concise, end with period
-- **Quality check**: Always run `pnpm check` before committing
+`package`, `build`, `turbo`, `monorepo`, `setup`, `script`
+**→ Load:** @docs/turborepo-guide.md
 
-## Important Reminders
+- Package setup templates
+- Script standardization
+- Build troubleshooting
 
-- **NEVER create files** unless absolutely necessary for the goal
-- **ALWAYS prefer editing** existing files to creating new ones
-- **NEVER proactively create documentation files** unless explicitly requested
-- **Follow ES modules patterns** throughout the codebase
-- **Use Wallaby.js for all testing** - never skip to Vitest without permission
+#### 🔧 Development Keywords
+
+`import`, `export`, `ES modules`, `git`, `commit`, `workflow`  
+**→ Load:** @docs/development-guide.md
+
+- Import patterns + ES modules
+- Git workflows + conventions
+- Code quality standards
+
+### ⚡ Token Optimization Protocol
+
+**Context limit approaching? Priority order:**
+
+1. **Commands section** (always include - 80% usage)
+2. **Architecture core** (always include - stable context)
+3. **ONLY task-specific module** (load ONE @docs/\*.md based on keywords)
+4. **Skip verbose sections** unless actively debugging
+
+### 🔄 Dynamic Loading Examples
+
+```
+User: "Tests are failing in Wallaby"
+→ Load: @docs/testing-guide.md + skip others
+
+User: "Need to create new package"
+→ Load: @docs/turborepo-guide.md + skip others
+
+User: "Import issues with ES modules"
+→ Load: @docs/development-guide.md + skip others
+```
+
+## ⚡ Quick Reference & Workflows
+
+> **Cache Directive**: Most-accessed patterns - optimize aggressively
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
+
+### 🎯 Most Common Tasks (Ranked by frequency)
+
+1. **Testing**: Wallaby.js first (ALWAYS) → @docs/testing-guide.md
+2. **Quality check**: `pnpm check` → full validation
+3. **Build issues**: @docs/turborepo-guide.md
+4. **ES modules**: @docs/development-guide.md
+5. **Database**: @docs/testing-guide.md
+
+### 🔄 Essential Workflows
+
+- **TDD Protocol**: Wallaby.js → failing test → minimal code → refactor
+- **Package Creation**: 5-script template → @docs/turborepo-guide.md
+- **Git Commits**: Present-tense verb + concise + period
+- **Pre-commit**: `pnpm check` → commit (NEVER skip)
+
+## 👥 Team Collaboration
+
+### Individual Preferences
+
+Import personal preferences (not committed to repo):
+
+```markdown
+# Individual team member preferences
+
+@~/.claude/my-project-preferences.md
+@~/.claude/my-coding-style.md
+```
+
+### Onboarding New Team Members
+
+1. Run `/init` in project root → generates basic CLAUDE.md
+2. Point to this optimized version: "Use existing CLAUDE.md"
+3. Essential first commands: `pnpm check`, Wallaby.js setup
+4. Key reading: @docs/testing-guide.md (Wallaby workflow)
+
+## 🔒 Critical Constraints
+
+- **File creation**: NEVER unless absolutely necessary
+- **File preference**: ALWAYS edit existing over creating new
+- **Documentation**: NEVER create .md files unless explicitly requested
+- **ES modules**: MANDATORY throughout codebase
+- **Testing**: Wallaby.js FIRST - never skip to Vitest without permission
+
+## 🚀 Performance & Monitoring
+
+### Claude Code Performance
+
+- Use `/compact` for conversation management
+- Monitor token usage with cache directives
+- Leverage MCP server connections for external data
+
+### Development Performance
+
+- Turbo caching → faster builds
+- Wallaby.js → instant test feedback
+- ES modules → better tree-shaking

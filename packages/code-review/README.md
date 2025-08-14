@@ -267,6 +267,7 @@ test-fixtures/
 ```
 
 **Important Notes:**
+
 - Test fixtures contain **intentionally vulnerable code** for testing purposes only
 - These files are excluded from security scans and production builds
 - Never copy patterns from test fixtures into production code

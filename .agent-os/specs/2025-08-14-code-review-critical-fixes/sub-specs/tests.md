@@ -10,6 +10,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Unit Tests
 
 **Security Validators**
+
 - Environment variable validation with valid inputs
 - Environment variable validation with invalid inputs
 - Missing required environment variables handling
@@ -17,6 +18,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Zod schema validation for all input types
 
 **Async Utilities**
+
 - execFile wrapper with successful execution
 - execFile wrapper with timeout handling
 - execFile wrapper with error handling
@@ -24,6 +26,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Graceful shutdown signal handling
 
 **Core Security Analysis**
+
 - Pattern detection for hardcoded credentials
 - Vulnerability scoring algorithm accuracy
 - Confidence threshold calculations
@@ -31,6 +34,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Report generation formatting
 
 **CodeRabbit Parser**
+
 - Valid CodeRabbit response parsing
 - Malformed response handling
 - Missing fields graceful degradation
@@ -40,6 +44,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Integration Tests
 
 **CLI Command Workflows**
+
 - `analyze-pr` command with valid PR number
 - `analyze-pr` command with invalid PR number
 - `analyze-pr` command with network timeout
@@ -49,6 +54,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Signal handling (SIGINT, SIGTERM)
 
 **Environment Configuration**
+
 - Loading from .env file
 - Environment variable precedence
 - Validation on startup
@@ -56,6 +62,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Default value application
 
 **External API Integration**
+
 - GitHub API authentication and requests
 - CodeRabbit API integration with retries
 - Rate limiting handling
@@ -65,6 +72,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Feature Tests
 
 **Complete PR Analysis Flow**
+
 - Small PR analysis (< 100 lines)
 - Medium PR analysis (100-1000 lines)
 - Large PR analysis (> 1000 lines)
@@ -73,6 +81,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - PR with no issues found
 
 **Report Generation**
+
 - JSON report format validation
 - Markdown report formatting
 - Console output formatting
@@ -82,23 +91,27 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Mocking Requirements
 
 **GitHub API**
+
 - Mock PR data responses using MSW
 - Mock file content responses
 - Mock rate limit responses
 - Mock authentication failures
 
 **CodeRabbit API**
+
 - Mock analysis responses
 - Mock authentication flow
 - Mock timeout scenarios
 - Mock malformed responses
 
 **File System**
+
 - Mock file read/write operations
 - Mock directory operations
 - Mock permission errors
 
 **Child Process**
+
 - Mock git command execution
 - Mock external tool execution
 - Mock process signals
@@ -106,6 +119,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ## Test Organization
 
 ### Directory Structure
+
 ```
 packages/code-review/src/__tests__/
 ├── unit/
@@ -142,14 +156,17 @@ packages/code-review/src/__tests__/
 ### Test Utilities
 
 **Test Database Setup**
+
 - Not required for this package (no database operations)
 
 **Mock Factories**
+
 - `createMockPR()` - Generate test PR data
 - `createMockCodeRabbitResponse()` - Generate API responses
 - `createMockEnv()` - Set up test environment variables
 
 **Test Helpers**
+
 - `withTimeout()` - Test async operations with timeout
 - `captureConsoleOutput()` - Capture CLI output for assertions
 - `mockFileSystem()` - Set up file system mocks
@@ -158,12 +175,14 @@ packages/code-review/src/__tests__/
 ### Coverage Requirements
 
 **Minimum Coverage Targets:**
+
 - Statements: 80%
 - Branches: 75%
 - Functions: 80%
 - Lines: 80%
 
 **Critical Path Coverage:**
+
 - Security analysis functions: 95%
 - Environment validation: 100%
 - Error handling paths: 90%
@@ -172,11 +191,13 @@ packages/code-review/src/__tests__/
 ### Test Execution
 
 **Wallaby.js Configuration**
+
 - Ensure all tests run in Wallaby.js
 - Exclude performance-intensive tests if needed
 - Configure proper environment detection
 
 **CI/CD Integration**
+
 - Run full test suite on PR
 - Generate coverage reports
 - Fail build if coverage drops below thresholds

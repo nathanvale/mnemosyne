@@ -1,4 +1,4 @@
-# CLAUDE_TURBOREPO.md
+# Turborepo Guide
 
 > **Prompt Cache Directive**: This content is cacheable for Turborepo workflows
 > Cache Control: `{"type": "ephemeral"}`
