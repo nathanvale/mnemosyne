@@ -6,10 +6,10 @@
  * Provides data needed for expert PR analysis
  */
 
-import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 
-import { GitHubPRContext } from '../types/github.js'
+import { GitHubPRContext, GitHubSecurityAlert } from '../types/github.js'
+import { execFileWithTimeout, execFileJson } from '../utils/async-exec.js'
 
 /**
  * Validate repository name format
@@ -173,7 +173,7 @@ export class GitHubDataFetcher {
       const checkRuns = await this.fetchCheckRuns(prNumber, repository)
 
       // Fetch security alerts (if enabled)
-      let securityAlerts = []
+      let securityAlerts: GitHubSecurityAlert[] = []
       if (this.config.includeSecurityAlerts) {
         this.log('🛡️ Fetching security alerts...')
         securityAlerts = await this.fetchSecurityAlerts(repository)
@@ -244,12 +244,15 @@ export class GitHubDataFetcher {
       'isDraft',
     ].join(',')
 
-    const result = execFileSync(
-      'gh',
-      ['pr', 'view', prNumber.toString(), '--repo', repo, '--json', jsonFields],
-      { encoding: 'utf-8' },
-    )
-    const prData = JSON.parse(result) as GitHubPRDataAPI
+    const prData = await execFileJson<GitHubPRDataAPI>('gh', [
+      'pr',
+      'view',
+      prNumber.toString(),
+      '--repo',
+      repo,
+      '--json',
+      jsonFields,
+    ])
 
     // Transform GitHub API response to our schema format
     const merged = !!prData.mergedAt
@@ -321,11 +324,15 @@ export class GitHubDataFetcher {
     validatePRNumber(prNumber)
     validateRepoName(repo)
 
-    const fileList = execFileSync(
-      'gh',
-      ['pr', 'diff', prNumber.toString(), '--repo', repo, '--name-only'],
-      { encoding: 'utf-8' },
-    )
+    const fileListOutput = await execFileWithTimeout('gh', [
+      'pr',
+      'diff',
+      prNumber.toString(),
+      '--repo',
+      repo,
+      '--name-only',
+    ])
+    const fileList = fileListOutput
       .split('\n')
       .filter((file: string) => file.trim())
 
@@ -334,11 +341,15 @@ export class GitHubDataFetcher {
     for (const filename of fileList) {
       try {
         // Get file diff stats
-        const diffOutput = execFileSync(
-          'gh',
-          ['pr', 'diff', prNumber.toString(), '--repo', repo, '--', filename],
-          { encoding: 'utf-8' },
-        )
+        const diffOutput = await execFileWithTimeout('gh', [
+          'pr',
+          'diff',
+          prNumber.toString(),
+          '--repo',
+          repo,
+          '--',
+          filename,
+        ])
 
         const additions = this.countDiffLines(diffOutput, '+')
         const deletions = this.countDiffLines(diffOutput, '-')
@@ -382,12 +393,15 @@ export class GitHubDataFetcher {
     validatePRNumber(prNumber)
     validateRepoName(repo)
 
-    const result = execFileSync(
-      'gh',
-      ['pr', 'view', prNumber.toString(), '--repo', repo, '--json', 'commits'],
-      { encoding: 'utf-8' },
-    )
-    const data = JSON.parse(result) as { commits?: GitHubCommitAPI[] }
+    const data = await execFileJson<{ commits?: GitHubCommitAPI[] }>('gh', [
+      'pr',
+      'view',
+      prNumber.toString(),
+      '--repo',
+      repo,
+      '--json',
+      'commits',
+    ])
 
     return (data.commits || []).map((commit: GitHubCommitAPI) => ({
       sha: commit.oid,
@@ -423,20 +437,15 @@ export class GitHubDataFetcher {
       validatePRNumber(prNumber)
       validateRepoName(repo)
 
-      const result = execFileSync(
-        'gh',
-        [
-          'pr',
-          'checks',
-          prNumber.toString(),
-          '--repo',
-          repo,
-          '--json',
-          'state,name,startedAt,completedAt,link',
-        ],
-        { encoding: 'utf-8' },
-      )
-      const checks = JSON.parse(result) as GitHubCheckAPI[]
+      const checks = await execFileJson<GitHubCheckAPI[]>('gh', [
+        'pr',
+        'checks',
+        prNumber.toString(),
+        '--repo',
+        repo,
+        '--json',
+        'state,name,startedAt,completedAt,link',
+      ])
 
       return checks.map((check: GitHubCheckAPI, index: number) => ({
         id: index, // gh CLI doesn't provide actual ID
@@ -468,44 +477,50 @@ export class GitHubDataFetcher {
       validateRepoName(repo)
 
       // Note: This requires special permissions and may not be available
-      const result = execFileSync(
-        'gh',
-        ['api', `repos/${repo}/security-advisories`, '--paginate'],
-        { encoding: 'utf-8' },
-      )
-      const alerts = JSON.parse(result)
+      const alerts = await execFileJson<Record<string, unknown>[]>('gh', [
+        'api',
+        `repos/${repo}/security-advisories`,
+        '--paginate',
+      ])
 
-      return alerts.map((alert: Record<string, unknown>) => ({
-        number: (alert.id as number) || 0,
-        state: (alert.state as string) || 'open',
-        created_at: alert.created_at,
-        updated_at: alert.updated_at,
-        fixed_at: alert.fixed_at,
-        dismissed_at: alert.dismissed_at,
-        security_advisory: {
-          ghsa_id: alert.ghsa_id || '',
-          cve_id: alert.cve_id,
-          summary: alert.summary || '',
-          description: alert.description || '',
-          severity: alert.severity || 'medium',
-          cvss: {
-            vector_string:
-              (alert.cvss as { vector_string?: string })?.vector_string || '',
-            score: (alert.cvss as { score?: number })?.score || 0,
+      return alerts.map(
+        (alert: Record<string, unknown>): GitHubSecurityAlert => ({
+          number: (alert.id as number) || 0,
+          state: (alert.state as 'open' | 'fixed' | 'dismissed') || 'open',
+          created_at: (alert.created_at as string) || '',
+          updated_at: (alert.updated_at as string) || '',
+          fixed_at: (alert.fixed_at as string) || null,
+          dismissed_at: (alert.dismissed_at as string) || null,
+          security_advisory: {
+            ghsa_id: (alert.ghsa_id as string) || '',
+            cve_id: (alert.cve_id as string) || null,
+            summary: (alert.summary as string) || '',
+            description: (alert.description as string) || '',
+            severity:
+              (alert.severity as 'low' | 'medium' | 'high' | 'critical') ||
+              'medium',
+            cvss: {
+              vector_string:
+                (alert.cvss as { vector_string?: string })?.vector_string || '',
+              score: (alert.cvss as { score?: number })?.score || 0,
+            },
           },
-        },
-        security_vulnerability: {
-          package: {
-            name: (alert.package as { name?: string })?.name || '',
-            ecosystem:
-              (alert.package as { ecosystem?: string })?.ecosystem || '',
+          security_vulnerability: {
+            package: {
+              name: (alert.package as { name?: string })?.name || '',
+              ecosystem:
+                (alert.package as { ecosystem?: string })?.ecosystem || '',
+            },
+            vulnerable_version_range:
+              (alert.vulnerable_version_range as string) || '',
+            first_patched_version: alert.first_patched_version
+              ? { identifier: alert.first_patched_version as string }
+              : null,
           },
-          vulnerable_version_range: alert.vulnerable_version_range || '',
-          first_patched_version: alert.first_patched_version,
-        },
-        url: alert.url || '',
-        html_url: alert.html_url || '',
-      }))
+          url: (alert.url as string) || '',
+          html_url: (alert.html_url as string) || '',
+        }),
+      )
     } catch {
       this.log(
         '⚠️ Could not fetch security alerts (may require additional permissions)',

@@ -1,7 +1,13 @@
 /* eslint-disable prefer-template */
 /**
- * Example file with intentional security vulnerabilities for testing
- * DO NOT USE IN PRODUCTION - FOR TESTING PURPOSES ONLY
+ * ⚠️ TEST FIXTURE - INTENTIONAL VULNERABILITIES ⚠️
+ *
+ * THIS FILE CONTAINS INTENTIONALLY VULNERABLE CODE FOR TESTING PURPOSES ONLY
+ * DO NOT USE ANY CODE FROM THIS FILE IN PRODUCTION
+ * ALL CREDENTIALS ARE FAKE/TEST EXAMPLES
+ *
+ * This file is used to test the security analysis capabilities of the code review tool.
+ * It contains various security anti-patterns that should be detected by the analyzer.
  */
 
 // Mock Express types to avoid dependency
@@ -16,7 +22,7 @@ interface Response {
   send: (html: string) => void
 }
 
-// Vulnerability 1: SQL Injection
+// TEST VULNERABILITY 1: SQL Injection
 export function getUserData(req: Request, res: Response) {
   const userId = req.params.id
 
@@ -33,23 +39,23 @@ export function getUserData(req: Request, res: Response) {
   res.json({ query })
 }
 
-// Vulnerability 2: Hardcoded Secrets
+// TEST VULNERABILITY 2: Hardcoded Secrets (ALL ARE FAKE TEST EXAMPLES)
 export const API_CONFIG = {
-  // VULNERABLE: Hardcoded API key (test example)
+  // VULNERABLE: Hardcoded API key (TEST EXAMPLE - NOT REAL)
   apiKey: 'sk_test_424242424242424242424242424242424242TEST',
 
-  // VULNERABLE: Hardcoded database password
-  dbPassword: 'SuperSecretPassword123!@#',
+  // VULNERABLE: Hardcoded database password (TEST EXAMPLE - NOT REAL)
+  dbPassword: 'SuperSecretPassword123!@#TEST',
 
-  // VULNERABLE: JWT secret key
-  jwtSecret: 'my-super-secret-jwt-key-that-should-be-in-env',
+  // VULNERABLE: JWT secret key (TEST EXAMPLE - NOT REAL)
+  jwtSecret: 'my-super-secret-jwt-key-that-should-be-in-env-TEST',
 
-  // VULNERABLE: AWS credentials (test examples)
+  // VULNERABLE: AWS credentials (TEST EXAMPLES - NOT REAL)
   awsAccessKey: 'AKIA-TEST-EXAMPLE-CREDENTIALS',
   awsSecretKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY-TEST',
 }
 
-// Vulnerability 3: Cross-Site Scripting (XSS)
+// TEST VULNERABILITY 3: Cross-Site Scripting (XSS)
 export function renderUserProfile(req: Request, res: Response) {
   const username = req.query.name
 
@@ -70,7 +76,7 @@ export function renderUserProfile(req: Request, res: Response) {
   res.send(html)
 }
 
-// Additional vulnerability: Command Injection
+// TEST VULNERABILITY 4: Command Injection
 export function processFile(req: Request, res: Response) {
   const filename = req.body.file
 

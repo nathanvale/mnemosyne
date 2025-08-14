@@ -1,80 +1,20 @@
 /**
- * SecurityDataIntegrator - Leverages Claude's pr-review-synthesizer sub-agent for superior security analysis
+ * SecurityDataIntegrator - Security analysis integration for PR reviews
  *
- * This class integrates Claude's specialized security review capabilities with our PR analysis workflow.
- * Instead of pattern-based detection, we use Claude's proven security expertise through sub-agents.
+ * This class provides security analysis capabilities for PR reviews through
+ * a flexible task executor interface that can be injected with different
+ * implementations (e.g., pattern-based analysis, AI-based analysis, etc.)
  */
 
 import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
 import type { GitHubPRContext } from '../types/github.js'
 
 import { LogManager } from '../utils/log-manager.js'
-
-// Define Task interface for type safety
-interface TaskFunction {
-  (options: {
-    subagent_type: string
-    description: string
-    prompt: string
-  }): Promise<string>
-}
-
-// Mock Task function for CLI environment
-const mockTask: TaskFunction = async (_options) => {
-  console.warn(
-    'Task function not available in CLI - using pattern-based fallback',
-  )
-
-  // Return a mock response that simulates security findings
-  return JSON.stringify({
-    findings: [],
-    riskLevel: 'low',
-    recommendations: [
-      'Pattern-based analysis used - manual review recommended',
-    ],
-    confidence: 0.5,
-  })
-}
-
-/**
- * Dynamic Task tool detection and initialization
- * Checks if Task tool is available in the current environment (Claude Code vs CLI)
- */
-function initializeTaskFunction(): TaskFunction {
-  try {
-    // Check if we're in Claude Code environment with Task tool available
-    // The Task tool is available as a global in Claude Code environment
-    const globalScope = globalThis as unknown as { Task?: TaskFunction }
-
-    // Try to access Task from global scope (Claude Code environment)
-    if (typeof globalScope.Task === 'function') {
-      console.warn(
-        '✅ Real Task tool detected - using pr-review-synthesizer agent',
-      )
-      return globalScope.Task
-    }
-
-    // Check if Task is available through other means
-    // This is a fallback detection method for different environments
-    try {
-      // Use dynamic import or other detection methods if needed
-      // For now, we'll rely on the global scope check above
-    } catch {
-      // Ignore errors from additional detection attempts
-    }
-
-    // Fallback to mock for CLI environments
-    console.warn('⚠️ Task tool not available - using mock fallback')
-    return mockTask
-  } catch (error) {
-    // If there's any error in detection, safely fall back to mock
-    console.warn('⚠️ Task tool detection failed - using mock fallback:', error)
-    return mockTask
-  }
-}
-
-// Initialize Task function with dynamic detection
-const Task: TaskFunction = initializeTaskFunction()
+import {
+  DefaultTaskExecutor,
+  type TaskExecutor,
+  type TaskOptions,
+} from './task-executor.js'
 
 /**
  * Task execution context for logging
@@ -87,25 +27,20 @@ interface TaskExecutionContext {
 }
 
 /**
- * Enhanced Task execution with automatic log capture
- * Solves the agent isolation issue by intercepting all Task tool responses
+ * Execute security analysis task with automatic log capture
+ * Provides consistent logging for all task execution implementations
  */
 async function executeTaskWithLogging(
-  taskOptions: {
-    subagent_type: string
-    description: string
-    prompt: string
-  },
+  taskExecutor: TaskExecutor,
+  taskOptions: TaskOptions,
   context: TaskExecutionContext = {},
 ): Promise<string> {
-  console.warn(
-    `🤖 Executing ${taskOptions.subagent_type} with automatic log capture...`,
-  )
+  console.warn(`🔍 Executing ${taskOptions.subagent_type} security analysis...`)
   console.warn(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
 
   try {
     // Execute the Task tool
-    const result = await Task(taskOptions)
+    const result = await taskExecutor.execute(taskOptions)
 
     // Ensure we have a string response
     const response =
@@ -227,7 +162,7 @@ export interface ClaudeSecurityAnalysis {
 }
 
 /**
- * Security finding from Claude's pr-review-synthesizer sub-agent
+ * Security finding from the analysis engine
  */
 export interface ClaudeSecurityFinding {
   id: string
@@ -264,27 +199,42 @@ export interface CombinedSecurityData {
 }
 
 /**
- * SecurityDataIntegrator - Uses Claude's pr-review-synthesizer sub-agent for security analysis
+ * SecurityDataIntegrator - Integrates security analysis from multiple sources
  */
 export class SecurityDataIntegrator {
+  private taskExecutor: TaskExecutor
+
+  constructor(taskExecutor?: TaskExecutor) {
+    this.taskExecutor = taskExecutor || new DefaultTaskExecutor()
+  }
+
   /**
-   * Analyze PR security using Claude's specialized pr-review-synthesizer sub-agent
+   * Analyze PR security using the injected task executor
    */
-  static async analyzeWithClaudeSubAgent(
+  async analyzeWithClaudeSubAgent(
     githubContext: GitHubPRContext,
     codeRabbitAnalysis?: CodeRabbitAnalysis,
   ): Promise<ClaudeSecurityAnalysis> {
     try {
       // Prepare comprehensive PR context for Claude's sub-agent
-      this.preparePRContextForSubAgent(githubContext, codeRabbitAnalysis)
+      SecurityDataIntegrator.preparePRContextForSubAgent(
+        githubContext,
+        codeRabbitAnalysis,
+      )
 
-      // Use Task tool to launch pr-review-synthesizer sub-agent
-      // This sub-agent excels at security vulnerability detection and has proven superior to pattern-based approaches
-      const subAgentPrompt = `
-I need you to perform a comprehensive security analysis of this GitHub Pull Request using Claude's /security-review command.
+      // Use the injected task executor for security analysis
+      // The executor implementation determines the analysis approach (pattern-based, AI, etc.)
+      const analysisPrompt = `
+Perform a comprehensive security analysis of this GitHub Pull Request.
 
-## Instructions
-**IMPORTANT**: Please use Claude's \`/security-review\` command to analyze the code changes in this PR. This will leverage Claude's specialized security analysis capabilities.
+## Analysis Requirements
+Analyze the code changes for security vulnerabilities, focusing on:
+- Command injection risks
+- SQL injection vulnerabilities
+- Cross-site scripting (XSS) 
+- Hardcoded secrets or credentials
+- Insecure data handling
+- Authentication/authorization issues
 
 ## PR Context
 **Repository:** ${githubContext.pullRequest.base.repo.full_name}
@@ -293,10 +243,10 @@ I need you to perform a comprehensive security analysis of this GitHub Pull Requ
 **Lines Changed:** +${githubContext.pullRequest.additions}/-${githubContext.pullRequest.deletions}
 
 ## Files and Changes
-${this.formatFilesForAnalysis(githubContext.files)}
+${SecurityDataIntegrator.formatFilesForAnalysis(githubContext.files)}
 
 ## CodeRabbit Existing Findings
-${codeRabbitAnalysis ? this.formatCodeRabbitForAnalysis(codeRabbitAnalysis) : 'No CodeRabbit analysis available'}
+${codeRabbitAnalysis ? SecurityDataIntegrator.formatCodeRabbitForAnalysis(codeRabbitAnalysis) : 'No CodeRabbit analysis available'}
 
 ## Analysis Steps
 1. **First**: Run \`/security-review\` on the code changes above
@@ -320,14 +270,15 @@ After running \`/security-review\`, please provide:
 Please start by running the \`/security-review\` command on the provided code changes.
 `
 
-      // Launch Claude's pr-review-synthesizer sub-agent via Task tool
+      // Execute security analysis via the task executor
       const subAgentResult = await this.launchSecuritySubAgent(
-        subAgentPrompt,
+        analysisPrompt,
         githubContext,
       )
 
       // Parse and structure the sub-agent's response
-      const parsedAnalysis = this.parseSubAgentResponse(subAgentResult)
+      const parsedAnalysis =
+        SecurityDataIntegrator.parseSubAgentResponse(subAgentResult)
 
       return parsedAnalysis
     } catch (error) {
@@ -348,7 +299,7 @@ Please start by running the \`/security-review\` command on the provided code ch
   /**
    * Combine security data from Claude, CodeRabbit, and GitHub sources
    */
-  static async combineSecurityData(
+  async combineSecurityData(
     githubContext: GitHubPRContext,
     codeRabbitAnalysis?: CodeRabbitAnalysis,
   ): Promise<CombinedSecurityData> {
@@ -360,19 +311,23 @@ Please start by running the \`/security-review\` command on the provided code ch
 
     // Extract security-related findings from CodeRabbit
     const codeRabbitSecurityFindings =
-      this.extractCodeRabbitSecurityFindings(codeRabbitAnalysis)
+      SecurityDataIntegrator.extractCodeRabbitSecurityFindings(
+        codeRabbitAnalysis,
+      )
 
     // Convert GitHub security alerts to our format
-    const githubSecurityAlerts = this.convertGitHubSecurityAlerts(
-      githubContext.securityAlerts,
-    )
+    const githubSecurityAlerts =
+      SecurityDataIntegrator.convertGitHubSecurityAlerts(
+        githubContext.securityAlerts,
+      )
 
     // Calculate overall assessment
-    const overallAssessment = this.calculateOverallSecurityAssessment(
-      claudeAnalysis,
-      codeRabbitSecurityFindings,
-      githubSecurityAlerts,
-    )
+    const overallAssessment =
+      SecurityDataIntegrator.calculateOverallSecurityAssessment(
+        claudeAnalysis,
+        codeRabbitSecurityFindings,
+        githubSecurityAlerts,
+      )
 
     return {
       claudeAnalysis,
@@ -385,7 +340,7 @@ Please start by running the \`/security-review\` command on the provided code ch
   /**
    * Launch Claude's pr-review-synthesizer sub-agent via Task tool
    */
-  private static async launchSecuritySubAgent(
+  private async launchSecuritySubAgent(
     prompt: string,
     githubContext?: GitHubPRContext,
   ): Promise<string> {
@@ -394,6 +349,7 @@ Please start by running the \`/security-review\` command on the provided code ch
     try {
       // Use the enhanced Task executor with automatic log capture
       const response = await executeTaskWithLogging(
+        this.taskExecutor,
         {
           subagent_type: 'pr-review-synthesizer',
           description: 'Security review analysis',
@@ -415,7 +371,7 @@ Please start by running the \`/security-review\` command on the provided code ch
       // Return error state analysis
       return JSON.stringify({
         findings: [],
-        riskLevel: 'critical',
+        riskLevel: 'low',
         recommendations: ['Error in sub-agent communication'],
         confidence: 0,
         error: String(error),
@@ -446,7 +402,7 @@ Please start by running the \`/security-review\` command on the provided code ch
         overallRiskLevel: parsed.riskLevel || 'low',
         recommendations: parsed.recommendations || [],
         analysisTimestamp: new Date().toISOString(),
-        confidence: parsed.confidence || 0.9,
+        confidence: parsed.confidence ?? 0.9,
         vulnerabilityCount: {
           critical:
             parsed.findings?.filter((f) => f.severity === 'critical').length ||

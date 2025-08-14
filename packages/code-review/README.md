@@ -256,6 +256,22 @@ Key TypeScript interfaces are defined in `src/types/`:
 
 ## Development
 
+### Test Fixtures
+
+The package uses test fixtures for security testing to avoid having actual vulnerable code in the main source tree:
+
+```
+test-fixtures/
+└── security-examples/
+    └── example-vulnerable-code.ts  # Contains intentionally vulnerable patterns for testing
+```
+
+**Important Notes:**
+- Test fixtures contain **intentionally vulnerable code** for testing purposes only
+- These files are excluded from security scans and production builds
+- Never copy patterns from test fixtures into production code
+- All test fixture files include clear warning headers
+
 ### Running Tests
 
 ```bash
@@ -273,6 +289,7 @@ pnpm build
 1. Add pattern detection in `src/cli/analyze-pr.ts`
 2. Update severity calculation logic
 3. Add corresponding tests in `src/__tests__/`
+4. If testing security patterns, use test fixtures in `test-fixtures/security-examples/`
 
 ## Troubleshooting
 

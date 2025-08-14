@@ -6,12 +6,16 @@
  * Provides a single command to perform comprehensive PR analysis
  */
 
-import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 
 import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
 import type { GitHubPRContext } from '../types/github.js'
 
+import {
+  execFileWithGracefulShutdown,
+  initializeGracefulShutdown,
+  registerShutdownCleanup,
+} from '../utils/async-exec.js'
 import { ExpertPRAnalysis } from './expert-pr-analysis.js'
 
 /**
@@ -103,6 +107,16 @@ export class UnifiedAnalysisOrchestrator {
       cleanupTempFiles: config.cleanupTempFiles ?? true,
       verbose: config.verbose ?? false,
     }
+
+    // Initialize graceful shutdown handling
+    initializeGracefulShutdown()
+
+    // Register cleanup function for temporary files
+    registerShutdownCleanup(async () => {
+      if (this.config.cleanupTempFiles) {
+        this.cleanupTemporaryFiles()
+      }
+    })
   }
 
   /**
@@ -184,10 +198,17 @@ export class UnifiedAnalysisOrchestrator {
       .join(' ')
 
     this.log(`🔄 Running: ${command}`)
-    execSync(command, {
-      encoding: 'utf-8',
-      stdio: this.config.verbose ? 'inherit' : 'pipe',
-    })
+    await execFileWithGracefulShutdown('pnpm', [
+      '--filter',
+      '@studio/code-review',
+      'review:fetch-github',
+      this.config.prNumber.toString(),
+      '--repo',
+      this.config.repo,
+      '--output',
+      outputFile,
+      ...(this.config.verbose ? ['--verbose'] : []),
+    ])
 
     if (!existsSync(outputFile)) {
       throw new Error(`GitHub data file not created: ${outputFile}`)
@@ -218,10 +239,17 @@ export class UnifiedAnalysisOrchestrator {
         .join(' ')
 
       this.log(`🔄 Running: ${command}`)
-      execSync(command, {
-        encoding: 'utf-8',
-        stdio: this.config.verbose ? 'inherit' : 'pipe',
-      })
+      await execFileWithGracefulShutdown('pnpm', [
+        '--filter',
+        '@studio/code-review',
+        'review:fetch-coderabbit',
+        '--pr-number',
+        this.config.prNumber.toString(),
+        '--repo',
+        this.config.repo,
+        '--output',
+        outputFile,
+      ])
 
       if (!existsSync(outputFile)) {
         this.log(

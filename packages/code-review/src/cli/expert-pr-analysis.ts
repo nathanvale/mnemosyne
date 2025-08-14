@@ -101,11 +101,11 @@ export class ExpertPRAnalysis {
       console.error(
         '🛡️ Running Claude security analysis with pr-review-synthesizer...',
       )
-      const combinedSecurityData =
-        await SecurityDataIntegrator.combineSecurityData(
-          githubContext,
-          codeRabbitAnalysis,
-        )
+      const securityIntegrator = new SecurityDataIntegrator()
+      const combinedSecurityData = await securityIntegrator.combineSecurityData(
+        githubContext,
+        codeRabbitAnalysis,
+      )
 
       // Create legacy SecurityAuditResults for compatibility
       const securityAudit = {

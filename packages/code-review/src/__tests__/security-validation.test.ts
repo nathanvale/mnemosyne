@@ -25,7 +25,7 @@ describe('Security Analysis Architecture Change', () => {
   })
 
   it('should confirm security analysis integration is in CLI workflow', () => {
-    // The expert-pr-analysis.ts CLI now uses SecurityDataIntegrator.combineSecurityData()
+    // The expert-pr-analysis.ts CLI now uses new SecurityDataIntegrator().combineSecurityData()
     // instead of the old SecurityAnalyzer.analyzeSecurityFindings() pattern-based approach
     // This provides Claude-enhanced security analysis in the PR review workflow
 

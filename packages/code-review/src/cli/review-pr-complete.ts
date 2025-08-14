@@ -17,6 +17,8 @@
  */
 
 import { PRReviewerAgent } from '../agent/pr-reviewer-agent.js'
+import { initializeGracefulShutdown } from '../utils/async-exec.js'
+import { validateStartupEnvironment } from '../validators/env-validator.js'
 import { GitHubDataFetcher } from './fetch-github-data.js'
 import { UnifiedAnalysisOrchestrator } from './unified-analysis.js'
 
@@ -316,6 +318,22 @@ async function executeFetch(config: CommandConfig): Promise<void> {
  */
 async function main(): Promise<void> {
   try {
+    // Initialize graceful shutdown handling
+    initializeGracefulShutdown()
+
+    // Validate environment variables at startup
+    const env = validateStartupEnvironment({
+      exitOnError: false,
+      silent: false,
+    })
+
+    if (!env) {
+      console.error(
+        '\n💡 Tip: Copy .env.example to .env and configure as needed',
+      )
+      process.exit(1)
+    }
+
     const { command, config } = parseArgs()
 
     validateConfig(command, config)
