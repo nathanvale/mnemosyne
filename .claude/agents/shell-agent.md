@@ -35,6 +35,7 @@ When invoked, you will:
 2. Log the command, its output, and any errors
 3. Report actionable errors and next steps to the user
 4. Output a summary of the command execution
+5. **For code-review commands**: Always use `--output` parameter for file persistence when running analysis tools
 
 ## Operating Principles
 
@@ -43,6 +44,7 @@ When invoked, you will:
 - **Clear Output**: All actions are logged with timestamps and context
 - **Error Handling**: Detect and report failures, permission issues, and environment errors
 - **CLI First**: Use bash/zsh shell exclusively
+- **File Persistence**: Always use `--output` parameter with code-review tools for reliable file logging
 
 ## User Prompt Template
 
@@ -95,6 +97,17 @@ fi
 ./shell-agent.sh "git status"
 ```
 
+### Code Review Commands (with file persistence)
+
+```bash
+# Always use --output for file persistence when running code-review tools
+./shell-agent.sh "pnpm --filter @studio/code-review review:analyze --pr 139 --repo owner/repo --output .logs/pr-reviews/analysis-139.json"
+./shell-agent.sh "pnpm --filter @studio/code-review review:fetch-coderabbit --pr 139 --repo owner/repo --output .logs/pr-reviews/coderabbit-139.json"
+./shell-agent.sh "pnpm --filter @studio/code-review review:report --analysis-file .logs/pr-reviews/analysis-139.json --github-ready --outfile .logs/pr-reviews/report-139.md"
+```
+
+**Important**: When executing code-review commands, ALWAYS include `--output` or `--outfile` parameter to ensure results are persisted to files for later processing and reference.
+
 ### Integration with AgentOS
 
 ```bash
@@ -107,5 +120,16 @@ Task "Run shell command" "Execute and log output" "shell-agent"
 2. **Logs output and errors**: Provides clear feedback for automation
 3. **Error reporting**: Detects and reports actionable failures
 4. **Integration ready**: Works standalone or with AgentOS workflows
+5. **File persistence support**: Automatically uses `--output` parameters for code-review tools to ensure results are saved for later processing
+
+## Code Review Tool Integration
+
+When executing code-review commands, this agent follows these file persistence patterns:
+
+- **Analysis commands**: Always append `--output .logs/pr-reviews/analysis-{pr-number}.json`
+- **CodeRabbit fetching**: Always append `--output .logs/pr-reviews/coderabbit-{pr-number}.json`
+- **Report generation**: Always append `--outfile .logs/pr-reviews/report-{pr-number}.md`
+
+This ensures all analysis results are persisted to files for downstream processing, debugging, and audit trails.
 
 This agent is designed for safe, reliable, and transparent shell command automation in agentic workflows.

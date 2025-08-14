@@ -1,0 +1,28 @@
+# Test Fixtures Gitignore
+
+# Ignore any files that might contain real credentials
+*.env
+*.env.local
+*.env.production
+*.env.staging
+
+# Ignore any backup files
+*.backup
+*.bak
+
+# Ignore any files with "real" or "production" in the name
+*real*
+*production*
+*prod*
+
+# Ignore any private key files
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+
+# Ignore any credential dumps
+credentials.json
+secrets.json
+config.prod.json

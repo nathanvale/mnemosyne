@@ -39,6 +39,7 @@ When invoked, you will:
 5. Push commits to remote
 6. Merge branches (with conflict detection)
 7. Report status and actionable errors
+8. **For code-review workflows**: Coordinate with analysis results and ensure files are committed for persistence
 
 ## Operating Principles
 
@@ -178,6 +179,24 @@ fi
 Task "Commit changes" "Atomic commit and push" "git-agent"
 ```
 
+### Code Review Workflow Integration
+
+```bash
+# Example: Committing analysis results for persistence
+./git-agent.sh https://github.com/owner/repo analysis-results commit "Add PR analysis results
+
+- analysis-139.json: Comprehensive PR security and quality analysis
+- coderabbit-139.json: CodeRabbit automated review findings
+- report-139.md: GitHub-ready formatted review report
+
+These files provide audit trail and downstream processing capability."
+
+# Push analysis results
+./git-agent.sh https://github.com/owner/repo analysis-results push
+```
+
+**Important**: When working with code-review workflows, ensure that analysis files generated with `--output` parameters are properly committed to maintain audit trails and enable downstream processing.
+
 ## Key Features
 
 1. **Pure git CLI**: No extra dependencies
@@ -185,5 +204,15 @@ Task "Commit changes" "Atomic commit and push" "git-agent"
 3. **Clear output**: All steps logged for downstream agents
 4. **Error handling**: Detects and reports common git issues
 5. **Integration ready**: Works standalone or with agentic workflows
+6. **Code-review coordination**: Supports committing analysis results for persistent audit trails
+
+## Code Review File Persistence Patterns
+
+When coordinating with code-review workflows, follow these patterns:
+
+- **Branch naming**: Use `analysis-results` or `pr-analysis-{pr-number}` for analysis result commits
+- **Commit structure**: Include file list with purpose in commit message
+- **File organization**: Keep analysis files in organized directory structure
+- **Audit trail**: Ensure all analysis results are committed for downstream processing
 
 This agent is designed for maximum portability and reliability in automated workflows.

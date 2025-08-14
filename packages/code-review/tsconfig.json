@@ -1,0 +1,10 @@
+{
+  "extends": "@studio/typescript-config/library.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "composite": true,
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+}
