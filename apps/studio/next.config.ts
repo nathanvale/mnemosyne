@@ -1,26 +1,11 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // In development, transpile all workspace packages to use source files directly
+  // In development, transpile only used workspace packages for source file access
   // In production, use pre-built packages for optimal performance
   transpilePackages:
     process.env.NODE_ENV === 'development'
-      ? [
-          '@studio/db',
-          '@studio/logger',
-          '@studio/ui',
-          '@studio/mocks',
-          '@studio/schema',
-          '@studio/shared',
-          '@studio/validation',
-          '@studio/test-config',
-          '@studio/memory',
-          '@studio/scripts',
-          '@studio/mcp',
-          '@studio/dev-tools',
-          '@studio/code-review',
-          '@studio/claude-hooks',
-        ]
+      ? ['@studio/db', '@studio/logger', '@studio/ui', '@studio/mocks']
       : [], // Use pre-built packages in production
 
   experimental: {
@@ -30,11 +15,6 @@ const nextConfig: NextConfig = {
       '@studio/logger',
       '@studio/ui',
       '@studio/mocks',
-      '@studio/schema',
-      '@studio/shared',
-      '@studio/validation',
-      '@studio/memory',
-      '@studio/mcp',
     ],
   },
 }

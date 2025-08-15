@@ -169,5 +169,8 @@
     }
   },
   "active": "aa77bb40a0bdb2c9",
-  "lastOpenFiles": ["specs/2025-08-16-bun-migration-complete/spec.md"]
+  "lastOpenFiles": [
+    "specs/2025-08-16-bun-migration-complete/spec.md",
+    "specs/2025-08-16-bun-migration-complete/tasks.md"
+  ]
 }

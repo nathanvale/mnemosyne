@@ -12,5 +12,10 @@
     "src/__tests__/**/*",
     "**/__tests__/**/*",
     "scripts/**/*"
+  ],
+  "references": [
+    {
+      "path": "../logger"
+    }
   ]
 }

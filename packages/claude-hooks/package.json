@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
+  "types": "./dist/index.d.ts",
   "description": "Claude Code hooks for task completion notifications, quality checks, and TTS integration",
   "keywords": [
     "claude",
