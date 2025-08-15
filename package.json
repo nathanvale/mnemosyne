@@ -94,6 +94,7 @@
     "eslint-plugin-perfectionist": "^4.15.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-storybook": "^9.0.14",
+    "glob": "^11.0.3",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "markdown-to-jsx": "^7.7.10",
