@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { getCallSite } from '../stacktrace'
+import { getCallSite } from '../stacktrace.js'
 
 describe('stacktrace', () => {
   it('extracts callsite information', () => {

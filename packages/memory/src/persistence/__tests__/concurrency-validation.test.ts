@@ -205,7 +205,7 @@ describe('Concurrency Validation Tests - Phase 2', () => {
       expect(memories.length).toBe(writeSuccesses.length)
 
       // Verify all memories have unique IDs
-      const uniqueIds = new Set(memories.map((m) => m.id))
+      const uniqueIds = new Set(memories.map((m: { id: string }) => m.id))
       expect(uniqueIds.size).toBe(memories.length)
     }, 30000)
 

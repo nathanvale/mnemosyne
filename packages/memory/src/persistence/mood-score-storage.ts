@@ -2,6 +2,50 @@ import { PrismaClient } from '@studio/db'
 
 import type { MoodAnalysisResult, MoodDelta } from '../types'
 
+// Define Prisma result types
+interface PrismaMoodFactor {
+  id: string
+  moodScoreId: string
+  type: string
+  weight: number
+  description: string
+  evidence: string
+  internalScore: number | null
+  createdAt: Date
+}
+
+interface PrismaMoodScore {
+  id: string
+  memoryId: string
+  score: number
+  confidence: number
+  descriptors: string
+  algorithmVersion: string
+  processingTimeMs: number
+  calculatedAt: Date
+  createdAt: Date
+  updatedAt: Date
+  factors?: PrismaMoodFactor[]
+}
+
+interface PrismaMoodDelta {
+  id: string
+  memoryId: string
+  conversationId: string | null
+  deltaSequence: number | null
+  magnitude: number
+  direction: string
+  type: string
+  confidence: number
+  factors: string
+  significance: number
+  previousScore: number | null
+  currentScore: number
+  temporalContext: string | null
+  detectedAt: Date
+  createdAt: Date
+}
+
 type PrismaTransaction = Omit<
   PrismaClient,
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
@@ -110,14 +154,22 @@ export class MoodScoreStorageService {
         })
 
         // Store the factors
-        const factorData = moodAnalysis.factors.map((factor) => ({
-          moodScoreId: storedScore.id,
-          type: factor.type,
-          weight: factor.weight,
-          description: factor.description,
-          evidence: JSON.stringify(factor.evidence),
-          internalScore: factor._score,
-        }))
+        const factorData = moodAnalysis.factors.map(
+          (factor: {
+            type: string
+            weight: number
+            description: string
+            evidence: string[]
+            _score?: number
+          }) => ({
+            moodScoreId: storedScore.id,
+            type: factor.type,
+            weight: factor.weight,
+            description: factor.description,
+            evidence: JSON.stringify(factor.evidence),
+            internalScore: factor._score,
+          }),
+        )
 
         if (factorData.length > 0) {
           await tx.moodFactor.createMany({
@@ -137,7 +189,7 @@ export class MoodScoreStorageService {
           score: storedScore.score,
           confidence: storedScore.confidence,
           descriptors: JSON.parse(storedScore.descriptors),
-          factors: createdFactors.map((factor) => ({
+          factors: createdFactors.map((factor: PrismaMoodFactor) => ({
             id: factor.id,
             moodScoreId: factor.moodScoreId,
             type: factor.type,
@@ -184,14 +236,22 @@ export class MoodScoreStorageService {
     moodScoreId: string,
     factors: MoodAnalysisResult['factors'],
   ): Promise<StoredMoodFactor[]> {
-    const factorData = factors.map((factor) => ({
-      moodScoreId,
-      type: factor.type,
-      weight: factor.weight,
-      description: factor.description,
-      evidence: JSON.stringify(factor.evidence),
-      internalScore: factor._score,
-    }))
+    const factorData = factors.map(
+      (factor: {
+        type: string
+        weight: number
+        description: string
+        evidence: string[]
+        _score?: number
+      }) => ({
+        moodScoreId,
+        type: factor.type,
+        weight: factor.weight,
+        description: factor.description,
+        evidence: JSON.stringify(factor.evidence),
+        internalScore: factor._score,
+      }),
+    )
 
     await this.prisma.moodFactor.createMany({
       data: factorData,
@@ -202,7 +262,7 @@ export class MoodScoreStorageService {
       orderBy: { createdAt: 'asc' },
     })
 
-    return createdFactors.map((factor) => ({
+    return createdFactors.map((factor: PrismaMoodFactor) => ({
       id: factor.id,
       moodScoreId: factor.moodScoreId,
       type: factor.type,
@@ -230,7 +290,7 @@ export class MoodScoreStorageService {
         throw new Error(`Memory with id ${memoryId} does not exist`)
       }
 
-      const deltaData = deltas.map((delta) => ({
+      const deltaData = deltas.map((delta: MoodDelta) => ({
         memoryId,
         magnitude: delta.magnitude,
         direction: delta.direction,
@@ -250,7 +310,7 @@ export class MoodScoreStorageService {
         orderBy: { createdAt: 'asc' },
       })
 
-      return createdDeltas.map((delta) => ({
+      return createdDeltas.map((delta: PrismaMoodDelta) => ({
         id: delta.id,
         memoryId: delta.memoryId,
         magnitude: delta.magnitude,
@@ -331,7 +391,7 @@ export class MoodScoreStorageService {
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -359,7 +419,7 @@ export class MoodScoreStorageService {
       orderBy: { createdAt: 'asc' },
     })
 
-    return factors.map((factor) => ({
+    return factors.map((factor: PrismaMoodFactor) => ({
       id: factor.id,
       moodScoreId: factor.moodScoreId,
       type: factor.type,
@@ -377,7 +437,7 @@ export class MoodScoreStorageService {
       orderBy: { detectedAt: 'asc' },
     })
 
-    return deltas.map((delta) => ({
+    return deltas.map((delta: PrismaMoodDelta) => ({
       id: delta.id,
       memoryId: delta.memoryId,
       magnitude: delta.magnitude,
@@ -432,13 +492,13 @@ export class MoodScoreStorageService {
       orderBy: { createdAt: 'desc' },
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -479,13 +539,13 @@ export class MoodScoreStorageService {
       take: limit,
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -519,7 +579,7 @@ export class MoodScoreStorageService {
       take: limit,
     })
 
-    return deltas.map((delta) => ({
+    return deltas.map((delta: PrismaMoodDelta) => ({
       id: delta.id,
       memoryId: delta.memoryId,
       magnitude: delta.magnitude,
@@ -548,13 +608,13 @@ export class MoodScoreStorageService {
       orderBy: { createdAt: 'desc' },
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -595,13 +655,13 @@ export class MoodScoreStorageService {
       take: limit,
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -642,13 +702,13 @@ export class MoodScoreStorageService {
       take: limit,
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,
@@ -687,13 +747,13 @@ export class MoodScoreStorageService {
       take: limit,
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaMoodScore) => ({
       id: result.id,
       memoryId: result.memoryId,
       score: result.score,
       confidence: result.confidence,
       descriptors: JSON.parse(result.descriptors),
-      factors: result.factors.map((factor) => ({
+      factors: (result.factors || []).map((factor: PrismaMoodFactor) => ({
         id: factor.id,
         moodScoreId: factor.moodScoreId,
         type: factor.type,

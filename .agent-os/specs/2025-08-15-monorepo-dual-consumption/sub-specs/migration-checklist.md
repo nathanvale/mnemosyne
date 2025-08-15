@@ -18,7 +18,9 @@ Before starting migration, verify:
 
 ### Step 1: Update Package.json Exports
 
-#### Current Structure (Source-only)
+#### TypeScript Packages (Standard Pattern)
+
+**Current Structure (Source-only):**
 
 ```json
 {
@@ -29,7 +31,7 @@ Before starting migration, verify:
 }
 ```
 
-#### New Structure (Dual Consumption)
+**New Structure (Dual Consumption):**
 
 ```json
 {
@@ -49,6 +51,29 @@ Before starting migration, verify:
   }
 }
 ```
+
+#### JavaScript Config Packages (Simplified Pattern)
+
+**For packages with JavaScript config files:**
+
+```json
+{
+  "exports": {
+    "./base": {
+      "development": "./src/base.js",
+      "import": "./src/base.js",
+      "default": "./src/base.js"
+    },
+    "./config": {
+      "development": "./index.js",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  }
+}
+```
+
+**Note:** Config packages point to the same file for all conditions since JavaScript files don't require compilation.
 
 ### Step 2: Verify TypeScript Configuration
 
@@ -159,6 +184,22 @@ The package.json exports field automatically serves the right files based on NOD
 
 ## Package-Specific Considerations
 
+### For JavaScript Config Packages (eslint-config, prettier-config)
+
+**Special handling required:**
+
+- [ ] Use simplified tsconfig without extends if conflicts occur
+- [ ] Add type declarations for `.js` modules imported in tests:
+  ```typescript
+  // src/types.d.ts
+  declare module '*.js' {
+    const content: any
+    export = content
+  }
+  ```
+- [ ] Skip problematic config imports in tests (e.g., Next.js ESLint configs)
+- [ ] Focus tests on package structure rather than deep config validation
+
 ### For UI Component Packages
 
 Additional checks:
@@ -174,6 +215,44 @@ Additional steps:
 - [ ] Update bin field to point to dist
 - [ ] Add shebang to CLI entry files
 - [ ] Test CLI commands after build
+
+## Common Issues and Solutions
+
+### TypeScript Composite Mode Conflicts
+
+**Problem:** Config packages mixing JS files with TypeScript composite mode
+**Solution:** Create custom tsconfig without extends:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false
+  }
+}
+```
+
+### ESLint Config Import Errors
+
+**Problem:** Next.js ESLint configs fail in test environment
+**Solution:** Skip problematic imports or test selectively:
+
+```typescript
+// Test only safe configs
+const baseConfig = await import('../base.js')
+const libraryConfig = await import('../library.js')
+// Skip: const nextConfig = await import('../next.js')
+```
+
+### TypeScript Not Finding JS Modules
+
+**Problem:** TypeScript can't resolve JS file imports
+**Solution:** Add wildcard type declaration and include JS files in tsconfig
 
 ### For Configuration Packages
 

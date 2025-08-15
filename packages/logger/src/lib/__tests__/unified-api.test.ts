@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
-import { createLogger, production } from '../logger'
-import { createMockLogger } from '../testing'
+import { createLogger, production } from '../logger.js'
+import { createMockLogger } from '../testing.js'
 
 describe('Unified Logger API', () => {
   describe('Unified API Signature', () => {

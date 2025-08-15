@@ -1,5 +1,21 @@
 import { PrismaClient, Prisma } from '@studio/db'
 
+interface PrismaValidationResult {
+  id: string
+  memoryId: string
+  humanScore: number
+  algorithmScore: number
+  agreement: number
+  discrepancy: number
+  validatorId: string
+  validationMethod: string
+  feedback: string | null
+  biasIndicators: string
+  accuracyMetrics: string
+  validatedAt: Date
+  createdAt: Date
+}
+
 type PrismaTransaction = Omit<
   PrismaClient,
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
@@ -207,7 +223,7 @@ export class ValidationResultStorageService {
     })
 
     // Calculate trend data based on metric type
-    const dataPoints = results.map((result) => ({
+    const dataPoints = results.map((result: PrismaValidationResult) => ({
       timestamp: result.validatedAt,
       value: this.extractMetricValue(result, metricType),
     }))
@@ -238,9 +254,12 @@ export class ValidationResultStorageService {
       where: whereClause,
     })
 
-    const differences = results.map((r) => r.humanScore - r.algorithmScore)
+    const differences = results.map(
+      (r: PrismaValidationResult) => r.humanScore - r.algorithmScore,
+    )
     const avgDifference =
-      differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+      differences.reduce((sum: number, diff: number) => sum + diff, 0) /
+      differences.length
     const overallBiasScore = Math.min(1.0, Math.abs(avgDifference) / 1.5) // Scale to 0-1, even more sensitive
 
     const biasPatterns = []
@@ -250,7 +269,8 @@ export class ValidationResultStorageService {
       biasPatterns.push({
         pattern: 'systematic_underestimate',
         frequency:
-          differences.filter((d) => d > 0.3).length / differences.length,
+          differences.filter((d: number) => d > 0.3).length /
+          differences.length,
         impact:
           avgDifference > 1.2
             ? ('high' as const)
@@ -270,7 +290,8 @@ export class ValidationResultStorageService {
       biasPatterns.push({
         pattern: 'systematic_overestimate',
         frequency:
-          differences.filter((d) => d < -0.3).length / differences.length,
+          differences.filter((d: number) => d < -0.3).length /
+          differences.length,
         impact:
           avgDifference < -1.5
             ? ('high' as const)
@@ -390,7 +411,7 @@ export class ValidationResultStorageService {
       take: query.limit,
     })
 
-    return results.map((result) => ({
+    return results.map((result: PrismaValidationResult) => ({
       id: result.id,
       memoryId: result.memoryId,
       humanScore: result.humanScore,
@@ -465,26 +486,35 @@ export class ValidationResultStorageService {
       }
     }
 
-    const agreements = results.map((r) => r.agreement)
-    const discrepancies = results.map((r) => r.discrepancy)
-    const humanScores = results.map((r) => r.humanScore)
-    const algorithmScores = results.map((r) => r.algorithmScore)
+    const agreements = results.map((r: PrismaValidationResult) => r.agreement)
+    const discrepancies = results.map(
+      (r: PrismaValidationResult) => r.discrepancy,
+    )
+    const humanScores = results.map((r: PrismaValidationResult) => r.humanScore)
+    const algorithmScores = results.map(
+      (r: PrismaValidationResult) => r.algorithmScore,
+    )
 
     const averageAgreement =
-      agreements.reduce((sum, a) => sum + a, 0) / agreements.length
+      agreements.reduce((sum: number, a: number) => sum + a, 0) /
+      agreements.length
     const meanAbsoluteError =
-      discrepancies.reduce((sum, d) => sum + d, 0) / discrepancies.length
+      discrepancies.reduce((sum: number, d: number) => sum + d, 0) /
+      discrepancies.length
     const correlationCoefficient = this.calculatePearsonCorrelation(
       humanScores,
       algorithmScores,
     )
-    const highAgreementCount = agreements.filter((a) => a > 0.9).length
+    const highAgreementCount = agreements.filter((a: number) => a > 0.9).length
     const highAgreementPercentage = highAgreementCount / agreements.length
 
     // Calculate bias score from human vs algorithm differences
-    const differences = results.map((r) => r.humanScore - r.algorithmScore)
+    const differences = results.map(
+      (r: PrismaValidationResult) => r.humanScore - r.algorithmScore,
+    )
     const avgDifference =
-      differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+      differences.reduce((sum: number, diff: number) => sum + diff, 0) /
+      differences.length
     const biasScore = Math.min(1.0, Math.abs(avgDifference) / 4.0)
 
     // Determine trend direction (simplified - would need temporal analysis for real implementation)
@@ -625,13 +655,21 @@ export class ValidationResultStorageService {
       },
     })
 
-    return validators.map((validator) => ({
-      validatorId: validator.validatorId,
-      averageAgreement: Math.round((validator._avg.agreement || 0) * 100) / 100,
-      totalValidations: validator._count.id,
-      biasScore: Math.round((validator._avg.discrepancy || 0) * 100) / 100,
-      validationMethod: validator.validationMethod,
-    }))
+    return validators.map(
+      (validator: {
+        validatorId: string
+        validationMethod: string
+        _avg: { agreement: number | null; discrepancy: number | null }
+        _count: { id: number }
+      }) => ({
+        validatorId: validator.validatorId,
+        averageAgreement:
+          Math.round((validator._avg.agreement || 0) * 100) / 100,
+        totalValidations: validator._count.id,
+        biasScore: Math.round((validator._avg.discrepancy || 0) * 100) / 100,
+        validationMethod: validator.validationMethod,
+      }),
+    )
   }
 
   async getMethodologyPerformanceComparison(): Promise<
@@ -654,20 +692,26 @@ export class ValidationResultStorageService {
       },
     })
 
-    return methods.map((method) => {
-      const avgAgreement = method._avg.agreement || 0
-      const reliability =
-        avgAgreement > 0.9 ? 'high' : avgAgreement > 0.7 ? 'medium' : 'low'
+    return methods.map(
+      (method: {
+        validationMethod: string
+        _avg: { agreement: number | null; discrepancy: number | null }
+        _count: { id: number }
+      }) => {
+        const avgAgreement = method._avg.agreement || 0
+        const reliability =
+          avgAgreement > 0.9 ? 'high' : avgAgreement > 0.7 ? 'medium' : 'low'
 
-      return {
-        validationMethod: method.validationMethod,
-        averageAgreement: Math.round(avgAgreement * 100) / 100,
-        averageDiscrepancy:
-          Math.round((method._avg.discrepancy || 0) * 100) / 100,
-        totalValidations: method._count.id,
-        reliability: reliability as 'high' | 'medium' | 'low',
-      }
-    })
+        return {
+          validationMethod: method.validationMethod,
+          averageAgreement: Math.round(avgAgreement * 100) / 100,
+          averageDiscrepancy:
+            Math.round((method._avg.discrepancy || 0) * 100) / 100,
+          totalValidations: method._count.id,
+          reliability: reliability as 'high' | 'medium' | 'low',
+        }
+      },
+    )
   }
 
   async getImprovementMetrics(
@@ -711,13 +755,21 @@ export class ValidationResultStorageService {
 
     // Calculate baseline stats
     const baselineAgreement =
-      baselineResults.reduce((sum, r) => sum + r.agreement, 0) /
-      baselineResults.length
+      baselineResults.reduce(
+        (sum: number, r: PrismaValidationResult) => sum + r.agreement,
+        0,
+      ) / baselineResults.length
     const baselineDiscrepancy =
-      baselineResults.reduce((sum, r) => sum + r.discrepancy, 0) /
-      baselineResults.length
-    const baselineHuman = baselineResults.map((r) => r.humanScore)
-    const baselineAlgorithm = baselineResults.map((r) => r.algorithmScore)
+      baselineResults.reduce(
+        (sum: number, r: PrismaValidationResult) => sum + r.discrepancy,
+        0,
+      ) / baselineResults.length
+    const baselineHuman = baselineResults.map(
+      (r: PrismaValidationResult) => r.humanScore,
+    )
+    const baselineAlgorithm = baselineResults.map(
+      (r: PrismaValidationResult) => r.algorithmScore,
+    )
     const baselineCorrelation = this.calculatePearsonCorrelation(
       baselineHuman,
       baselineAlgorithm,
@@ -725,13 +777,21 @@ export class ValidationResultStorageService {
 
     // Calculate comparison stats
     const comparisonAgreement =
-      comparisonResults.reduce((sum, r) => sum + r.agreement, 0) /
-      comparisonResults.length
+      comparisonResults.reduce(
+        (sum: number, r: PrismaValidationResult) => sum + r.agreement,
+        0,
+      ) / comparisonResults.length
     const comparisonDiscrepancy =
-      comparisonResults.reduce((sum, r) => sum + r.discrepancy, 0) /
-      comparisonResults.length
-    const comparisonHuman = comparisonResults.map((r) => r.humanScore)
-    const comparisonAlgorithm = comparisonResults.map((r) => r.algorithmScore)
+      comparisonResults.reduce(
+        (sum: number, r: PrismaValidationResult) => sum + r.discrepancy,
+        0,
+      ) / comparisonResults.length
+    const comparisonHuman = comparisonResults.map(
+      (r: PrismaValidationResult) => r.humanScore,
+    )
+    const comparisonAlgorithm = comparisonResults.map(
+      (r: PrismaValidationResult) => r.algorithmScore,
+    )
     const comparisonCorrelation = this.calculatePearsonCorrelation(
       comparisonHuman,
       comparisonAlgorithm,
@@ -817,7 +877,7 @@ export class ValidationResultStorageService {
       orderBy: { validatedAt: 'asc' },
     })
 
-    const rawData = results.map((result) => ({
+    const rawData = results.map((result: PrismaValidationResult) => ({
       id: result.id,
       memoryId: result.memoryId,
       humanScore: result.humanScore,
@@ -847,7 +907,10 @@ export class ValidationResultStorageService {
         agreement:
           results.length > 0
             ? Math.round(
-                (results.reduce((sum, r) => sum + r.agreement, 0) /
+                (results.reduce(
+                  (sum: number, r: PrismaValidationResult) => sum + r.agreement,
+                  0,
+                ) /
                   results.length) *
                   100,
               ) / 100
@@ -855,7 +918,11 @@ export class ValidationResultStorageService {
         discrepancy:
           results.length > 0
             ? Math.round(
-                (results.reduce((sum, r) => sum + r.discrepancy, 0) /
+                (results.reduce(
+                  (sum: number, r: PrismaValidationResult) =>
+                    sum + r.discrepancy,
+                  0,
+                ) /
                   results.length) *
                   100,
               ) / 100
@@ -864,8 +931,8 @@ export class ValidationResultStorageService {
           results.length > 0
             ? Math.round(
                 this.calculatePearsonCorrelation(
-                  results.map((r) => r.humanScore),
-                  results.map((r) => r.algorithmScore),
+                  results.map((r: PrismaValidationResult) => r.humanScore),
+                  results.map((r: PrismaValidationResult) => r.algorithmScore),
                 ) * 100,
               ) / 100
             : 0,

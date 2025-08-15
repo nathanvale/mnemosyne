@@ -64,6 +64,24 @@
       "types": "./dist/speech/index.d.ts",
       "import": "./dist/speech/index.js",
       "default": "./dist/speech/index.js"
+    },
+    "./audio": {
+      "development": "./src/audio/index.ts",
+      "types": "./dist/audio/index.d.ts",
+      "import": "./dist/audio/index.js",
+      "default": "./dist/audio/index.js"
+    },
+    "./utils": {
+      "development": "./src/utils/auto-config.ts",
+      "types": "./dist/utils/auto-config.d.ts",
+      "import": "./dist/utils/auto-config.js",
+      "default": "./dist/utils/auto-config.js"
+    },
+    "./quality-check": {
+      "development": "./src/quality-check/index.ts",
+      "types": "./dist/quality-check/index.d.ts",
+      "import": "./dist/quality-check/index.js",
+      "default": "./dist/quality-check/index.js"
     }
   },
   "scripts": {

@@ -190,7 +190,7 @@ describe('TestDataFactory', () => {
 
       // Verify factor details
       const sentimentFactor = moodScore!.factors.find(
-        (f) => f.type === 'sentiment_analysis',
+        (f: { type: string }) => f.type === 'sentiment_analysis',
       )
       expect(sentimentFactor).toBeDefined()
       expect(sentimentFactor!.weight).toBe(0.4)
@@ -245,11 +245,17 @@ describe('TestDataFactory', () => {
       })
 
       expect(deltas).toHaveLength(2)
-      expect(deltas.every((d) => d.memoryId === memoryId)).toBe(true)
+      expect(
+        deltas.every((d: { memoryId: string }) => d.memoryId === memoryId),
+      ).toBe(true)
 
       // Verify delta details
-      const positiveDeltas = deltas.filter((d) => d.direction === 'positive')
-      const negativeDeltas = deltas.filter((d) => d.direction === 'negative')
+      const positiveDeltas = deltas.filter(
+        (d: { direction: string }) => d.direction === 'positive',
+      )
+      const negativeDeltas = deltas.filter(
+        (d: { direction: string }) => d.direction === 'negative',
+      )
 
       expect(positiveDeltas).toHaveLength(1)
       expect(negativeDeltas).toHaveLength(1)

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
-import type { Memory, MemoryV1 } from '../utils/transformations.js'
+import type { Memory } from '../memory/core-memory.js'
+import type { MemoryV1 } from '../utils/transformations.js'
 
 import { EmotionalState, EmotionalTheme } from '../memory/emotional-context.js'
 import { ParticipantRole } from '../memory/participants.js'

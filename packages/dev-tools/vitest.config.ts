@@ -6,5 +6,11 @@ export default defineConfig({
     environment: 'node',
     // Don't reference a setup file that doesn't exist
     // setupFiles: undefined,
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
+    },
+  },
+  esbuild: {
+    target: 'node14',
   },
 })

@@ -1,6 +1,6 @@
 import pino from 'pino'
 
-import { getCallSite } from './stacktrace'
+import { getCallSite } from './stacktrace.js'
 
 /**
  * Logger utilities for the application

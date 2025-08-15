@@ -194,6 +194,11 @@ export class TestDataFactory {
         }
 
         // Use the storage service with transaction context
+        // At this point memoryId is guaranteed to be defined
+        if (!memoryId) {
+          throw new Error('Memory ID is undefined after creation/validation')
+        }
+
         const storedMoodScore = await this.moodScoreStorage.storeMoodScore(
           memoryId,
           moodAnalysis,
@@ -274,56 +279,60 @@ export class TestDataFactory {
     } = {},
   ): Promise<{ memoryId: string; deltaId: string }> {
     // Use transaction to ensure Memory exists before creating MoodDelta
-    const result = await this.prisma.$transaction(async (tx) => {
-      // Ensure Memory exists first - create if not provided
-      let memoryId = options.memoryId
-      if (!memoryId) {
-        // Create memory within the transaction
-        const timestamp = Date.now()
-        const microtime = performance.now()
-        const randomSuffix = Math.random().toString(36).substring(2)
-        const memoryData = {
-          id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-          sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
-          participants: JSON.stringify([{ id: 'user1', name: 'Test User 1' }]),
-          summary: 'Test memory summary',
-          confidence: 8,
-          contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+    const result = await this.prisma.$transaction(
+      async (tx: PrismaTransaction) => {
+        // Ensure Memory exists first - create if not provided
+        let memoryId = options.memoryId
+        if (!memoryId) {
+          // Create memory within the transaction
+          const timestamp = Date.now()
+          const microtime = performance.now()
+          const randomSuffix = Math.random().toString(36).substring(2)
+          const memoryData = {
+            id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+            sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
+            participants: JSON.stringify([
+              { id: 'user1', name: 'Test User 1' },
+            ]),
+            summary: 'Test memory summary',
+            confidence: 8,
+            contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+          }
+
+          const memory = await tx.memory.create({
+            data: memoryData,
+          })
+          memoryId = memory.id
+        } else {
+          // Verify Memory exists
+          const existingMemory = await tx.memory.findUnique({
+            where: { id: memoryId },
+          })
+          if (!existingMemory) {
+            throw new Error(`Memory with ID ${memoryId} does not exist`)
+          }
         }
 
-        const memory = await tx.memory.create({
-          data: memoryData,
+        const delta = await tx.moodDelta.create({
+          data: {
+            memoryId,
+            magnitude: options.magnitude || 2.5,
+            direction: options.direction || 'positive',
+            type: options.type || 'mood_repair',
+            confidence: options.confidence || 0.85,
+            factors: JSON.stringify(
+              options.factors || ['support', 'breakthrough'],
+            ),
+            significance: options.significance || 0.8,
+            currentScore: options.currentScore || 7.5,
+          },
         })
-        memoryId = memory.id
-      } else {
-        // Verify Memory exists
-        const existingMemory = await tx.memory.findUnique({
-          where: { id: memoryId },
-        })
-        if (!existingMemory) {
-          throw new Error(`Memory with ID ${memoryId} does not exist`)
-        }
-      }
 
-      const delta = await tx.moodDelta.create({
-        data: {
-          memoryId,
-          magnitude: options.magnitude || 2.5,
-          direction: options.direction || 'positive',
-          type: options.type || 'mood_repair',
-          confidence: options.confidence || 0.85,
-          factors: JSON.stringify(
-            options.factors || ['support', 'breakthrough'],
-          ),
-          significance: options.significance || 0.8,
-          currentScore: options.currentScore || 7.5,
-        },
-      })
+        return { memoryId, delta }
+      },
+    )
 
-      return { memoryId, delta }
-    })
-
-    return { memoryId: result.memoryId, deltaId: result.delta.id }
+    return { memoryId: result.memoryId as string, deltaId: result.delta.id }
   }
 
   /**
@@ -344,69 +353,73 @@ export class TestDataFactory {
     } = {},
   ): Promise<{ memoryId: string; deltaIds: Array<string> }> {
     // Use transaction to ensure Memory exists before creating MoodDeltas
-    const result = await this.prisma.$transaction(async (tx) => {
-      // Ensure Memory exists first - create if not provided
-      let memoryId = options.memoryId
-      if (!memoryId) {
-        // Create memory within the transaction
-        const timestamp = Date.now()
-        const microtime = performance.now()
-        const randomSuffix = Math.random().toString(36).substring(2)
-        const memoryData = {
-          id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
-          sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
-          participants: JSON.stringify([{ id: 'user1', name: 'Test User 1' }]),
-          summary: 'Test memory summary',
-          confidence: 8,
-          contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+    const result = await this.prisma.$transaction(
+      async (tx: PrismaTransaction) => {
+        // Ensure Memory exists first - create if not provided
+        let memoryId = options.memoryId
+        if (!memoryId) {
+          // Create memory within the transaction
+          const timestamp = Date.now()
+          const microtime = performance.now()
+          const randomSuffix = Math.random().toString(36).substring(2)
+          const memoryData = {
+            id: `test-memory-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+            sourceMessageIds: JSON.stringify(['msg1', 'msg2']),
+            participants: JSON.stringify([
+              { id: 'user1', name: 'Test User 1' },
+            ]),
+            summary: 'Test memory summary',
+            confidence: 8,
+            contentHash: `hash-${timestamp}-${Math.floor(microtime)}-${randomSuffix}`,
+          }
+
+          const memory = await tx.memory.create({
+            data: memoryData,
+          })
+          memoryId = memory.id
+        } else {
+          // Verify Memory exists
+          const existingMemory = await tx.memory.findUnique({
+            where: { id: memoryId },
+          })
+          if (!existingMemory) {
+            throw new Error(`Memory with ID ${memoryId} does not exist`)
+          }
         }
 
-        const memory = await tx.memory.create({
-          data: memoryData,
-        })
-        memoryId = memory.id
-      } else {
-        // Verify Memory exists
-        const existingMemory = await tx.memory.findUnique({
-          where: { id: memoryId },
-        })
-        if (!existingMemory) {
-          throw new Error(`Memory with ID ${memoryId} does not exist`)
-        }
-      }
-
-      const deltas = options.deltas || [
-        {
-          magnitude: 2.5,
-          direction: 'positive' as const,
-          type: 'mood_repair' as const,
-          confidence: 0.85,
-          factors: ['support', 'breakthrough'],
-          significance: 0.8,
-          currentScore: 7.5,
-        },
-      ]
-
-      const deltaIds: Array<string> = []
-
-      for (const delta of deltas) {
-        const deltaResult = await tx.moodDelta.create({
-          data: {
-            memoryId,
-            magnitude: delta.magnitude,
-            direction: delta.direction,
-            type: delta.type,
-            confidence: delta.confidence,
-            factors: JSON.stringify(delta.factors),
-            significance: delta.significance || 0.7,
-            currentScore: delta.currentScore || 6.0,
+        const deltas = options.deltas || [
+          {
+            magnitude: 2.5,
+            direction: 'positive' as const,
+            type: 'mood_repair' as const,
+            confidence: 0.85,
+            factors: ['support', 'breakthrough'],
+            significance: 0.8,
+            currentScore: 7.5,
           },
-        })
-        deltaIds.push(deltaResult.id)
-      }
+        ]
 
-      return { memoryId, deltaIds }
-    })
+        const deltaIds: Array<string> = []
+
+        for (const delta of deltas) {
+          const deltaResult = await tx.moodDelta.create({
+            data: {
+              memoryId,
+              magnitude: delta.magnitude,
+              direction: delta.direction,
+              type: delta.type,
+              confidence: delta.confidence,
+              factors: JSON.stringify(delta.factors),
+              significance: delta.significance || 0.7,
+              currentScore: delta.currentScore || 6.0,
+            },
+          })
+          deltaIds.push(deltaResult.id)
+        }
+
+        return { memoryId: memoryId as string, deltaIds }
+      },
+    )
 
     return result
   }
@@ -427,7 +440,7 @@ export class TestDataFactory {
   }> {
     // Use a single transaction for all operations to avoid isolation issues
     return await this.prisma.$transaction(
-      async (tx) => {
+      async (tx: PrismaTransaction) => {
         // Create memory first
         const timestamp = Date.now()
         const microtime = performance.now()
@@ -533,9 +546,9 @@ export class TestDataFactory {
           const significance =
             delta.significance || baseSignificance * positionMultiplier
 
-          console.log(
-            `Delta ${i}: position=${position}, base=${baseSignificance}, multiplier=${positionMultiplier}, final=${significance}`,
-          )
+          // console.log(
+          //   `Delta ${i}: position=${position}, base=${baseSignificance}, multiplier=${positionMultiplier}, final=${significance}`,
+          // )
 
           const result = await tx.moodDelta.create({
             data: {

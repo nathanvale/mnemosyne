@@ -4,20 +4,27 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
-    "build": "echo 'Mocks package - build via turbo'",
-    "dev": "echo 'Mocks package dev placeholder'",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
-    "test": "echo 'Mocks package - no tests needed'",
+    "test": "vitest",
     "lint": "eslint src --max-warnings 0",
-    "format:check": "prettier --check src"
+    "format:check": "prettier --check src",
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "msw": "^2.10.2"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

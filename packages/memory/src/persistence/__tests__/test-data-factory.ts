@@ -2,6 +2,11 @@ import type { PrismaClient } from '@studio/db'
 
 import type { MoodAnalysisResult } from '../../types'
 
+type PrismaTransaction = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
 /**
  * Test Data Factory - Creates test data with proper foreign key dependencies
  * Addresses Task 4.2: Create centralized factory functions that respect foreign key dependencies
@@ -89,7 +94,7 @@ export class TestDataFactory {
       ],
     }
 
-    return await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx: PrismaTransaction) => {
       // Verify Memory exists before creating MoodScore
       const existingMemory = await tx.memory.findUnique({
         where: { id: options.memoryId },
@@ -140,7 +145,7 @@ export class TestDataFactory {
     significance?: number
     currentScore?: number
   }): Promise<{ memoryId: string; deltaId: string }> {
-    return await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx: PrismaTransaction) => {
       // Verify Memory exists before creating MoodDelta
       const existingMemory = await tx.memory.findUnique({
         where: { id: options.memoryId },
@@ -195,7 +200,7 @@ export class TestDataFactory {
       },
     ]
 
-    return await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx: PrismaTransaction) => {
       // Verify Memory exists before creating MoodDeltas
       const existingMemory = await tx.memory.findUnique({
         where: { id: options.memoryId },
@@ -248,7 +253,7 @@ export class TestDataFactory {
     deltaIds: Array<string>
   }> {
     return await this.prisma.$transaction(
-      async (tx) => {
+      async (tx: PrismaTransaction) => {
         // Create Memory first
         const timestamp = Date.now()
         const random = Math.random().toString(36).substr(2, 12)

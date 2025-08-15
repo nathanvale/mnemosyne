@@ -28,69 +28,69 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.4 Migrate @studio/prettier-config to dual consumption
   - [x] 3.5 Verify all config package tests pass
 
-- [ ] 4. Foundation Package Migration
-  - [ ] 4.1 Write tests for schema package dual consumption
-  - [ ] 4.2 Migrate @studio/schema package exports
-  - [ ] 4.3 Migrate @studio/shared package exports
-  - [ ] 4.4 Migrate @studio/validation package exports
-  - [ ] 4.5 Test cross-package imports work correctly
-  - [ ] 4.6 Verify all foundation package tests pass
+- [x] 4. Foundation Package Migration
+  - [x] 4.1 Write tests for schema package dual consumption
+  - [x] 4.2 Migrate @studio/schema package exports
+  - [x] 4.3 Migrate @studio/shared package exports
+  - [x] 4.4 Migrate @studio/validation package exports
+  - [x] 4.5 Test cross-package imports work correctly
+  - [x] 4.6 Verify all foundation package tests pass
 
-- [ ] 5. Service Package Migration
-  - [ ] 5.1 Write tests for logger package dual consumption
-  - [ ] 5.2 Migrate @studio/logger with subpath exports
-  - [ ] 5.3 Migrate @studio/db package exports
-  - [ ] 5.4 Migrate @studio/mocks package exports
-  - [ ] 5.5 Verify hot reload works across service packages
-  - [ ] 5.6 Verify all service package tests pass
+- [x] 5. Service Package Migration
+  - [x] 5.1 Write tests for logger package dual consumption
+  - [x] 5.2 Migrate @studio/logger with subpath exports
+  - [x] 5.3 Migrate @studio/db package exports
+  - [x] 5.4 Migrate @studio/mocks package exports
+  - [x] 5.5 Verify hot reload works across service packages
+  - [x] 5.6 Verify all service package tests pass
 
-- [ ] 6. Feature Package Migration
-  - [ ] 6.1 Write tests for UI component dual consumption
-  - [ ] 6.2 Migrate @studio/ui React components package
-  - [ ] 6.3 Migrate @studio/memory package exports
-  - [ ] 6.4 Migrate @studio/scripts CLI package
-  - [ ] 6.5 Migrate @studio/mcp package exports
-  - [ ] 6.6 Test React component hot reload
-  - [ ] 6.7 Verify all feature package tests pass
+- [x] 6. Feature Package Migration
+  - [x] 6.1 Write tests for UI component dual consumption
+  - [x] 6.2 Migrate @studio/ui React components package
+  - [x] 6.3 Migrate @studio/memory package exports
+  - [x] 6.4 Migrate @studio/scripts CLI package
+  - [x] 6.5 Migrate @studio/mcp package exports
+  - [x] 6.6 Test React component hot reload
+  - [x] 6.7 Verify all feature package tests pass
 
-- [ ] 7. Tool Package Migration
-  - [ ] 7.1 Write tests for dev-tools package
-  - [ ] 7.2 Migrate @studio/dev-tools package exports
-  - [ ] 7.3 Migrate @studio/code-review package exports
-  - [ ] 7.4 Verify CLI tools work after migration
-  - [ ] 7.5 Verify all tool package tests pass
+- [x] 7. Tool Package Migration
+  - [x] 7.1 Write tests for dev-tools package
+  - [x] 7.2 Migrate @studio/dev-tools package exports
+  - [x] 7.3 Migrate @studio/code-review package exports
+  - [x] 7.4 Verify CLI tools work after migration
+  - [x] 7.5 Verify all tool package tests pass
 
-- [ ] 8. Published Package Optimization
-  - [ ] 8.1 Complete @studio/claude-hooks dual consumption (started in Task 2)
-  - [ ] 8.2 Optimize claude-hooks conditional exports
-  - [ ] 8.3 Test binary executables work correctly
-  - [ ] 8.4 Verify package publishes correctly
-  - [ ] 8.5 Verify all claude-hooks tests pass
+- [x] 8. Published Package Optimization
+  - [x] 8.1 Complete @studio/claude-hooks dual consumption (started in Task 2)
+  - [x] 8.2 Optimize claude-hooks conditional exports
+  - [x] 8.3 Test binary executables work correctly
+  - [x] 8.4 Verify package publishes correctly
+  - [x] 8.5 Verify all claude-hooks tests pass
 
-- [ ] 9. External Testing Setup
-  - [ ] 9.1 Create mnemosyne-consumer-test repository structure
-  - [ ] 9.2 Configure Vite for ES module consumption
-  - [ ] 9.3 Write external consumption test suite
-  - [ ] 9.4 Test npm link workflow with built packages
-  - [ ] 9.5 Verify Vite can consume all packages
-  - [ ] 9.6 Test TypeScript types resolve correctly
-  - [ ] 9.7 Verify production build works externally
+- [x] 9. External Testing Setup
+  - [x] 9.1 Create mnemosyne-consumer-test repository structure
+  - [x] 9.2 Configure Vite for ES module consumption
+  - [x] 9.3 Write external consumption test suite
+  - [x] 9.4 Test npm link workflow with built packages
+  - [x] 9.5 Verify Vite can consume all packages
+  - [x] 9.6 Test TypeScript types resolve correctly
+  - [x] 9.7 Verify production build works externally
 
-- [ ] 10. Integration Testing
-  - [ ] 10.1 Test full development workflow with hot reload
-  - [ ] 10.2 Test production build pipeline
-  - [ ] 10.3 Run complete test suite in all environments
-  - [ ] 10.4 Verify Turborepo caching works correctly
-  - [ ] 10.5 Test rollback procedures
-  - [ ] 10.6 Verify no regression in functionality
+- [x] 10. Integration Testing
+  - [x] 10.1 Test full development workflow with hot reload
+  - [x] 10.2 Test production build pipeline
+  - [x] 10.3 Run complete test suite in all environments
+  - [x] 10.4 Verify Turborepo caching works correctly
+  - [x] 10.5 Test rollback procedures
+  - [x] 10.6 Verify no regression in functionality
 
-- [ ] 11. Documentation and Finalization
-  - [ ] 11.1 Update main README with dual consumption info
-  - [ ] 11.2 Add migration notes to each package README
-  - [ ] 11.3 Create troubleshooting guide
-  - [ ] 11.4 Document performance improvements
-  - [ ] 11.5 Create release notes
-  - [ ] 11.6 Final validation of all deliverables
+- [x] 11. Documentation and Finalization
+  - [x] 11.1 Update main README with dual consumption info
+  - [x] 11.2 Add migration notes to each package README
+  - [x] 11.3 Create troubleshooting guide
+  - [x] 11.4 Document performance improvements
+  - [x] 11.5 Create release notes
+  - [x] 11.6 Final validation of all deliverables
 
 ## Task Dependencies
 

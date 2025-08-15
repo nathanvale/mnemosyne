@@ -158,6 +158,48 @@ pnpm --filter @studio/claude-hooks setup
 - 🔊 **Sound Notifications**: Customizable sounds for success/warning/error
 - 📝 **TypeScript Cache**: Intelligent tsconfig resolution for monorepo
 
+## 🎯 Dual Consumption Architecture
+
+### ⚡ Instant Development, Optimized Production
+
+This monorepo implements a **dual consumption architecture** - packages can be consumed directly as TypeScript source in development for instant hot reload, or as optimized JavaScript in production:
+
+```json
+// Each package exposes both source and built files
+{
+  "exports": {
+    ".": {
+      "development": "./src/index.ts", // Development: TypeScript source
+      "types": "./dist/index.d.ts", // TypeScript definitions
+      "import": "./dist/index.js", // Production: Compiled JS
+      "default": "./dist/index.js"
+    }
+  }
+}
+```
+
+**Benefits:**
+
+- 🚀 **Zero build time** in development - instant hot reload
+- ⚡ **< 1s package changes** - no compilation needed during development
+- 📦 **Optimized production** - tree-shaken, minified builds
+- 🔧 **External compatibility** - npm-consumable packages
+
+### 🎨 How It Works
+
+```typescript
+// Same import works in both modes
+import { logger } from '@studio/logger'
+
+// Development (NODE_ENV=development):
+// → Imports directly from packages/logger/src/index.ts
+// → Instant hot reload, perfect source maps
+
+// Production (NODE_ENV=production):
+// → Imports from packages/logger/dist/index.js
+// → Optimized, tree-shaken code
+```
+
 ## 🎯 Turborepo Features
 
 ### ⚡ Intelligent Caching
@@ -301,16 +343,46 @@ mnemosyne/
 
 ### 📂 Import Paths
 
-The monorepo supports both legacy and new import patterns:
+The monorepo uses workspace imports with dual consumption support:
 
 ```typescript
-// Legacy imports (no longer supported)
-// import { logger } from '@/lib/logger'
-
-// New monorepo imports (recommended)
+// All imports work seamlessly in both dev and production
 import { PrismaClient } from '@studio/db'
 import { logger } from '@studio/logger'
 import { Button } from '@studio/ui'
+
+// Subpath imports also supported
+import { OpenAIProvider } from '@studio/claude-hooks/speech'
+import { createTestDatabase } from '@studio/test-config/database'
+```
+
+### 🔄 Dual Consumption in Practice
+
+**Development Mode (`NODE_ENV=development`):**
+
+- Direct TypeScript source imports - no build step
+- Instant hot reload across package boundaries
+- Perfect source maps for debugging
+- Changes reflect immediately
+
+**Production Mode (`NODE_ENV=production`):**
+
+- Optimized JavaScript imports
+- Tree-shaken and minified code
+- Faster runtime execution
+- Suitable for deployment
+
+**External Consumption:**
+
+```bash
+# Other projects can consume packages via npm link
+cd external-project
+npm link ../mnemosyne/packages/logger
+```
+
+```typescript
+// External project gets compiled JS + TypeScript definitions
+import { logger } from '@studio/logger' // Works perfectly!
 ```
 
 ### 🧪 Testing Strategy
@@ -393,6 +465,22 @@ pnpm --filter @studio/db build
 
 # Reset database schema
 pnpm db:reset
+```
+
+**Dual Consumption Issues:**
+
+```bash
+# Module not found in development?
+# Check package.json exports field has "development" condition
+
+# TypeScript can't find types?
+# Ensure "types" field points to .d.ts files
+
+# CLI binary not working?
+pnpm --filter <package> build  # Build binaries first
+
+# External project can't import?
+pnpm build  # Build all packages before npm link
 ```
 
 ### 📋 Health Check
