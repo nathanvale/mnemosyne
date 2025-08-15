@@ -42,20 +42,28 @@
   ],
   "exports": {
     ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "default": "./dist/index.js"
     },
     "./types": {
+      "development": "./src/types/index.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js",
-      "types": "./dist/types/index.d.ts"
+      "default": "./dist/types/index.js"
     },
     "./config": {
+      "development": "./src/config/config-schema.ts",
+      "types": "./dist/config/config-schema.d.ts",
       "import": "./dist/config/config-schema.js",
-      "types": "./dist/config/config-schema.d.ts"
+      "default": "./dist/config/config-schema.js"
     },
     "./speech": {
+      "development": "./src/speech/index.ts",
+      "types": "./dist/speech/index.d.ts",
       "import": "./dist/speech/index.js",
-      "types": "./dist/speech/index.d.ts"
+      "default": "./dist/speech/index.js"
     }
   },
   "scripts": {
@@ -75,6 +83,7 @@
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.8.0",
+    "@studio/logger": "workspace:*",
     "dotenv": "^17.2.1",
     "micromatch": "^4.0.8",
     "openai": "^5.12.0",

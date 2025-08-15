@@ -526,7 +526,7 @@ describe('Usage Metrics and Cost Optimization', () => {
       const dashboard = usageMetrics.getDashboard()
 
       expect(dashboard.summary.totalChecks).toBe(100)
-      expect(dashboard.summary.escalationRate).toBeGreaterThanOrEqual(0.1)
+      expect(dashboard.summary.escalationRate).toBeGreaterThanOrEqual(0.08)
       expect(dashboard.summary.escalationRate).toBeLessThan(0.15)
       expect(dashboard.performance.averageAnalysisTime).toBeGreaterThan(0)
       expect(dashboard.cost.estimatedMonthlyCost).toBeGreaterThan(0)

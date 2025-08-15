@@ -8,6 +8,7 @@ describe('Subagent Stop Hook Integration', () => {
   let tempDir: string
   let configPath: string
   let logDir: string
+  const rootDir = join(__dirname, '../../../../../')
 
   beforeEach(() => {
     // Create temporary directories for testing
@@ -74,13 +75,15 @@ describe('Subagent Stop Hook Integration', () => {
 
     // Execute the subagent stop hook
     const hookPath = join(__dirname, '../../subagent-stop/index.ts')
-    const command = `echo '${stdinInput}' | tsx ${hookPath}`
+    // Use tsx with root tsconfig for path mappings
+    const command = `echo '${stdinInput}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
     expect(() => {
       execSync(command, {
         cwd: tempDir,
         env: {
           ...process.env,
+          NODE_ENV: 'development',
           CLAUDE_HOOKS_DEBUG: 'true',
           CLAUDE_HOOKS_LOG_DIR: logDir,
           CLAUDE_HOOKS_CONFIG_PATH: configPath,
@@ -128,13 +131,15 @@ describe('Subagent Stop Hook Integration', () => {
     })
 
     const hookPath = join(__dirname, '../../subagent-stop/index.ts')
-    const command = `echo '${stdinInput}' | tsx ${hookPath}`
+    // Use tsx with root tsconfig for path mappings
+    const command = `echo '${stdinInput}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
     expect(() => {
       execSync(command, {
         cwd: tempDir,
         env: {
           ...process.env,
+          NODE_ENV: 'development',
           CLAUDE_HOOKS_DEBUG: 'true',
           CLAUDE_HOOKS_LOG_DIR: logDir,
           CLAUDE_HOOKS_CONFIG_PATH: configPath,
@@ -179,7 +184,8 @@ describe('Subagent Stop Hook Integration', () => {
         },
       })
 
-      const command = `echo '${stdinInput}' | tsx ${hookPath}`
+      // Use tsx with root tsconfig for path mappings
+      const command = `echo '${stdinInput}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
       expect(() => {
         execSync(command, {
@@ -218,7 +224,8 @@ describe('Subagent Stop Hook Integration', () => {
     })
 
     const hookPath = join(__dirname, '../../subagent-stop/index.ts')
-    const command = `echo '${stdinInput}' | tsx ${hookPath}`
+    // Use tsx with root tsconfig for path mappings
+    const command = `echo '${stdinInput}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
     // Test with environment variable overrides
     expect(() => {
@@ -226,6 +233,7 @@ describe('Subagent Stop Hook Integration', () => {
         cwd: tempDir,
         env: {
           ...process.env,
+          NODE_ENV: 'development',
           CLAUDE_HOOKS_DEBUG: 'true',
           CLAUDE_HOOKS_CONFIG_PATH: configPath,
           CLAUDE_HOOKS_SUBAGENT_SOUND: 'false', // Override config
@@ -255,7 +263,8 @@ describe('Subagent Stop Hook Integration', () => {
       data: {}, // Empty data
     })
 
-    const commandMissing = `echo '${stdinInputMissing}' | tsx ${hookPath}`
+    // Use tsx with root tsconfig for path mappings
+    const commandMissing = `echo '${stdinInputMissing}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
     expect(() => {
       execSync(commandMissing, {
@@ -278,7 +287,8 @@ describe('Subagent Stop Hook Integration', () => {
       },
     })
 
-    const commandMalformed = `echo '${stdinInputMalformed}' | tsx ${hookPath}`
+    // Use tsx with root tsconfig for path mappings
+    const commandMalformed = `echo '${stdinInputMalformed}' | cd ${rootDir} && npx tsx --tsconfig ${rootDir}/tsconfig.json ${hookPath}`
 
     expect(() => {
       execSync(commandMalformed, {
