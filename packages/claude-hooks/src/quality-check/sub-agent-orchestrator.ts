@@ -89,13 +89,21 @@ export class SubAgentOrchestrator {
   }
 
   private readonly options: Required<SubAgentOrchestratorOptions>
+  private readonly execImpl?: (
+    cmd: string,
+    callback: (error: Error | null, stdout: string | null) => void,
+  ) => void
 
-  constructor(options: SubAgentOrchestratorOptions = {}) {
+  constructor(
+    options: SubAgentOrchestratorOptions = {},
+    execImpl?: SubAgentOrchestrator['execImpl'],
+  ) {
     this.options = {
       circuitBreakerCooldown: options.circuitBreakerCooldown ?? 60000, // 1 minute default
       maxFailures: options.maxFailures ?? 3,
       timeout: options.timeout ?? 30000, // 30 seconds default
     }
+    this.execImpl = execImpl
   }
 
   /**
@@ -373,21 +381,11 @@ export class SubAgentOrchestrator {
     prompt: string,
     timeout?: number,
   ): Promise<TaskToolResponse | null> {
-    // This would be the real implementation using exec
-    // For now, we check if mock functions are available (for testing)
-    const globalWithMock = global as unknown as { mockExec?: unknown }
-
-    if (globalWithMock.mockExec) {
-      // Use the mock implementation from tests
+    // Use injected exec implementation if provided (for testing)
+    if (this.execImpl) {
       return new Promise((resolve, reject) => {
         try {
-          // Cast to the expected function type for testing
-          const mockExec = globalWithMock.mockExec as (
-            cmd: string,
-            callback: (error: Error | null, stdout: string | null) => void,
-          ) => void
-
-          mockExec(
+          this.execImpl!(
             'task-tool-command',
             (error: Error | null, stdout: string | null) => {
               if (error) {

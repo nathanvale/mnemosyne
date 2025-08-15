@@ -171,38 +171,28 @@ function normalizePath(
   filePath: string,
   log: ReturnType<typeof createLogger>,
 ): string {
-  // Check for duplicate segments in the path
   const segments = filePath.split('/')
   const normalized: string[] = []
 
-  // Track if we've seen packages/claude-hooks sequence
-  let lastWasPackages = false
-  let lastWasClaudeHooks = false
-
   for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i]
+    const seg = segments[i]
 
-    // Check for duplicate packages/claude-hooks pattern
+    // If current pair is 'packages/claude-hooks' and the last two normalized
+    // segments are also 'packages/claude-hooks', skip this duplicate pair.
     if (
-      segment === 'packages' &&
-      lastWasPackages &&
+      seg === 'packages' &&
       i + 1 < segments.length &&
       segments[i + 1] === 'claude-hooks' &&
-      lastWasClaudeHooks
+      normalized.length >= 2 &&
+      normalized[normalized.length - 2] === 'packages' &&
+      normalized[normalized.length - 1] === 'claude-hooks'
     ) {
-      // Skip this duplicate packages/claude-hooks
-      log.debug(
-        `Skipping duplicate segment: packages/claude-hooks at position ${i}`,
-      )
-      i++ // Skip the next 'claude-hooks' as well
+      log.debug('Skipping duplicate segment: packages/claude-hooks')
+      i++ // skip 'claude-hooks' as well
       continue
     }
 
-    normalized.push(segment)
-
-    // Update tracking
-    lastWasPackages = segment === 'packages'
-    lastWasClaudeHooks = segment === 'claude-hooks'
+    normalized.push(seg)
   }
 
   const normalizedPath = normalized.join('/')

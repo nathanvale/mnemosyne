@@ -200,8 +200,12 @@ packages/your-package/
   "private": true,
   "type": "module", // ← CRITICAL: Required for ES modules
   "exports": {
-    // ← Use exports field, not main
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
     "build": "tsc",

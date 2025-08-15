@@ -23,19 +23,16 @@ describe('SubAgentOrchestrator', () => {
 
   beforeEach(() => {
     originalEnv = { ...process.env }
-    orchestrator = new SubAgentOrchestrator()
 
     // Mock child_process.exec for Task tool invocation
     mockExec = vi.fn()
-    // Set the mock on global for the SubAgentOrchestrator to use
-    const globalWithMock = global as unknown as { mockExec: Mock }
-    globalWithMock.mockExec = mockExec
+
+    // Use dependency injection instead of global mock
+    orchestrator = new SubAgentOrchestrator({}, mockExec)
   })
 
   afterEach(() => {
     process.env = originalEnv
-    const globalWithMock = global as unknown as { mockExec?: Mock }
-    delete globalWithMock.mockExec
     vi.restoreAllMocks()
   })
 
