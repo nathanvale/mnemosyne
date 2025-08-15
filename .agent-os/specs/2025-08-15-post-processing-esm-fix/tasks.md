@@ -14,12 +14,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.4 Verify all import patterns are handled correctly
   - [x] 1.5 Run script tests and ensure all pass
 
-- [ ] 2. Test with Single Package
-  - [ ] 2.1 Choose @studio/logger as pilot package
-  - [ ] 2.2 Update package.json build script to include post-processing
-  - [ ] 2.3 Build package and verify output has .js extensions
-  - [ ] 2.4 Test that the package runs without import errors
-  - [ ] 2.5 Verify existing package tests still pass
+- [x] 2. Test with Single Package
+  - [x] 2.1 Choose @studio/logger as pilot package
+  - [x] 2.2 Update package.json build script to include post-processing
+  - [x] 2.3 Build package and verify output has .js extensions
+  - [x] 2.4 Test that the package runs without import errors
+  - [x] 2.5 Verify existing package tests still pass
 
 - [ ] 3. Roll Out to All Packages
   - [ ] 3.1 Update build scripts for all library packages
