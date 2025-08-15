@@ -7,12 +7,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Create Post-Processing Script
-  - [ ] 1.1 Write tests for fix-esm-extensions script
-  - [ ] 1.2 Create scripts/fix-esm-extensions.js with core functionality
-  - [ ] 1.3 Test script with sample JavaScript files
-  - [ ] 1.4 Verify all import patterns are handled correctly
-  - [ ] 1.5 Run script tests and ensure all pass
+- [x] 1. Create Post-Processing Script
+  - [x] 1.1 Write tests for fix-esm-extensions script
+  - [x] 1.2 Create scripts/fix-esm-extensions.js with core functionality
+  - [x] 1.3 Test script with sample JavaScript files
+  - [x] 1.4 Verify all import patterns are handled correctly
+  - [x] 1.5 Run script tests and ensure all pass
 
 - [ ] 2. Test with Single Package
   - [ ] 2.1 Choose @studio/logger as pilot package
