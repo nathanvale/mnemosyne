@@ -7,8 +7,8 @@
 
 import { vi } from 'vitest'
 
-import type { BrowserLogger, LogLevel } from './browser-logger'
-import type { LogContext, NodeLogger } from './logger'
+import type { BrowserLogger, LogLevel } from './browser-logger.js'
+import type { LogContext, NodeLogger } from './logger.js'
 
 /**
  * Mock implementation of NodeLogger interface

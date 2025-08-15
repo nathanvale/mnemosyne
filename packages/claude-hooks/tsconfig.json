@@ -1,27 +1,10 @@
 {
+  "extends": "@studio/typescript-config/library.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "noEmit": false,
-    "allowJs": false,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "isolatedModules": true,
-    "composite": false,
-    "incremental": false
+    "rootDir": "./src"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "dist",
     "node_modules",
@@ -29,5 +12,10 @@
     "src/__tests__/**/*",
     "**/__tests__/**/*",
     "scripts/**/*"
+  ],
+  "references": [
+    {
+      "path": "../logger"
+    }
   ]
 }

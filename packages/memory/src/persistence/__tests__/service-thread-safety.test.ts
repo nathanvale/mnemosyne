@@ -448,14 +448,21 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
         expect(memoryValidations.length).toBe(expectedCount)
 
         // Verify all validations have proper structure
-        memoryValidations.forEach((validation) => {
-          expect(validation.humanScore).toBeGreaterThan(0)
-          expect(validation.algorithmScore).toBeGreaterThan(0)
-          expect(validation.agreement).toBeGreaterThan(0)
-          expect(['expert_review', 'comparative_analysis']).toContain(
-            validation.validationMethod,
-          )
-        })
+        memoryValidations.forEach(
+          (validation: {
+            humanScore: number
+            algorithmScore: number
+            agreement: number
+            validationMethod: string
+          }) => {
+            expect(validation.humanScore).toBeGreaterThan(0)
+            expect(validation.algorithmScore).toBeGreaterThan(0)
+            expect(validation.agreement).toBeGreaterThan(0)
+            expect(['expert_review', 'comparative_analysis']).toContain(
+              validation.validationMethod,
+            )
+          },
+        )
       }
     }, 30000)
   })
@@ -606,13 +613,13 @@ describe('Service Thread-Safety Validation - Phase 3', () => {
       expect(finalValidations.length).toBe(multiSuccesses.length)
 
       // Verify referential integrity
-      finalMoodScores.forEach((moodScore) => {
+      finalMoodScores.forEach((moodScore: { memoryId: string }) => {
         expect(moodScore.memoryId).toBe(baseMemoryId)
       })
-      finalDeltas.forEach((delta) => {
+      finalDeltas.forEach((delta: { memoryId: string }) => {
         expect(delta.memoryId).toBe(baseMemoryId)
       })
-      finalValidations.forEach((validation) => {
+      finalValidations.forEach((validation: { memoryId: string }) => {
         expect(validation.memoryId).toBe(baseMemoryId)
       })
     }, 30000)

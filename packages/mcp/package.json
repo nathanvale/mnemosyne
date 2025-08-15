@@ -4,13 +4,19 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
     "test": "vitest",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

@@ -1,4 +1,4 @@
-export { PrismaClient } from '../generated'
+export { PrismaClient, Prisma } from '../generated'
 export type * from '../generated'
 
 // Schema-validated database operations

@@ -11,6 +11,7 @@
   "scripts": {
     "db:reset": "pnpm --filter @studio/db db:reset",
     "dev": "pnpm --filter @studio/app dev",
+    "dev:prepare": "pnpm --filter @studio/db prisma generate",
     "docs:dev": "pnpm --filter @studio/docs dev",
     "build": "turbo build",
     "start": "pnpm --filter @studio/app start",
@@ -28,7 +29,7 @@
     "storybook": "pnpm --filter @studio/app storybook",
     "build-storybook": "pnpm --filter @studio/app build-storybook",
     "prepare": "husky",
-    "postinstall": "playwright install chromium && turbo build --filter=@studio/claude-hooks",
+    "postinstall": "playwright install chromium",
     "import:messages": "tsx packages/scripts/src/import-messages.ts --in packages/scripts/src/data/messages.csv",
     "studio:dev": "pnpm --filter \"@studio/*\" dev",
     "studio:build": "pnpm --filter \"@studio/*\" build",

@@ -5,10 +5,15 @@
   "type": "module",
   "description": "Development tools and utilities for the mnemosyne monorepo",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "bin": {
-    "wallaby-status": "./dist/src/bin/wallaby-status.js"
+    "wallaby-status": "./dist/bin/wallaby-status.js"
   },
   "scripts": {
     "build": "tsc && node scripts/fix-shebangs.js",

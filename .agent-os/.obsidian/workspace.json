@@ -1,0 +1,176 @@
+{
+  "main": {
+    "id": "5caa7578543c6eb9",
+    "type": "split",
+    "children": [
+      {
+        "id": "e61914246e87ee8b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "aa77bb40a0bdb2c9",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "tasks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c01732c1429d68ed",
+    "type": "split",
+    "children": [
+      {
+        "id": "4f14393a1d154320",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "af45c043b89d6c49",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "378c053c33596440",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "39281fa9ba98bd5b",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "bd5d5acf810afd2d",
+    "type": "split",
+    "children": [
+      {
+        "id": "a89c999c34eb8e67",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "21395d84c8940086",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for tasks"
+            }
+          },
+          {
+            "id": "cc04cbbfaf2fdcca",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from tasks"
+            }
+          },
+          {
+            "id": "adabace5ee0f24b1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "5ddd34f31bb88f11",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of tasks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "aa77bb40a0bdb2c9",
+  "lastOpenFiles": [
+    "specs/2025-08-16-bun-migration-complete/spec.md",
+    "specs/2025-08-16-bun-migration-complete/tasks.md"
+  ]
+}

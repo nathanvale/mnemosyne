@@ -212,6 +212,8 @@ User: "Import issues with ES modules"
 
 - **TDD Protocol**: Wallaby.js → failing test → minimal code → refactor
 - **Package Creation**: 5-script template → @docs/turborepo-guide.md
+- **Dual Package Consumption**: Development (TypeScript source) ↔ Production (compiled JS) → @docs/turborepo-guide.md
+- **CLI Tools**: TSX development → Built binaries production → @docs/turborepo-guide.md
 - **Git Commits**: Present-tense verb + concise + period
 - **Pre-commit**: `pnpm check` → commit (NEVER skip)
 

@@ -1,8 +1,11 @@
 {
   "extends": "../typescript-config/library.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "./dist",
-    "types": []
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": [
@@ -10,7 +13,9 @@
     "node_modules",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/__tests__/**/*"
+    "**/__tests__/**",
+    "**/test-*.ts",
+    "**/test-*.tsx"
   ],
   "references": [{ "path": "../schema" }, { "path": "../logger" }]
 }

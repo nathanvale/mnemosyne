@@ -1,10 +1,18 @@
 {
-  "extends": "../typescript-config/base.json",
   "compilerOptions": {
-    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowJs": true
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "rootDir": "./src",
+    "noImplicitAny": false
   },
-  "include": [],
-  "files": []
+  "include": ["src/**/*.ts", "src/**/*.js"],
+  "exclude": ["dist", "node_modules"]
 }

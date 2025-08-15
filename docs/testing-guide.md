@@ -137,7 +137,36 @@ if (isWallaby) {
 
 2. **Module mocking issues**:
    - Wallaby has different module resolution than Vitest
+   - Mock methods need to use `mockImplementation(() => value)` instead of `mockReturnValue(value)` for Wallaby
+   - Wallaby needs simpler mock setup - just `vi.mock('fs')` without async functions
    - Solution: Use dynamic imports and check for Wallaby environment
+
+   **Example - Correct mocking for Wallaby compatibility:**
+
+   ```javascript
+   // ✅ Works with both Wallaby and Vitest
+   vi.mock('fs') // Simple mock declaration
+
+   it('test with fs mocks', async () => {
+     const fs = await import('fs')
+     // Use mockImplementation for Wallaby compatibility
+     vi.mocked(fs.existsSync).mockImplementation(() => true)
+     vi.mocked(fs.readFileSync).mockImplementation(() => 'file content')
+   })
+   ```
+
+   **Example - What doesn't work with Wallaby:**
+
+   ```javascript
+   // ❌ Fails in Wallaby (but works in Vitest)
+   vi.mock('fs', async () => {
+     const actual = await vi.importActual('fs')
+     return { ...actual, existsSync: vi.fn() }
+   })
+
+   // ❌ mockReturnValue doesn't work reliably in Wallaby
+   vi.mocked(fs.existsSync).mockReturnValue(true)
+   ```
 
 3. **File system path issues**:
    - `import.meta.url` behaves differently in Wallaby

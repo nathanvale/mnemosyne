@@ -4,18 +4,26 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "development": "./index.js",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
     "build": "echo 'Prettier config - no build needed'",
     "lint": "echo 'Prettier config - no linting needed'",
     "format:check": "prettier --check *.js",
-    "test": "echo 'Prettier config - no tests needed'",
-    "type-check": "echo 'Prettier config - no TypeScript to check'",
+    "test": "vitest",
+    "type-check": "tsc --noEmit",
     "clean": "echo 'Prettier config - no clean needed'"
   },
   "peerDependencies": {
     "prettier": "^3.0.0"
+  },
+  "devDependencies": {
+    "@studio/typescript-config": "workspace:*",
+    "vitest": "^3.2.4"
   }
 }

@@ -125,7 +125,6 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig.json", "package.json"]
     },
     "lint": {
@@ -247,6 +246,10 @@
       "dependsOn": ["^build"]
     },
     "clean": {
+      "cache": false
+    },
+    "deploy": {
+      "dependsOn": ["^build", "build"],
       "cache": false
     }
   }

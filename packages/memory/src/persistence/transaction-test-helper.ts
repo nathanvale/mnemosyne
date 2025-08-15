@@ -1,5 +1,55 @@
 import { PrismaClient } from '@studio/db'
 
+type PrismaTransaction = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
+interface MoodScore {
+  id: string
+  memoryId: string
+  score: number
+  confidence: number
+  descriptors: string
+  algorithmVersion: string
+  processingTimeMs: number
+  calculatedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface MoodDelta {
+  id: string
+  memoryId: string
+  conversationId: string | null
+  deltaSequence: number | null
+  magnitude: number
+  direction: string
+  type: string
+  confidence: number
+  factors: string
+  significance: number
+  currentScore: number
+  temporalContext: string | null
+  createdAt: Date
+}
+
+interface ValidationResult {
+  id: string
+  memoryId: string
+  humanScore: number
+  algorithmScore: number
+  agreement: number
+  discrepancy: number
+  validatorId: string
+  validationMethod: string
+  feedback: string | null
+  biasIndicators: string
+  accuracyMetrics: string
+  validatedAt: Date
+  createdAt: Date
+}
+
 export interface ConcurrencyTestResult {
   success: boolean
   errors: string[]
@@ -71,20 +121,20 @@ export class TransactionTestHelper {
 
       const hasDataCorruption = finalState
         ? this.checkForDataCorruption({
-            moodScores: finalState.moodScores?.map((score) => ({
+            moodScores: finalState.moodScores?.map((score: MoodScore) => ({
               descriptors: score.descriptors,
               confidence: score.confidence || undefined,
               score: score.score || undefined,
-              factors: score.factors?.map((f) => ({ evidence: f.evidence })),
+              factors: undefined, // Factors are in a separate table
             })),
-            moodDeltas: finalState.moodDeltas?.map((delta) => ({
+            moodDeltas: finalState.moodDeltas?.map((delta: MoodDelta) => ({
               confidence: delta.confidence,
               significance: delta.significance,
               factors: delta.factors || undefined,
               temporalContext: delta.temporalContext || undefined,
             })),
             validationResults: finalState.validationResults?.map(
-              (validation) => ({
+              (validation: ValidationResult) => ({
                 agreement: validation.agreement,
                 discrepancy: validation.discrepancy,
                 biasIndicators: validation.biasIndicators || undefined,
@@ -149,7 +199,7 @@ export class TransactionTestHelper {
 
       // Test scenario: Start transaction, insert data, then force failure
       try {
-        await this.prisma.$transaction(async (tx) => {
+        await this.prisma.$transaction(async (tx: PrismaTransaction) => {
           // Insert mood score
           const moodScore = await tx.moodScore.create({
             data: {

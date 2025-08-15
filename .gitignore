@@ -86,3 +86,4 @@ packages/db/prisma/:memory:
 
 .claude/settings.local.json
 .wallaby/
+**/.obsidian/**

@@ -13,11 +13,12 @@
     "build": "echo 'TypeScript config - no build needed'",
     "lint": "echo 'TypeScript config - no linting needed'",
     "format:check": "prettier --check *.json",
-    "test": "echo 'TypeScript config - no tests needed'",
+    "test": "vitest",
     "type-check": "echo 'TypeScript config - no TypeScript to check'",
     "clean": "echo 'TypeScript config - no clean needed'"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

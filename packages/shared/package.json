@@ -4,13 +4,31 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "build": "echo 'Shared package build placeholder'",
-    "dev": "echo 'Shared package dev placeholder'",
-    "lint": "eslint src --max-warnings 0"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "lint": "eslint src --max-warnings 0",
+    "format:check": "prettier --check src",
+    "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "@studio/eslint-config": "workspace:*",
+    "@studio/typescript-config": "workspace:*",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
 }

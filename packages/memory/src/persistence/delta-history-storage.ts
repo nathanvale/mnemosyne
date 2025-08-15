@@ -1,5 +1,51 @@
 import { PrismaClient } from '@studio/db'
 
+// Define Prisma result types
+interface PrismaMoodDelta {
+  id: string
+  memoryId: string
+  conversationId: string | null
+  deltaSequence: number | null
+  magnitude: number
+  direction: string
+  type: string
+  confidence: number
+  factors: string
+  significance: number
+  previousScore: number | null
+  currentScore: number
+  temporalContext: string | null
+  detectedAt: Date
+  createdAt: Date
+}
+
+interface PrismaDeltaPattern {
+  id: string
+  memoryId: string
+  patternType: string
+  description: string
+  averageMagnitude: number
+  significance: number
+  confidence: number
+  duration: number
+  createdAt: Date
+  deltaAssociations: Array<{ deltaId: string; sequenceOrder: number }>
+}
+
+interface PrismaTurningPoint {
+  id: string
+  memoryId: string
+  deltaId: string | null
+  type: string
+  magnitude: number
+  description: string
+  factors: string
+  timestamp: Date
+  significance: number
+  temporalContext: string
+  createdAt: Date
+}
+
 type PrismaTransaction = Omit<
   PrismaClient,
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
@@ -224,7 +270,9 @@ export class DeltaHistoryStorageService {
         select: { id: true },
       })
 
-      const existingDeltaIds = existingDeltas.map((delta) => delta.id)
+      const existingDeltaIds = existingDeltas.map(
+        (delta: { id: string }) => delta.id,
+      )
       const missingDeltaIds = pattern.deltaIds.filter(
         (id) => !existingDeltaIds.includes(id),
       )
@@ -334,7 +382,7 @@ export class DeltaHistoryStorageService {
       orderBy: { deltaSequence: 'asc' },
     })
 
-    return deltas.map((delta) => ({
+    return deltas.map((delta: PrismaMoodDelta) => ({
       id: delta.id,
       memoryId: delta.memoryId,
       conversationId: delta.conversationId || '',
@@ -373,11 +421,13 @@ export class DeltaHistoryStorageService {
       orderBy: { significance: 'desc' },
     })
 
-    return patterns.map((pattern) => ({
+    return patterns.map((pattern: PrismaDeltaPattern) => ({
       id: pattern.id,
       memoryId: pattern.memoryId,
       patternType: pattern.patternType as StoredDeltaPattern['patternType'],
-      deltaIds: pattern.deltaAssociations.map((assoc) => assoc.deltaId),
+      deltaIds: pattern.deltaAssociations.map(
+        (assoc: { deltaId: string; sequenceOrder: number }) => assoc.deltaId,
+      ),
       significance: pattern.significance,
       confidence: pattern.confidence,
       description: pattern.description,
@@ -395,7 +445,7 @@ export class DeltaHistoryStorageService {
       orderBy: { timestamp: 'asc' },
     })
 
-    return turningPoints.map((tp) => ({
+    return turningPoints.map((tp: PrismaTurningPoint) => ({
       id: tp.id,
       memoryId: tp.memoryId,
       deltaId: tp.deltaId || undefined,
@@ -424,7 +474,7 @@ export class DeltaHistoryStorageService {
       take: limit,
     })
 
-    return deltas.map((delta) => ({
+    return deltas.map((delta: PrismaMoodDelta) => ({
       id: delta.id,
       memoryId: delta.memoryId,
       conversationId: delta.conversationId || '',
@@ -466,7 +516,7 @@ export class DeltaHistoryStorageService {
       orderBy: { deltaSequence: 'asc' },
     })
 
-    return deltas.map((delta) => ({
+    return deltas.map((delta: PrismaMoodDelta) => ({
       id: delta.id,
       memoryId: delta.memoryId,
       conversationId: delta.conversationId || '',

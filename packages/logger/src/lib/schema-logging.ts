@@ -1,6 +1,6 @@
 import { type ValidationResult, type ValidationError } from '@studio/schema'
 
-import { createLogger, type NodeLogger, type LogContext } from './logger'
+import { createLogger, type NodeLogger, type LogContext } from './logger.js'
 
 /**
  * Schema-aware logging utilities for memory processing

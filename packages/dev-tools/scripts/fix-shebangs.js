@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const binDir = join(__dirname, '..', 'dist', 'src', 'bin')
+const binDir = join(__dirname, '..', 'dist', 'bin')
 const scripts = ['wallaby-status.js']
 
 scripts.forEach((script) => {

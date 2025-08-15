@@ -243,7 +243,7 @@ describe('TaskExecutor', () => {
       })
       const endTime = Date.now()
 
-      expect(endTime - startTime).toBeGreaterThanOrEqual(10)
+      expect(endTime - startTime).toBeGreaterThanOrEqual(9) // Allow 1ms tolerance for timer precision
       const result = JSON.parse(response)
       expect(result.recommendations).toContain('Async analysis completed')
     })

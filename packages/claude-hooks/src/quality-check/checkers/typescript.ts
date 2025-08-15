@@ -10,6 +10,7 @@ import type { ResolvedQualityConfig } from '../config.js'
 
 import { findProjectRoot } from '../../utils/config-loader.js'
 import { fileExists, readFile } from '../../utils/file-utils.js'
+import { createQualityLogger } from '../../utils/logger.js'
 import { createDummyFile } from '../dummy-generator.js'
 import {
   determineFileExtension,
@@ -66,10 +67,21 @@ export async function createTypeScriptChecker(
 
   const isTestFile = /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(filePath)
 
+  // Create structured logger for detailed debugging
+  const { logger: structuredLogger } = createQualityLogger('typescript-checker')
+  const fileLogger = structuredLogger.withContext({
+    filePath: path.relative(projectRoot, filePath),
+    isTestFile,
+    projectRoot,
+  })
+
   return {
     async check(): Promise<string[]> {
       const errors: string[] = []
       log.info('Running TypeScript compilation check...')
+      fileLogger.debug('Starting TypeScript check', {
+        operation: 'typescript-check-start',
+      })
 
       try {
         // Get intelligent config for this file
@@ -234,6 +246,23 @@ export async function createTypeScriptChecker(
         // Report edited file first
         const editedFileDiagnostics = diagnosticsByFile.get(filePath) || []
         if (editedFileDiagnostics.length > 0) {
+          fileLogger.warn('TypeScript errors found in edited file', {
+            operation: 'typescript-errors-detected',
+            errorCount: editedFileDiagnostics.length,
+            configFile: path.basename(configPath),
+            diagnostics: editedFileDiagnostics.map((d) => ({
+              code: d.code,
+              message: ts.flattenDiagnosticMessageText(d.messageText, '\n'),
+              file: d.file?.fileName,
+              line: d.file
+                ? d.file.getLineAndCharacterOfPosition(d.start!).line + 1
+                : 0,
+              character: d.file
+                ? d.file.getLineAndCharacterOfPosition(d.start!).character + 1
+                : 0,
+            })),
+          })
+
           errors.push(
             `TypeScript errors in edited file (using ${path.basename(configPath)})`,
           )
@@ -253,6 +282,32 @@ export async function createTypeScriptChecker(
 
         // Report dependencies separately (as warnings, not errors) - only if enabled
         if (config.showDependencyErrors) {
+          const dependencyFiles = Array.from(
+            diagnosticsByFile.entries(),
+          ).filter(([fileName]) => fileName !== filePath)
+
+          if (dependencyFiles.length > 0) {
+            fileLogger.warn('TypeScript dependency errors detected', {
+              operation: 'dependency-errors-detected',
+              dependencyCount: dependencyFiles.length,
+              dependencies: dependencyFiles.map(([fileName, diags]) => ({
+                fileName: path.relative(projectRoot, fileName),
+                errorCount: diags.length,
+                errors: diags.map((d) => ({
+                  code: d.code,
+                  message: ts.flattenDiagnosticMessageText(d.messageText, '\n'),
+                  line: d.file
+                    ? d.file.getLineAndCharacterOfPosition(d.start!).line + 1
+                    : 0,
+                  character: d.file
+                    ? d.file.getLineAndCharacterOfPosition(d.start!).character +
+                      1
+                    : 0,
+                })),
+              })),
+            })
+          }
+
           let hasDepErrors = false
           diagnosticsByFile.forEach((diags, fileName) => {
             if (fileName !== filePath) {

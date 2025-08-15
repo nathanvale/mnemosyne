@@ -4,16 +4,28 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./base": "./src/base.js",
-    "./next": "./src/next.js",
-    "./library": "./src/library.js"
+    "./base": {
+      "development": "./src/base.js",
+      "import": "./src/base.js",
+      "default": "./src/base.js"
+    },
+    "./next": {
+      "development": "./src/next.js",
+      "import": "./src/next.js",
+      "default": "./src/next.js"
+    },
+    "./library": {
+      "development": "./src/library.js",
+      "import": "./src/library.js",
+      "default": "./src/library.js"
+    }
   },
   "scripts": {
     "build": "echo 'ESLint config - no build needed'",
     "lint": "eslint src --max-warnings 0",
     "format:check": "prettier --check src",
-    "test": "echo 'ESLint config - no tests needed'",
-    "type-check": "echo 'ESLint config - no TypeScript to check'",
+    "test": "vitest",
+    "type-check": "tsc --noEmit --skipLibCheck",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
@@ -33,5 +45,9 @@
   "peerDependencies": {
     "eslint": "^9.0.0",
     "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@studio/typescript-config": "workspace:*",
+    "vitest": "^3.2.4"
   }
 }
