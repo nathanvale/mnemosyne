@@ -335,18 +335,21 @@ export function Button({ label, disabled }: ButtonProps) {
       }
 
       mockExec.mockImplementation((_cmd: string, callback: ExecCallback) => {
-        callback(
-          null,
-          JSON.stringify({
-            success: true,
-            analysis: {
-              explanations: [],
-              impactAssessment: 'Low',
-              bestPractices: [],
-            },
-          }),
-          '',
-        )
+        // Simulate async execution with a small delay
+        setTimeout(() => {
+          callback(
+            null,
+            JSON.stringify({
+              success: true,
+              analysis: {
+                explanations: [],
+                impactAssessment: 'Low',
+                bestPractices: [],
+              },
+            }),
+            '',
+          )
+        }, 10) // 10ms delay to ensure response time > 0
       })
 
       await orchestrator.analyzeTypeScriptErrors(errors, context)
@@ -355,7 +358,7 @@ export function Button({ label, disabled }: ButtonProps) {
       expect(metrics.totalInvocations).toBe(1)
       expect(metrics.successfulInvocations).toBe(1)
       expect(metrics.failedInvocations).toBe(0)
-      expect(metrics.averageResponseTime).toBeGreaterThan(0)
+      expect(metrics.averageResponseTime).toBeGreaterThanOrEqual(10)
     })
 
     it('should track failed Task tool invocations', async () => {

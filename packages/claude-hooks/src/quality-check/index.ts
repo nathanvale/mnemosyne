@@ -9,7 +9,7 @@ import type { FileToolInput, ClaudePostToolUseEvent } from '../types/claude.js'
 
 import { HookExitCode } from '../types/claude.js'
 import { fileExists, isSourceFile } from '../utils/file-utils.js'
-import { createLogger, colors } from '../utils/logger.js'
+import { createQualityLogger, createLogger, colors } from '../utils/logger.js'
 import { createCommonIssuesChecker } from './checkers/common-issues.js'
 import { createESLintChecker } from './checkers/eslint.js'
 import { createPrettierChecker } from './checkers/prettier.js'
@@ -321,7 +321,15 @@ async function main(): Promise<void> {
     '.claude/hooks/quality-check.config.json',
   )
   const config = await loadQualityConfig(configPath)
-  const log = createLogger('INFO', config.debug)
+  const { logger: structuredLogger, legacy: log } =
+    createQualityLogger('quality-check')
+
+  // Add configuration context to structured logger for debugging
+  structuredLogger.debug('Quality check configuration loaded', {
+    configPath,
+    debug: config.debug,
+    hookVersion: config.fileConfig.version || '1.0.0',
+  })
 
   // Show header
   const hookVersion = config.fileConfig.version || '1.0.0'
@@ -399,8 +407,22 @@ async function main(): Promise<void> {
     tsConfigCache,
   )
 
-  // Print summary
-  printSummary(errors, autofixes)
+  // Print summary with optional sub-agent enhancement
+  // Try to use enhanced version if available, otherwise fall back to standard
+  try {
+    log.debug('Attempting to load enhanced print summary...')
+    const { printSummaryWithSubAgent } = await import(
+      './print-summary-enhanced.js'
+    )
+    log.debug('Enhanced print summary loaded successfully')
+    await printSummaryWithSubAgent(errors, autofixes, filePath, tsConfigCache)
+  } catch (error) {
+    // Fall back to standard printSummary if enhanced version is not available
+    log.debug(
+      `Enhanced print summary failed to load: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
+    printSummary(errors, autofixes)
+  }
 
   // Check if all issues were auto-fixed silently
   const allAutoFixed =

@@ -31,18 +31,18 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.5 Add error handling for Task tool failures and timeouts
   - [x] 3.6 Verify all tests pass and Task tool integration works reliably
 
-- [ ] 4. Integrate with Existing Quality Check System
-  - [ ] 4.1 Write tests for seamless integration with existing printSummary function
-  - [ ] 4.2 Extend quality-check/index.ts to trigger sub-agent analysis for unfixable errors
-  - [ ] 4.3 Preserve existing auto-fix functionality and terminal output patterns
-  - [ ] 4.4 Implement output blending that combines traditional errors with AI insights
-  - [ ] 4.5 Add circuit breaker pattern for graceful degradation
-  - [ ] 4.6 Verify all tests pass and existing hook behavior is completely preserved
+- [x] 4. Integrate with Existing Quality Check System
+  - [x] 4.1 Write tests for seamless integration with existing printSummary function
+  - [x] 4.2 Extend quality-check/index.ts to trigger sub-agent analysis for unfixable errors
+  - [x] 4.3 Preserve existing auto-fix functionality and terminal output patterns
+  - [x] 4.4 Implement output blending that combines traditional errors with AI insights
+  - [x] 4.5 Add circuit breaker pattern for graceful degradation
+  - [x] 4.6 Verify all tests pass and existing hook behavior is completely preserved
 
-- [ ] 5. Implement Performance Optimization and Metrics
-  - [ ] 5.1 Write tests for usage tracking and cost optimization
-  - [ ] 5.2 Add selective escalation logic to target 10-15% of quality checks
-  - [ ] 5.3 Implement usage metrics collection and cost tracking
-  - [ ] 5.4 Create performance monitoring for sub-agent analysis overhead
-  - [ ] 5.5 Add configuration options for escalation sensitivity and cost controls
-  - [ ] 5.6 Verify all tests pass and performance targets are met
+- [x] 5. Implement Performance Optimization and Metrics
+  - [x] 5.1 Write tests for usage tracking and cost optimization
+  - [x] 5.2 Add selective escalation logic to target 10-15% of quality checks
+  - [x] 5.3 Implement usage metrics collection and cost tracking
+  - [x] 5.4 Create performance monitoring for sub-agent analysis overhead
+  - [x] 5.5 Add configuration options for escalation sensitivity and cost controls
+  - [x] 5.6 Verify all tests pass and performance targets are met
