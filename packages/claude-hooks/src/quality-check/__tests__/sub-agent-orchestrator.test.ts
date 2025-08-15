@@ -433,7 +433,10 @@ export function Button({ label, disabled }: ButtonProps) {
 
     it('should reset circuit breaker after cooldown period', async () => {
       // Set a short cooldown for testing
-      orchestrator = new SubAgentOrchestrator({ circuitBreakerCooldown: 100 })
+      orchestrator = new SubAgentOrchestrator(
+        { circuitBreakerCooldown: 100 },
+        mockExec,
+      )
 
       const errors = ["src/test.ts(1,1): error TS2304: Cannot find name 'foo'."]
       const context: SubAgentContext = {
