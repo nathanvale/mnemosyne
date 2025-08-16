@@ -33,12 +33,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.3 Test monorepo-wide script execution
   - [x] 4.4 Document script usage
 
-- [ ] 5. Integration Testing
-  - [ ] 5.1 Write integration tests for build pipeline
-  - [ ] 5.2 Test cross-package imports work correctly
-  - [ ] 5.3 Verify CLI tools execute without errors
-  - [ ] 5.4 Test npm link functionality
-  - [ ] 5.5 Run all integration tests and ensure they pass
+- [x] 5. Integration Testing
+  - [x] 5.1 Write integration tests for build pipeline
+  - [x] 5.2 Test cross-package imports work correctly
+  - [x] 5.3 Verify CLI tools execute without errors
+  - [x] 5.4 Test npm link functionality
+  - [x] 5.5 Run all integration tests and ensure they pass
 
 ## Task Dependencies
 
