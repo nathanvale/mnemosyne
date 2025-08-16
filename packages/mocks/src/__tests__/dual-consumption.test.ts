@@ -84,7 +84,9 @@ describe('@studio/mocks dual consumption', () => {
       const packageJson = await import('../../package.json')
 
       // Build script should now use tsc instead of placeholder
-      expect(packageJson.scripts.build).toBe('tsc')
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Dev script should use tsc --watch
       expect(packageJson.scripts.dev).toBe('tsc --watch')

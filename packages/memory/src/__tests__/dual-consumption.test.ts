@@ -59,8 +59,10 @@ describe('@studio/memory dual consumption', () => {
       // Main export should support dual consumption after migration
       expect(packageJson.exports['.']).toBeDefined()
 
-      // Should have proper build script
-      expect(packageJson.scripts.build).toBe('tsc')
+      // Should have proper build script with ESM fix
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Should have test configuration
       expect(packageJson.devDependencies['@studio/test-config']).toBe(
@@ -100,8 +102,10 @@ describe('@studio/memory dual consumption', () => {
     it('should have correct build script configuration', async () => {
       const packageJson = await import('../../package.json')
 
-      // Build script should use tsc
-      expect(packageJson.scripts.build).toBe('tsc')
+      // Build script should use tsc with ESM fix
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Dev script should use tsc --watch
       expect(packageJson.scripts.dev).toBe('tsc --watch')

@@ -54,6 +54,7 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 - **Complete commands**: @docs/commands-reference.md
 - **Testing workflows**: @docs/testing-guide.md
 - **Build troubleshooting**: @docs/turborepo-guide.md
+- **ES modules guide**: @docs/esm-extensions-guide.md
 
 ## 🏗️ Architecture (Core Context)
 
@@ -116,10 +117,11 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 
 ### 📦 Import/Export Patterns
 
-- **ES modules**: Use `.js` extensions in import paths
+- **ES modules**: TypeScript source uses clean imports, `.js` extensions added automatically during build
 - **Type imports**: `import type { User } from '@studio/db'`
 - **Import order**: external deps → @studio/\* → relative imports
 - **Prefer named exports** over default exports
+- **Build process**: `tsc` + `fix-esm-extensions.js` handles Node.js compatibility (see @docs/esm-extensions-guide.md)
 
 ### 🚨 Error Handling Protocol
 

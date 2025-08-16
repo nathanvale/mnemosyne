@@ -65,7 +65,9 @@ describe('@studio/scripts dual consumption', () => {
       expect(packageJson.exports['.']).toBeDefined()
 
       // Should have proper build script
-      expect(packageJson.scripts.build).toBe('tsc')
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Should have test script
       expect(packageJson.scripts.test).toBe('vitest')
@@ -100,7 +102,9 @@ describe('@studio/scripts dual consumption', () => {
       const packageJson = await import('../../package.json')
 
       // Build script should use tsc
-      expect(packageJson.scripts.build).toBe('tsc')
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Test script should use vitest
       expect(packageJson.scripts.test).toBe('vitest')

@@ -16,7 +16,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ../../scripts/fix-esm-extensions.js dist",
     "dev": "echo 'Test config package dev placeholder'",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --max-warnings 0"

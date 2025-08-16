@@ -7,38 +7,38 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Create Post-Processing Script
-  - [ ] 1.1 Write tests for fix-esm-extensions script
-  - [ ] 1.2 Create scripts/fix-esm-extensions.js with core functionality
-  - [ ] 1.3 Test script with sample JavaScript files
-  - [ ] 1.4 Verify all import patterns are handled correctly
-  - [ ] 1.5 Run script tests and ensure all pass
+- [x] 1. Create Post-Processing Script
+  - [x] 1.1 Write tests for fix-esm-extensions script
+  - [x] 1.2 Create scripts/fix-esm-extensions.js with core functionality
+  - [x] 1.3 Test script with sample JavaScript files
+  - [x] 1.4 Verify all import patterns are handled correctly
+  - [x] 1.5 Run script tests and ensure all pass
 
-- [ ] 2. Test with Single Package
-  - [ ] 2.1 Choose @studio/logger as pilot package
-  - [ ] 2.2 Update package.json build script to include post-processing
-  - [ ] 2.3 Build package and verify output has .js extensions
-  - [ ] 2.4 Test that the package runs without import errors
-  - [ ] 2.5 Verify existing package tests still pass
+- [x] 2. Test with Single Package
+  - [x] 2.1 Choose @studio/logger as pilot package
+  - [x] 2.2 Update package.json build script to include post-processing
+  - [x] 2.3 Build package and verify output has .js extensions
+  - [x] 2.4 Test that the package runs without import errors
+  - [x] 2.5 Verify existing package tests still pass
 
-- [ ] 3. Roll Out to All Packages
-  - [ ] 3.1 Update build scripts for all library packages
-  - [ ] 3.2 Build all packages with the new script
-  - [ ] 3.3 Run all package tests to ensure compatibility
-  - [ ] 3.4 Test CLI binaries work correctly
+- [x] 3. Roll Out to All Packages
+  - [x] 3.1 Update build scripts for all library packages
+  - [x] 3.2 Build all packages with the new script
+  - [x] 3.3 Run all package tests to ensure compatibility
+  - [x] 3.4 Test CLI binaries work correctly
 
-- [ ] 4. Create Helper Scripts
-  - [ ] 4.1 Create fix-all-extensions.js for monorepo-wide processing
-  - [ ] 4.2 Add convenience scripts to root package.json
-  - [ ] 4.3 Test monorepo-wide script execution
-  - [ ] 4.4 Document script usage
+- [x] 4. Create Helper Scripts
+  - [x] 4.1 Create fix-all-extensions.js for monorepo-wide processing
+  - [x] 4.2 Add convenience scripts to root package.json
+  - [x] 4.3 Test monorepo-wide script execution
+  - [x] 4.4 Document script usage
 
-- [ ] 5. Integration Testing
-  - [ ] 5.1 Write integration tests for build pipeline
-  - [ ] 5.2 Test cross-package imports work correctly
-  - [ ] 5.3 Verify CLI tools execute without errors
-  - [ ] 5.4 Test npm link functionality
-  - [ ] 5.5 Run all integration tests and ensure they pass
+- [x] 5. Integration Testing
+  - [x] 5.1 Write integration tests for build pipeline
+  - [x] 5.2 Test cross-package imports work correctly
+  - [x] 5.3 Verify CLI tools execute without errors
+  - [x] 5.4 Test npm link functionality
+  - [x] 5.5 Run all integration tests and ensure they pass
 
 ## Task Dependencies
 
