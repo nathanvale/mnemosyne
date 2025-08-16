@@ -15,6 +15,14 @@ Adding a simple script that runs after TypeScript compilation to add `.js` exten
 - Produce Node.js-compatible ES modules
 - Avoid complex bundler configurations
 
+### Documentation
+
+For complete documentation of the implemented solution, see:
+
+- **[Scripts README](../../../../scripts/README.md)** - Comprehensive usage guide
+- **[fix-esm-extensions.js](../../../../scripts/fix-esm-extensions.js)** - The main script with inline documentation
+- **[fix-all-extensions.js](../../../../scripts/fix-all-extensions.js)** - Monorepo-wide helper script
+
 ## Implementation Steps
 
 ### Step 1: Create the Post-Processing Script
