@@ -16,7 +16,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ../../scripts/fix-esm-extensions.js dist",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",

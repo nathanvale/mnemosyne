@@ -86,7 +86,9 @@ describe('@studio/ui dual consumption', () => {
       const packageJson = await import('../../package.json')
 
       // Build script should use tsc for TypeScript compilation
-      expect(packageJson.scripts.build).toBe('tsc')
+      expect(packageJson.scripts.build).toBe(
+        'tsc && node ../../scripts/fix-esm-extensions.js dist',
+      )
 
       // Should have proper test script
       expect(packageJson.scripts.test).toBe('vitest')

@@ -16,7 +16,7 @@
     "wallaby-status": "./dist/bin/wallaby-status.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/fix-shebangs.js",
+    "build": "tsc && node ../../scripts/fix-esm-extensions.js dist && node scripts/fix-shebangs.js",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest",

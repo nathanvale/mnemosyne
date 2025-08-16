@@ -21,11 +21,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.4 Test that the package runs without import errors
   - [x] 2.5 Verify existing package tests still pass
 
-- [ ] 3. Roll Out to All Packages
-  - [ ] 3.1 Update build scripts for all library packages
-  - [ ] 3.2 Build all packages with the new script
-  - [ ] 3.3 Run all package tests to ensure compatibility
-  - [ ] 3.4 Test CLI binaries work correctly
+- [x] 3. Roll Out to All Packages
+  - [x] 3.1 Update build scripts for all library packages
+  - [x] 3.2 Build all packages with the new script
+  - [x] 3.3 Run all package tests to ensure compatibility
+  - [x] 3.4 Test CLI binaries work correctly
 
 - [ ] 4. Create Helper Scripts
   - [ ] 4.1 Create fix-all-extensions.js for monorepo-wide processing
