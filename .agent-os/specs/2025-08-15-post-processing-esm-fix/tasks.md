@@ -27,11 +27,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.3 Run all package tests to ensure compatibility
   - [x] 3.4 Test CLI binaries work correctly
 
-- [ ] 4. Create Helper Scripts
-  - [ ] 4.1 Create fix-all-extensions.js for monorepo-wide processing
-  - [ ] 4.2 Add convenience scripts to root package.json
-  - [ ] 4.3 Test monorepo-wide script execution
-  - [ ] 4.4 Document script usage
+- [x] 4. Create Helper Scripts
+  - [x] 4.1 Create fix-all-extensions.js for monorepo-wide processing
+  - [x] 4.2 Add convenience scripts to root package.json
+  - [x] 4.3 Test monorepo-wide script execution
+  - [x] 4.4 Document script usage
 
 - [ ] 5. Integration Testing
   - [ ] 5.1 Write integration tests for build pipeline

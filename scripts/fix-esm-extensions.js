@@ -1,5 +1,31 @@
 #!/usr/bin/env node
 
+/**
+ * ES Module Extension Fixer
+ *
+ * This script automatically adds .js extensions to relative imports in compiled
+ * JavaScript output, solving Node.js ES module compatibility issues.
+ *
+ * Usage:
+ *   # Fix extensions in a specific directory
+ *   node scripts/fix-esm-extensions.js dist
+ *
+ *   # Fix extensions in all packages (monorepo)
+ *   pnpm build:fix-extensions
+ *
+ *   # Use in package.json build script
+ *   "build": "tsc && node ../../scripts/fix-esm-extensions.js dist"
+ *
+ * What it does:
+ * - Finds all .js files in the specified directory
+ * - Adds .js extensions to relative imports/exports
+ * - Preserves existing .json, .mjs, .cjs extensions
+ * - Ignores node_modules and package imports
+ * - Handles static imports, dynamic imports, and re-exports
+ *
+ * @module fix-esm-extensions
+ */
+
 import { glob } from 'glob'
 import { promises as fs } from 'node:fs'
 

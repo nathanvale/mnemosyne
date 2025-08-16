@@ -14,6 +14,7 @@
     "dev:prepare": "pnpm --filter @studio/db prisma generate",
     "docs:dev": "pnpm --filter @studio/docs dev",
     "build": "turbo build",
+    "build:fix-extensions": "node scripts/fix-all-extensions.js",
     "start": "pnpm --filter @studio/app start",
     "lint": "turbo lint",
     "lint:root": "eslint . --max-warnings 0",
