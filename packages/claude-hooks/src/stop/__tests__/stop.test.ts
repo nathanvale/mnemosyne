@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { ClaudeStopEvent } from '../../types/claude.js'
+import type { ClaudeStopEvent } from '../../types/claude'
 
-import { StopHook } from '../stop.js'
+import { StopHook } from '../stop'
 
 // Mock dependencies
 vi.mock('../../audio/audio-player.js')
@@ -93,7 +93,7 @@ describe('StopHook', () => {
 
   describe('Event Handling', () => {
     it('should play success sound on successful completion', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(
         () =>
@@ -143,7 +143,7 @@ describe('StopHook', () => {
     })
 
     it('should play error sound on failed completion', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(
         () =>
@@ -340,10 +340,10 @@ describe('StopHook', () => {
 
   describe('Platform Support', () => {
     it('should work on Windows', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('win32' as any)
 
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(
         () =>
@@ -387,7 +387,7 @@ describe('StopHook', () => {
     })
 
     it('should handle unsupported platforms gracefully', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('unsupported' as any)
 
       const event: ClaudeStopEvent = {
@@ -415,7 +415,7 @@ describe('StopHook', () => {
 
   describe('Error Handling', () => {
     it('should handle audio playback failures', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(false)
       vi.mocked(AudioPlayer).mockImplementation(
         () =>

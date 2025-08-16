@@ -19,9 +19,9 @@ import type {
   ProviderCapabilities,
   StreamHandlers,
   TokenUsage,
-} from '../llm-provider.interface.js'
+} from '../llm-provider.interface'
 
-import { PricingCatalog } from '../pricing-catalog.js'
+import { PricingCatalog } from '../pricing-catalog'
 
 // Type for OpenAI streaming chunks
 interface StreamChunk {

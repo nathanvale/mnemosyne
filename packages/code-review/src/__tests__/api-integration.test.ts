@@ -29,7 +29,7 @@ vi.mock('../utils/async-exec.js', async () => {
   }
 })
 
-import { GitHubDataFetcher } from '../cli/fetch-github-data.js'
+import { GitHubDataFetcher } from '../cli/fetch-github-data'
 
 describe('API Integration Tests', () => {
   beforeEach(() => {
@@ -423,7 +423,7 @@ index 1234567..abcdefg 100644
         },
       ]
 
-      const { execFileWithTimeout } = await import('../utils/async-exec.js')
+      const { execFileWithTimeout } = await import('../utils/async-exec')
 
       for (const scenario of scenarios) {
         if (scenario.mockResponse) {
@@ -447,7 +447,7 @@ index 1234567..abcdefg 100644
     })
 
     it('should handle JSON parsing from command output', async () => {
-      const { execFileJson } = await import('../utils/async-exec.js')
+      const { execFileJson } = await import('../utils/async-exec')
 
       // Valid JSON response - since we're mocking execFileJson directly,
       // we should mock it to return the parsed data
@@ -469,7 +469,7 @@ index 1234567..abcdefg 100644
     })
 
     it('should handle parallel command execution', async () => {
-      const { execFileParallel } = await import('../utils/async-exec.js')
+      const { execFileParallel } = await import('../utils/async-exec')
 
       // Mock execFileParallel to return expected results directly
       mockExecFileParallel.mockResolvedValueOnce([
@@ -686,7 +686,7 @@ This PR implements a new user authentication system with the following changes:
 
         // Import and test the CodeRabbitDataFetcher
         const { CodeRabbitDataFetcher } = await import(
-          '../cli/coderabbit-data-fetcher.js'
+          '../cli/coderabbit-data-fetcher'
         )
         const fetcher = new CodeRabbitDataFetcher({ verbose: false })
 
@@ -771,7 +771,7 @@ This PR implements a new user authentication system with the following changes:
 
         // Import and test the CodeRabbitDataFetcher
         const { CodeRabbitDataFetcher } = await import(
-          '../cli/coderabbit-data-fetcher.js'
+          '../cli/coderabbit-data-fetcher'
         )
         const fetcher = new CodeRabbitDataFetcher({ verbose: false })
 

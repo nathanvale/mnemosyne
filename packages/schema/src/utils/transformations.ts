@@ -1,14 +1,14 @@
-import type { Memory } from '../memory/core-memory.js'
-import type { EmotionalContext } from '../memory/emotional-context.js'
-import type { Participant } from '../memory/participants.js'
-import type { RelationshipDynamics } from '../memory/relationship-dynamics.js'
+import type { Memory } from '../memory/core-memory'
+import type { EmotionalContext } from '../memory/emotional-context'
+import type { Participant } from '../memory/participants'
+import type { RelationshipDynamics } from '../memory/relationship-dynamics'
 
-import { EmotionalState } from '../memory/emotional-context.js'
-import { ParticipantRole } from '../memory/participants.js'
+import { EmotionalState } from '../memory/emotional-context'
+import { ParticipantRole } from '../memory/participants'
 import {
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 
 /**
  * Export format for external systems

@@ -1,10 +1,10 @@
-import type { MemoryLLMResponse, ExtractedMemory } from './response-schema.js'
-import type { LLMResponse } from './types.js'
+import type { MemoryLLMResponse, ExtractedMemory } from './response-schema'
+import type { LLMResponse } from './types'
 
 import {
   MemoryLLMResponseSchema,
   MemoryLLMResponseSingularSchema,
-} from './response-schema.js'
+} from './response-schema'
 
 /**
  * Result of parsing LLM response

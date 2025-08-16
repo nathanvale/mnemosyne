@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { ClaudeSubagentStopEvent } from '../../types/claude.js'
+import type { ClaudeSubagentStopEvent } from '../../types/claude'
 
-import { SubagentStopHook } from '../subagent-stop.js'
+import { SubagentStopHook } from '../subagent-stop'
 
 // Mock dependencies
 vi.mock('../../audio/audio-player.js')
@@ -76,7 +76,7 @@ describe('SubagentStopHook', () => {
 
   describe('Event Handling', () => {
     it('should play notification sound when notify is enabled', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -119,7 +119,7 @@ describe('SubagentStopHook', () => {
     })
 
     it('should not play sound when notify is disabled', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn()
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -189,7 +189,7 @@ describe('SubagentStopHook', () => {
     })
 
     it('should handle events without data gracefully', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -266,10 +266,10 @@ describe('SubagentStopHook', () => {
 
   describe('Platform Support', () => {
     it('should work on Windows', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('win32')
 
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -306,7 +306,7 @@ describe('SubagentStopHook', () => {
     })
 
     it('should handle unsupported platforms gracefully', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('unsupported')
 
       const event: ClaudeSubagentStopEvent = {
@@ -334,7 +334,7 @@ describe('SubagentStopHook', () => {
 
   describe('Error Handling', () => {
     it('should handle audio playback failures', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(false)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,

@@ -2,13 +2,13 @@ import type { Mock } from 'vitest'
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import type { SubAgentContext } from '../error-classifier.js'
+import type { SubAgentContext } from '../error-classifier'
 import type {
   SubAgentAnalysis,
   TaskToolResponse,
-} from '../sub-agent-orchestrator.js'
+} from '../sub-agent-orchestrator'
 
-import { SubAgentOrchestrator } from '../sub-agent-orchestrator.js'
+import { SubAgentOrchestrator } from '../sub-agent-orchestrator'
 
 type ExecCallback = (
   error: Error | null,

@@ -8,8 +8,8 @@
 
 import { writeFileSync } from 'node:fs'
 
-import { GitHubPRContext, GitHubSecurityAlert } from '../types/github.js'
-import { execFileWithTimeout, execFileJson } from '../utils/async-exec.js'
+import { GitHubPRContext, GitHubSecurityAlert } from '../types/github'
+import { execFileWithTimeout, execFileJson } from '../utils/async-exec'
 
 /**
  * Validate repository name format

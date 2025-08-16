@@ -9,18 +9,18 @@ import '../utils/env-loader.js'
 import type {
   TTSProvider,
   TTSProviderConfig,
-} from '../speech/providers/tts-provider.js'
-import type { ClaudeSubagentStopEvent } from '../types/claude.js'
+} from '../speech/providers/tts-provider'
+import type { ClaudeSubagentStopEvent } from '../types/claude'
 
-import { AudioPlayer } from '../audio/audio-player.js'
-import { detectPlatform, Platform } from '../audio/platform.js'
-import { BaseHook, type HookConfig } from '../base-hook.js'
+import { AudioPlayer } from '../audio/audio-player'
+import { detectPlatform, Platform } from '../audio/platform'
+import { BaseHook, type HookConfig } from '../base-hook'
 // Import providers to trigger registration
 import '../speech/providers/index.js'
 import {
   TTSProviderFactory,
   type FactoryConfig,
-} from '../speech/providers/provider-factory.js'
+} from '../speech/providers/provider-factory'
 
 export interface SubagentStopHookConfig extends HookConfig {
   notifySound?: boolean
@@ -194,7 +194,7 @@ export class SubagentStopHook extends BaseHook<ClaudeSubagentStopEvent> {
 // Hook entry point
 export async function main(): Promise<void> {
   // Load auto-config from .claude/hooks/subagent-stop.config.json
-  const { loadAutoConfig } = await import('../utils/auto-config.js')
+  const { loadAutoConfig } = await import('../utils/auto-config')
   const jsonConfig =
     await loadAutoConfig<SubagentStopHookConfig>('subagent-stop')
 

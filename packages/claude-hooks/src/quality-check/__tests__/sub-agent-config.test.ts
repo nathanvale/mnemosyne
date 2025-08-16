@@ -9,7 +9,7 @@ import {
   SENSITIVITY_CONFIGS,
   shouldEscalateError,
   validateConfig,
-} from '../sub-agent-config.js'
+} from '../sub-agent-config'
 
 describe('SubAgentConfig', () => {
   beforeEach(() => {

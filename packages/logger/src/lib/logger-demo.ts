@@ -1,4 +1,4 @@
-import logger, { cli, debug, production, createLogger } from './logger.js'
+import logger, { cli, debug, production, createLogger } from './logger'
 
 // Example usage of the logger
 export function demonstrateLogger() {

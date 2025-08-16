@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 
-import { ConfigValidator } from '../config-schema.js'
+import { ConfigValidator } from '../config-schema'
 
 describe('ConfigValidator Integration', () => {
   describe('Valid Configurations', () => {

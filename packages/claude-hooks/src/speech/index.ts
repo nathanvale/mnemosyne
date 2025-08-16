@@ -3,6 +3,6 @@
  * Provides speech engine, quiet hours, and cooldown functionality
  */
 
-export * from './speech-engine.js'
-export * from './quiet-hours.js'
-export * from './cooldown.js'
+export * from './speech-engine'
+export * from './quiet-hours'
+export * from './cooldown'

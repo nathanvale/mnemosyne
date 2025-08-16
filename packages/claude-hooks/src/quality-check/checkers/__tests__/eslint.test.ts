@@ -2,7 +2,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { describe, expect, it, vi } from 'vitest'
 
-import { createESLintChecker } from '../eslint.js'
+import { createESLintChecker } from '../eslint'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

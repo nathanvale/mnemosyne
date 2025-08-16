@@ -7,14 +7,12 @@ describe('PR Analysis Engine - Simple Integration Test', () => {
 
   it('should have all required modules available', async () => {
     // Test that we can import all the main modules
-    const { SecurityAnalyzer } = await import(
-      '../analysis/security-analyzer.js'
-    )
-    const { ExpertValidator } = await import('../analysis/expert-validator.js')
-    const { ContextAnalyzer } = await import('../analysis/context-analyzer.js')
-    const { ReportGenerator } = await import('../reporting/report-generator.js')
+    const { SecurityAnalyzer } = await import('../analysis/security-analyzer')
+    const { ExpertValidator } = await import('../analysis/expert-validator')
+    const { ContextAnalyzer } = await import('../analysis/context-analyzer')
+    const { ReportGenerator } = await import('../reporting/report-generator')
     const { PRMetricsCollector } = await import(
-      '../metrics/pr-metrics-collector.js'
+      '../metrics/pr-metrics-collector'
     )
 
     // Verify classes exist
@@ -35,10 +33,8 @@ describe('PR Analysis Engine - Simple Integration Test', () => {
   })
 
   it('should validate method signatures exist', async () => {
-    const { SecurityAnalyzer } = await import(
-      '../analysis/security-analyzer.js'
-    )
-    const { ExpertValidator } = await import('../analysis/expert-validator.js')
+    const { SecurityAnalyzer } = await import('../analysis/security-analyzer')
+    const { ExpertValidator } = await import('../analysis/expert-validator')
 
     // Test that required static methods exist
     expect(typeof SecurityAnalyzer.analyzeSecurityFindings).toBe('function')

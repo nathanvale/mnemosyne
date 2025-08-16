@@ -8,13 +8,13 @@ import {
   isEmotionalContext,
   transformMemoryToExport,
   normalizeMemory,
-} from '../index.js'
-import { EmotionalState, EmotionalTheme } from '../memory/emotional-context.js'
-import { ParticipantRole } from '../memory/participants.js'
+} from '../index'
+import { EmotionalState, EmotionalTheme } from '../memory/emotional-context'
+import { ParticipantRole } from '../memory/participants'
 import {
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 
 describe('Performance Benchmarks', () => {
   // Skip performance benchmarks in Wallaby.js and CI - they can cause timeouts

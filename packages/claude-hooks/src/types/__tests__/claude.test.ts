@@ -6,7 +6,7 @@ import type {
   ClaudeStopEvent,
   ClaudeSubagentStopEvent,
   HookEventType,
-} from '../claude.js'
+} from '../claude'
 
 describe('Claude Hook Event Types', () => {
   describe('Event Type Discrimination', () => {

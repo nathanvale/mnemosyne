@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'fs'
 import * as fs from 'fs/promises'
 
 // Import the actual test subject after mocks are set up
-import { LogManager } from '../log-manager.js'
+import { LogManager } from '../log-manager'
 
 // Get the mocked functions for test assertions
 const mockExistsSync = vi.mocked(existsSync)

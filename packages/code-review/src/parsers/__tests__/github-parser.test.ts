@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { GitHubParser } from '../github-parser.js'
+import { GitHubParser } from '../github-parser'
 
 // Helper function to create a valid GitHub user
 const createTestUser = (login = 'testuser', id = 1) => ({

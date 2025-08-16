@@ -4,10 +4,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import {
-  TranscriptParser,
-  type ParsedTranscript,
-} from '../transcript-parser.js'
+import { TranscriptParser, type ParsedTranscript } from '../transcript-parser'
 
 describe('TranscriptParser', () => {
   let parser: TranscriptParser

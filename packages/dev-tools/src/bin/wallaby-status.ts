@@ -3,7 +3,7 @@
 import chalk from 'chalk'
 import { program } from 'commander'
 
-import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status.js'
+import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status'
 
 program
   .name('wallaby-status')

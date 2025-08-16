@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import type { QualityCheckConfig } from '../../types/config.js'
+import type { QualityCheckConfig } from '../../types/config'
 
-import { loadQualityConfig } from '../config.js'
+import { loadQualityConfig } from '../config'
 
 // Mock fs module - need to mock the exact way it's imported
 vi.mock('fs', () => {

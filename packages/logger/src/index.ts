@@ -1,6 +1,6 @@
 // Export logger functionality
-export * from './lib/logger.js'
-export * from './lib/logger-demo.js'
+export * from './lib/logger'
+export * from './lib/logger-demo'
 
 // Export browser logger with specific exports to avoid conflicts
 export {
@@ -10,16 +10,16 @@ export {
   type LogEntry,
   type LogLevel,
   type LogContext,
-} from './lib/browser-logger.js'
+} from './lib/browser-logger'
 
 // Export stacktrace with specific exports to avoid conflicts
 export {
   getCallSite,
   type CallSite as StackTraceCallSite,
-} from './lib/stacktrace.js'
+} from './lib/stacktrace'
 
 // Export schema-aware logging utilities
-export * from './lib/schema-logging.js'
+export * from './lib/schema-logging'
 
 // Note: The unified createLogger from './lib/logger' is the recommended factory function
 // Use createBrowserLogger if you specifically need browser-only features

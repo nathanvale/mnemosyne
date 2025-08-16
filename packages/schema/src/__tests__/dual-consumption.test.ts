@@ -33,7 +33,7 @@ describe('@studio/schema dual consumption', () => {
 
   describe('core exports availability', () => {
     it('should export core memory types and schemas', async () => {
-      const schemaModule = await import('../index.js')
+      const schemaModule = await import('../index')
 
       // Check core memory exports
       expect(schemaModule.MemorySchema).toBeDefined()
@@ -50,7 +50,7 @@ describe('@studio/schema dual consumption', () => {
     })
 
     it('should export validation types and functions', async () => {
-      const schemaModule = await import('../index.js')
+      const schemaModule = await import('../index')
 
       // Check validation exports
       expect(schemaModule.ValidationStatus).toBeDefined()
@@ -65,7 +65,7 @@ describe('@studio/schema dual consumption', () => {
     })
 
     it('should export utility functions', async () => {
-      const schemaModule = await import('../index.js')
+      const schemaModule = await import('../index')
 
       // Check type guards
       expect(schemaModule.isMemory).toBeDefined()
@@ -81,7 +81,7 @@ describe('@studio/schema dual consumption', () => {
     })
 
     it('should export constants', async () => {
-      const schemaModule = await import('../index.js')
+      const schemaModule = await import('../index')
 
       expect(schemaModule.SCHEMA_VERSION).toBeDefined()
       expect(schemaModule.CONFIDENCE_THRESHOLDS).toBeDefined()
@@ -95,7 +95,7 @@ describe('@studio/schema dual consumption', () => {
       // This test verifies that imports work in the current environment
       // Whether it's development (source) or production (compiled)
       const { MemorySchema, isMemory, SCHEMA_VERSION } = await import(
-        '../index.js'
+        '../index'
       )
 
       expect(MemorySchema).toBeDefined()
@@ -108,7 +108,7 @@ describe('@studio/schema dual consumption', () => {
     })
 
     it('should maintain type information', async () => {
-      const { ValidationStatus, EmotionalState } = await import('../index.js')
+      const { ValidationStatus, EmotionalState } = await import('../index')
 
       // These should be enums or objects
       expect(ValidationStatus).toBeDefined()
@@ -122,7 +122,7 @@ describe('@studio/schema dual consumption', () => {
 
   describe('dependency handling', () => {
     it('should handle zod dependency correctly', async () => {
-      const { MemorySchema } = await import('../index.js')
+      const { MemorySchema } = await import('../index')
 
       // MemorySchema should be a Zod schema
       expect(MemorySchema).toBeDefined()

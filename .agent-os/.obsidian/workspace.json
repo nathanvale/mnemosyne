@@ -20,8 +20,23 @@
               "icon": "lucide-file",
               "title": "tasks"
             }
+          },
+          {
+            "id": "22ab98df9173181f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "specs/2025-08-16-code-review-production/sub-specs/phase-2-reliability.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "phase-2-reliability"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -94,7 +109,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "file": "specs/2025-08-16-code-review-production/sub-specs/phase-2-reliability.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +119,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for tasks"
+              "title": "Backlinks for phase-2-reliability"
             }
           },
           {
@@ -113,12 +128,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "file": "specs/2025-08-16-code-review-production/sub-specs/phase-2-reliability.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from tasks"
+              "title": "Outgoing links from phase-2-reliability"
             }
           },
           {
@@ -142,13 +157,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "specs/2025-08-16-bun-migration-complete/tasks.md",
+                "file": "specs/2025-08-16-code-review-production/sub-specs/phase-2-reliability.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of tasks"
+              "title": "Outline of phase-2-reliability"
             }
           }
         ]
@@ -168,9 +183,21 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "aa77bb40a0bdb2c9",
+  "active": "22ab98df9173181f",
   "lastOpenFiles": [
-    "specs/2025-08-16-bun-migration-complete/spec.md",
-    "specs/2025-08-16-bun-migration-complete/tasks.md"
+    "specs/2025-08-16-code-review-production/tasks.md",
+    "specs/2025-08-16-code-review-production/sub-specs/phase-2-reliability.md",
+    "specs/2025-08-16-code-review-production/spec.md",
+    "specs/2025-08-16-code-review-production/sub-specs/phase-1-critical.md",
+    "specs/2025-08-16-code-review-production/sub-specs/technical-spec.md",
+    "specs/2025-08-15-post-processing-esm-fix/tasks.md",
+    "specs/2025-08-16-code-review-production/sub-specs/phase-3-future.md",
+    "specs/2025-08-16-code-review-production/sub-specs",
+    "specs/2025-08-16-code-review-production",
+    "specs/2025-08-16-bun-migration-complete/tasks.md",
+    "specs/2025-08-16-bun-migration-complete/sub-specs/security-spec.md",
+    "specs/2025-08-16-bun-migration-complete/sub-specs/testing-strategy.md",
+    "specs/2025-08-16-bun-migration-complete/tasks.md.tmp.60828.1755297004384",
+    "specs/2025-08-16-bun-migration-complete/spec.md"
   ]
 }

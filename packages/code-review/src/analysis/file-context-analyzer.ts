@@ -1,5 +1,5 @@
-import type { GitHubFileChange } from '../types/github.js'
-import type { FileContext } from './issue-prioritizer.js'
+import type { GitHubFileChange } from '../types/github'
+import type { FileContext } from './issue-prioritizer'
 
 /**
  * Analyzes file context to determine criticality for issue prioritization

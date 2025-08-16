@@ -3,7 +3,7 @@
  * Translates environment variable configuration to AudioCache configuration
  */
 
-import type { AudioCacheConfig } from './audio-cache.js'
+import type { AudioCacheConfig } from './audio-cache'
 
 /**
  * Environment configuration shape

@@ -9,10 +9,10 @@ import type {
   LLMResponse,
   StreamHandlers,
   TokenUsage,
-} from '../../types.js'
+} from '../../types'
 
-import { PricingCatalog, INITIAL_PRICING } from '../../pricing-catalog.js'
-import { OpenAIProvider } from '../openai.provider.js'
+import { PricingCatalog, INITIAL_PRICING } from '../../pricing-catalog'
+import { OpenAIProvider } from '../openai.provider'
 
 // Mock the OpenAI SDK
 vi.mock('openai', () => {

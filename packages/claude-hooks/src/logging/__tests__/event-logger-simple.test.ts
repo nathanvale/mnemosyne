@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ClaudeEvent } from '../../types/claude.js'
+import type { ClaudeEvent } from '../../types/claude'
 
-import { EventLogger } from '../event-logger.js'
+import { EventLogger } from '../event-logger'
 
 describe('EventLogger - Simple Tests', () => {
   describe('Constructor', () => {

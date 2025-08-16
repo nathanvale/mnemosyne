@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { findMonorepoRoot } from './src/utils/env-loader.js'
+import { findMonorepoRoot } from './src/utils/env-loader'
 
 // Get the monorepo root directory using the shared root resolver
 const rootDir = findMonorepoRoot()

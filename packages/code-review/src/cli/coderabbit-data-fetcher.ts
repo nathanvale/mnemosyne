@@ -6,8 +6,8 @@
  * patterns as GitHubDataFetcher.
  */
 
-import { CodeRabbitFinding } from '../types/coderabbit.js'
-import { execFileJson } from '../utils/async-exec.js'
+import { CodeRabbitFinding } from '../types/coderabbit'
+import { execFileJson } from '../utils/async-exec'
 
 /**
  * Validate repository name format

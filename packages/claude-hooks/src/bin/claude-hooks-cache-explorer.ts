@@ -13,7 +13,7 @@ import { readdir, readFile, unlink, stat, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { AudioCache } from '../speech/providers/audio-cache.js'
+import { AudioCache } from '../speech/providers/audio-cache'
 
 interface CacheEntryDetails {
   key: string

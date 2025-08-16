@@ -42,7 +42,7 @@ describe('@studio/shared dual consumption', () => {
   describe('module imports', () => {
     it('should be able to import the main module', async () => {
       // This should not throw
-      const sharedModule = await import('../index.js')
+      const sharedModule = await import('../index')
       expect(sharedModule).toBeDefined()
     })
   })

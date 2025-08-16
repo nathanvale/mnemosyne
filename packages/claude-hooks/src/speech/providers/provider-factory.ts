@@ -7,7 +7,7 @@ import type {
   TTSProvider,
   TTSProviderConfig,
   SpeakResult,
-} from './tts-provider.js'
+} from './tts-provider'
 
 /**
  * Provider constructor type

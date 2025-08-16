@@ -9,7 +9,7 @@
 import {
   UnifiedAnalysisOrchestrator,
   type AnalysisSummary,
-} from '../cli/unified-analysis.js'
+} from '../cli/unified-analysis'
 
 /**
  * Environment configuration

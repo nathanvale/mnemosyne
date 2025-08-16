@@ -15,12 +15,12 @@ import type {
   Voice,
   TTSProviderInfo,
   TTSProviderConfig,
-} from './tts-provider.js'
+} from './tts-provider'
 
-import { createLogger } from '../../utils/logger.js'
-import { AudioCache } from './audio-cache.js'
-import { translateAudioCacheConfig } from './cache-config-adapter.js'
-import { BaseTTSProvider } from './tts-provider.js'
+import { createLogger } from '../../utils/logger'
+import { AudioCache } from './audio-cache'
+import { translateAudioCacheConfig } from './cache-config-adapter'
+import { BaseTTSProvider } from './tts-provider'
 
 /**
  * OpenAI-specific configuration

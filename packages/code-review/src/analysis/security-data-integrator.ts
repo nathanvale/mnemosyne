@@ -6,15 +6,15 @@
  * implementations (e.g., pattern-based analysis, AI-based analysis, etc.)
  */
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
-import { LogManager } from '../utils/log-manager.js'
+import { LogManager } from '../utils/log-manager'
 import {
   DefaultTaskExecutor,
   type TaskExecutor,
   type TaskOptions,
-} from './task-executor.js'
+} from './task-executor'
 
 /**
  * Task execution context for logging

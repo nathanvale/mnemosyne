@@ -6,17 +6,17 @@
  * Replaces basic CLI pattern matching with enterprise-grade security analysis
  */
 
-import type { ReportOptions } from '../reporting/report-generator.js'
-import type { PRAnalysisResult, PRMetrics } from '../types/analysis.js'
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { ReportOptions } from '../reporting/report-generator'
+import type { PRAnalysisResult, PRMetrics } from '../types/analysis'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
-import { ContextAnalyzer } from '../analysis/context-analyzer.js'
-import { ExpertValidator } from '../analysis/expert-validator.js'
-import { SecurityDataIntegrator } from '../analysis/security-data-integrator.js'
-import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
-import { ReportGenerator } from '../reporting/report-generator.js'
-import { LogManager } from '../utils/log-manager.js'
+import { ContextAnalyzer } from '../analysis/context-analyzer'
+import { ExpertValidator } from '../analysis/expert-validator'
+import { SecurityDataIntegrator } from '../analysis/security-data-integrator'
+import { PRMetricsCollector } from '../metrics/pr-metrics-collector'
+import { ReportGenerator } from '../reporting/report-generator'
+import { LogManager } from '../utils/log-manager'
 
 /**
  * Expert analysis configuration

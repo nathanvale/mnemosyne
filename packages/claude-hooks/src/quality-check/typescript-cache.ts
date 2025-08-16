@@ -6,7 +6,7 @@ import crypto from 'crypto'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import path from 'path'
 
-import { findProjectRoot } from '../utils/config-loader.js'
+import { findProjectRoot } from '../utils/config-loader'
 
 interface CacheData {
   hashes: Record<string, string>

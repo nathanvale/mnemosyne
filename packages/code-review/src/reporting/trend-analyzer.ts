@@ -1,9 +1,5 @@
-import type { ExpertValidationResults } from '../analysis/expert-validator.js'
-import type {
-  PRAnalysisResult,
-  PRMetrics,
-  RiskLevel,
-} from '../types/analysis.js'
+import type { ExpertValidationResults } from '../analysis/expert-validator'
+import type { PRAnalysisResult, PRMetrics, RiskLevel } from '../types/analysis'
 
 /**
  * Historical PR analysis data point

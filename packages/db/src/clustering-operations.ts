@@ -5,9 +5,9 @@ import type {
   ClusterQualityMetrics,
   Memory,
   Prisma,
-} from '../generated/index.js'
+} from '../generated/index'
 
-import { PrismaClient } from '../generated/index.js'
+import { PrismaClient } from '../generated/index'
 
 export interface ClusteringOperations {
   // Memory Cluster operations

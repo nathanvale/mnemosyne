@@ -2,10 +2,10 @@ import { Readable } from 'stream'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { ClaudeNotificationEvent } from '../types/claude.js'
+import type { ClaudeNotificationEvent } from '../types/claude'
 
-import { BaseHook } from '../base-hook.js'
-import { HookExitCode } from '../types/claude.js'
+import { BaseHook } from '../base-hook'
+import { HookExitCode } from '../types/claude'
 
 // Test implementation of BaseHook
 class TestHook extends BaseHook<ClaudeNotificationEvent> {

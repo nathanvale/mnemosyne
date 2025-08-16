@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import { LogConfig, type LogConfigOptions } from '../log-config.js'
+import { LogConfig, type LogConfigOptions } from '../log-config'
 
 describe('LogConfig', () => {
   beforeEach(() => {

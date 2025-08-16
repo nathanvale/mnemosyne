@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 
-import type { TypeScriptConfigCache } from './typescript-cache.js'
+import type { TypeScriptConfigCache } from './typescript-cache'
 
 export interface QualityCheckContext {
   filePath: string

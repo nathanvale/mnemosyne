@@ -2,7 +2,7 @@
  * Entry point for the notification hook
  */
 
-import { main } from './notification.js'
+import { main } from './notification'
 
 // Run the hook
 main().catch((error) => {

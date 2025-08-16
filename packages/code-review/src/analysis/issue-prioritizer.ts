@@ -2,7 +2,7 @@ import type {
   CodeRabbitFinding,
   CodeRabbitSeverity,
   CodeRabbitCategory,
-} from '../types/coderabbit.js'
+} from '../types/coderabbit'
 
 /**
  * Issue priority levels for PR review decisions

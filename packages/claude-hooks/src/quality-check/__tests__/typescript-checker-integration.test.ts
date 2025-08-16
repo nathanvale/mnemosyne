@@ -3,8 +3,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import { createTypeScriptChecker } from '../checkers/typescript.js'
-import { TypeScriptConfigCache } from '../typescript-cache.js'
+import { createTypeScriptChecker } from '../checkers/typescript'
+import { TypeScriptConfigCache } from '../typescript-cache'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

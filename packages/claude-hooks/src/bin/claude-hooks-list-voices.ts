@@ -7,7 +7,7 @@
 
 // Load environment variables before any other imports
 import '../utils/env-loader.js'
-import { main } from '../voices/list-voices.js'
+import { main } from '../voices/list-voices'
 
 // Execute the main function
 main().catch((error) => {

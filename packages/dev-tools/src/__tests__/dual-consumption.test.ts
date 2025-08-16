@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status.js'
+import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status'
 
 describe('@studio/dev-tools - Dual Consumption Architecture', () => {
   it('should have correct package.json exports structure', async () => {

@@ -4,9 +4,9 @@
 
 import { promises as fs } from 'fs'
 
-import type { QualityCheckConfig } from '../types/config.js'
+import type { QualityCheckConfig } from '../types/config'
 
-import { parseBoolean } from '../utils/config-loader.js'
+import { parseBoolean } from '../utils/config-loader'
 
 export interface ResolvedQualityConfig {
   typescriptEnabled: boolean

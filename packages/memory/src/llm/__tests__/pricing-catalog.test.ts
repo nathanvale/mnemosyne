@@ -4,7 +4,7 @@ import {
   PricingCatalog,
   type ModelPricing,
   type ProviderPricing,
-} from '../pricing-catalog.js'
+} from '../pricing-catalog'
 
 describe('PricingCatalog', () => {
   beforeEach(() => {

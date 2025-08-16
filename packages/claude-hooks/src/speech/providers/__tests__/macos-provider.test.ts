@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { MacOSConfig } from '../macos-provider.js'
+import type { MacOSConfig } from '../macos-provider'
 
 // Use vi.hoisted to ensure mocks are available when modules are imported
 const { mockSpawn } = vi.hoisted(() => {
@@ -19,7 +19,7 @@ vi.mock('node:child_process', () => ({
   spawn: mockSpawn,
 }))
 
-import { MacOSProvider } from '../macos-provider.js'
+import { MacOSProvider } from '../macos-provider'
 
 describe('MacOSProvider', () => {
   let provider: MacOSProvider

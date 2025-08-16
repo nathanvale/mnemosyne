@@ -4,7 +4,7 @@
 
 import { exec } from 'child_process'
 
-import { Platform } from './platform.js'
+import { Platform } from './platform'
 
 // Helper to promisify exec
 const execAsync = (

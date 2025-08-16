@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status.js'
+import { SimpleWallabyStatus } from '../wallaby-manager/simple-wallaby-status'
 
 describe('SimpleWallabyStatus', () => {
   describe('checkStatus', () => {

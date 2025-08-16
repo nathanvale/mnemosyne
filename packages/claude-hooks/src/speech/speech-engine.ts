@@ -5,7 +5,7 @@
 
 import { exec } from 'node:child_process'
 
-import { detectPlatform, Platform } from '../audio/platform.js'
+import { detectPlatform, Platform } from '../audio/platform'
 
 export interface SpeechOptions {
   voice?: string

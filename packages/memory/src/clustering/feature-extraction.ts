@@ -6,7 +6,7 @@
  * psychological indicators, and temporal context.
  */
 
-import type { ExtractedMemory } from '../types/index.js'
+import type { ExtractedMemory } from '../types/index'
 import type {
   EmotionalToneFeatures,
   CommunicationStyleFeatures,
@@ -26,7 +26,7 @@ import type {
   StressMarker,
   GrowthIndicator,
   FeatureWeights,
-} from './types.js'
+} from './types'
 
 /**
  * Feature weights for multi-dimensional similarity calculation

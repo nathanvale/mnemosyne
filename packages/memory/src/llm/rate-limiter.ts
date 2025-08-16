@@ -1,4 +1,4 @@
-import type { ProviderType } from './types.js'
+import type { ProviderType } from './types'
 
 /**
  * Configuration for rate limiting

@@ -3,6 +3,6 @@
  * Provides event logging, transcript parsing, and log configuration
  */
 
-export * from './event-logger.js'
-export * from './transcript-parser.js'
-export * from './log-config.js'
+export * from './event-logger'
+export * from './transcript-parser'
+export * from './log-config'

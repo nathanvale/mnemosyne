@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
-import { PerformanceMonitor } from '../performance-monitor.js'
-import { SelectiveEscalation } from '../selective-escalation.js'
-import { UsageMetrics } from '../usage-metrics.js'
+import { PerformanceMonitor } from '../performance-monitor'
+import { SelectiveEscalation } from '../selective-escalation'
+import { UsageMetrics } from '../usage-metrics'
 
 describe('Usage Metrics and Cost Optimization', () => {
   let usageMetrics: UsageMetrics

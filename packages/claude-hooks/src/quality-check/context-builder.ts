@@ -11,8 +11,8 @@ import type {
   ProjectContext,
   SubAgentContext,
   TypeScriptErrorDetail,
-} from './error-classifier.js'
-import type { TypeScriptConfigCache } from './typescript-cache.js'
+} from './error-classifier'
+import type { TypeScriptConfigCache } from './typescript-cache'
 
 export interface EnrichedProjectContext extends ProjectContext {
   packageName?: string

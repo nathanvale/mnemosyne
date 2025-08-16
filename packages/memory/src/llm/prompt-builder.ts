@@ -1,5 +1,5 @@
-import type { ConversationMessage, MoodAnalysisResult } from '../types/index.js'
-import type { LLMProvider } from './llm-provider.interface.js'
+import type { ConversationMessage, MoodAnalysisResult } from '../types/index'
+import type { LLMProvider } from './llm-provider.interface'
 
 /**
  * Options for building mood-aware prompts

@@ -2,7 +2,7 @@ import { execSync } from 'child_process'
 import { existsSync, unlinkSync } from 'fs'
 import { resolve } from 'path'
 
-import { PrismaClient } from '../../generated/index.js'
+import { PrismaClient } from '../../generated/index'
 
 /**
  * Test database setup for @studio/db package

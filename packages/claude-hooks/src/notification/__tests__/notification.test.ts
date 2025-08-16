@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { ClaudeNotificationEvent } from '../../types/claude.js'
+import type { ClaudeNotificationEvent } from '../../types/claude'
 
-import { NotificationHook } from '../notification.js'
+import { NotificationHook } from '../notification'
 
 // Mock dependencies
 vi.mock('../../audio/audio-player.js')
@@ -77,7 +77,7 @@ describe('NotificationHook', () => {
 
   describe('Event Handling', () => {
     it('should play notification sound when notify is enabled', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -120,7 +120,7 @@ describe('NotificationHook', () => {
     })
 
     it('should not play sound when notify is disabled', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn()
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -154,7 +154,7 @@ describe('NotificationHook', () => {
     })
 
     it('should use appropriate sound based on priority', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       const mockGetSystemSounds = vi.fn().mockReturnValue({
         success: '/System/Library/Sounds/Glass.aiff',
@@ -256,10 +256,10 @@ describe('NotificationHook', () => {
 
   describe('Platform Support', () => {
     it('should work on Windows', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('win32' as any)
 
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(true)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,
@@ -297,7 +297,7 @@ describe('NotificationHook', () => {
     })
 
     it('should handle unsupported platforms gracefully', async () => {
-      const { detectPlatform } = await import('../../audio/platform.js')
+      const { detectPlatform } = await import('../../audio/platform')
       vi.mocked(detectPlatform).mockReturnValue('unsupported' as any)
 
       const event: ClaudeNotificationEvent = {
@@ -326,7 +326,7 @@ describe('NotificationHook', () => {
 
   describe('Error Handling', () => {
     it('should handle audio playback failures', async () => {
-      const { AudioPlayer } = await import('../../audio/audio-player.js')
+      const { AudioPlayer } = await import('../../audio/audio-player')
       const mockPlaySound = vi.fn().mockResolvedValue(false)
       vi.mocked(AudioPlayer).mockImplementation(() => ({
         playSound: mockPlaySound,

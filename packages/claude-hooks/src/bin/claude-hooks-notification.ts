@@ -7,7 +7,7 @@
 
 // Load environment variables before any other imports
 import '../utils/env-loader.js'
-import { main } from '../notification/notification.js'
+import { main } from '../notification/notification'
 
 // Execute the main function
 main().catch((error) => {

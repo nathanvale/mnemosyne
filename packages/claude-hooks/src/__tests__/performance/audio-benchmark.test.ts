@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
-import { AudioPlayer } from '../../audio/audio-player.js'
-import { Platform } from '../../audio/platform.js'
+import { AudioPlayer } from '../../audio/audio-player'
+import { Platform } from '../../audio/platform'
 
 describe('Audio Performance Benchmarks', () => {
   // Skip performance benchmarks in CI and Wallaby environments

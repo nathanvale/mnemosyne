@@ -58,9 +58,9 @@ import {
   type MockedFunction,
 } from 'vitest'
 
-import type { ClaudeEvent } from '../../types/claude.js'
+import type { ClaudeEvent } from '../../types/claude'
 
-import { EventLogger } from '../event-logger.js'
+import { EventLogger } from '../event-logger'
 
 describe('EventLogger', () => {
   let mockMkdir: MockedFunction<typeof fs.mkdir>

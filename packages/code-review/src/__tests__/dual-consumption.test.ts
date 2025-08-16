@@ -23,7 +23,7 @@ describe('@studio/code-review - Dual Consumption Architecture', () => {
 
   it('should be importable from main export', async () => {
     // Test that the package can be imported from source
-    const codeReview = await import('../index.js')
+    const codeReview = await import('../index')
     expect(codeReview).toBeDefined()
   })
 
@@ -35,11 +35,11 @@ describe('@studio/code-review - Dual Consumption Architecture', () => {
 
     if (isProduction) {
       // In production, we expect built files to be used
-      const codeReview = await import('../index.js')
+      const codeReview = await import('../index')
       expect(codeReview).toBeDefined()
     } else {
       // In development, source files should be directly consumable
-      const codeReview = await import('../index.js')
+      const codeReview = await import('../index')
       expect(codeReview).toBeDefined()
     }
   })

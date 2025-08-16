@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { GitHubPRContext } from '../../types/github.js'
+import { GitHubPRContext } from '../../types/github'
 
 // Mock the async-exec module
 vi.mock('../../utils/async-exec.js')
@@ -9,8 +9,8 @@ vi.mock('node:fs')
 // Import after mocks are set up
 import { writeFileSync } from 'node:fs'
 
-import * as asyncExec from '../../utils/async-exec.js'
-import { GitHubDataFetcher } from '../fetch-github-data.js'
+import * as asyncExec from '../../utils/async-exec'
+import { GitHubDataFetcher } from '../fetch-github-data'
 
 const mockExecFileWithTimeout = vi.mocked(asyncExec.execFileWithTimeout)
 const mockExecFileJson = vi.mocked(asyncExec.execFileJson)

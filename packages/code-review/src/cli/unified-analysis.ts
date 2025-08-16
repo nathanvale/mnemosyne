@@ -8,15 +8,15 @@
 
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
 import {
   execFileWithGracefulShutdown,
   initializeGracefulShutdown,
   registerShutdownCleanup,
-} from '../utils/async-exec.js'
-import { ExpertPRAnalysis } from './expert-pr-analysis.js'
+} from '../utils/async-exec'
+import { ExpertPRAnalysis } from './expert-pr-analysis'
 
 /**
  * Analysis orchestrator configuration

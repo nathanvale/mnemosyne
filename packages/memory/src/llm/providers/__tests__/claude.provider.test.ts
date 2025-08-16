@@ -9,10 +9,10 @@ import type {
   LLMResponse,
   StreamHandlers,
   TokenUsage,
-} from '../../types.js'
+} from '../../types'
 
-import { PricingCatalog, INITIAL_PRICING } from '../../pricing-catalog.js'
-import { ClaudeProvider } from '../claude.provider.js'
+import { PricingCatalog, INITIAL_PRICING } from '../../pricing-catalog'
+import { ClaudeProvider } from '../claude.provider'
 
 // Mock the Anthropic SDK
 vi.mock('@anthropic-ai/sdk', () => {

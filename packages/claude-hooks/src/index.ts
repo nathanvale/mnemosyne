@@ -3,31 +3,31 @@
  */
 
 // Main hook classes
-export { NotificationHook } from './notification/notification.js'
-export { StopHook } from './stop/stop.js'
-export { SubagentStopHook } from './subagent-stop/subagent-stop.js'
-export { BaseHook } from './base-hook.js'
+export { NotificationHook } from './notification/notification'
+export { StopHook } from './stop/stop'
+export { SubagentStopHook } from './subagent-stop/subagent-stop'
+export { BaseHook } from './base-hook'
 
 // Hook configuration interfaces
-export type { NotificationHookConfig } from './notification/notification.js'
-export type { StopHookConfig } from './stop/stop.js'
-export type { SubagentStopHookConfig } from './subagent-stop/subagent-stop.js'
-export type { HookConfig } from './base-hook.js'
+export type { NotificationHookConfig } from './notification/notification'
+export type { StopHookConfig } from './stop/stop'
+export type { SubagentStopHookConfig } from './subagent-stop/subagent-stop'
+export type { HookConfig } from './base-hook'
 
 // TTS and Speech
-export { TTSProviderFactory } from './speech/providers/provider-factory.js'
+export { TTSProviderFactory } from './speech/providers/provider-factory'
 export type {
   TTSProvider,
   TTSProviderConfig,
-} from './speech/providers/tts-provider.js'
+} from './speech/providers/tts-provider'
 
 // Audio system
-export { AudioPlayer } from './audio/audio-player.js'
-export { detectPlatform, Platform } from './audio/platform.js'
+export { AudioPlayer } from './audio/audio-player'
+export { detectPlatform, Platform } from './audio/platform'
 
 // Configuration
-export { loadAutoConfig } from './utils/auto-config.js'
-export { loadConfigFromEnv } from './config/env-config.js'
+export { loadAutoConfig } from './utils/auto-config'
+export { loadConfigFromEnv } from './config/env-config'
 
 // Claude event types
 export type {
@@ -36,11 +36,11 @@ export type {
   ClaudeSubagentStopEvent,
   ClaudePostToolUseEvent,
   FileToolInput,
-} from './types/claude.js'
+} from './types/claude'
 
 // Utility types
-export { HookExitCode } from './types/claude.js'
+export { HookExitCode } from './types/claude'
 
 // Export specific utilities
-export { createLogger, type Logger } from './utils/logger.js'
-export { loadConfig } from './utils/config-loader.js'
+export { createLogger, type Logger } from './utils/logger'
+export { loadConfig } from './utils/config-loader'

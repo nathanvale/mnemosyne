@@ -3,7 +3,7 @@
  * Manages communication with Task tool for intelligent error analysis
  */
 
-import type { SubAgentContext } from './error-classifier.js'
+import type { SubAgentContext } from './error-classifier'
 
 /**
  * Represents an explanation for a TypeScript error

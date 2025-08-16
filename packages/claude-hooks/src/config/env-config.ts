@@ -4,7 +4,7 @@
  * Allows hook configurations to be overridden via environment variables
  */
 
-import type { CompleteHookConfig } from './config-schema.js'
+import type { CompleteHookConfig } from './config-schema'
 
 /**
  * Environment variable mapping for hook configuration

@@ -4,7 +4,7 @@
 
 import { promises as fs } from 'fs'
 
-import type { ClaudeToolInput } from '../types/claude.js'
+import type { ClaudeToolInput } from '../types/claude'
 
 /**
  * Parse JSON input from stdin

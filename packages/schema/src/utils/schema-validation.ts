@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-import { MemorySchema } from '../memory/core-memory.js'
-import { EmotionalContextSchema } from '../memory/emotional-context.js'
-import { ParticipantSchema } from '../memory/participants.js'
-import { RelationshipDynamicsSchema } from '../memory/relationship-dynamics.js'
+import { MemorySchema } from '../memory/core-memory'
+import { EmotionalContextSchema } from '../memory/emotional-context'
+import { ParticipantSchema } from '../memory/participants'
+import { RelationshipDynamicsSchema } from '../memory/relationship-dynamics'
 
 /**
  * Detailed validation error with field-level information

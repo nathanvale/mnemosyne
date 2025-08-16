@@ -5,9 +5,9 @@
 import { exec } from 'node:child_process'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
-import { Platform } from '../../audio/platform.js'
-import { detectPlatform } from '../../audio/platform.js'
-import { SpeechEngine, type SpeechOptions } from '../speech-engine.js'
+import { Platform } from '../../audio/platform'
+import { detectPlatform } from '../../audio/platform'
+import { SpeechEngine, type SpeechOptions } from '../speech-engine'
 
 // Mock child_process
 vi.mock('node:child_process', () => {

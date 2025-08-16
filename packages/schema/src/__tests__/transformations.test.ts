@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 
-import type { Memory } from '../memory/core-memory.js'
-import type { MemoryV1 } from '../utils/transformations.js'
+import type { Memory } from '../memory/core-memory'
+import type { MemoryV1 } from '../utils/transformations'
 
-import { EmotionalState, EmotionalTheme } from '../memory/emotional-context.js'
-import { ParticipantRole } from '../memory/participants.js'
+import { EmotionalState, EmotionalTheme } from '../memory/emotional-context'
+import { ParticipantRole } from '../memory/participants'
 import {
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 import {
   transformMemoryToExport,
   transformMemoryFromV1,
@@ -17,7 +17,7 @@ import {
   normalizeMemory,
   extractMemoryFeatures,
   transformBatch,
-} from '../utils/transformations.js'
+} from '../utils/transformations'
 
 describe('Transformations', () => {
   const mockMemory: Memory = {

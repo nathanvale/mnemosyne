@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-import type { PrioritizedIssue } from '../analysis/issue-prioritizer.js'
-import type { CodeRabbitFinding, CodeRabbitAnalysis } from './coderabbit.js'
-import type { GitHubPRContext } from './github.js'
+import type { PrioritizedIssue } from '../analysis/issue-prioritizer'
+import type { CodeRabbitFinding, CodeRabbitAnalysis } from './coderabbit'
+import type { GitHubPRContext } from './github'
 
 /**
  * Analysis decision outcome
@@ -311,3 +311,68 @@ export const AnalysisConfig = z.object({
   maxAnalysisTimeMs: z.number().default(600000), // 10 minutes
 })
 export type AnalysisConfig = z.infer<typeof AnalysisConfig>
+
+/**
+ * Consolidated Analysis Output
+ * Final structure that combines all analysis sources for agent consumption
+ */
+export interface ConsolidatedAnalysisOutput {
+  // Metadata
+  analysis_id: string
+  pr_number: number
+  repository: string
+  timestamp: string
+  analysis_version: string
+
+  // Context
+  github_context: {
+    title: string
+    description: string
+    author: string
+    base_branch: string
+    head_branch: string
+    files_changed: number
+    additions: number
+    deletions: number
+  }
+
+  // All findings merged
+  findings: {
+    coderabbit: CodeRabbitFinding[]
+    security: SecurityFinding[]
+    expert: PrioritizedIssue[]
+    total_count: number
+    by_severity: {
+      critical: number
+      high: number
+      medium: number
+      low: number
+    }
+  }
+
+  // Metrics
+  metrics: {
+    code_quality_score: number
+    security_score: number
+    test_coverage_delta?: number
+    complexity_score: number
+    confidence_score: number
+  }
+
+  // Decision and recommendations
+  decision: AnalysisDecision
+  risk_level: RiskLevel
+  blocking_issues: PrioritizedIssue[]
+  recommendations: {
+    immediate: string[]
+    short_term: string[]
+    long_term: string[]
+  }
+
+  // Summary for human consumption
+  summary: {
+    overview: string
+    key_findings: string[]
+    action_items: string[]
+  }
+}

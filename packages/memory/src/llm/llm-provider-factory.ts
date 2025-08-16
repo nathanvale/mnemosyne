@@ -5,7 +5,7 @@
  * based on configuration, enabling runtime switching between providers.
  */
 
-import type { LLMProvider, ProviderConfig } from './llm-provider.interface.js'
+import type { LLMProvider, ProviderConfig } from './llm-provider.interface'
 
 /**
  * Factory function type for creating provider instances

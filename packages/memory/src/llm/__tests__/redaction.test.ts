@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { ContentRedactor } from '../redaction.js'
+import { ContentRedactor } from '../redaction'
 
 describe('ContentRedactor', () => {
   let redactor: ContentRedactor

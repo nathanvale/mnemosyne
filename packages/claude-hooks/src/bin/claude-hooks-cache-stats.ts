@@ -8,7 +8,7 @@
 
 // Load environment variables before any other imports
 import '../utils/env-loader.js'
-import { AudioCache } from '../speech/providers/audio-cache.js'
+import { AudioCache } from '../speech/providers/audio-cache'
 
 /**
  * Format bytes as human-readable size

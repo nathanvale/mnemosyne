@@ -11,7 +11,7 @@ import {
 import {
   createProgressIndicator,
   ProgressIndicator,
-} from '../progress-indicator.js'
+} from '../progress-indicator'
 
 describe('ProgressIndicator', () => {
   let indicator: ProgressIndicator

@@ -4,8 +4,8 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { SubAgentContextBuilder } from '../context-builder.js'
-import { TypeScriptConfigCache } from '../typescript-cache.js'
+import { SubAgentContextBuilder } from '../context-builder'
+import { TypeScriptConfigCache } from '../typescript-cache'
 
 // Mock the TypeScript config cache
 vi.mock('../typescript-cache.js')

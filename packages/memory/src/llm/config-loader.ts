@@ -5,7 +5,7 @@
  * Provides defaults and comprehensive validation with clear error messages.
  */
 
-import type { LLMProviderConfig, IndividualProviderConfig } from './types.js'
+import type { LLMProviderConfig, IndividualProviderConfig } from './types'
 
 /**
  * Configuration validation result
