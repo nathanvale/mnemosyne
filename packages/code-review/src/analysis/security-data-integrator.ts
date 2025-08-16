@@ -10,6 +10,7 @@ import type { CodeRabbitAnalysis } from '../types/coderabbit'
 import type { GitHubPRContext } from '../types/github'
 
 import { LogManager } from '../utils/log-manager'
+import { logProgress, logDebug } from '../utils/logger'
 import {
   DefaultTaskExecutor,
   type TaskExecutor,
@@ -35,8 +36,8 @@ async function executeTaskWithLogging(
   taskOptions: TaskOptions,
   context: TaskExecutionContext = {},
 ): Promise<string> {
-  console.warn(`🔍 Executing ${taskOptions.subagent_type} security analysis...`)
-  console.warn(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
+  logProgress(`🔍 Executing ${taskOptions.subagent_type} security analysis...`)
+  logDebug(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
 
   try {
     // Execute the Task tool
@@ -46,7 +47,7 @@ async function executeTaskWithLogging(
     const response =
       typeof result === 'string' ? result : JSON.stringify(result)
 
-    console.warn(
+    logDebug(
       `✅ ${taskOptions.subagent_type} response received (${response.length} characters)`,
     )
 
@@ -69,18 +70,22 @@ async function executeTaskWithLogging(
         },
       )
 
-      console.warn(
+      logDebug(
         `📁 Response automatically saved to: ${logPath.replace(process.cwd(), '.')}`,
       )
-      console.warn(`🔍 Analysis ID: ${analysisId}`)
+      logDebug(`🔍 Analysis ID: ${analysisId}`)
     } catch (logError) {
-      console.error('❌ Failed to save sub-agent response to logs:', logError)
+      logDebug('❌ Failed to save sub-agent response to logs:', {
+        error: String(logError),
+      })
       // Continue even if logging fails - don't block the analysis
     }
 
     return response
   } catch (error) {
-    console.error(`❌ Error executing ${taskOptions.subagent_type}:`, error)
+    logDebug(`❌ Error executing ${taskOptions.subagent_type}:`, {
+      error: String(error),
+    })
 
     // Log the error attempt as well
     const errorResponse = JSON.stringify({
@@ -99,7 +104,7 @@ async function executeTaskWithLogging(
         format: 'json',
       })
     } catch (logError) {
-      console.warn('Failed to log error response:', logError)
+      logDebug('Failed to log error response:', { error: String(logError) })
     }
 
     throw error
@@ -282,7 +287,9 @@ Please start by running the \`/security-review\` command on the provided code ch
 
       return parsedAnalysis
     } catch (error) {
-      console.error('Error in Claude sub-agent security analysis:', error)
+      logDebug('Error in Claude sub-agent security analysis:', {
+        error: String(error),
+      })
 
       // Return minimal analysis on error
       return {
@@ -344,7 +351,7 @@ Please start by running the \`/security-review\` command on the provided code ch
     prompt: string,
     githubContext?: GitHubPRContext,
   ): Promise<string> {
-    console.warn('🚀 Launching Claude pr-review-synthesizer sub-agent...')
+    logProgress('🚀 Launching Claude pr-review-synthesizer sub-agent...')
 
     try {
       // Use the enhanced Task executor with automatic log capture
@@ -363,10 +370,12 @@ Please start by running the \`/security-review\` command on the provided code ch
         },
       )
 
-      console.warn('✅ Security sub-agent analysis completed successfully')
+      logProgress('✅ Security sub-agent analysis completed successfully')
       return response
     } catch (error) {
-      console.error('❌ Error in security sub-agent analysis:', error)
+      logDebug('❌ Error in security sub-agent analysis:', {
+        error: String(error),
+      })
 
       // Return error state analysis
       return JSON.stringify({
@@ -415,7 +424,7 @@ Please start by running the \`/security-review\` command on the provided code ch
         },
       }
     } catch (error) {
-      console.error('Error parsing sub-agent response:', error)
+      logDebug('Error parsing sub-agent response:', { error: String(error) })
 
       return {
         findings: [],
