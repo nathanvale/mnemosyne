@@ -5,19 +5,19 @@ import type {
   OWASPCategory,
   SANSCategory,
   CWECategory,
-} from '../types/analysis.js'
+} from '../types/analysis'
 import type {
   CodeRabbitAnalysis,
   CodeRabbitFinding,
   CodeRabbitSeverity,
-} from '../types/coderabbit.js'
+} from '../types/coderabbit'
 import type {
   GitHubPRContext,
   GitHubFileChange,
   GitHubSecurityAlert,
-} from '../types/github.js'
+} from '../types/github'
 
-import { CodeRabbitParser } from '../parsers/coderabbit-parser.js'
+import { CodeRabbitParser } from '../parsers/coderabbit-parser'
 
 /**
  * Multi-phase security analyzer implementing OWASP Top 10, SANS Top 25, and CWE frameworks

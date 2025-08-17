@@ -7,9 +7,9 @@
  */
 
 // Import from index to ensure providers are registered
-import type { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider.js'
+import type { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider'
 
-import { TTSProviderFactory } from '../src/speech/providers/index.js'
+import { TTSProviderFactory } from '../src/speech/providers/index'
 
 // Set the API key
 process.env.ELEVENLABS_API_KEY =

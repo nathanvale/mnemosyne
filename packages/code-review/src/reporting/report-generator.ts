@@ -2,17 +2,17 @@ import type {
   ContextAnalysisResults,
   BusinessRiskAssessment,
   ArchitecturalInsight,
-} from '../analysis/context-analyzer.js'
-import type { ExpertValidationResults } from '../analysis/expert-validator.js'
-import type { PrioritizedIssue } from '../analysis/issue-prioritizer.js'
-import type { CombinedSecurityData } from '../analysis/security-data-integrator.js'
+} from '../analysis/context-analyzer'
+import type { ExpertValidationResults } from '../analysis/expert-validator'
+import type { PrioritizedIssue } from '../analysis/issue-prioritizer'
+import type { CombinedSecurityData } from '../analysis/security-data-integrator'
 import type {
   PRAnalysisResult,
   SecurityAuditResults,
   PRMetrics,
   AnalysisDecision,
   RiskLevel,
-} from '../types/analysis.js'
+} from '../types/analysis'
 
 /**
  * Report formatting options

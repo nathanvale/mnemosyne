@@ -5,17 +5,17 @@
 
 import path from 'path'
 
-import type { FileToolInput, ClaudePostToolUseEvent } from '../types/claude.js'
+import type { FileToolInput, ClaudePostToolUseEvent } from '../types/claude'
 
-import { HookExitCode } from '../types/claude.js'
-import { fileExists, isSourceFile } from '../utils/file-utils.js'
-import { createQualityLogger, createLogger, colors } from '../utils/logger.js'
-import { createCommonIssuesChecker } from './checkers/common-issues.js'
-import { createESLintChecker } from './checkers/eslint.js'
-import { createPrettierChecker } from './checkers/prettier.js'
-import { createTypeScriptChecker } from './checkers/typescript.js'
-import { loadQualityConfig } from './config.js'
-import { TypeScriptConfigCache } from './typescript-cache.js'
+import { HookExitCode } from '../types/claude'
+import { fileExists, isSourceFile } from '../utils/file-utils'
+import { createQualityLogger, createLogger, colors } from '../utils/logger'
+import { createCommonIssuesChecker } from './checkers/common-issues'
+import { createESLintChecker } from './checkers/eslint'
+import { createPrettierChecker } from './checkers/prettier'
+import { createTypeScriptChecker } from './checkers/typescript'
+import { loadQualityConfig } from './config'
+import { TypeScriptConfigCache } from './typescript-cache'
 
 /**
  * Quality checker for a single file
@@ -402,7 +402,7 @@ async function main(): Promise<void> {
   try {
     log.debug('Attempting to load enhanced print summary...')
     const { printSummaryWithSubAgent } = await import(
-      './print-summary-enhanced.js'
+      './print-summary-enhanced'
     )
     log.debug('Enhanced print summary loaded successfully')
     await printSummaryWithSubAgent(errors, autofixes, filePath, tsConfigCache)

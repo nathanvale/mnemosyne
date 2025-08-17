@@ -10,7 +10,7 @@ import {
   EnvConfigLoader,
   DEFAULT_ENV_MAPPINGS,
   loadConfigFromEnv,
-} from '../env-config.js'
+} from '../env-config'
 
 describe('Environment Configuration', () => {
   let originalEnv: NodeJS.ProcessEnv

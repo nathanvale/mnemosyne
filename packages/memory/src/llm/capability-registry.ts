@@ -5,7 +5,7 @@
  * enabling feature comparison and provider selection based on requirements.
  */
 
-import type { ProviderCapabilities } from './types.js'
+import type { ProviderCapabilities } from './types'
 
 /**
  * Registry for provider capabilities

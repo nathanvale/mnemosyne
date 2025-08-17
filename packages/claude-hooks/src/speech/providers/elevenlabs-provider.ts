@@ -15,11 +15,11 @@ import type {
   Voice,
   TTSProviderInfo,
   TTSProviderConfig,
-} from './tts-provider.js'
+} from './tts-provider'
 
-import { AudioCache } from './audio-cache.js'
-import { translateAudioCacheConfig } from './cache-config-adapter.js'
-import { BaseTTSProvider } from './tts-provider.js'
+import { AudioCache } from './audio-cache'
+import { translateAudioCacheConfig } from './cache-config-adapter'
+import { BaseTTSProvider } from './tts-provider'
 
 const execAsync = promisify(exec)
 

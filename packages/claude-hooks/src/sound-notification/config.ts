@@ -4,9 +4,9 @@
 
 import { promises as fs } from 'fs'
 
-import type { SoundNotificationConfig } from '../types/config.js'
+import type { SoundNotificationConfig } from '../types/config'
 
-import { parseBoolean, parseInteger } from '../utils/config-loader.js'
+import { parseBoolean, parseInteger } from '../utils/config-loader'
 
 export interface ResolvedSoundConfig {
   playOnSuccess: boolean

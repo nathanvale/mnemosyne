@@ -1,5 +1,5 @@
-export { server } from './msw-setup.js'
-export { handlers, errorHandlers } from './msw-handlers.js'
+export { server } from './msw-setup'
+export { handlers, errorHandlers } from './msw-handlers'
 
 // Test data factories
 export function createMockPR(overrides = {}) {

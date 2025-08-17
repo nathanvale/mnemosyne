@@ -18,7 +18,7 @@ import {
   execFileJson,
   execFileParallel,
   createTimeoutController,
-} from '../async-exec.js'
+} from '../async-exec'
 
 describe('Async Execution Utilities', () => {
   // Skip all tests in Wallaby due to promisify mock limitations
@@ -266,7 +266,7 @@ describe('Async Execution Utilities', () => {
   describe('graceful shutdown', () => {
     it('should handle graceful shutdown initialization', async () => {
       const { initializeGracefulShutdown, registerShutdownCleanup } =
-        await import('../async-exec.js')
+        await import('../async-exec')
 
       // Initialize graceful shutdown
       expect(() => initializeGracefulShutdown()).not.toThrow()
@@ -277,7 +277,7 @@ describe('Async Execution Utilities', () => {
     })
 
     it('should execute with graceful shutdown support', async () => {
-      const { execFileWithGracefulShutdown } = await import('../async-exec.js')
+      const { execFileWithGracefulShutdown } = await import('../async-exec')
 
       mockExecFileAsync.mockResolvedValue({
         stdout: 'success with graceful shutdown',
@@ -297,7 +297,7 @@ describe('Async Execution Utilities', () => {
     })
 
     it('should handle abort signal during execution', async () => {
-      const { execFileWithGracefulShutdown } = await import('../async-exec.js')
+      const { execFileWithGracefulShutdown } = await import('../async-exec')
 
       const abortError = new Error('Command aborted')
       abortError.name = 'AbortError'

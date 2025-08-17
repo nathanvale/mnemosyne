@@ -3,14 +3,14 @@
  * Extends the existing quality check summary with AI-powered TypeScript error analysis
  */
 
-import type { SubAgentContext } from './error-classifier.js'
-import type { SubAgentAnalysis } from './sub-agent-orchestrator.js'
-import type { TypeScriptConfigCache } from './typescript-cache.js'
+import type { SubAgentContext } from './error-classifier'
+import type { SubAgentAnalysis } from './sub-agent-orchestrator'
+import type { TypeScriptConfigCache } from './typescript-cache'
 
-import { createQualityLogger } from '../utils/logger.js'
-import { SubAgentContextBuilder } from './context-builder.js'
-import { createErrorClassifier } from './error-classifier.js'
-import { SubAgentOrchestrator } from './sub-agent-orchestrator.js'
+import { createQualityLogger } from '../utils/logger'
+import { SubAgentContextBuilder } from './context-builder'
+import { createErrorClassifier } from './error-classifier'
+import { SubAgentOrchestrator } from './sub-agent-orchestrator'
 
 // Define colors inline to avoid import issues
 const colors = {

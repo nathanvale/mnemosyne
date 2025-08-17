@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import type { SoundNotificationConfig } from '../../types/config.js'
+import type { SoundNotificationConfig } from '../../types/config'
 
-import { loadSoundConfig } from '../config.js'
+import { loadSoundConfig } from '../config'
 
 // Mock fs module - need to mock the exact way it's imported
 vi.mock('fs', () => {

@@ -1,4 +1,4 @@
-import { getCallSite } from './stacktrace.js'
+import { getCallSite } from './stacktrace'
 
 function debugCallsite() {
   console.log('Frame 0:', getCallSite(0))

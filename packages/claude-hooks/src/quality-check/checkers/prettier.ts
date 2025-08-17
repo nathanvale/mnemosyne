@@ -4,11 +4,11 @@
 
 import path from 'path'
 
-import type { Logger } from '../../utils/logger.js'
-import type { ResolvedQualityConfig } from '../config.js'
+import type { Logger } from '../../utils/logger'
+import type { ResolvedQualityConfig } from '../config'
 
-import { findProjectRoot } from '../../utils/config-loader.js'
-import { readFile, writeFile } from '../../utils/file-utils.js'
+import { findProjectRoot } from '../../utils/config-loader'
+import { readFile, writeFile } from '../../utils/file-utils'
 
 export interface PrettierChecker {
   check(): Promise<{ errors: string[]; autofixes: string[] }>

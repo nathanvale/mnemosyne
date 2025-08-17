@@ -5,12 +5,12 @@
  * Lists available voices for all TTS providers
  */
 
-import type { Voice } from '../speech/providers/tts-provider.js'
+import type { Voice } from '../speech/providers/tts-provider'
 
-import { ElevenLabsProvider } from '../speech/providers/elevenlabs-provider.js'
-import { MacOSProvider } from '../speech/providers/macos-provider.js'
-import { OpenAIProvider } from '../speech/providers/openai-provider.js'
-import { createLogger } from '../utils/logger.js'
+import { ElevenLabsProvider } from '../speech/providers/elevenlabs-provider'
+import { MacOSProvider } from '../speech/providers/macos-provider'
+import { OpenAIProvider } from '../speech/providers/openai-provider'
+import { createLogger } from '../utils/logger'
 
 interface VoiceListOptions {
   provider?: 'openai' | 'macos' | 'elevenlabs' | 'all'

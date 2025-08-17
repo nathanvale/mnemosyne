@@ -6,7 +6,7 @@ import {
   getEnvVar,
   createTestEnvironment,
   prAnalysisEnvSchema,
-} from '../env-validator.js'
+} from '../env-validator'
 
 describe('Environment Validator', () => {
   const originalEnv = process.env

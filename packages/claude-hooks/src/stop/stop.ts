@@ -9,19 +9,19 @@ import '../utils/env-loader.js'
 import type {
   TTSProvider,
   TTSProviderConfig,
-} from '../speech/providers/tts-provider.js'
-import type { ClaudeStopEvent } from '../types/claude.js'
+} from '../speech/providers/tts-provider'
+import type { ClaudeStopEvent } from '../types/claude'
 
-import { AudioPlayer } from '../audio/audio-player.js'
-import { detectPlatform, Platform } from '../audio/platform.js'
-import { BaseHook, type HookConfig } from '../base-hook.js'
-import { TranscriptParser } from '../logging/transcript-parser.js'
+import { AudioPlayer } from '../audio/audio-player'
+import { detectPlatform, Platform } from '../audio/platform'
+import { BaseHook, type HookConfig } from '../base-hook'
+import { TranscriptParser } from '../logging/transcript-parser'
 // Import providers and ensure registration
-import { initializeProviders } from '../speech/providers/index.js'
+import { initializeProviders } from '../speech/providers/index'
 import {
   TTSProviderFactory,
   type FactoryConfig,
-} from '../speech/providers/provider-factory.js'
+} from '../speech/providers/provider-factory'
 
 // Ensure providers are registered
 initializeProviders()
@@ -263,7 +263,7 @@ export async function main(): Promise<void> {
   }
 
   // Load auto-config from .claude/hooks/stop.config.json
-  const { loadAutoConfig } = await import('../utils/auto-config.js')
+  const { loadAutoConfig } = await import('../utils/auto-config')
   const jsonConfig = await loadAutoConfig<StopHookConfig>('stop')
 
   // Merge with CLI arguments (CLI args override JSON)

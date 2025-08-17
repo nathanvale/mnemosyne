@@ -10,11 +10,11 @@
  * environment without access to LogManager. This wrapper solves that problem.
  */
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
-import { AgentSimulator } from '../agent/agent-simulator.js'
-import { LogManager } from '../utils/log-manager.js'
+import { AgentSimulator } from '../agent/agent-simulator'
+import { LogManager } from '../utils/log-manager'
 
 /**
  * Wrapper configuration

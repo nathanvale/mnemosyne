@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import type { SubAgentAnalysis } from '../sub-agent-orchestrator.js'
-import type { TypeScriptConfigCache } from '../typescript-cache.js'
+import type { SubAgentAnalysis } from '../sub-agent-orchestrator'
+import type { TypeScriptConfigCache } from '../typescript-cache'
 
-import { SubAgentContextBuilder } from '../context-builder.js'
-import { createErrorClassifier } from '../error-classifier.js'
-import { SubAgentOrchestrator } from '../sub-agent-orchestrator.js'
+import { SubAgentContextBuilder } from '../context-builder'
+import { createErrorClassifier } from '../error-classifier'
+import { SubAgentOrchestrator } from '../sub-agent-orchestrator'
 
 // Mock modules
 vi.mock('../error-classifier.js')
@@ -91,7 +91,7 @@ describe('printSummary with Sub-agent Integration', () => {
       // We'll implement the actual enhanced printSummary in the next step
       // For now, this test documents expected behavior
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -161,7 +161,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -204,7 +204,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -237,7 +237,7 @@ describe('printSummary with Sub-agent Integration', () => {
       vi.mocked(mockOrchestrator.isCircuitBreakerOpen).mockReturnValue(true)
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -266,7 +266,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -320,7 +320,7 @@ describe('printSummary with Sub-agent Integration', () => {
       })
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -354,7 +354,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -377,7 +377,7 @@ describe('printSummary with Sub-agent Integration', () => {
 
       // Should fall back to traditional printSummary
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,
@@ -413,7 +413,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(errors, [], '/test/file.ts', mockTsCache)
 
@@ -454,7 +454,7 @@ describe('printSummary with Sub-agent Integration', () => {
       )
 
       const { printSummaryWithSubAgent } = await import(
-        '../print-summary-enhanced.js'
+        '../print-summary-enhanced'
       )
       await printSummaryWithSubAgent(
         errors,

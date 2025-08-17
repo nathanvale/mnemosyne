@@ -11,7 +11,7 @@ import type {
   ProviderCapabilities,
   StreamHandlers,
   TokenUsage,
-} from './types.js'
+} from './types'
 
 /**
  * Standard interface for LLM providers
@@ -84,4 +84,4 @@ export type {
   StreamEvent,
   StreamEventType,
   ProviderConfig,
-} from './types.js'
+} from './types'

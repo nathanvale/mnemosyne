@@ -1,8 +1,8 @@
 #!/usr/bin/env npx tsx
 
-import { loadConfigFromEnv } from './src/config/env-config.js'
-import { initializeProviders } from './src/speech/providers/index.js'
-import { TTSProviderFactory } from './src/speech/providers/provider-factory.js'
+import { loadConfigFromEnv } from './src/config/env-config'
+import { initializeProviders } from './src/speech/providers/index'
+import { TTSProviderFactory } from './src/speech/providers/provider-factory'
 
 async function testProviderSelection() {
   console.error('Testing TTS Provider Selection\n')

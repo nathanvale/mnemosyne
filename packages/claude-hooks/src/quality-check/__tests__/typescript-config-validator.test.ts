@@ -7,7 +7,7 @@ import {
   parseExcludePatterns,
   isFileExcluded,
   createConfigValidator,
-} from '../typescript-config-validator.js'
+} from '../typescript-config-validator'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

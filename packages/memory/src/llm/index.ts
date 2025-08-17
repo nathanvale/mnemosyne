@@ -17,16 +17,16 @@ export type {
   StreamEventType,
   StreamHandlers,
   TokenUsage,
-} from './llm-provider.interface.js'
+} from './llm-provider.interface'
 
 // Factory for provider creation
 export {
   LLMProviderFactory,
   type ProviderFactory,
-} from './llm-provider-factory.js'
+} from './llm-provider-factory'
 
 // Capability registry for feature discovery
-export { CapabilityRegistry } from './capability-registry.js'
+export { CapabilityRegistry } from './capability-registry'
 
 // Pricing catalog for cost management
 export {
@@ -34,7 +34,7 @@ export {
   INITIAL_PRICING,
   type ModelPricing,
   type ProviderPricing,
-} from './pricing-catalog.js'
+} from './pricing-catalog'
 
 // Configuration schemas and validation
 export {
@@ -52,4 +52,4 @@ export {
   type CustomProviderConfig,
   type OpenAIConfig,
   type ValidatedProviderConfig,
-} from './provider-config.schema.js'
+} from './provider-config.schema'

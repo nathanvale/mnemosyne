@@ -3,11 +3,11 @@
  * Centralizes log directory and configuration management
  */
 
-import { EventLogger, type EventLoggerConfig } from './event-logger.js'
+import { EventLogger, type EventLoggerConfig } from './event-logger'
 import {
   TranscriptParser,
   type TranscriptParserConfig,
-} from './transcript-parser.js'
+} from './transcript-parser'
 
 export interface LogConfigOptions {
   useLocal?: boolean

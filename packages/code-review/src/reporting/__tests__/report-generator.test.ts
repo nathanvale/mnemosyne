@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest'
 
-import type { ContextAnalysisResults } from '../../analysis/context-analyzer.js'
-import type { ExpertValidationResults } from '../../analysis/expert-validator.js'
-import type { CombinedSecurityData } from '../../analysis/security-data-integrator.js'
+import type { ContextAnalysisResults } from '../../analysis/context-analyzer'
+import type { ExpertValidationResults } from '../../analysis/expert-validator'
+import type { CombinedSecurityData } from '../../analysis/security-data-integrator'
 import type {
   PRAnalysisResult,
   SecurityAuditResults,
   PRMetrics,
   SecurityFinding,
-} from '../../types/analysis.js'
-import type { GitHubPRContext } from '../../types/github.js'
+} from '../../types/analysis'
+import type { GitHubPRContext } from '../../types/github'
 
-import { ReportGenerator, type ReportOptions } from '../report-generator.js'
+import { ReportGenerator, type ReportOptions } from '../report-generator'
 
 describe('ReportGenerator', () => {
   // Helper function to create test GitHub context

@@ -4,10 +4,10 @@
 
 import path from 'path'
 
-import type { Logger } from '../../utils/logger.js'
-import type { ResolvedQualityConfig } from '../config.js'
+import type { Logger } from '../../utils/logger'
+import type { ResolvedQualityConfig } from '../config'
 
-import { readFile } from '../../utils/file-utils.js'
+import { readFile } from '../../utils/file-utils'
 
 export interface CommonIssuesChecker {
   check(fileType: string): Promise<string[]>

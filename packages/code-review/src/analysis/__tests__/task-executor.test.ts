@@ -6,7 +6,7 @@ import {
   type TaskExecutor,
   type TaskOptions,
   type TaskResult,
-} from '../task-executor.js'
+} from '../task-executor'
 
 describe('TaskExecutor', () => {
   describe('DefaultTaskExecutor', () => {

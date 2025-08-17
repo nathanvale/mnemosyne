@@ -7,9 +7,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
-import type { LLMProviderConfig } from '../types.js'
+import type { LLMProviderConfig } from '../types'
 
-import { LLMConfigLoader } from '../config-loader.js'
+import { LLMConfigLoader } from '../config-loader'
 
 describe('LLMConfigLoader', () => {
   // Store original env vars

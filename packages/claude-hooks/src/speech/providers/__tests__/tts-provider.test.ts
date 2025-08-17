@@ -10,7 +10,7 @@ import type {
   TTSProviderConfig,
   TTSProviderInfo,
   Voice,
-} from '../tts-provider.js'
+} from '../tts-provider'
 
 // Mock implementation for testing
 class MockTTSProvider implements TTSProvider {

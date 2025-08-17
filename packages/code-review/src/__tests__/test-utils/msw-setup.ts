@@ -1,7 +1,7 @@
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
-import { handlers } from './msw-handlers.js'
+import { handlers } from './msw-handlers'
 
 export const server = setupServer(...handlers)
 

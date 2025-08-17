@@ -7,10 +7,10 @@
  * while ensuring proper logging through LogManager.
  */
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
-import { ExpertPRAnalysis } from '../cli/expert-pr-analysis.js'
+import { ExpertPRAnalysis } from '../cli/expert-pr-analysis'
 
 /**
  * Analysis metadata interface

@@ -28,7 +28,7 @@ describe('@studio/prettier-config exports', () => {
   })
 
   it('should be importable as ES module', async () => {
-    const prettierConfig = await import('../../index.js')
+    const prettierConfig = await import('../../index')
 
     expect(prettierConfig).toBeDefined()
     expect(prettierConfig.default).toBeDefined()

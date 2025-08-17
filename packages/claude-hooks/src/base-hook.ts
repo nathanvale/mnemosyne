@@ -2,11 +2,11 @@
  * Base class for all Claude Code hooks
  */
 
-import type { ClaudeHookEvent, HookEventType } from './types/claude.js'
+import type { ClaudeHookEvent, HookEventType } from './types/claude'
 
-import { EventLogger } from './logging/event-logger.js'
-import { HookExitCode } from './types/claude.js'
-import { createLogger, type Logger } from './utils/logger.js'
+import { EventLogger } from './logging/event-logger'
+import { HookExitCode } from './types/claude'
+import { createLogger, type Logger } from './utils/logger'
 
 export interface HookConfig {
   debug?: boolean

@@ -7,8 +7,8 @@ import {
 } from '@studio/schema'
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import type { ExtractedMemory } from '../../types/index.js'
-import type { ClusteringFeatures } from '../types.js'
+import type { ExtractedMemory } from '../../types/index'
+import type { ClusteringFeatures } from '../types'
 
 import {
   EmotionalToneExtractor,
@@ -16,7 +16,7 @@ import {
   RelationshipContextExtractor,
   PsychologicalIndicatorExtractor,
   FeatureSimilarityCalculator,
-} from '../feature-extraction.js'
+} from '../feature-extraction'
 
 describe('Multi-Dimensional Feature Extraction System', () => {
   let mockMemory: ExtractedMemory

@@ -10,10 +10,10 @@ import type {
   Voice,
   TTSProviderInfo,
   TTSProviderConfig,
-} from './tts-provider.js'
+} from './tts-provider'
 
-import { createLogger } from '../../utils/logger.js'
-import { BaseTTSProvider } from './tts-provider.js'
+import { createLogger } from '../../utils/logger'
+import { BaseTTSProvider } from './tts-provider'
 
 /**
  * macOS-specific configuration

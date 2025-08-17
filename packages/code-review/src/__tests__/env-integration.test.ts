@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import {
   validateEnvironment,
   validateStartupEnvironment,
-} from '../validators/env-validator.js'
+} from '../validators/env-validator'
 
 describe('Environment Validation Integration', () => {
   const originalEnv = process.env

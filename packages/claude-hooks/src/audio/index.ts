@@ -3,5 +3,5 @@
  * Provides cross-platform audio playback and platform detection
  */
 
-export * from './audio-player.js'
-export * from './platform.js'
+export * from './audio-player'
+export * from './platform'

@@ -6,15 +6,17 @@
  * implementations (e.g., pattern-based analysis, AI-based analysis, etc.)
  */
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
-import { LogManager } from '../utils/log-manager.js'
+import { ErrorHandler } from '../utils/error-handler'
+import { LogManager } from '../utils/log-manager'
+import { logProgress, logDebug } from '../utils/logger'
 import {
   DefaultTaskExecutor,
   type TaskExecutor,
   type TaskOptions,
-} from './task-executor.js'
+} from './task-executor'
 
 /**
  * Task execution context for logging
@@ -35,8 +37,8 @@ async function executeTaskWithLogging(
   taskOptions: TaskOptions,
   context: TaskExecutionContext = {},
 ): Promise<string> {
-  console.warn(`🔍 Executing ${taskOptions.subagent_type} security analysis...`)
-  console.warn(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
+  logProgress(`🔍 Executing ${taskOptions.subagent_type} security analysis...`)
+  logDebug(`📏 Prompt length: ${taskOptions.prompt.length} characters`)
 
   try {
     // Execute the Task tool
@@ -46,7 +48,7 @@ async function executeTaskWithLogging(
     const response =
       typeof result === 'string' ? result : JSON.stringify(result)
 
-    console.warn(
+    logDebug(
       `✅ ${taskOptions.subagent_type} response received (${response.length} characters)`,
     )
 
@@ -69,18 +71,22 @@ async function executeTaskWithLogging(
         },
       )
 
-      console.warn(
+      logDebug(
         `📁 Response automatically saved to: ${logPath.replace(process.cwd(), '.')}`,
       )
-      console.warn(`🔍 Analysis ID: ${analysisId}`)
+      logDebug(`🔍 Analysis ID: ${analysisId}`)
     } catch (logError) {
-      console.error('❌ Failed to save sub-agent response to logs:', logError)
+      logDebug('❌ Failed to save sub-agent response to logs:', {
+        error: String(logError),
+      })
       // Continue even if logging fails - don't block the analysis
     }
 
     return response
   } catch (error) {
-    console.error(`❌ Error executing ${taskOptions.subagent_type}:`, error)
+    logDebug(`❌ Error executing ${taskOptions.subagent_type}:`, {
+      error: String(error),
+    })
 
     // Log the error attempt as well
     const errorResponse = JSON.stringify({
@@ -99,7 +105,7 @@ async function executeTaskWithLogging(
         format: 'json',
       })
     } catch (logError) {
-      console.warn('Failed to log error response:', logError)
+      logDebug('Failed to log error response:', { error: String(logError) })
     }
 
     throw error
@@ -282,7 +288,9 @@ Please start by running the \`/security-review\` command on the provided code ch
 
       return parsedAnalysis
     } catch (error) {
-      console.error('Error in Claude sub-agent security analysis:', error)
+      logDebug('Error in Claude sub-agent security analysis:', {
+        error: String(error),
+      })
 
       // Return minimal analysis on error
       return {
@@ -344,29 +352,60 @@ Please start by running the \`/security-review\` command on the provided code ch
     prompt: string,
     githubContext?: GitHubPRContext,
   ): Promise<string> {
-    console.warn('🚀 Launching Claude pr-review-synthesizer sub-agent...')
+    logProgress('🚀 Launching Claude pr-review-synthesizer sub-agent...')
+    const errorHandler = new ErrorHandler()
 
     try {
-      // Use the enhanced Task executor with automatic log capture
-      const response = await executeTaskWithLogging(
-        this.taskExecutor,
-        {
-          subagent_type: 'pr-review-synthesizer',
-          description: 'Security review analysis',
-          prompt,
-        },
-        {
-          prNumber: githubContext?.pullRequest?.number,
-          repository: githubContext?.pullRequest?.base?.repo?.full_name,
-          analysisId: `claude-security-${Date.now()}`,
-          source: 'claude-sub-agent',
-        },
-      )
+      // Set a timeout for the security sub-agent (30 seconds)
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Task execution timed out after 30 seconds'))
+        }, 30000)
+      })
 
-      console.warn('✅ Security sub-agent analysis completed successfully')
+      // Race between the task execution and timeout
+      const response = await Promise.race([
+        executeTaskWithLogging(
+          this.taskExecutor,
+          {
+            subagent_type: 'pr-review-synthesizer',
+            description: 'Security review analysis',
+            prompt,
+          },
+          {
+            prNumber: githubContext?.pullRequest?.number,
+            repository: githubContext?.pullRequest?.base?.repo?.full_name,
+            analysisId: `claude-security-${Date.now()}`,
+            source: 'claude-sub-agent',
+          },
+        ),
+        timeoutPromise,
+      ])
+
+      logProgress('✅ Security sub-agent analysis completed successfully')
       return response
     } catch (error) {
-      console.error('❌ Error in security sub-agent analysis:', error)
+      // Handle timeout specifically
+      if (error instanceof Error && error.message.includes('timed out')) {
+        logDebug('⏱️ Security sub-agent timed out, using fallback')
+
+        const timeoutResult = await errorHandler.handleSecurityAgentTimeout(
+          error,
+          githubContext,
+        )
+
+        return JSON.stringify({
+          findings: timeoutResult.findings,
+          riskLevel: 'low',
+          recommendations: [timeoutResult.fallbackMessage],
+          confidence: timeoutResult.usedFallback ? 0.5 : 0,
+          timedOut: true,
+        })
+      }
+
+      logDebug('❌ Error in security sub-agent analysis:', {
+        error: String(error),
+      })
 
       // Return error state analysis
       return JSON.stringify({
@@ -415,7 +454,7 @@ Please start by running the \`/security-review\` command on the provided code ch
         },
       }
     } catch (error) {
-      console.error('Error parsing sub-agent response:', error)
+      logDebug('Error parsing sub-agent response:', { error: String(error) })
 
       return {
         findings: [],

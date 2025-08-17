@@ -4,9 +4,9 @@
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import type { TTSProvider, TTSProviderConfig } from '../tts-provider.js'
+import type { TTSProvider, TTSProviderConfig } from '../tts-provider'
 
-import { TTSProviderFactory } from '../provider-factory.js'
+import { TTSProviderFactory } from '../provider-factory'
 
 // Mock providers for testing
 class MockOpenAIProvider implements TTSProvider {

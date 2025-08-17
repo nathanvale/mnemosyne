@@ -1,14 +1,14 @@
 import type {
   ContextAnalysisResults,
   BusinessRiskAssessment,
-} from '../analysis/context-analyzer.js'
-import type { ExpertValidationResults } from '../analysis/expert-validator.js'
+} from '../analysis/context-analyzer'
+import type { ExpertValidationResults } from '../analysis/expert-validator'
 import type {
   PRAnalysisResult,
   SecurityAuditResults,
   PRMetrics,
   RiskLevel,
-} from '../types/analysis.js'
+} from '../types/analysis'
 
 /**
  * Interactive report configuration

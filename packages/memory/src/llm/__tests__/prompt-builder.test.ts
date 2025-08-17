@@ -4,13 +4,13 @@ import type {
   ConversationMessage,
   MoodAnalysisResult,
   MoodDelta,
-} from '../../types/index.js'
+} from '../../types/index'
 import type {
   LLMProvider,
   ProviderCapabilities,
-} from '../llm-provider.interface.js'
+} from '../llm-provider.interface'
 
-import { PromptBuilder } from '../prompt-builder.js'
+import { PromptBuilder } from '../prompt-builder'
 
 /**
  * Mock LLM provider for testing token counting

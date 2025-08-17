@@ -12,8 +12,8 @@ import {
 // Mock child_process before importing AudioPlayer
 vi.mock('child_process')
 
-import { AudioPlayer } from '../audio-player.js'
-import { Platform } from '../platform.js'
+import { AudioPlayer } from '../audio-player'
+import { Platform } from '../platform'
 
 describe('AudioPlayer', () => {
   let player: AudioPlayer

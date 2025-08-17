@@ -5,20 +5,20 @@
 import { existsSync } from 'fs'
 import path from 'path'
 
-import type { Logger } from '../../utils/logger.js'
-import type { ResolvedQualityConfig } from '../config.js'
+import type { Logger } from '../../utils/logger'
+import type { ResolvedQualityConfig } from '../config'
 
-import { findProjectRoot } from '../../utils/config-loader.js'
-import { fileExists, readFile } from '../../utils/file-utils.js'
-import { createQualityLogger } from '../../utils/logger.js'
-import { createDummyFile } from '../dummy-generator.js'
+import { findProjectRoot } from '../../utils/config-loader'
+import { fileExists, readFile } from '../../utils/file-utils'
+import { createQualityLogger } from '../../utils/logger'
+import { createDummyFile } from '../dummy-generator'
 import {
   determineFileExtension,
   parseImportStatement,
   resolveImportPath,
-} from '../import-parser.js'
-import { TypeScriptConfigCache } from '../typescript-cache.js'
-import { createConfigValidator } from '../typescript-config-validator.js'
+} from '../import-parser'
+import { TypeScriptConfigCache } from '../typescript-cache'
+import { createConfigValidator } from '../typescript-config-validator'
 
 export interface TypeScriptChecker {
   check(): Promise<string[]>

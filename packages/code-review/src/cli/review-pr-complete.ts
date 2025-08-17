@@ -16,11 +16,11 @@
  *   help                 - Show this help message
  */
 
-import { PRReviewerAgent } from '../agent/pr-reviewer-agent.js'
-import { initializeGracefulShutdown } from '../utils/async-exec.js'
-import { validateStartupEnvironment } from '../validators/env-validator.js'
-import { GitHubDataFetcher } from './fetch-github-data.js'
-import { UnifiedAnalysisOrchestrator } from './unified-analysis.js'
+import { PRReviewerAgent } from '../agent/pr-reviewer-agent'
+import { initializeGracefulShutdown } from '../utils/async-exec'
+import { validateStartupEnvironment } from '../validators/env-validator'
+import { GitHubDataFetcher } from './fetch-github-data'
+import { UnifiedAnalysisOrchestrator } from './unified-analysis'
 
 /**
  * Command configuration

@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 
-import type { LLMProvider, ProviderConfig } from '../llm-provider.interface.js'
+import type { LLMProvider, ProviderConfig } from '../llm-provider.interface'
 
-import { LLMProviderFactory } from '../llm-provider-factory.js'
+import { LLMProviderFactory } from '../llm-provider-factory'
 
 describe('LLMProviderFactory', () => {
   beforeEach(() => {

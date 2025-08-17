@@ -16,7 +16,7 @@ describe('Monorepo TypeScript Compatibility', () => {
   it('should import hooks directly from TypeScript source', async () => {
     // Test dynamic import of TypeScript source (monorepo usage)
     try {
-      const { NotificationHook, StopHook } = await import('../../src/index.js')
+      const { NotificationHook, StopHook } = await import('../../src/index')
 
       expect(NotificationHook).toBeDefined()
       expect(typeof NotificationHook).toBe('function')

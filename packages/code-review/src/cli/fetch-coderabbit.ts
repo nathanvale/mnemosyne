@@ -6,7 +6,7 @@
 
 import { parseArgs } from 'node:util'
 
-import { CodeRabbitDataFetcher } from './coderabbit-data-fetcher.js'
+import { CodeRabbitDataFetcher } from './coderabbit-data-fetcher'
 
 async function main() {
   const { values } = parseArgs({

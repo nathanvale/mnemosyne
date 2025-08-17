@@ -5,12 +5,12 @@
  * Tests the complete cascade: ElevenLabs → OpenAI → macOS
  */
 
-import type { FactoryConfig } from '../src/speech/providers/provider-factory.js'
+import type { FactoryConfig } from '../src/speech/providers/provider-factory'
 
-import { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider.js'
-import { MacOSProvider } from '../src/speech/providers/macos-provider.js'
-import { OpenAIProvider } from '../src/speech/providers/openai-provider.js'
-import { TTSProviderFactory } from '../src/speech/providers/provider-factory.js'
+import { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider'
+import { MacOSProvider } from '../src/speech/providers/macos-provider'
+import { OpenAIProvider } from '../src/speech/providers/openai-provider'
+import { TTSProviderFactory } from '../src/speech/providers/provider-factory'
 // Load environment variables
 import '../src/utils/env-loader.js'
 
@@ -170,7 +170,7 @@ async function testScenario4() {
 
   // Manually create nested fallback
   const { FallbackProvider } = await import(
-    '../src/speech/providers/provider-factory.js'
+    '../src/speech/providers/provider-factory'
   )
   const openaiWithMacOSFallback = new FallbackProvider(
     openaiProvider,
@@ -221,7 +221,7 @@ async function testScenario5() {
   })
 
   const { FallbackProvider } = await import(
-    '../src/speech/providers/provider-factory.js'
+    '../src/speech/providers/provider-factory'
   )
   const provider = new FallbackProvider(mockProvider, openaiProvider)
 

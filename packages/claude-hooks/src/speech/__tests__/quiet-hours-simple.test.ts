@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 
-import { QuietHours } from '../quiet-hours.js'
+import { QuietHours } from '../quiet-hours'
 
 describe('QuietHours - Simple Tests', () => {
   describe('Basic Configuration', () => {

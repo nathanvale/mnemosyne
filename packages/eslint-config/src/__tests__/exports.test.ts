@@ -38,8 +38,8 @@ describe('@studio/eslint-config exports', () => {
       return
     }
 
-    const baseConfig = await import('../base.js')
-    const libraryConfig = await import('../library.js')
+    const baseConfig = await import('../base')
+    const libraryConfig = await import('../library')
     // Note: next.js imports eslint-config-next which has compatibility issues in test environment
 
     expect(baseConfig).toBeDefined()

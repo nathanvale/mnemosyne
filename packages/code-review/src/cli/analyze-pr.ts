@@ -8,7 +8,9 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 
-import type { CodeRabbitFinding } from '../types/coderabbit.js'
+import type { CodeRabbitFinding } from '../types/coderabbit'
+
+import { UnifiedOutputManager } from '../utils/unified-output-manager'
 
 /**
  * Validate repository name format
@@ -521,8 +523,31 @@ Examples:
   }
 
   try {
+    // Initialize output manager
+    const outputManager = new UnifiedOutputManager()
+
+    // Create analysis session
+    const session = await outputManager.createAnalysisSession({
+      prNumber: parseInt(prNumber),
+      repository: repo,
+      analysisType: 'full',
+      source: 'cli',
+      // Support backwards compatibility with --output/--outfile
+      customPath: values.output || values.outfile,
+      preserveExistingStructure: !!(values.output || values.outfile),
+    })
+
     // Fetch PR data from GitHub
     const { metadata, diff } = await fetchPRData(repo, prNumber)
+
+    // Save GitHub source data
+    await session.saveSource(
+      {
+        metadata,
+        diff: values['include-diff'] ? diff : undefined,
+      },
+      'github-pr-data',
+    )
 
     // Load CodeRabbit findings if provided
     let coderabbitFindings: CodeRabbitFinding[] = []
@@ -533,6 +558,8 @@ Examples:
         )
         if (coderabbitData.findings) {
           coderabbitFindings = coderabbitData.findings
+          // Save CodeRabbit source data
+          await session.saveSource(coderabbitData, 'coderabbit-findings')
         }
       } catch (error) {
         console.error(`Warning: Could not load CodeRabbit file: ${error}`)
@@ -542,8 +569,13 @@ Examples:
     // Perform analysis
     const analysis = analyzePR(metadata, diff, coderabbitFindings)
 
-    // Determine output file path if specified
-    const outputFile = values.output || values.outfile
+    // Update session summary
+    await session.updateSummary({
+      riskLevel: analysis.summary.riskLevel,
+      totalFindings: analysis.summary.totalFindings,
+      recommendation: analysis.summary.recommendation,
+      decision: analysis.summary.needsReview ? 'request_changes' : 'approve',
+    })
 
     // Prepare output
     const output = {
@@ -557,29 +589,33 @@ Examples:
       analysis,
       timestamp: new Date().toISOString(),
       diff: values['include-diff'] ? diff : undefined,
-      meta: {
-        ...(outputFile && { outputFile }),
-      },
     }
 
-    // Output results
-    const jsonOutput = JSON.stringify(output, null, 2)
+    // Save main analysis result
+    await session.saveAnalysis(output, 'json')
 
-    // Optional file output (Node.js CLI best practices)
-    if (outputFile) {
-      const fs = await import('node:fs')
-      fs.writeFileSync(outputFile, jsonOutput)
-      console.error(`✓ Analysis written to ${outputFile}`)
+    // For backwards compatibility with --output/--outfile
+    if (values.output || values.outfile) {
+      const outputFile = values.output || values.outfile
+      if (outputFile) {
+        const fs = await import('node:fs')
+        fs.writeFileSync(outputFile, JSON.stringify(output, null, 2))
+        console.error(`✓ Analysis written to ${outputFile}`)
+      }
     }
+
+    // Finalize session
+    const report = await outputManager.finalizeSession(session.id)
 
     // Analysis summary
     console.error(
       `✓ Analyzed PR #${prNumber}: ${analysis.findings.length} findings, risk level: ${analysis.summary.riskLevel}`,
     )
+    console.error(`✓ Results saved to: ${report.folder}`)
 
     // Always output JSON to stdout for processing
     // eslint-disable-next-line no-console
-    console.log(jsonOutput)
+    console.log(JSON.stringify(output, null, 2))
   } catch (error) {
     console.error('Error analyzing PR:', error)
     process.exit(1)

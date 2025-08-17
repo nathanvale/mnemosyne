@@ -7,7 +7,7 @@
 
 // Load environment variables before any other imports
 import '../utils/env-loader.js'
-import { main } from '../quality-check/index.js'
+import { main } from '../quality-check/index'
 
 // Execute the main function
 main().catch((error: unknown) => {

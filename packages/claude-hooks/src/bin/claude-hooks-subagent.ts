@@ -7,7 +7,7 @@
 
 // Load environment variables before any other imports
 import '../utils/env-loader.js'
-import { main } from '../subagent-stop/subagent-stop.js'
+import { main } from '../subagent-stop/subagent-stop'
 
 // Execute the main function
 main().catch((error: unknown) => {

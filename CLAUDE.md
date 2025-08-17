@@ -56,6 +56,20 @@ Mnemosyne is a Next.js 15 Turborepo monorepo built with TypeScript that provides
 - **Build troubleshooting**: @docs/turborepo-guide.md
 - **ES modules guide**: @docs/esm-extensions-guide.md
 
+### 🎯 Prompt Engineering & Agent Development
+
+- **Enterprise Prompt Guide**: @docs/enterprise-prompt-engineering-guide.md - XML-structured patterns for agents
+- **Quick Reference**: @docs/xml-prompt-quick-reference.md - Rapid lookup for XML patterns
+- **Agent Examples**: @.claude/agents/ - Production-ready agent configurations
+
+**Key Pattern**: Use XML-structured prompts for enterprise-grade reliability:
+
+```xml
+<ai_meta><parsing_rules>...</parsing_rules></ai_meta>
+<constraints><forbidden_tools>...</forbidden_tools></constraints>
+<process_flow><step>...</step></process_flow>
+```
+
 ## 🏗️ Architecture (Core Context)
 
 > **Cache Directive**: Architectural decisions - stable content

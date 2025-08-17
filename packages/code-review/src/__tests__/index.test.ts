@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 
 describe('Package Exports', () => {
   it('exports all expected modules', async () => {
-    const exports = await import('../index.js')
+    const exports = await import('../index')
 
     // Check that type exports are available (though they won't be at runtime)
     // This mainly ensures the module can be imported without errors
@@ -23,7 +23,7 @@ describe('Package Exports', () => {
   })
 
   it('exports IssuePriority enum with correct values', async () => {
-    const { IssuePriority } = await import('../index.js')
+    const { IssuePriority } = await import('../index')
 
     expect(IssuePriority.Blocking).toBe('blocking')
     expect(IssuePriority.Important).toBe('important')

@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
 import '../src/utils/env-loader.js'
-import { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider.js'
-import { OpenAIProvider } from '../src/speech/providers/openai-provider.js'
-import { FallbackProvider } from '../src/speech/providers/provider-factory.js'
+import { ElevenLabsProvider } from '../src/speech/providers/elevenlabs-provider'
+import { OpenAIProvider } from '../src/speech/providers/openai-provider'
+import { FallbackProvider } from '../src/speech/providers/provider-factory'
 
 async function test() {
   console.error('\n=== Testing Real API Fallback ===\n')

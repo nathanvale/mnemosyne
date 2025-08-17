@@ -1,15 +1,15 @@
-import type { Memory } from '../memory/core-memory.js'
+import type { Memory } from '../memory/core-memory'
 import type {
   EmotionalContext,
   EmotionalState,
   EmotionalTheme,
-} from '../memory/emotional-context.js'
-import type { Participant, ParticipantRole } from '../memory/participants.js'
+} from '../memory/emotional-context'
+import type { Participant, ParticipantRole } from '../memory/participants'
 import type {
   RelationshipDynamics,
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 
 /**
  * Type guard to check if an object is a valid Memory

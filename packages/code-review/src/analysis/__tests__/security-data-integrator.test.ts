@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 
-import type { CodeRabbitAnalysis } from '../../types/coderabbit.js'
-import type { GitHubPRContext } from '../../types/github.js'
+import type { CodeRabbitAnalysis } from '../../types/coderabbit'
+import type { GitHubPRContext } from '../../types/github'
 
-import { SecurityDataIntegrator } from '../security-data-integrator.js'
-import { MockTaskExecutor } from '../task-executor.js'
+import { SecurityDataIntegrator } from '../security-data-integrator'
+import { MockTaskExecutor } from '../task-executor'
 
 // Mock the LogManager
 vi.mock('../../utils/log-manager.js', () => ({

@@ -3,10 +3,10 @@ import { describe, it, expect } from 'vitest'
 import type {
   CodeRabbitAnalysis,
   CodeRabbitFinding,
-} from '../../types/coderabbit.js'
-import type { GitHubPRContext, GitHubFileChange } from '../../types/github.js'
+} from '../../types/coderabbit'
+import type { GitHubPRContext, GitHubFileChange } from '../../types/github'
 
-import { PRMetricsCollector } from '../pr-metrics-collector.js'
+import { PRMetricsCollector } from '../pr-metrics-collector'
 
 describe('PRMetricsCollector', () => {
   const mockGitHubContext: GitHubPRContext = {

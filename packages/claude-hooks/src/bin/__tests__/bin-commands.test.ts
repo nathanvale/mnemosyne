@@ -35,7 +35,7 @@ describe('Bin Commands', () => {
 
     it('should import and call the main function', async () => {
       const content = await fs.readFile(binPath, 'utf8')
-      expect(content).toContain("import { main } from '../stop/stop.js'")
+      expect(content).toContain("import { main } from '../stop/stop'")
       expect(content).toContain('main().catch')
     })
 
@@ -71,7 +71,7 @@ describe('Bin Commands', () => {
     it('should import and call the main function', async () => {
       const content = await fs.readFile(binPath, 'utf8')
       expect(content).toContain(
-        "import { main } from '../notification/notification.js'",
+        "import { main } from '../notification/notification'",
       )
       expect(content).toContain('main().catch')
     })
@@ -95,9 +95,7 @@ describe('Bin Commands', () => {
 
     it('should import and call the main function', async () => {
       const content = await fs.readFile(binPath, 'utf8')
-      expect(content).toContain(
-        "import { main } from '../quality-check/index.js'",
-      )
+      expect(content).toContain("import { main } from '../quality-check/index'")
       expect(content).toContain('main().catch')
     })
   })
@@ -121,7 +119,7 @@ describe('Bin Commands', () => {
     it('should import and call the main function', async () => {
       const content = await fs.readFile(binPath, 'utf8')
       expect(content).toContain(
-        "import { main } from '../subagent-stop/subagent-stop.js'",
+        "import { main } from '../subagent-stop/subagent-stop'",
       )
       expect(content).toContain('main().catch')
     })

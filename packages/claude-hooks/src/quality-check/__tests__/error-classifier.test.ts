@@ -5,13 +5,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import type {
-  QualityCheckContext,
-  SubAgentContext,
-} from '../error-classifier.js'
+import type { QualityCheckContext, SubAgentContext } from '../error-classifier'
 
-import { createErrorClassifier } from '../error-classifier.js'
-import { TypeScriptConfigCache } from '../typescript-cache.js'
+import { createErrorClassifier } from '../error-classifier'
+import { TypeScriptConfigCache } from '../typescript-cache'
 
 describe('ErrorClassifier', () => {
   let _classifier: ReturnType<typeof createErrorClassifier>

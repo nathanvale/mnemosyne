@@ -5,7 +5,7 @@ import {
   GitHubCommit,
   GitHubCheckRun,
   GitHubSecurityAlert,
-} from '../types/github.js'
+} from '../types/github'
 
 /**
  * Parser for GitHub API responses and webhook data

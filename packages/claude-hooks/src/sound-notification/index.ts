@@ -7,12 +7,12 @@ import { execSync } from 'child_process'
 import { existsSync } from 'fs'
 import path from 'path'
 
-import type { ClaudeToolInput } from '../types/claude.js'
+import type { ClaudeToolInput } from '../types/claude'
 
-import { HookExitCode } from '../types/claude.js'
-import { parseJsonInput } from '../utils/file-utils.js'
-import { createLogger } from '../utils/logger.js'
-import { loadSoundConfig, type ResolvedSoundConfig } from './config.js'
+import { HookExitCode } from '../types/claude'
+import { parseJsonInput } from '../utils/file-utils'
+import { createLogger } from '../utils/logger'
+import { loadSoundConfig, type ResolvedSoundConfig } from './config'
 
 // Cooldown tracking
 let lastSoundTime = 0

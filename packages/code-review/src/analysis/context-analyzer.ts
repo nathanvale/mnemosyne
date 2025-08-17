@@ -1,13 +1,6 @@
-import type {
-  RiskLevel,
-  OWASPCategory,
-  CWECategory,
-} from '../types/analysis.js'
-import type {
-  CodeRabbitAnalysis,
-  CodeRabbitFinding,
-} from '../types/coderabbit.js'
-import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
+import type { RiskLevel, OWASPCategory, CWECategory } from '../types/analysis'
+import type { CodeRabbitAnalysis, CodeRabbitFinding } from '../types/coderabbit'
+import type { GitHubPRContext, GitHubFileChange } from '../types/github'
 
 /**
  * File context classification

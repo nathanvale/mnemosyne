@@ -7,8 +7,8 @@ import { promises as fs } from 'fs'
 import { homedir } from 'os'
 import path from 'path'
 
-import { loadConfigFromEnv } from '../config/env-config.js'
-import { findMonorepoRoot, findProjectRoot } from './config-loader.js'
+import { loadConfigFromEnv } from '../config/env-config'
+import { findMonorepoRoot, findProjectRoot } from './config-loader'
 
 /**
  * Substitute environment variables in JSON config values

@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { ElevenLabsConfig } from '../elevenlabs-provider.js'
+import type { ElevenLabsConfig } from '../elevenlabs-provider'
 
 // hoisted mocks
 const { mockConvert, mockVoicesSearch, mockExec } = vi.hoisted(() => {
@@ -45,7 +45,7 @@ vi.mock('node:child_process', () => ({
   exec: mockExec,
 }))
 
-import { ElevenLabsProvider } from '../elevenlabs-provider.js'
+import { ElevenLabsProvider } from '../elevenlabs-provider'
 
 describe('ElevenLabsProvider', () => {
   let provider: ElevenLabsProvider

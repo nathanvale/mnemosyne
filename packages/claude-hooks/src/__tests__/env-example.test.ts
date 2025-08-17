@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 
-import { findMonorepoRoot } from '../utils/env-loader.js'
+import { findMonorepoRoot } from '../utils/env-loader'
 
 describe('.env.example file', () => {
   // Use shared root resolver utility

@@ -1,18 +1,18 @@
 import { describe, it, expect } from 'vitest'
 
-import { EmotionalState, EmotionalTheme } from '../memory/emotional-context.js'
-import { ParticipantRole } from '../memory/participants.js'
+import { EmotionalState, EmotionalTheme } from '../memory/emotional-context'
+import { ParticipantRole } from '../memory/participants'
 import {
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 import {
   validateMemory,
   validateEmotionalContext,
   validateRelationshipDynamics,
   validateParticipant,
   validateBatch,
-} from '../utils/schema-validation.js'
+} from '../utils/schema-validation'
 
 describe('Schema Validation', () => {
   describe('validateMemory', () => {

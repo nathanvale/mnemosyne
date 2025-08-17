@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
 import '../src/utils/env-loader.js'
-import { ElevenLabsProvider } from '../dist/speech/providers/elevenlabs-provider.js'
-import { OpenAIProvider } from '../dist/speech/providers/openai-provider.js'
-import { FallbackProvider } from '../dist/speech/providers/provider-factory.js'
+import { ElevenLabsProvider } from '../dist/speech/providers/elevenlabs-provider'
+import { OpenAIProvider } from '../dist/speech/providers/openai-provider'
+import { FallbackProvider } from '../dist/speech/providers/provider-factory'
 
 async function test() {
   console.error('\n=== Testing Fallback with Invalid ElevenLabs Key ===\n')

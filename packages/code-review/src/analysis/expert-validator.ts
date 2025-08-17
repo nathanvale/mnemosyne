@@ -4,18 +4,15 @@ import type {
   PRMetrics,
   AnalysisDecision,
   RiskLevel,
-} from '../types/analysis.js'
-import type {
-  CodeRabbitAnalysis,
-  CodeRabbitFinding,
-} from '../types/coderabbit.js'
-import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
-import type { FileContext } from './issue-prioritizer.js'
+} from '../types/analysis'
+import type { CodeRabbitAnalysis, CodeRabbitFinding } from '../types/coderabbit'
+import type { GitHubPRContext, GitHubFileChange } from '../types/github'
+import type { FileContext } from './issue-prioritizer'
 
-import { getThresholds } from '../config/severity-thresholds.js'
-import { PRMetricsCollector } from '../metrics/pr-metrics-collector.js'
-import { CodeRabbitParser } from '../parsers/coderabbit-parser.js'
-import { FileContextAnalyzer } from './file-context-analyzer.js'
+import { getThresholds } from '../config/severity-thresholds'
+import { PRMetricsCollector } from '../metrics/pr-metrics-collector'
+import { CodeRabbitParser } from '../parsers/coderabbit-parser'
+import { FileContextAnalyzer } from './file-context-analyzer'
 
 /**
  * Expert validation categories for comprehensive code review

@@ -8,8 +8,9 @@
 
 import { writeFileSync } from 'node:fs'
 
-import { GitHubPRContext, GitHubSecurityAlert } from '../types/github.js'
-import { execFileWithTimeout, execFileJson } from '../utils/async-exec.js'
+import { GitHubPRContext, GitHubSecurityAlert } from '../types/github'
+import { execFileWithTimeout, execFileJson } from '../utils/async-exec'
+import { ErrorHandler } from '../utils/error-handler'
 
 /**
  * Validate repository name format
@@ -324,66 +325,138 @@ export class GitHubDataFetcher {
     validatePRNumber(prNumber)
     validateRepoName(repo)
 
-    const fileListOutput = await execFileWithTimeout('gh', [
-      'pr',
-      'diff',
-      prNumber.toString(),
-      '--repo',
-      repo,
-      '--name-only',
-    ])
-    const fileList = fileListOutput
-      .split('\n')
-      .filter((file: string) => file.trim())
+    const errorHandler = new ErrorHandler()
 
-    // Get detailed file information
-    const files = []
-    for (const filename of fileList) {
-      try {
-        // Get file diff stats
-        const diffOutput = await execFileWithTimeout('gh', [
-          'pr',
-          'diff',
-          prNumber.toString(),
-          '--repo',
-          repo,
-          '--',
-          filename,
-        ])
+    try {
+      const fileListOutput = await execFileWithTimeout('gh', [
+        'pr',
+        'diff',
+        prNumber.toString(),
+        '--repo',
+        repo,
+        '--name-only',
+      ])
+      const fileList = fileListOutput
+        .split('\n')
+        .filter((file: string) => file.trim())
 
-        const additions = this.countDiffLines(diffOutput, '+')
-        const deletions = this.countDiffLines(diffOutput, '-')
+      // Handle empty diff scenario
+      if (fileList.length === 0) {
+        this.log(
+          '⚠️ GitHub diff returned 0 lines, attempting file list fallback',
+        )
 
-        files.push({
-          sha: '', // Not available from gh CLI
-          filename,
-          status: this.inferFileStatus(diffOutput),
-          additions,
-          deletions,
-          changes: additions + deletions,
-          blob_url: '', // Would need additional API call
-          raw_url: '', // Would need additional API call
-          contents_url: '', // Would need additional API call
-          patch: this.config.includeDiffData ? diffOutput : undefined,
-        })
-      } catch {
-        this.log(`⚠️ Could not get diff for file: ${filename}`)
-        // Add file with minimal info
-        files.push({
-          sha: '',
-          filename,
-          status: 'modified' as const,
-          additions: 0,
-          deletions: 0,
-          changes: 0,
-          blob_url: '',
-          raw_url: '',
-          contents_url: '',
-        })
+        // Try to get file list from PR API as fallback
+        try {
+          const prData = await execFileJson<{
+            files?: Array<{
+              filename: string
+              status: string
+              additions: number
+              deletions: number
+            }>
+          }>('gh', [
+            'api',
+            `repos/${repo}/pulls/${prNumber}/files`,
+            '--paginate',
+          ])
+
+          if (prData.files && prData.files.length > 0) {
+            // Use the error handler to process the fallback
+            const fallbackResult = await errorHandler.handleEmptyDiff({
+              pullRequest: { number: prNumber },
+              files: prData.files.map((f) => ({
+                filename: f.filename,
+                status: f.status as
+                  | 'added'
+                  | 'removed'
+                  | 'modified'
+                  | 'renamed',
+                additions: f.additions,
+                deletions: f.deletions,
+                changes: f.additions + f.deletions,
+                sha: '',
+                blob_url: '',
+                raw_url: '',
+                contents_url: '',
+              })),
+            } as unknown as Parameters<typeof errorHandler.handleEmptyDiff>[0])
+
+            this.log(
+              `✅ Using file list fallback: ${fallbackResult.files.length} files`,
+            )
+            return fallbackResult.files
+          }
+        } catch (fallbackError) {
+          this.log(`⚠️ Could not fetch file list as fallback: ${fallbackError}`)
+        }
+
+        // Return empty array if no files found
+        return []
       }
-    }
 
-    return files
+      // Get detailed file information
+      const files = []
+      for (const filename of fileList) {
+        try {
+          // Get file diff stats
+          const diffOutput = await execFileWithTimeout('gh', [
+            'pr',
+            'diff',
+            prNumber.toString(),
+            '--repo',
+            repo,
+            '--',
+            filename,
+          ])
+
+          const additions = this.countDiffLines(diffOutput, '+')
+          const deletions = this.countDiffLines(diffOutput, '-')
+
+          files.push({
+            sha: '', // Not available from gh CLI
+            filename,
+            status: this.inferFileStatus(diffOutput),
+            additions,
+            deletions,
+            changes: additions + deletions,
+            blob_url: '', // Would need additional API call
+            raw_url: '', // Would need additional API call
+            contents_url: '', // Would need additional API call
+            patch: this.config.includeDiffData ? diffOutput : undefined,
+          })
+        } catch {
+          this.log(`⚠️ Could not get diff for file: ${filename}`)
+          // Add file with minimal info
+          files.push({
+            sha: '',
+            filename,
+            status: 'modified' as const,
+            additions: 0,
+            deletions: 0,
+            changes: 0,
+            blob_url: '',
+            raw_url: '',
+            contents_url: '',
+          })
+        }
+      }
+
+      return files
+    } catch (error) {
+      this.log(`❌ Error fetching file changes: ${error}`)
+
+      // Handle timeout errors specifically
+      if (error instanceof Error && error.message.includes('timeout')) {
+        const recovery = await errorHandler.handleGitHubTimeout(error)
+        this.log(
+          `⏱️ GitHub API timeout - retry delay: ${recovery.retryDelay}ms`,
+        )
+      }
+
+      // Return empty array as last resort
+      return []
+    }
   }
 
   /**
@@ -444,7 +517,7 @@ export class GitHubDataFetcher {
         '--repo',
         repo,
         '--json',
-        'state,name,startedAt,completedAt,link',
+        'state,name,startedAt,completedAt,link,conclusion',
       ])
 
       return checks.map((check: GitHubCheckAPI, index: number) => ({

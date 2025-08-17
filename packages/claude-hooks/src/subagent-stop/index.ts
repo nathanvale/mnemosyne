@@ -2,7 +2,7 @@
  * Entry point for the subagent stop hook
  */
 
-import { main } from './subagent-stop.js'
+import { main } from './subagent-stop'
 
 // Run the hook
 main().catch((error) => {

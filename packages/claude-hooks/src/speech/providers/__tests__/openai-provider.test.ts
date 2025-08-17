@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { OpenAIConfig } from '../openai-provider.js'
+import type { OpenAIConfig } from '../openai-provider'
 
 // Use vi.hoisted to ensure mocks are available when modules are imported
 const { mockCreate, mockExec, mockExecFile } = vi.hoisted(() => {
@@ -50,7 +50,7 @@ vi.mock('node:child_process', () => ({
   spawn: vi.fn(() => ({ unref: vi.fn() })),
 }))
 
-import { OpenAIProvider } from '../openai-provider.js'
+import { OpenAIProvider } from '../openai-provider'
 
 describe('OpenAIProvider', () => {
   let provider: OpenAIProvider

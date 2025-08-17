@@ -7,7 +7,7 @@ import { promises as fs } from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-import type { ClaudeEvent } from '../types/claude.js'
+import type { ClaudeEvent } from '../types/claude'
 
 export interface EventLoggerConfig {
   logDir?: string

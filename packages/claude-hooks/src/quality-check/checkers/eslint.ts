@@ -4,18 +4,18 @@
 
 import path from 'path'
 
-import type { Logger } from '../../utils/logger.js'
-import type { ResolvedQualityConfig } from '../config.js'
+import type { Logger } from '../../utils/logger'
+import type { ResolvedQualityConfig } from '../config'
 
-import { findProjectRoot } from '../../utils/config-loader.js'
-import { fileExists, readFile, writeFile } from '../../utils/file-utils.js'
-import { createDummyFile } from '../dummy-generator.js'
+import { findProjectRoot } from '../../utils/config-loader'
+import { fileExists, readFile, writeFile } from '../../utils/file-utils'
+import { createDummyFile } from '../dummy-generator'
 import {
   determineFileExtension,
   extractImportErrors,
   parseImportStatement,
   resolveImportPath,
-} from '../import-parser.js'
+} from '../import-parser'
 
 export interface ESLintChecker {
   check(): Promise<{

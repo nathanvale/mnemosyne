@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
 
-import { detectPlatform, Platform } from '../platform.js'
+import { detectPlatform, Platform } from '../platform'
 
 describe('Platform Detection', () => {
   const originalPlatform = process.platform

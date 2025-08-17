@@ -1,8 +1,8 @@
-import type { PRMetrics } from '../types/analysis.js'
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext, GitHubFileChange } from '../types/github.js'
+import type { PRMetrics } from '../types/analysis'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext, GitHubFileChange } from '../types/github'
 
-import { GitHubParser } from '../parsers/github-parser.js'
+import { GitHubParser } from '../parsers/github-parser'
 
 /**
  * Union type for CodeRabbit data - can be either the full analysis or parsed data from fetcher

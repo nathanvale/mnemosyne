@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import type { CodeRabbitAnalysis } from '../../types/coderabbit.js'
+import type { CodeRabbitAnalysis } from '../../types/coderabbit'
 
 // Mock the async-exec module
 vi.mock('../../utils/async-exec.js')
 vi.mock('node:fs')
 
 // Import after mocks are set up
-import { execFileWithTimeout } from '../../utils/async-exec.js'
+import { execFileWithTimeout } from '../../utils/async-exec'
 
 const mockExecFileWithTimeout = vi.mocked(execFileWithTimeout)
 

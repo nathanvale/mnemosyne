@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 
-import type { ProviderCapabilities } from '../types.js'
+import type { ProviderCapabilities } from '../types'
 
-import { CapabilityRegistry } from '../capability-registry.js'
+import { CapabilityRegistry } from '../capability-registry'
 
 describe('CapabilityRegistry', () => {
   beforeEach(() => {

@@ -6,7 +6,7 @@ import {
   createSentryLogger,
   createDatadogLogger,
   createLogRocketLogger,
-} from '../browser-logger.js'
+} from '../browser-logger'
 
 // Mock console methods
 const mockConsole = {

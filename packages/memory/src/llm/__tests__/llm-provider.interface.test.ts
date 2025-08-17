@@ -7,7 +7,7 @@ import type {
   ProviderCapabilities,
   StreamHandlers,
   TokenUsage,
-} from '../llm-provider.interface.js'
+} from '../llm-provider.interface'
 
 describe('LLMProvider Interface', () => {
   describe('Provider Implementation Contract', () => {

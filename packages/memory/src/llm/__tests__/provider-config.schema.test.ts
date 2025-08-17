@@ -14,7 +14,7 @@ import {
   type AnthropicConfig,
   type BaseProviderConfig,
   type OpenAIConfig,
-} from '../provider-config.schema.js'
+} from '../provider-config.schema'
 
 describe('Provider Configuration Schemas', () => {
   describe('BaseProviderConfigSchema', () => {

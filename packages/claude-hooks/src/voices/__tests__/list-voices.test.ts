@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { main } from '../list-voices.js'
+import { main } from '../list-voices'
 
 // Mock the providers
 vi.mock('../../speech/providers/openai-provider.js', () => ({
@@ -318,7 +318,7 @@ Daniel            en_GB    # Hello, my name is Daniel.`,
   describe('error handling', () => {
     it('should handle provider errors gracefully', async () => {
       const { OpenAIProvider } = await import(
-        '../../speech/providers/openai-provider.js'
+        '../../speech/providers/openai-provider'
       )
       const mockProvider = OpenAIProvider as unknown as ReturnType<typeof vi.fn>
       mockProvider.mockImplementation(() => ({
@@ -332,7 +332,7 @@ Daniel            en_GB    # Hello, my name is Daniel.`,
 
     it('should handle preview errors gracefully', async () => {
       const { OpenAIProvider } = await import(
-        '../../speech/providers/openai-provider.js'
+        '../../speech/providers/openai-provider'
       )
       const mockProvider2 = OpenAIProvider as unknown as ReturnType<
         typeof vi.fn

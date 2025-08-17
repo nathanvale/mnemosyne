@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { AudioCacheConfig } from '../audio-cache.js'
+import type { AudioCacheConfig } from '../audio-cache'
 
 // Mock stat result type
 interface MockStats {
@@ -51,7 +51,7 @@ vi.mock('node:fs/promises', () => ({
   readdir: mockReaddir,
 }))
 
-import { AudioCache } from '../audio-cache.js'
+import { AudioCache } from '../audio-cache'
 
 describe('AudioCache', () => {
   let cache: AudioCache

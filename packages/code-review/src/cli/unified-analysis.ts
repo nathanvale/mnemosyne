@@ -8,15 +8,17 @@
 
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 
-import type { CodeRabbitAnalysis } from '../types/coderabbit.js'
-import type { GitHubPRContext } from '../types/github.js'
+import type { CodeRabbitAnalysis } from '../types/coderabbit'
+import type { GitHubPRContext } from '../types/github'
 
 import {
   execFileWithGracefulShutdown,
   initializeGracefulShutdown,
   registerShutdownCleanup,
-} from '../utils/async-exec.js'
-import { ExpertPRAnalysis } from './expert-pr-analysis.js'
+} from '../utils/async-exec'
+import { createLogger, outputFinalJSON, logProgress } from '../utils/logger.js'
+import { createOutputConsolidator } from '../utils/output-consolidator.js'
+import { ExpertPRAnalysis } from './expert-pr-analysis'
 
 /**
  * Analysis orchestrator configuration
@@ -95,6 +97,7 @@ export class UnifiedAnalysisOrchestrator {
   private tempFiles: string[] = []
   private logPath?: string
   private fullReport?: string
+  private logger = createLogger('UnifiedAnalysis')
 
   constructor(config: Partial<UnifiedAnalysisConfig> = {}) {
     this.config = {
@@ -123,34 +126,36 @@ export class UnifiedAnalysisOrchestrator {
    * Run complete unified analysis workflow
    */
   async runAnalysis(): Promise<AnalysisSummary> {
-    this.log('🚀 Starting unified PR analysis workflow...')
-    this.log(`📋 Analyzing PR #${this.config.prNumber} in ${this.config.repo}`)
+    logProgress('🚀 Starting unified PR analysis workflow...')
+    logProgress(
+      `📋 Analyzing PR #${this.config.prNumber} in ${this.config.repo}`,
+    )
 
     try {
       const analysisId = this.generateAnalysisId()
 
       // Phase 1: Fetch GitHub data
-      this.log('🔍 Phase 1: Fetching GitHub PR context...')
+      logProgress('🔍 Phase 1: Fetching GitHub PR context...')
       const githubDataFile = await this.fetchGitHubData()
 
       // Phase 2: Fetch CodeRabbit data (optional)
       let codeRabbitDataFile: string | undefined
       if (this.config.includeCodeRabbit) {
-        this.log('🤖 Phase 2: Fetching CodeRabbit analysis...')
+        logProgress('🤖 Phase 2: Fetching CodeRabbit analysis...')
         codeRabbitDataFile = await this.fetchCodeRabbitData()
       } else {
-        this.log('⏭️  Phase 2: Skipping CodeRabbit (disabled)')
+        logProgress('⏭️  Phase 2: Skipping CodeRabbit (disabled)')
       }
 
       // Phase 3: Run expert analysis
-      this.log('🎯 Phase 3: Running expert analysis...')
+      logProgress('🎯 Phase 3: Running expert analysis...')
       const analysisResultFile = await this.runExpertAnalysis(
         githubDataFile,
         codeRabbitDataFile,
       )
 
       // Phase 4: Parse results and create summary
-      this.log('📊 Phase 4: Generating analysis summary...')
+      logProgress('📊 Phase 4: Generating analysis summary...')
       const summary = await this.generateSummary(
         analysisId,
         githubDataFile,
@@ -158,16 +163,24 @@ export class UnifiedAnalysisOrchestrator {
         analysisResultFile,
       )
 
-      // Phase 5: Cleanup (if enabled)
+      // Phase 5: Generate consolidated output for agent consumption
+      logProgress('📦 Phase 5: Generating consolidated JSON output...')
+      await this.generateConsolidatedOutput(
+        githubDataFile,
+        codeRabbitDataFile,
+        analysisResultFile,
+      )
+
+      // Phase 6: Cleanup (if enabled)
       if (this.config.cleanupTempFiles) {
-        this.log('🧹 Phase 5: Cleaning up temporary files...')
+        logProgress('🧹 Phase 6: Cleaning up temporary files...')
         this.cleanupTemporaryFiles()
       }
 
-      this.log('✅ Unified analysis completed successfully!')
+      logProgress('✅ Unified analysis completed successfully!')
       return summary
     } catch (error) {
-      console.error('❌ Unified analysis failed:', error)
+      this.logger.error('❌ Unified analysis failed:', { error })
 
       // Cleanup on error
       if (this.config.cleanupTempFiles) {
@@ -330,6 +343,57 @@ export class UnifiedAnalysisOrchestrator {
   }
 
   /**
+   * Generate consolidated JSON output for agent consumption
+   */
+  private async generateConsolidatedOutput(
+    githubDataFile: string,
+    codeRabbitDataFile: string | undefined,
+    analysisResultFile: string,
+  ): Promise<void> {
+    // Load all the data files
+    const githubContext: GitHubPRContext = JSON.parse(
+      readFileSync(githubDataFile, 'utf-8'),
+    )
+
+    let codeRabbitAnalysis: CodeRabbitAnalysis | undefined
+    if (codeRabbitDataFile && existsSync(codeRabbitDataFile)) {
+      codeRabbitAnalysis = JSON.parse(readFileSync(codeRabbitDataFile, 'utf-8'))
+    }
+
+    // Parse the expert analysis result
+    const analysisResult = JSON.parse(readFileSync(analysisResultFile, 'utf-8'))
+
+    // Create the consolidator
+    const consolidator = createOutputConsolidator({
+      prNumber: this.config.prNumber,
+      repository: this.config.repo,
+      analysisVersion: '1.0.0',
+      verbose: this.config.verbose,
+    })
+
+    // Extract findings from the analysis result
+    // TODO: Parse the actual expert findings structure
+    const expertFindings = analysisResult.findings || []
+    const securityFindings = analysisResult.security_findings || []
+    const coderabbitFindings = codeRabbitAnalysis?.findings || []
+
+    // Consolidate all findings
+    const consolidatedOutput = consolidator.consolidate({
+      githubContext,
+      coderabbitFindings,
+      securityFindings,
+      expertFindings,
+      metrics: analysisResult.metrics,
+      recommendations: analysisResult.recommendations,
+      decision: analysisResult.decision,
+      riskLevel: analysisResult.risk_level,
+    })
+
+    // Output the final consolidated JSON to stdout
+    outputFinalJSON(consolidatedOutput)
+  }
+
+  /**
    * Generate comprehensive analysis summary
    */
   private async generateSummary(
@@ -431,7 +495,7 @@ export class UnifiedAnalysisOrchestrator {
    */
   private log(message: string): void {
     if (this.config.verbose) {
-      console.error(message)
+      logProgress(message)
     }
   }
 

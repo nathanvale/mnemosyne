@@ -8,9 +8,9 @@ import {
   afterAll,
 } from 'vitest'
 
-import { PrismaClient, MemoryCluster, Memory } from '../../generated/index.js'
-import { PrismaClusteringOperations } from '../clustering-operations.js'
-import { TestDatabaseSetup } from './test-database-setup.js'
+import { PrismaClient, MemoryCluster, Memory } from '../../generated/index'
+import { PrismaClusteringOperations } from '../clustering-operations'
+import { TestDatabaseSetup } from './test-database-setup'
 
 let prisma: PrismaClient
 let clusteringOps: PrismaClusteringOperations

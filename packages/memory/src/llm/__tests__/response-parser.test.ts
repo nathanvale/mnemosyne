@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import type { MemoryLLMResponse, MemoryItem } from '../response-schema.js'
-import type { LLMResponse } from '../types.js'
+import type { MemoryLLMResponse, MemoryItem } from '../response-schema'
+import type { LLMResponse } from '../types'
 
-import { ResponseParser } from '../response-parser.js'
+import { ResponseParser } from '../response-parser'
 
 /**
  * Test fixture factory for valid memory item

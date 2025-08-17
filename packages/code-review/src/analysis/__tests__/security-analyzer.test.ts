@@ -1,18 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import type { SecurityRiskLevel } from '../../types/analysis.js'
+import type { SecurityRiskLevel } from '../../types/analysis'
 import type {
   CodeRabbitAnalysis,
   CodeRabbitFinding,
   CodeRabbitSeverity,
-} from '../../types/coderabbit.js'
-import type {
-  GitHubPRContext,
-  GitHubSecurityAlert,
-} from '../../types/github.js'
+} from '../../types/coderabbit'
+import type { GitHubPRContext, GitHubSecurityAlert } from '../../types/github'
 
-import { CodeRabbitParser } from '../../parsers/coderabbit-parser.js'
-import { SecurityAnalyzer } from '../security-analyzer.js'
+import { CodeRabbitParser } from '../../parsers/coderabbit-parser'
+import { SecurityAnalyzer } from '../security-analyzer'
 
 // Mock the CodeRabbitParser
 vi.mock('../../parsers/coderabbit-parser.js')

@@ -49,7 +49,7 @@ describe('env-loader', () => {
   describe('Environment file detection', () => {
     it('should detect monorepo root directory', async () => {
       // We'll test this after implementation
-      const { findMonorepoRoot } = await import('../env-loader.js')
+      const { findMonorepoRoot } = await import('../env-loader')
       const root = findMonorepoRoot()
       expect(root).toBeDefined()
       expect(root).toContain('mnemosyne')
@@ -59,7 +59,7 @@ describe('env-loader', () => {
       process.env.NODE_ENV = 'test'
       mockExistsSync.mockReturnValue(true)
 
-      const { loadEnv } = await import('../env-loader.js')
+      const { loadEnv } = await import('../env-loader')
       const result = loadEnv()
 
       // In Wallaby, it might load .env but still be in test mode
@@ -75,7 +75,7 @@ describe('env-loader', () => {
       process.env.VITEST = 'true'
       mockExistsSync.mockReturnValue(true)
 
-      const { loadEnv } = await import('../env-loader.js')
+      const { loadEnv } = await import('../env-loader')
       const result = loadEnv()
 
       expect(result.isTestMode).toBe(true)
@@ -86,7 +86,7 @@ describe('env-loader', () => {
       // This test verifies the logic would work in production
       mockExistsSync.mockReturnValue(true)
 
-      const { loadEnv } = await import('../env-loader.js')
+      const { loadEnv } = await import('../env-loader')
       const result = loadEnv()
 
       // The path will contain '.env' (could be .env or .env.example)
@@ -103,7 +103,7 @@ describe('env-loader', () => {
         return path.includes('.env.example')
       })
 
-      const { loadEnv } = await import('../env-loader.js')
+      const { loadEnv } = await import('../env-loader')
       const result = loadEnv()
 
       // In Wallaby, it might load .env even if we're mocking
@@ -119,7 +119,7 @@ describe('env-loader', () => {
     it('should handle case when neither .env nor .env.example exist', async () => {
       mockExistsSync.mockReturnValue(false)
 
-      const { loadEnv } = await import('../env-loader.js')
+      const { loadEnv } = await import('../env-loader')
       const result = loadEnv()
 
       expect(result.loaded).toBe(false)
@@ -133,7 +133,7 @@ describe('env-loader', () => {
         return path.includes('pnpm-workspace.yaml')
       })
 
-      const { findMonorepoRoot } = await import('../env-loader.js')
+      const { findMonorepoRoot } = await import('../env-loader')
       const root = findMonorepoRoot()
 
       expect(root).toBeDefined()
@@ -144,7 +144,7 @@ describe('env-loader', () => {
         return path.includes('turbo.json')
       })
 
-      const { findMonorepoRoot } = await import('../env-loader.js')
+      const { findMonorepoRoot } = await import('../env-loader')
       const root = findMonorepoRoot()
 
       expect(root).toBeDefined()
@@ -153,7 +153,7 @@ describe('env-loader', () => {
     it('should stop at filesystem root if no monorepo markers found', async () => {
       mockExistsSync.mockReturnValue(false)
 
-      const { findMonorepoRoot } = await import('../env-loader.js')
+      const { findMonorepoRoot } = await import('../env-loader')
       const root = findMonorepoRoot()
 
       // Should return current directory as fallback
@@ -167,7 +167,7 @@ describe('env-loader', () => {
       // eslint-disable-next-line turbo/no-undeclared-env-vars
       process.env['TEST_BASE_URL'] = 'https://api.example.com'
 
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('${TEST_BASE_URL}/endpoint')
 
       expect(result).toBe('https://api.example.com/endpoint')
@@ -176,7 +176,7 @@ describe('env-loader', () => {
     })
 
     it('should handle missing variables gracefully', async () => {
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('${MISSING_VAR}/endpoint')
 
       expect(result).toBe('${MISSING_VAR}/endpoint')
@@ -189,7 +189,7 @@ describe('env-loader', () => {
       // eslint-disable-next-line turbo/no-undeclared-env-vars
       process.env['TEST_PORT'] = '3000'
 
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('http://${TEST_HOST}:${TEST_PORT}')
 
       expect(result).toBe('http://localhost:3000')
@@ -200,7 +200,7 @@ describe('env-loader', () => {
     })
 
     it('should keep placeholder when environment variable is not found', async () => {
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('${UNDEFINED_VAR}')
 
       expect(result).toBe('${UNDEFINED_VAR}')
@@ -212,7 +212,7 @@ describe('env-loader', () => {
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('${MISSING_VAR}')
 
       expect(result).toBe('${MISSING_VAR}')
@@ -235,7 +235,7 @@ describe('env-loader', () => {
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const { substituteEnvVars } = await import('../env-loader.js')
+      const { substituteEnvVars } = await import('../env-loader')
       const result = substituteEnvVars('${MISSING_VAR}')
 
       expect(result).toBe('${MISSING_VAR}')

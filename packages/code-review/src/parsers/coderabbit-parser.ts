@@ -1,12 +1,12 @@
 import {
   IssuePrioritizer,
   type PrioritizationResult,
-} from '../analysis/issue-prioritizer.js'
+} from '../analysis/issue-prioritizer'
 import {
   CodeRabbitAPIResponse,
   CodeRabbitAnalysis,
   CodeRabbitFinding,
-} from '../types/coderabbit.js'
+} from '../types/coderabbit'
 
 /**
  * Parser for CodeRabbit API responses and webhook data

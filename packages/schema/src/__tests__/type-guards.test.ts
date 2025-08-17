@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 
-import { EmotionalState, EmotionalTheme } from '../memory/emotional-context.js'
-import { ParticipantRole } from '../memory/participants.js'
+import { EmotionalState, EmotionalTheme } from '../memory/emotional-context'
+import { ParticipantRole } from '../memory/participants'
 import {
   CommunicationPattern,
   InteractionQuality,
-} from '../memory/relationship-dynamics.js'
+} from '../memory/relationship-dynamics'
 import {
   isMemory,
   isMemoryMetadata,
@@ -22,7 +22,7 @@ import {
   isISODateTime,
   isNumberInRange,
   hasProperty,
-} from '../utils/type-guards.js'
+} from '../utils/type-guards'
 
 describe('Type Guards', () => {
   describe('isMemory', () => {
