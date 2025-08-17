@@ -27,6 +27,11 @@
 .DS_Store
 *.pem
 
+# Obsidian
+.agent-os/.obsidian/workspace.json
+.obsidian/workspace.json
+**/.obsidian/workspace.json
+
 # debug
 npm-debug.log*
 yarn-debug.log*
