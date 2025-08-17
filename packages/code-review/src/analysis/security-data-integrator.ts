@@ -9,6 +9,7 @@
 import type { CodeRabbitAnalysis } from '../types/coderabbit'
 import type { GitHubPRContext } from '../types/github'
 
+import { ErrorHandler } from '../utils/error-handler'
 import { LogManager } from '../utils/log-manager'
 import { logProgress, logDebug } from '../utils/logger'
 import {
@@ -352,27 +353,56 @@ Please start by running the \`/security-review\` command on the provided code ch
     githubContext?: GitHubPRContext,
   ): Promise<string> {
     logProgress('🚀 Launching Claude pr-review-synthesizer sub-agent...')
+    const errorHandler = new ErrorHandler()
 
     try {
-      // Use the enhanced Task executor with automatic log capture
-      const response = await executeTaskWithLogging(
-        this.taskExecutor,
-        {
-          subagent_type: 'pr-review-synthesizer',
-          description: 'Security review analysis',
-          prompt,
-        },
-        {
-          prNumber: githubContext?.pullRequest?.number,
-          repository: githubContext?.pullRequest?.base?.repo?.full_name,
-          analysisId: `claude-security-${Date.now()}`,
-          source: 'claude-sub-agent',
-        },
-      )
+      // Set a timeout for the security sub-agent (30 seconds)
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Task execution timed out after 30 seconds'))
+        }, 30000)
+      })
+
+      // Race between the task execution and timeout
+      const response = await Promise.race([
+        executeTaskWithLogging(
+          this.taskExecutor,
+          {
+            subagent_type: 'pr-review-synthesizer',
+            description: 'Security review analysis',
+            prompt,
+          },
+          {
+            prNumber: githubContext?.pullRequest?.number,
+            repository: githubContext?.pullRequest?.base?.repo?.full_name,
+            analysisId: `claude-security-${Date.now()}`,
+            source: 'claude-sub-agent',
+          },
+        ),
+        timeoutPromise,
+      ])
 
       logProgress('✅ Security sub-agent analysis completed successfully')
       return response
     } catch (error) {
+      // Handle timeout specifically
+      if (error instanceof Error && error.message.includes('timed out')) {
+        logDebug('⏱️ Security sub-agent timed out, using fallback')
+
+        const timeoutResult = await errorHandler.handleSecurityAgentTimeout(
+          error,
+          githubContext,
+        )
+
+        return JSON.stringify({
+          findings: timeoutResult.findings,
+          riskLevel: 'low',
+          recommendations: [timeoutResult.fallbackMessage],
+          confidence: timeoutResult.usedFallback ? 0.5 : 0,
+          timedOut: true,
+        })
+      }
+
       logDebug('❌ Error in security sub-agent analysis:', {
         error: String(error),
       })

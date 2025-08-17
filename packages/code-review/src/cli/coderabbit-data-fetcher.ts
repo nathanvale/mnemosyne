@@ -8,6 +8,7 @@
 
 import { CodeRabbitFinding } from '../types/coderabbit'
 import { execFileJson } from '../utils/async-exec'
+import { ErrorHandler } from '../utils/error-handler'
 
 /**
  * Validate repository name format
@@ -71,6 +72,8 @@ interface ParsedCodeRabbitData {
     fileChanges?: Array<{ file: string; description: string }>
     reviewEffort?: { score: number; complexity: string }
     hasSequenceDiagrams?: boolean
+    error?: string
+    continueAnalysis?: boolean
   }
 }
 
@@ -98,91 +101,129 @@ export class CodeRabbitDataFetcher {
     validatePRNumber(prNumber)
     validateRepoName(repository)
 
+    const errorHandler = new ErrorHandler()
+
     if (this.verbose) {
       console.warn(
         `Fetching CodeRabbit data for PR ${prNumber} in ${repository}`,
       )
     }
 
-    // Fetch issue comments (summaries/walkthroughs) using gh CLI
-    const issueComments = (await execFileJson('gh', [
-      'api',
-      `repos/${repository}/issues/${prNumber.toString()}/comments`,
-      '--paginate',
-    ])) as CodeRabbitComment[]
+    try {
+      // Fetch issue comments (summaries/walkthroughs) using gh CLI
+      const issueComments = (await execFileJson('gh', [
+        'api',
+        `repos/${repository}/issues/${prNumber.toString()}/comments`,
+        '--paginate',
+      ])) as CodeRabbitComment[]
 
-    // Filter for CodeRabbit issue comments
-    const coderabbitIssueComments = issueComments.filter(
-      (comment) =>
-        comment.user.login === 'coderabbitai' ||
-        comment.user.login === 'coderabbitai[bot]',
-    )
+      // Filter for CodeRabbit issue comments
+      const coderabbitIssueComments = issueComments.filter(
+        (comment) =>
+          comment.user.login === 'coderabbitai' ||
+          comment.user.login === 'coderabbitai[bot]',
+      )
 
-    let coderabbitReviewComments: PRReviewComment[] = []
+      let coderabbitReviewComments: PRReviewComment[] = []
 
-    if (this.includeReviewComments) {
-      try {
-        // Fetch PR review comments (line-by-line feedback) using gh CLI
-        const reviewComments = (await execFileJson('gh', [
-          'api',
-          `repos/${repository}/pulls/${prNumber.toString()}/comments`,
-          '--paginate',
-        ])) as PRReviewComment[]
+      if (this.includeReviewComments) {
+        try {
+          // Fetch PR review comments (line-by-line feedback) using gh CLI
+          const reviewComments = (await execFileJson('gh', [
+            'api',
+            `repos/${repository}/pulls/${prNumber.toString()}/comments`,
+            '--paginate',
+          ])) as PRReviewComment[]
 
-        // Filter for CodeRabbit review comments
-        coderabbitReviewComments = reviewComments.filter(
-          (comment) =>
-            comment.user.login === 'coderabbitai' ||
-            comment.user.login === 'coderabbitai[bot]',
-        )
-      } catch (error) {
-        if (this.verbose) {
-          console.warn('Could not fetch PR review comments:', error)
+          // Filter for CodeRabbit review comments
+          coderabbitReviewComments = reviewComments.filter(
+            (comment) =>
+              comment.user.login === 'coderabbitai' ||
+              comment.user.login === 'coderabbitai[bot]',
+          )
+        } catch (error) {
+          if (this.verbose) {
+            console.warn('Could not fetch PR review comments:', error)
+          }
         }
       }
-    }
 
-    // Parse CodeRabbit data
-    const result: ParsedCodeRabbitData = {
-      prNumber,
-      repository,
-      fetchedAt: new Date().toISOString(),
-      hasCodeRabbitReview:
-        coderabbitIssueComments.length > 0 ||
-        coderabbitReviewComments.length > 0,
-      issueComments: coderabbitIssueComments,
-      reviewComments: coderabbitReviewComments,
-      findings: [],
-      metadata: {},
-    }
+      // Parse CodeRabbit data
+      const result: ParsedCodeRabbitData = {
+        prNumber,
+        repository,
+        fetchedAt: new Date().toISOString(),
+        hasCodeRabbitReview:
+          coderabbitIssueComments.length > 0 ||
+          coderabbitReviewComments.length > 0,
+        issueComments: coderabbitIssueComments,
+        reviewComments: coderabbitReviewComments,
+        findings: [],
+        metadata: {},
+      }
 
-    // Extract findings from issue comments (walkthroughs/summaries)
-    for (const comment of coderabbitIssueComments) {
-      const parsed = this.parseCodeRabbitMarkdown(comment.body)
-      if (parsed.summary && !result.summary) {
-        result.summary = parsed.summary
+      // Extract findings from issue comments (walkthroughs/summaries)
+      for (const comment of coderabbitIssueComments) {
+        const parsed = this.parseCodeRabbitMarkdown(comment.body)
+        if (parsed.summary && !result.summary) {
+          result.summary = parsed.summary
+        }
+        if (parsed.walkthrough && !result.walkthrough) {
+          result.walkthrough = parsed.walkthrough
+        }
+        if (parsed.findings) {
+          result.findings.push(...parsed.findings)
+        }
+        // Merge metadata
+        if (parsed.metadata) {
+          result.metadata = { ...result.metadata, ...parsed.metadata }
+        }
       }
-      if (parsed.walkthrough && !result.walkthrough) {
-        result.walkthrough = parsed.walkthrough
-      }
-      if (parsed.findings) {
-        result.findings.push(...parsed.findings)
-      }
-      // Merge metadata
-      if (parsed.metadata) {
-        result.metadata = { ...result.metadata, ...parsed.metadata }
-      }
-    }
 
-    // Extract findings from PR review comments (line-by-line feedback)
-    for (const comment of coderabbitReviewComments) {
-      const finding = this.parseReviewComment(comment)
-      if (finding) {
-        result.findings.push(finding)
+      // Extract findings from PR review comments (line-by-line feedback)
+      for (const comment of coderabbitReviewComments) {
+        const finding = this.parseReviewComment(comment)
+        if (finding) {
+          result.findings.push(finding)
+        }
       }
-    }
 
-    return result
+      return result
+    } catch (error) {
+      // Handle CodeRabbit API errors gracefully
+      if (error instanceof Error) {
+        const fallbackResult = await errorHandler.handleCodeRabbitError(
+          error,
+          prNumber,
+          repository,
+        )
+
+        if (this.verbose) {
+          console.warn(
+            `CodeRabbit fallback activated: ${fallbackResult.summary}`,
+          )
+        }
+
+        // Return a minimal ParsedCodeRabbitData with error information
+        return {
+          prNumber,
+          repository,
+          fetchedAt: new Date().toISOString(),
+          hasCodeRabbitReview: false,
+          issueComments: [],
+          reviewComments: [],
+          findings: fallbackResult.findings as CodeRabbitFinding[],
+          summary: fallbackResult.summary,
+          metadata: {
+            error: fallbackResult.error,
+            continueAnalysis: fallbackResult.continueAnalysis,
+          },
+        }
+      }
+
+      // Re-throw if not an Error instance
+      throw error
+    }
   }
 
   /**
