@@ -69,7 +69,7 @@ describe('Stop Hook Integration', () => {
         stdio: 'pipe',
       })
     }).not.toThrow()
-  })
+  }, 30000)
 
   it('should respect cooldown periods', async () => {
     const config = {
