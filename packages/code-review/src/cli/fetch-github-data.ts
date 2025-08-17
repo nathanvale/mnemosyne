@@ -517,7 +517,7 @@ export class GitHubDataFetcher {
         '--repo',
         repo,
         '--json',
-        'state,name,startedAt,completedAt,link',
+        'state,name,startedAt,completedAt,link,conclusion',
       ])
 
       return checks.map((check: GitHubCheckAPI, index: number) => ({

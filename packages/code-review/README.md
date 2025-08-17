@@ -245,14 +245,192 @@ The package is designed to work with the PR reviewer agent located at `.claude/a
 3. Synthesize findings into a comprehensive report
 4. Provide expert-level code review recommendations
 
+## Consolidated Output Format (v2.0)
+
+As of version 2.0, the CLI outputs a single consolidated JSON structure that merges all analysis sources. This ensures compatibility with AI agents and automated workflows.
+
+### ConsolidatedAnalysisOutput Structure
+
+The consolidated output combines findings from multiple sources into a unified format:
+
+```typescript
+interface ConsolidatedAnalysisOutput {
+  // Metadata
+  analysis_id: string // Unique analysis identifier
+  pr_number: number // PR number
+  repository: string // Repository (owner/repo)
+  timestamp: string // ISO 8601 timestamp
+  analysis_version: string // Version of analysis format
+
+  // Context
+  github_context: {
+    title: string // PR title
+    description: string // PR description
+    author: string // PR author username
+    base_branch: string // Target branch
+    head_branch: string // Source branch
+    files_changed: number // Number of files changed
+    additions: number // Lines added
+    deletions: number // Lines removed
+  }
+
+  // All findings merged from different sources
+  findings: {
+    coderabbit: CodeRabbitFinding[] // CodeRabbit automated review findings
+    security: SecurityFinding[] // Security analysis findings
+    expert: ExpertFinding[] // Expert validation findings
+    total_count: number // Total number of findings
+    by_severity: {
+      // Count by severity level
+      critical: number
+      high: number
+      medium: number
+      low: number
+    }
+  }
+
+  // Metrics
+  metrics: {
+    code_quality_score: number // 0-100 quality score
+    security_score: number // 0-100 security score
+    test_coverage_delta: number // Change in test coverage
+    complexity_score: number // Code complexity metric
+    confidence_score: number // Overall confidence in analysis
+  }
+
+  // Decision and recommendations
+  decision: 'approve' | 'request_changes' | 'comment' | 'security_block'
+  risk_level: 'low' | 'medium' | 'high' | 'critical'
+  blocking_issues: BlockingIssue[] // Issues that must be fixed
+  recommendations: {
+    immediate: string[] // Must fix before merge
+    short_term: string[] // Should fix soon
+    long_term: string[] // Consider for future
+  }
+
+  // Summary for human consumption
+  summary: {
+    overview: string // Executive summary
+    key_findings: string[] // Top findings
+    action_items: string[] // Required actions
+  }
+}
+```
+
+### Finding Structure
+
+Each finding follows a consistent structure regardless of source:
+
+```typescript
+interface Finding {
+  id: string // Unique finding ID
+  source: 'coderabbit' | 'security' | 'expert' | 'github'
+  title: string // Brief title
+  description: string // Detailed description
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info'
+  category: string // Finding category
+  confidence: 'very_high' | 'high' | 'medium' | 'low'
+  location?: {
+    // Code location if applicable
+    file: string
+    line?: number
+    column?: number
+  }
+  remediation?: string // How to fix
+  false_positive?: boolean // If likely false positive
+  tags: string[] // Additional tags
+  timestamp: string // When finding was created
+}
+```
+
+### Output Behavior
+
+- **Single JSON Output**: All findings are consolidated into one JSON structure
+- **Stdout Only**: The consolidated JSON is output to stdout for easy parsing
+- **Progress to Stderr**: All progress messages go to stderr to avoid interference
+- **Structured Logging**: Detailed logs saved to `.logs/pr-reviews/` directory
+
+### Example Usage
+
+```bash
+# Get consolidated analysis (outputs single JSON to stdout)
+pnpm review:pr analyze --pr 141 --repo nathanvale/mnemosyne
+
+# Save to file for later processing
+pnpm review:pr analyze --pr 141 --repo nathanvale/mnemosyne > analysis.json
+
+# Use with jq to extract specific data
+pnpm review:pr analyze --pr 141 --repo nathanvale/mnemosyne | jq '.findings.by_severity'
+```
+
 ## API Types
 
 Key TypeScript interfaces are defined in `src/types/`:
 
+- `ConsolidatedAnalysisOutput`: Complete consolidated analysis output
 - `CodeRabbitFinding`: Individual finding from CodeRabbit
+- `SecurityFinding`: Security analysis finding
+- `ExpertFinding`: Expert validation finding
 - `CodeRabbitAnalysis`: Complete analysis summary
 - `PRAnalysis`: Comprehensive PR analysis result
 - `CodeLocation`: File and line number information
+
+## Structured Logging
+
+The package uses `@studio/logger` for structured logging, providing better debugging and monitoring capabilities.
+
+### Logging Configuration
+
+Logs are automatically written to `.logs/pr-reviews/` with the following structure:
+
+```
+.logs/pr-reviews/
+├── session-YYYYMMDD-HHMMSS.log     # Session logs with full details
+├── analysis-<pr-number>.json       # Analysis output (when saved)
+└── errors.log                       # Error-only log for troubleshooting
+```
+
+### Log Levels
+
+- **error**: Critical errors that prevent analysis
+- **warn**: Warnings about degraded functionality (e.g., CodeRabbit unavailable)
+- **info**: General information about analysis progress
+- **debug**: Detailed debugging information (enabled with `--verbose` flag)
+
+### Environment Variables
+
+```bash
+# Set log level (default: info)
+LOG_LEVEL=debug pnpm review:pr analyze --pr 141 --repo owner/repo
+
+# Disable file logging (console only)
+LOG_TO_FILE=false pnpm review:pr analyze --pr 141 --repo owner/repo
+
+# Custom log directory
+LOG_DIR=/custom/path pnpm review:pr analyze --pr 141 --repo owner/repo
+```
+
+### Debugging
+
+To enable verbose logging for troubleshooting:
+
+```bash
+# Using --verbose flag
+pnpm review:pr analyze --pr 141 --repo owner/repo --verbose
+
+# Or set environment variable
+DEBUG=* pnpm review:pr analyze --pr 141 --repo owner/repo
+```
+
+### Log Metadata
+
+Each log entry includes contextual metadata:
+
+- `pr_number`: PR being analyzed
+- `repository`: Repository being analyzed
+- `analysis_id`: Unique analysis session ID
+- `source`: Component generating the log
+- `timestamp`: ISO 8601 timestamp
 
 ## Development
 
