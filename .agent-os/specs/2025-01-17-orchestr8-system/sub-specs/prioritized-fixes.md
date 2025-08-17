@@ -104,7 +104,7 @@ env:
 **Actions**:
 
 - [ ] Change from '20' to '20.12.x' in CI matrix
-- [ ] Change from '22' to '22.7.x' in CI matrix
+- [ ] Change from '22' to '22.15.x' in CI matrix (aligned with .nvmrc)
 - [ ] Test AbortSignal.any and AbortSignal.timeout features
 
 **Implementation**:
@@ -112,7 +112,7 @@ env:
 ```yaml
 strategy:
   matrix:
-    node: ['20.12.x', '22.7.x']
+    node: ['20.12.x', '22.15.x'] # 22.15.x aligned with project .nvmrc
 ```
 
 ## Priority 3: Test Alignment (Week 2)

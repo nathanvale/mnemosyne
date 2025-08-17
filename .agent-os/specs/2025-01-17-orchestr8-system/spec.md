@@ -277,7 +277,7 @@ The @orchestr8 system implements a comprehensive testing strategy with concrete 
 - **Codecov v4**: Using codecov-action@v4 with v8 json-summary uploads
 - **Concurrency control**: `group: ${{ github.workflow }}-${{ github.ref }}`, `cancel-in-progress: true`
 - **Environment consistency**: `TZ=UTC`, `LANG=en_US.UTF-8` in all test jobs
-- **Node.js pinning**: Minor versions (20.12.x, 22.7.x) for cross-platform consistency
+- **Node.js pinning**: Minor versions (20.12.x, 22.15.x) for cross-platform consistency (22.15.x aligned with .nvmrc)
 - **Unified workspace option**: Single test run to simplify coverage collection
 - **Thread capping**: Max 8 threads for stability
 - **Reporter consistency**: junit.xml and coverage-summary.json

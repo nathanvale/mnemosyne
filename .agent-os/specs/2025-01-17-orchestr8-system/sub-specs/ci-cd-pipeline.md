@@ -97,7 +97,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x' # Pinned minor version
+          node-version: '22.15.x' # Pinned minor version (aligned with .nvmrc)
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -119,7 +119,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        node: ['20.12.x', '22.7.x'] # Pinned minor versions
+        node: ['20.12.x', '22.15.x'] # Pinned minor versions (22.15.x aligned with .nvmrc)
     steps:
       - uses: actions/checkout@v4
 
@@ -164,7 +164,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x'
+          node-version: '22.15.x' # Aligned with .nvmrc
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -199,7 +199,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x'
+          node-version: '22.15.x' # Aligned with .nvmrc
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -242,7 +242,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x'
+          node-version: '22.15.x' # Aligned with .nvmrc
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -278,7 +278,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x'
+          node-version: '22.15.x' # Aligned with .nvmrc
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -329,7 +329,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.7.x'
+          node-version: '22.15.x' # Aligned with .nvmrc
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -431,8 +431,14 @@ Pin minor versions to avoid cross-version differences:
 ```yaml
 strategy:
   matrix:
-    node: ['20.12.x', '22.7.x'] # Not '20', '22'
+    node: ['20.12.x', '22.15.x'] # Not '20', '22' - 22.15.x aligned with .nvmrc
 ```
+
+**Important**: Always keep the Node.js version in CI aligned with the project's `.nvmrc` file:
+
+- Check `.nvmrc` for the current project Node.js version
+- Update all CI matrix configurations when `.nvmrc` changes
+- Ensure consistency across all workflow files
 
 ### 3. Concurrency Management
 
